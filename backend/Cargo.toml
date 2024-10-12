@@ -1,0 +1,20 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+deadpool-diesel = { version = "0.6.1", features = ["postgres"] }
+diesel = { version = "2.2.4", features = ["postgres", "time"] }
+time = { version = "0.3.36" }
+dotenv = { version = "0.15.0" }
+oauth2 = { version = "4.4.2" }
+serde = { version = "1.0.210", features = ["derive"]  }
+serde_json = { version = "1.0.128" }
+axum = { version = "0.7", features = ["query"] }
+axum-extra = { version = "0.9.4", features = ["typed-routing", "typed-header"] }
+leptos_axum = { version = "0.6" }
+tokio = { version = "1", features = ["rt-multi-thread"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["fs"] }
+tracing = { version = "0.1" }
