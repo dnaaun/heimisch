@@ -1,0 +1,11 @@
+[package]
+name = "utils"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.83"
+reqwest = "0.12.8"
+serde = "1.0.210"
+serde_json = "1.0.132"
+url = "2.5.2"

@@ -1,0 +1,27 @@
+[package]
+name = "shared"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = { version = "0.12.8", features = ["json"] }
+serde = { version = "1.0.210", features = ["derive"] }
+url = "2.5.2"
+github_webhook_body = { path = "../github_webhook_body" }
+derive_more = { version = "1.0.0", features = ["as_ref", "deref", "display", "error", "from", "into"] }
+jiff = { version = "0.1.14", features = ["serde"] }
+serde_json = "1.0.132"
+tracing = "0.1.40"
+github_api = { path = "../github_api" }
+macros = { path = "../macros" }
+typesafe_idb = { path = "../typesafe_idb", optional = false }
+idb = { version = "*", optional = false }
+idalloc = "0.1.1"
+parking_lot = "0.12.3"
+send_wrapper = "0.6.0"
+
+[features]
+hydrate = ["jiff/js",
+# "dep:typesafe_idb", "dep:idb"
+]
+ssr = []

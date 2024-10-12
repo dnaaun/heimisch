@@ -1,0 +1,21 @@
+[package]
+name = "typesafe_idb"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+idb = "0.6.4"
+js-sys = "0.3.72"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
+tracing = "0.1.40"
+wasm-bindgen = "0.2.95"
+wasm-bindgen-test = "0.3.45"
+
+[dev-dependencies]
+macros = { path = "../macros" }
+trybuild = "1.0"
+
+# Otherwise (nightly) rust complains about `[wasm_bindgen_test]`
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test_coverage)'] }

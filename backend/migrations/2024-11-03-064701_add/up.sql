@@ -1,0 +1,2 @@
+ALTER TABLE webhooks
+    ADD COLUMN created_at TIMESTAMP NOT NULL;

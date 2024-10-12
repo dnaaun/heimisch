@@ -1,0 +1,10 @@
+[package]
+name = "macros"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+macros_impl = { path = "../macros_impl" }
+
+[lib]
+proc-macro = true

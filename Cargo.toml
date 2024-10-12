@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = [
+    "shared",
+    "backend",
+    "cli",
+    "web",
+    "web_hydrate",
+    "utils",
+    "diesel-test",
+    "meta_tools",
+    "github_webhook_body",
+    "macros",
+    "macros_impl",
+    "github_api",
+    "typesafe_idb",
+]
+
+[[workspace.metadata.leptos]]
+# project name
+name = "heimisch"
+bin-package = "backend"
+lib-package = "web_hydrate"
+tailwind-input-file = "style/tailwind_input.css"
+
+# The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
+site-addr = "127.0.0.1:3210"
+
+site-pkg-dir = "pkg"
+
+# The port to use for automatic reload monitoring
+reload-port = 3211
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3

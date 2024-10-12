@@ -1,0 +1,46 @@
+error[E0271]: type mismatch resolving `<ReadOnly as TxnMode>::SupportsReadWrite == Present`
+  --> tests/ui/read_only_txn_for_reaad_write_method.rs:47:28
+   |
+47 |         Repository::delete(&txn, &RepositoryId(4)).await.unwrap();
+   |         ------------------ ^^^^ expected `Present`, found `()`
+   |         |
+   |         required by a bound introduced by this call
+   |
+note: required by a bound in `delete`
+  --> src/store.rs
+   |
+   |     async fn delete<Marker, M>(txn: &Txn<Marker, M>, id: &Self::Id) -> Result<(), crate::Error>
+   |              ------ required by a bound in this associated function
+...
+   |         M: TxnMode<SupportsReadWrite = Present>,
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Store::delete`
+
+error[E0271]: type mismatch resolving `<ReadOnly as TxnMode>::SupportsReadWrite == Present`
+  --> tests/ui/read_only_txn_for_reaad_write_method.rs:47:9
+   |
+47 |         Repository::delete(&txn, &RepositoryId(4)).await.unwrap();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Present`, found `()`
+   |
+note: required by a bound in `delete`
+  --> src/store.rs
+   |
+   |     async fn delete<Marker, M>(txn: &Txn<Marker, M>, id: &Self::Id) -> Result<(), crate::Error>
+   |              ------ required by a bound in this associated function
+...
+   |         M: TxnMode<SupportsReadWrite = Present>,
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Store::delete`
+
+error[E0271]: type mismatch resolving `<ReadOnly as TxnMode>::SupportsReadWrite == Present`
+  --> tests/ui/read_only_txn_for_reaad_write_method.rs:47:52
+   |
+47 |         Repository::delete(&txn, &RepositoryId(4)).await.unwrap();
+   |                                                    ^^^^^ expected `Present`, found `()`
+   |
+note: required by a bound in `delete`
+  --> src/store.rs
+   |
+   |     async fn delete<Marker, M>(txn: &Txn<Marker, M>, id: &Self::Id) -> Result<(), crate::Error>
+   |              ------ required by a bound in this associated function
+...
+   |         M: TxnMode<SupportsReadWrite = Present>,
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Store::delete`

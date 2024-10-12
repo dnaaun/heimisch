@@ -1,0 +1,7 @@
+/target
+.env
+gitignored/
+web/dist/
+
+node_modules/
+pkg/

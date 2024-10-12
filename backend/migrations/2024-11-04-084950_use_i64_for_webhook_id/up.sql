@@ -1,0 +1,9 @@
+ALTER TABLE webhooks
+    DROP CONSTRAINT IF EXISTS webhooks_pkey;
+
+ALTER TABLE webhooks
+    DROP COLUMN id;
+
+ALTER TABLE webhooks
+ADD COLUMN id BIGINT PRIMARY KEY;
+
