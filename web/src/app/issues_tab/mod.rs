@@ -1,7 +1,11 @@
+use std::rc::Rc;
+
+use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     repository::Repository,
+    user::User,
 };
 
 use crate::{
@@ -13,36 +17,108 @@ use crate::{
 pub fn IssuesTab(repository: Repository) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
-    let open_and_close_issues_count = sync_engine.idb_signal(
+    let issues = sync_engine.idb_signal(
         |db| db.txn().with_store::<Issue>().ro(),
+        move |txn| async move {
+            txn.object_store::<Issue>()
+                .unwrap()
+                .index::<RepositoryIdIndex>()
+                .unwrap()
+                .get_all(Some(&repository.id))
+                .await
+                .unwrap()
+        },
+    );
+    let issues =
+        Signal::derive(move || issues.read().iter().flatten().cloned().collect::<Vec<_>>());
+
+    let counts = move || {
+        let issues = issues();
+        let (open, closed): (Vec<Option<Timestamp>>, Vec<_>) = issues
+            .iter()
+            .filter_map(|i| i.closed_at.as_ref().to_option())
+            .partition(|i| i.is_none());
+        Some((open.len(), closed.len()))
+    };
+
+    move || {
+        view! {
+            <>
+            <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
+                <div class="flex flex-nowrap gap-x-2">
+                    <div>Open {counts().map(|c| c.0)}</div>
+                    <div>Closed {counts().map(|c| c.1)}</div>
+                </div>
+                <div>Author</div>
+            </div>
+            <For
+                each={issues}
+                key={|i|i.id}
+                children={|issue| view! { <IssueRow issue=issue /> }
+                }
+            />
+
+            </>
+        }
+    }
+}
+
+#[component]
+pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView {
+    let sync_engine = use_sync_engine();
+    let user_id = issue.user_id.clone();
+    let user = sync_engine.idb_signal(
+        |db| db.txn().with_store::<User>().ro(),
         move |txn| {
-            Box::pin(async move {
-                let (open, closed): (Vec<_>, Vec<_>) = txn
-                    .object_store::<Issue>()
+            let user_id = user_id.clone();
+            async move {
+                let user_id = match user_id.to_option().flatten() {
+                    Some(u) => u,
+                    None => return None,
+                };
+                txn.object_store::<User>()
                     .unwrap()
-                    .index::<RepositoryIdIndex>()
-                    .unwrap()
-                    .get_all(Some(&repository.id))
+                    .get(&user_id)
                     .await
                     .unwrap()
-                    .into_iter()
-                    .filter_map(|i| i.closed_at.to_option())
-                    .partition(|i| i.is_none());
-                (open.len(), closed.len())
-            })
+            }
         },
     );
 
-    let closed = move || open_and_close_issues_count.read().map(|i| i.1);
-    let open = move || open_and_close_issues_count.read().map(|i| i.0);
+    move || {
+        let created_at = issue.created_at.clone();
+        let closed_at = issue.closed_at.clone();
+        let title = issue.title.clone();
+        let number = issue.number.clone();
 
-    view! {
-        <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
-            <div class="flex flex-nowrap gap-x-2">
-                <div>Open {open}</div>
-                <div>Closed {closed}</div>
-            </div>
-            <div>Author</div>
-        </div>
+        let user = user.read();
+        let user = user.as_ref();
+        let user = user.flatten();
+        let login = user.map(|u| u.login.clone());
+
+        let opened_or_closed_text = closed_at
+            .as_ref()
+            .to_option()
+            .flatten()
+            .map(|i| format!("closed on {}", strtime::format("%b %d, %Y", *i).expect("")))
+            .or_else(move || {
+                created_at
+                    .to_option()
+                    .map(|i| format!("opened on {}", strtime::format("%b %d, %Y", i).expect("")))
+            });
+
+        view! {
+            <div class="border-r border-l border-b p-3"
+                class=("rounded-b", is_last)
+                >
+                <a class="mb-1.5 font-bold">{title.to_option()}</a>
+                <div class="flex gap-1.5 text-sm text-gray-500">
+                    <div>{number.to_option().map(|a| format!("#{a}"))}</div>
+                    <div>"·"</div>
+                    <div>{login}</div>
+                    <div>{opened_or_closed_text}</div>
+                </div>
+                </div>
+        }
     }
 }

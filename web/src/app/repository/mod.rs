@@ -152,7 +152,7 @@ pub fn RepositoryPage() -> impl IntoView {
                 </TabList>
             </div>
             <div class="border-t border-t-gray-200">
-                <div class="w-[1280px] max-w-screen-xl mx-auto py-4 px-6">
+                <div class="w-full max-w-screen-xl mx-auto py-4 px-6">
                     {active_tab_el}
                 </div>
             </div>

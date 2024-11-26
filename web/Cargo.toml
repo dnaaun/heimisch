@@ -41,9 +41,10 @@ leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "f032a57"
 strum = "0.26.3"
 send_wrapper = "0.6.0"
 itertools = "0.13.0"
+jiff = { version = "0.1.14", features = ["serde"] }
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "thaw/hydrate", "shared/hydrate" ]
+hydrate = ["leptos/hydrate", "thaw/hydrate", "shared/hydrate", "jiff/js"]
 ssr = ["leptos/ssr", "leptos_router/ssr", "thaw/ssr"]
 tracing = []

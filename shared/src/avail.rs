@@ -37,13 +37,19 @@ impl<T> Avail<T> {
         }
     }
 
+    pub fn as_ref(&self) -> Avail<&T> {
+        match self {
+            Avail::Yes(t) => Avail::Yes(&t),
+            Avail::No => Avail::No,
+        }
+    }
+
     pub fn map_ref<O>(&self, func: impl FnOnce(&T) -> O) -> Avail<O> {
         match self {
             Avail::Yes(t) => Avail::Yes(func(t)),
             Avail::No => Avail::No,
         }
     }
-
 
     pub fn to_option(self) -> Option<T> {
         match self {

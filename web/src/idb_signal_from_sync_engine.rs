@@ -24,6 +24,7 @@ pub trait IdbSignalFromSyncEngine<DbStoreMarkers> {
 }
 
 impl IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine {
+    /// TODO: This doesn't react to dependencies changing in `compute_val()`
     fn idb_signal<TxnStoreMarkers, Mode, Fut, T>(
         &self,
         make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
