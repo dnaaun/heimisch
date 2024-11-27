@@ -9,7 +9,10 @@
  */
 
 use crate::models;
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+
+use super::user::Type;
 
 /// NullableSimpleUser : A GitHub user.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
@@ -60,61 +63,17 @@ pub struct NullableSimpleUser {
     pub events_url: String,
     #[serde(rename = "received_events_url")]
     pub received_events_url: String,
+
+    /// NOTE: I changed the type here.
     #[serde(rename = "type")]
-    pub r#type: String,
+    pub r#type: Type,
+
     #[serde(rename = "site_admin")]
     pub site_admin: bool,
+
     #[serde(rename = "starred_at", skip_serializing_if = "Option::is_none")]
-    pub starred_at: Option<String>,
+    pub starred_at: Option<Timestamp>,
+
     #[serde(rename = "user_view_type", skip_serializing_if = "Option::is_none")]
     pub user_view_type: Option<String>,
-}
-
-impl NullableSimpleUser {
-    /// A GitHub user.
-    pub fn new(
-        login: String,
-        id: i64,
-        node_id: String,
-        avatar_url: String,
-        gravatar_id: Option<String>,
-        url: String,
-        html_url: String,
-        followers_url: String,
-        following_url: String,
-        gists_url: String,
-        starred_url: String,
-        subscriptions_url: String,
-        organizations_url: String,
-        repos_url: String,
-        events_url: String,
-        received_events_url: String,
-        r#type: String,
-        site_admin: bool,
-    ) -> NullableSimpleUser {
-        NullableSimpleUser {
-            name: None,
-            email: None,
-            login,
-            id,
-            node_id,
-            avatar_url,
-            gravatar_id,
-            url,
-            html_url,
-            followers_url,
-            following_url,
-            gists_url,
-            starred_url,
-            subscriptions_url,
-            organizations_url,
-            repos_url,
-            events_url,
-            received_events_url,
-            r#type,
-            site_admin,
-            starred_at: None,
-            user_view_type: None,
-        }
-    }
 }

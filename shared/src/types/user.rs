@@ -63,4 +63,6 @@ pub struct User {
     pub updated_at: Avail<Timestamp>,
     pub url: Avail<String>,
     pub user_view_type: Avail<Option<String>>,
+
+    pub starred_at: Avail<Option<Timestamp>>,
 }

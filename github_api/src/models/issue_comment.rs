@@ -11,6 +11,8 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+use super::AuthorAssociation;
+
 /// IssueComment : The [comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment) itself.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct IssueComment {
@@ -85,31 +87,5 @@ impl IssueComment {
                 None
             },
         }
-    }
-}
-/// How the author is associated with the repository.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum AuthorAssociation {
-    #[serde(rename = "COLLABORATOR")]
-    Collaborator,
-    #[serde(rename = "CONTRIBUTOR")]
-    Contributor,
-    #[serde(rename = "FIRST_TIMER")]
-    FirstTimer,
-    #[serde(rename = "FIRST_TIME_CONTRIBUTOR")]
-    FirstTimeContributor,
-    #[serde(rename = "MANNEQUIN")]
-    Mannequin,
-    #[serde(rename = "MEMBER")]
-    Member,
-    #[serde(rename = "NONE")]
-    None,
-    #[serde(rename = "OWNER")]
-    Owner,
-}
-
-impl Default for AuthorAssociation {
-    fn default() -> AuthorAssociation {
-        Self::Collaborator
     }
 }

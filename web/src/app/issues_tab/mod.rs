@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
@@ -29,8 +27,7 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
                 .unwrap()
         },
     );
-    let issues =
-        Signal::derive(move || issues.read().iter().flatten().cloned().collect::<Vec<_>>());
+    let issues = move || issues.read().iter().flatten().cloned().collect::<Vec<_>>();
 
     let counts = move || {
         let issues = issues();
@@ -52,9 +49,9 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
                 <div>Author</div>
             </div>
             <For
-                each={issues}
-                key={|i|i.id}
-                children={|issue| view! { <IssueRow issue=issue /> }
+                each={move || issues().into_iter().enumerate()}
+                key={move |(_, i)|i.id}
+                children={move |(i, issue)| view! { <IssueRow issue=issue is_last={i == issues().len() - 1} /> }
                 }
             />
 
@@ -113,7 +110,7 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                 >
                 <a class="mb-1.5 font-bold">{title.to_option()}</a>
                 <div class="flex gap-1.5 text-sm text-gray-500">
-                    <div>{number.to_option().map(|a| format!("#{a}"))}</div>
+                    <div>{format!("#{number}")}</div>
                     <div>"·"</div>
                     <div>{login}</div>
                     <div>{opened_or_closed_text}</div>

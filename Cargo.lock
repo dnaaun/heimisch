@@ -3711,6 +3711,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "futures",
  "github_api",
  "github_webhook_body",
  "idalloc",

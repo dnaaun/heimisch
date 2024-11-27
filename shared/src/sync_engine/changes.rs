@@ -4,6 +4,7 @@ use typesafe_idb::TypesafeDb;
 use typesafe_idb::{Present, StoreMarker, Txn, TxnBuilder, TxnMode};
 
 use crate::avail::MergeError;
+use crate::types::issue_comment::{IssueComment, IssueCommentId};
 
 use super::{
     super::types::{
@@ -22,6 +23,7 @@ use super::{
 pub struct Changes {
     github_apps: HashMap<GithubAppId, GithubApp>,
     issues: HashMap<IssueId, Issue>,
+    issue_comments: HashMap<IssueCommentId, IssueComment>,
     users: HashMap<UserId, User>,
     repositorys: HashMap<RepositoryId, Repository>,
     licenses: HashMap<LicenseId, License>,
@@ -34,6 +36,7 @@ pub trait StoreMarkersForChanges:
     + StoreMarker<Repository>
     + StoreMarker<User>
     + StoreMarker<Issue>
+    + StoreMarker<IssueComment>
     + StoreMarker<GithubApp>
 {
 }
@@ -44,6 +47,7 @@ impl<T> StoreMarkersForChanges for T where
         + StoreMarker<Repository>
         + StoreMarker<User>
         + StoreMarker<Issue>
+        + StoreMarker<IssueComment>
         + StoreMarker<GithubApp>
 {
 }
@@ -64,6 +68,7 @@ impl Changes {
         Txn::builder(db)
             .with_store::<GithubApp>()
             .with_store::<Issue>()
+            .with_store::<IssueComment>()
             .with_store::<User>()
             .with_store::<Repository>()
             .with_store::<License>()
@@ -164,6 +169,18 @@ impl AddChanges<Issue> for Changes {
     }
 }
 
+impl AddChanges<IssueComment> for Changes {
+    fn add(&mut self, change: IssueComment) -> Result<&mut Self, MergeError> {
+        if self.issue_comments.contains_key(&change.id) {
+            let cur = self.issue_comments.get_mut(&change.id).expect("");
+            cur.merge(change)?;
+        } else {
+            self.issue_comments.insert(change.id, change);
+        }
+        Ok(self)
+    }
+}
+
 impl AddChanges<Repository> for Changes {
     fn add(&mut self, change: Repository) -> Result<&mut Self, MergeError> {
         if self.repositorys.contains_key(&change.id) {
@@ -205,6 +222,7 @@ impl AddChanges<Changes> for Changes {
         let Changes {
             github_apps,
             issues,
+            issue_comments,
             users,
             repositorys,
             licenses,
@@ -217,6 +235,10 @@ impl AddChanges<Changes> for Changes {
         for (_, issue) in issues {
             self.add(issue)?;
         }
+        for (_, issue_comment) in issue_comments {
+            self.add(issue_comment)?;
+        }
+
         for (_, user) in users {
             self.add(user)?;
         }
@@ -269,52 +291,19 @@ impl SyncEngine {
         let Changes {
             github_apps,
             issues,
+            issue_comments,
             users,
             repositorys,
             licenses,
             milestones,
         } = changes;
+        merge_and_upsert_issues(txn, issues).await?;
+        merge_and_upsert_issue_comments(txn, issue_comments).await?;
+        merge_and_upsert_github_apps(txn, github_apps).await?;
+        merge_and_upsert_users(txn, users).await?;
+        merge_and_upsert_repositorys(txn, repositorys).await?;
 
-        let issue_store = txn.object_store::<Issue>()?;
-        for (_, issue) in issues {
-            let existing = issue_store.get(&issue.id).await?;
-            let merged = match existing {
-                Some(existing) => existing.with_merged(issue)?,
-                None => issue,
-            };
-            issue_store.put(&merged).await?;
-        }
-
-        let github_app_store = txn.object_store::<GithubApp>()?;
-        for (_, github_app) in github_apps {
-            let existing = github_app_store.get(&github_app.id).await?;
-            let merged = match existing {
-                Some(existing) => existing.with_merged(github_app)?,
-                None => github_app,
-            };
-            github_app_store.put(&merged).await?;
-        }
-
-        let user_store = txn.object_store::<User>()?;
-        for (_, user) in users {
-            let existing = user_store.get(&user.id).await?;
-            let merged = match existing {
-                Some(existing) => existing.with_merged(user)?,
-                None => user,
-            };
-            user_store.put(&merged).await?;
-        }
-
-        let repository_store = txn.object_store::<Repository>()?;
-        for (_, repository) in repositorys {
-            let existing = repository_store.get(&repository.id).await?;
-            let merged = match existing {
-                Some(existing) => existing.with_merged(repository)?,
-                None => repository,
-            };
-            repository_store.put(&merged).await?;
-        }
-
+        // TODO: Move this to it's own function like above.
         let milestone_store = txn.object_store::<Milestone>()?;
         for (_, milestone) in milestones {
             let existing = milestone_store.get(&milestone.id).await?;
@@ -325,6 +314,7 @@ impl SyncEngine {
             milestone_store.put(&merged).await?;
         }
 
+        // TODO: Move this to it's own function like above.
         let license_store = txn.object_store::<License>()?;
         for (_, license) in licenses {
             let existing = license_store.get(&license.key).await?;
@@ -337,4 +327,107 @@ impl SyncEngine {
         }
         Ok(())
     }
+}
+
+async fn merge_and_upsert_issues<Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    issues: HashMap<IssueId, Issue>,
+) -> SyncResult<()>
+where
+    Marker: StoreMarker<Issue>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let issue_store = txn.object_store::<Issue>()?;
+    for (_, issue) in issues {
+        let existing = issue_store.get(&issue.id).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(issue)?,
+            None => issue,
+        };
+        issue_store.put(&merged).await?;
+    }
+
+    Ok(())
+}
+
+async fn merge_and_upsert_issue_comments<Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    issue_comments: HashMap<IssueCommentId, IssueComment>,
+) -> SyncResult<()>
+where
+    Marker: StoreMarker<IssueComment>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let issue_comment_store = txn.object_store::<IssueComment>()?;
+    for (_, issue_comment) in issue_comments {
+        let existing = issue_comment_store.get(&issue_comment.id).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(issue_comment)?,
+            None => issue_comment,
+        };
+        issue_comment_store.put(&merged).await?;
+    }
+    Ok(())
+}
+
+async fn merge_and_upsert_github_apps<Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    github_apps: HashMap<GithubAppId, GithubApp>,
+) -> SyncResult<()>
+where
+    Marker: StoreMarker<GithubApp>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let github_app_store = txn.object_store::<GithubApp>()?;
+    for (_, github_app) in github_apps {
+        let existing = github_app_store.get(&github_app.id).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(github_app)?,
+            None => github_app,
+        };
+        github_app_store.put(&merged).await?;
+    }
+    Ok(())
+}
+
+async fn merge_and_upsert_users<Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    users: HashMap<UserId, User>,
+) -> SyncResult<()>
+where
+    Marker: StoreMarker<User>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let user_store = txn.object_store::<User>()?;
+    for (_, user) in users {
+        let existing = user_store.get(&user.id).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(user)?,
+            None => user,
+        };
+        user_store.put(&merged).await?;
+    }
+
+    Ok(())
+}
+
+async fn merge_and_upsert_repositorys<Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    repositorys: HashMap<RepositoryId, Repository>,
+) -> SyncResult<()>
+where
+    Marker: StoreMarker<Repository>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let repository_store = txn.object_store::<Repository>()?;
+    for (_, repository) in repositorys {
+        let existing = repository_store.get(&repository.id).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(repository)?,
+            None => repository,
+        };
+        repository_store.put(&merged).await?;
+    }
+
+    Ok(())
 }

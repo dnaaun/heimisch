@@ -6,3 +6,6 @@ pub mod from_user;
 pub mod from_user1;
 pub mod from_milestone1;
 pub mod from_app10;
+pub mod from_issue_comment;
+pub mod from_integration;
+pub mod from_nullable_simple_user;

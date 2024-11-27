@@ -19,7 +19,7 @@ impl SyncEngine {
             .next()
             .unwrap();
 
-        self.ensure_initial_sync_issues(&test_repo.id, id).await?;
+        self.ensure_initial_sync_one_repository(&test_repo).await?;
 
         Ok(())
     }

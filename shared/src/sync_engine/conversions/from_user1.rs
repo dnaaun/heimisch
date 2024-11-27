@@ -70,6 +70,7 @@ pub fn from_user1(api_user1: github_api::models::User1) -> crate::types::user::U
         twitter_username: Avail::No,
         two_factor_authentication: Avail::No,
         updated_at: Avail::No,
+        starred_at: Avail::No,
     };
 
     db_user

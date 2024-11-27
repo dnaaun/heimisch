@@ -8,6 +8,7 @@ mod ensure_initial_sync_repositories;
 mod kick_off;
 
 pub mod changes;
+mod ensure_initial_sync_issue_comments;
 pub mod error;
 mod registry;
 
@@ -28,6 +29,10 @@ use crate::{
             InstallationAccessTokenRowStoreMarker,
         },
         issue::{Issue, IssueStoreMarker},
+        issue_comment::{IssueComment, IssueCommentStoreMarker},
+        issue_comment_initial_sync_status::{
+            IssueCommentInitialSyncStatus, IssueCommentInitialSyncStatusStoreMarker,
+        },
         issue_initial_sync_status::{IssueInitialSyncStatus, IssueInitialSyncStatusStoreMarker},
         license::{License, LicenseStoreMarker},
         milestone::{Milestone, MilestoneStoreMarker},
@@ -43,20 +48,26 @@ use jiff::{Timestamp, ToSpan};
 use url::Url;
 
 pub type DbStoreMarkers = Chain<
-    InstallationAccessTokenRowStoreMarker,
+    IssueCommentInitialSyncStatusStoreMarker,
     Chain<
-        RepositoryInitialSyncStatusStoreMarker,
+        IssueCommentStoreMarker,
         Chain<
-            IssueInitialSyncStatusStoreMarker,
+            InstallationAccessTokenRowStoreMarker,
             Chain<
-                LicenseStoreMarker,
+                RepositoryInitialSyncStatusStoreMarker,
                 Chain<
-                    MilestoneStoreMarker,
+                    IssueInitialSyncStatusStoreMarker,
                     Chain<
-                        RepositoryStoreMarker,
+                        LicenseStoreMarker,
                         Chain<
-                            GithubAppStoreMarker,
-                            Chain<UserStoreMarker, Chain<IssueStoreMarker, Chain<(), ()>>>,
+                            MilestoneStoreMarker,
+                            Chain<
+                                RepositoryStoreMarker,
+                                Chain<
+                                    GithubAppStoreMarker,
+                                    Chain<UserStoreMarker, Chain<IssueStoreMarker, Chain<(), ()>>>,
+                                >,
+                            >,
                         >,
                     >,
                 >,
@@ -121,6 +132,8 @@ impl SyncEngine {
             .with_store::<IssueInitialSyncStatus>()
             .with_store::<RepositoryInitialSyncStatus>()
             .with_store::<InstallationAccessTokenRow>()
+            .with_store::<IssueComment>()
+            .with_store::<IssueCommentInitialSyncStatus>()
             .build()
             .await?;
 

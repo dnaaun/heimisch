@@ -1,9 +1,10 @@
 use crate::avail::Avail;
 
-pub fn from_user(api_user: github_api::models::User) -> crate::types::user::User {
-    let github_api::models::User {
+pub fn from_nullable_simple_user(
+    api_user: github_api::models::NullableSimpleUser,
+) -> crate::types::user::User {
+    let github_api::models::NullableSimpleUser {
         avatar_url,
-        deleted,
         email,
         events_url,
         followers_url,
@@ -23,31 +24,32 @@ pub fn from_user(api_user: github_api::models::User) -> crate::types::user::User
         subscriptions_url,
         r#type,
         url,
+        user_view_type,
+        starred_at,
     } = api_user;
 
     let db_user = crate::types::user::User {
-        avatar_url: Avail::from_option(avatar_url),
-        deleted: Avail::from_option(deleted),
+        avatar_url: avatar_url.into(),
         email: Avail::from_option(email),
-        events_url: Avail::from_option(events_url),
-        followers_url: Avail::from_option(followers_url),
-        following_url: Avail::from_option(following_url),
-        gists_url: Avail::from_option(gists_url),
+        events_url: events_url.into(),
+        followers_url: followers_url.into(),
+        following_url: following_url.into(),
+        gists_url: gists_url.into(),
         gravatar_id: gravatar_id.into(),
-        html_url: Avail::from_option(html_url),
+        html_url: html_url.into(),
         id: i64::from(id).into(),
         login: login.into(),
-        name: name.into(),
-        node_id: Avail::from_option(node_id),
-        organizations_url: Avail::from_option(organizations_url),
-        received_events_url: Avail::from_option(received_events_url),
-        repos_url: Avail::from_option(repos_url),
-        site_admin: Avail::from_option(site_admin),
-        starred_url: Avail::from_option(starred_url),
-        subscriptions_url: Avail::from_option(subscriptions_url),
-        r#type: Avail::from_option(r#type),
-        url: Avail::from_option(url),
-        user_view_type: Avail::No,
+        name: Avail::from_option(name),
+        node_id: node_id.into(),
+        organizations_url: organizations_url.into(),
+        received_events_url: received_events_url.into(),
+        repos_url: repos_url.into(),
+        site_admin: site_admin.into(),
+        starred_url: starred_url.into(),
+        subscriptions_url: subscriptions_url.into(),
+        r#type: r#type.into(),
+        url: url.into(),
+        user_view_type: user_view_type.into(),
         bio: Avail::No,
         blog: Avail::No,
         business_plus: Avail::No,
@@ -69,7 +71,8 @@ pub fn from_user(api_user: github_api::models::User) -> crate::types::user::User
         twitter_username: Avail::No,
         two_factor_authentication: Avail::No,
         updated_at: Avail::No,
-        starred_at: Avail::No,
+        deleted: Avail::No,
+        starred_at: starred_at.into(),
     };
 
     db_user

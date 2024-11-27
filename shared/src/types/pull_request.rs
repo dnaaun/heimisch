@@ -1,4 +1,5 @@
 use derive_more::derive::{AsRef, Deref, From, Into};
+use github_api::models::issue::AuthorAssociation;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -6,26 +7,6 @@ use super::{
     milestone::MilestoneId, pull_request_labels_item::PullRequestLabelsItemId,
     repository::RepositoryId, team::TeamId, user::UserId,
 };
-
-#[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum AuthorAssociation {
-    #[serde(rename = "COLLABORATOR")]
-    Collaborator,
-    #[serde(rename = "CONTRIBUTOR")]
-    Contributor,
-    #[serde(rename = "FIRST_TIMER")]
-    FirstTimer,
-    #[serde(rename = "FIRST_TIME_CONTRIBUTOR")]
-    FirstTimeContributor,
-    #[serde(rename = "MANNEQUIN")]
-    Mannequin,
-    #[serde(rename = "MEMBER")]
-    Member,
-    #[serde(rename = "NONE")]
-    None,
-    #[serde(rename = "OWNER")]
-    Owner,
-}
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct AutoMerge {

@@ -13,7 +13,7 @@ use super::milestone::MilestoneId;
 use super::repository::RepositoryId;
 use super::user::UserId;
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
+#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Default)]
 pub struct IssueId(i64);
 
 #[derive(macros::TypesafeIdb)]
@@ -65,7 +65,8 @@ pub struct Issue {
     pub node_id: Avail<String>,
 
     #[doc = "Number uniquely identifying the issue within its repository"]
-    pub number: Avail<i64>,
+    #[idb(index)]
+    pub number: i64,
 
     pub performed_via_github_app_id: Avail<Option<GithubAppId>>,
 
@@ -95,14 +96,4 @@ pub struct Issue {
     pub url: Avail<String>,
 
     pub user_id: Avail<Option<UserId>>,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct IssuePullRequest {
-    pub diff_url: Option<String>,
-    pub html_url: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub merged_at: Option<Timestamp>,
-    pub patch_url: Option<String>,
-    pub url: Option<String>,
 }

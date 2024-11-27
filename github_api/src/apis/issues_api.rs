@@ -179,14 +179,14 @@ use serde::{Deserialize, Serialize};
 //     UnknownValue(serde_json::Value),
 // }
 //
-// /// struct for typed errors of method [`issues_slash_list_comments_for_repo`]
-// #[derive(Debug, Clone, Serialize, Deserialize)]
-// #[serde(untagged)]
-// pub enum IssuesSlashListCommentsForRepoError {
-//     Status422(models::ValidationError),
-//     Status404(models::BasicError),
-//     UnknownValue(serde_json::Value),
-// }
+/// struct for typed errors of method [`issues_slash_list_comments_for_repo`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum IssuesSlashListCommentsForRepoError {
+    Status422(models::ValidationError),
+    Status404(models::BasicError),
+    UnknownValue(serde_json::Value),
+}
 //
 // /// struct for typed errors of method [`issues_slash_list_events`]
 // #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1410,79 +1410,79 @@ pub enum IssuesSlashListForRepoError {
 //     }
 // }
 //
-// /// You can use the REST API to list comments on issues and pull requests for a repository. Every pull request is an issue, but not every issue is a pull request.  By default, issue comments are ordered by ascending ID.  This endpoint supports the following custom media types. For more information, see \"[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types).\"  - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response will include `body`. This is the default if you do not pass any specific media type. - **`application/vnd.github.text+json`**: Returns a text only representation of the markdown body. Response will include `body_text`. - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's markdown. Response will include `body_html`. - **`application/vnd.github.full+json`**: Returns raw, text, and HTML representations. Response will include `body`, `body_text`, and `body_html`.
-// pub async fn issues_slash_list_comments_for_repo(
-//     configuration: &configuration::Configuration,
-//     owner: &str,
-//     repo: &str,
-//     sort: Option<&str>,
-//     direction: Option<&str>,
-//     since: Option<String>,
-//     per_page: Option<i32>,
-//     page: Option<i32>,
-// ) -> Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>> {
-//     let local_var_configuration = configuration;
-//
-//     let local_var_client = &local_var_configuration.client;
-//
-//     let local_var_uri_str = format!(
-//         "{}/repos/{owner}/{repo}/issues/comments",
-//         local_var_configuration.base_path,
-//         owner = crate::apis::urlencode(owner),
-//         repo = crate::apis::urlencode(repo)
-//     );
-//     let mut local_var_req_builder =
-//         local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-//
-//     if let Some(ref local_var_str) = sort {
-//         local_var_req_builder =
-//             local_var_req_builder.query(&[("sort", &local_var_str.to_string())]);
-//     }
-//     if let Some(ref local_var_str) = direction {
-//         local_var_req_builder =
-//             local_var_req_builder.query(&[("direction", &local_var_str.to_string())]);
-//     }
-//     if let Some(ref local_var_str) = since {
-//         local_var_req_builder =
-//             local_var_req_builder.query(&[("since", &local_var_str.to_string())]);
-//     }
-//     if let Some(ref local_var_str) = per_page {
-//         local_var_req_builder =
-//             local_var_req_builder.query(&[("per_page", &local_var_str.to_string())]);
-//     }
-//     if let Some(ref local_var_str) = page {
-//         local_var_req_builder =
-//             local_var_req_builder.query(&[("page", &local_var_str.to_string())]);
-//     }
-//     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-//         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-//     }
-//
-//     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-//         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
-//     }
-//
-//     let local_var_req = local_var_req_builder.build()?;
-//     let local_var_resp = local_var_client.execute(local_var_req).await?;
-//
-//     let local_var_status = local_var_resp.status();
-//     let local_var_content = local_var_resp.text().await?;
-//
-//     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-//         serde_json::from_str(&local_var_content).map_err(Error::from)
-//     } else {
-//         let local_var_entity: Option<IssuesSlashListCommentsForRepoError> =
-//             serde_json::from_str(&local_var_content).ok();
-//         let local_var_error = ResponseContent {
-//             status: local_var_status,
-//             content: local_var_content,
-//             entity: local_var_entity,
-//         };
-//         Err(Error::ResponseError(local_var_error))
-//     }
-// }
+/// You can use the REST API to list comments on issues and pull requests for a repository. Every pull request is an issue, but not every issue is a pull request.  By default, issue comments are ordered by ascending ID.  This endpoint supports the following custom media types. For more information, see \"[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types).\"  - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response will include `body`. This is the default if you do not pass any specific media type. - **`application/vnd.github.text+json`**: Returns a text only representation of the markdown body. Response will include `body_text`. - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's markdown. Response will include `body_html`. - **`application/vnd.github.full+json`**: Returns raw, text, and HTML representations. Response will include `body`, `body_text`, and `body_html`.
+pub async fn issues_slash_list_comments_for_repo(
+    configuration: &configuration::Configuration,
+    owner: &str,
+    repo: &str,
+    sort: Option<&str>,
+    direction: Option<&str>,
+    since: Option<String>,
+    per_page: Option<i32>,
+    page: Option<i32>,
+) -> Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/repos/{owner}/{repo}/issues/comments",
+        local_var_configuration.base_path,
+        owner = crate::apis::urlencode(owner),
+        repo = crate::apis::urlencode(repo)
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = sort {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("sort", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = direction {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("direction", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = since {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("since", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = per_page {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("per_page", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = page {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("page", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+
+    if let Some(ref bearer_access_token) = configuration.bearer_access_token {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+    }
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<IssuesSlashListCommentsForRepoError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
 //
 // /// Lists all events for an issue.
 // pub async fn issues_slash_list_events(

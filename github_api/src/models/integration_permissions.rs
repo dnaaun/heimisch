@@ -11,30 +11,15 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+use super::app_1_permissions::ReadOrWrite;
+
 /// IntegrationPermissions : The set of permissions for the GitHub app
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+/// NOTE: I Changed the types below.
 pub struct IntegrationPermissions {
-    #[serde(rename = "issues", skip_serializing_if = "Option::is_none")]
-    pub issues: Option<String>,
-    #[serde(rename = "checks", skip_serializing_if = "Option::is_none")]
-    pub checks: Option<String>,
-    #[serde(rename = "metadata", skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<String>,
-    #[serde(rename = "contents", skip_serializing_if = "Option::is_none")]
-    pub contents: Option<String>,
-    #[serde(rename = "deployments", skip_serializing_if = "Option::is_none")]
-    pub deployments: Option<String>,
-}
-
-impl IntegrationPermissions {
-    /// The set of permissions for the GitHub app
-    pub fn new() -> IntegrationPermissions {
-        IntegrationPermissions {
-            issues: None,
-            checks: None,
-            metadata: None,
-            contents: None,
-            deployments: None,
-        }
-    }
+    pub issues: Option<ReadOrWrite>,
+    pub checks: Option<ReadOrWrite>,
+    pub metadata: Option<ReadOrWrite>,
+    pub contents: Option<ReadOrWrite>,
+    pub deployments: Option<ReadOrWrite>,
 }

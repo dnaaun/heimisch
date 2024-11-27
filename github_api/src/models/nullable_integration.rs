@@ -9,7 +9,10 @@
  */
 
 use crate::models;
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+
+use super::app_10::Events;
 
 /// NullableIntegration : GitHub apps are a new way to extend GitHub. They can be installed directly on organizations and user accounts and granted access to specific repositories. They come with granular permissions and built-in webhooks. GitHub apps are first class actors within GitHub.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
@@ -35,15 +38,16 @@ pub struct NullableIntegration {
     pub external_url: String,
     #[serde(rename = "html_url")]
     pub html_url: String,
-    #[serde(rename = "created_at")]
-    pub created_at: String,
+    pub created_at: Timestamp,
     #[serde(rename = "updated_at")]
-    pub updated_at: String,
+    pub updated_at: Timestamp,
     #[serde(rename = "permissions")]
     pub permissions: models::IntegrationPermissions,
+
     /// The list of events for the GitHub app
-    #[serde(rename = "events")]
-    pub events: Vec<String>,
+    /// NOTE: I changed the type here.
+    pub events: Vec<Events>,
+
     /// The number of installations associated with the GitHub app
     #[serde(
         rename = "installations_count",
@@ -61,45 +65,4 @@ pub struct NullableIntegration {
     pub webhook_secret: Option<Option<String>>,
     #[serde(rename = "pem", skip_serializing_if = "Option::is_none")]
     pub pem: Option<String>,
-}
-
-impl NullableIntegration {
-    /// GitHub apps are a new way to extend GitHub. They can be installed directly on organizations and user accounts and granted access to specific repositories. They come with granular permissions and built-in webhooks. GitHub apps are first class actors within GitHub.
-    pub fn new(
-        id: i32,
-        node_id: String,
-        owner: Option<models::NullableSimpleUser>,
-        name: String,
-        description: Option<String>,
-        external_url: String,
-        html_url: String,
-        created_at: String,
-        updated_at: String,
-        permissions: models::IntegrationPermissions,
-        events: Vec<String>,
-    ) -> NullableIntegration {
-        NullableIntegration {
-            id,
-            slug: None,
-            node_id,
-            client_id: None,
-            owner: if let Some(x) = owner {
-                Some(Box::new(x))
-            } else {
-                None
-            },
-            name,
-            description,
-            external_url,
-            html_url,
-            created_at,
-            updated_at,
-            permissions,
-            events,
-            installations_count: None,
-            client_secret: None,
-            webhook_secret: None,
-            pem: None,
-        }
-    }
 }
