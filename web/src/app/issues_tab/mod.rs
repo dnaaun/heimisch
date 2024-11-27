@@ -1,9 +1,10 @@
+use std::ops::Deref;
+
+use thaw::*;
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
-    issue::{Issue, RepositoryIdIndex},
-    repository::Repository,
-    user::User,
+    issue::{Issue, RepositoryIdIndex}, issue_comment::{IssueComment, IssueIdIndex}, repository::Repository, user::User
 };
 
 use crate::{
@@ -81,6 +82,24 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
             }
         },
     );
+    let issue_id = issue.id.clone();
+    let comments_count = sync_engine.idb_signal(
+        |db| db.txn().with_store::<IssueComment>().ro(),
+        move |txn| {
+            let issue_id = issue_id.clone();
+            async move {
+            txn.object_store::<IssueComment>()
+                .unwrap()
+                .index::<IssueIdIndex>()
+                .unwrap()
+                .get_all(Some(&Some(issue_id.clone())))
+                .await
+                .unwrap()
+                .len()
+        }});
+    let comments_count = move || comments_count.read().deref().deref().clone();
+
+
 
     move || {
         let created_at = issue.created_at.clone();
@@ -104,18 +123,27 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                     .map(|i| format!("opened on {}", strtime::format("%b %d, %Y", i).expect("")))
             });
 
+
         view! {
-            <div class="border-r border-l border-b p-3"
+            <div class="border-r border-l border-b p-3 flex justify-between items-center"
                 class=("rounded-b", is_last)
                 >
-                <a class="mb-1.5 font-bold">{title.to_option()}</a>
-                <div class="flex gap-1.5 text-sm text-gray-500">
-                    <div>{format!("#{number}")}</div>
-                    <div>"·"</div>
-                    <div>{login}</div>
-                    <div>{opened_or_closed_text}</div>
+                <div>
+                    <a class="mb-1.5 font-bold">{title.to_option()}</a>
+                    <div class="flex gap-1.5 text-sm text-gray-500">
+                        <div>{format!("#{number}")}</div>
+                        <div>"·"</div>
+                        <div>{login}</div>
+                        <div>{opened_or_closed_text}</div>
+                    </div>
+                </div>
+                <div>
+                <div class="flex gap-1 items-center">
+                    <Icon icon={icondata::AiCommentOutlined} />
+                    {comments_count}
                 </div>
                 </div>
+            </div>
         }
     }
 }

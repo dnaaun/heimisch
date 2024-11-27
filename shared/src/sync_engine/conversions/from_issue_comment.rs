@@ -1,7 +1,7 @@
 use std::future::Future;
 
 use crate::{
-    avail::{Avail, MergeError},
+    avail::MergeError,
     sync_engine::changes::{AddChanges, Changes},
     types::{issue::IssueId, issue_comment::IssueCommentId, repository::RepositoryId},
 };
@@ -61,7 +61,7 @@ pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
         updated_at: updated_at.into(),
         url: url.into(),
         user_id: db_user.as_ref().map(|u| u.id.clone()).into(),
-        issue_id: Avail::from_option(issue_id),
+        issue_id,
         repository_id: repository_id.clone().into(),
     };
 

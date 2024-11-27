@@ -43,7 +43,11 @@ pub struct IssueComment {
     pub url: Avail<String>,
     pub user_id: Avail<Option<UserId>>,
 
-    pub issue_id: Avail<IssueId>,
+
+    /// I don't support indexing on nested attrs yet, which I'd have to support if I want to index
+    /// `Avail<IssueId>`, hence:
+    #[idb(index)]
+    pub issue_id: Option<IssueId>,
 
     /// I want to store this because the intial fetch of issue comments doesn't include the issue
     /// id, and so we have to reconstruct it from the issue_url, but doing that in bulk will be
