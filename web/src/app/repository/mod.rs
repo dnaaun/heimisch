@@ -5,18 +5,16 @@ use leptos_router::{
     hooks::{use_navigate, use_params},
     params::Params,
 };
-use not_found::NotFound;
 use shared::types::{
     self,
     repository::Repository,
     user::{self, User},
 };
 use top_bar::TopBar;
-mod not_found;
 mod top_bar;
 use thaw::*;
 
-use crate::idb_signal_from_sync_engine::IdbSignalFromSyncEngine;
+use crate::{app::not_found::NotFound, idb_signal_from_sync_engine::IdbSignalFromSyncEngine};
 
 use super::{
     issues_tab::IssuesTab, pull_requests_tab::PullRequestsTab,

@@ -4,12 +4,14 @@ mod sync_engine_provider;
 mod issues_tab;
 mod pull_requests_tab;
 mod repository;
+mod not_found;
 use auth::{Auth, USER_ACCESS_TOKEN_KEY};
 use leptos_router::components::Routes;
 
 use leptos::prelude::*;
 use leptos_router::components::{Route, Router};
 use leptos_router::path;
+use not_found::NotFound;
 use repository::RepositoryPage;
 use sync_engine_provider::SyncEngineProvider;
 use thaw::*;
@@ -23,7 +25,7 @@ pub fn App() -> impl IntoView {
             <SyncEngineProvider>
                 <ConfigProvider>
                     <Router>
-                        <Routes fallback=|| view! { <div>In router fallback!</div> }>
+                        <Routes fallback=NotFound>
                             <Route path=path!("/auth") view=Auth />
                             <Route path=path!("/:owner_name/:repo_name") view=RepositoryPage />
                             <Route path=path!("/:owner_name/:repo_name/:tab") view=RepositoryPage />
