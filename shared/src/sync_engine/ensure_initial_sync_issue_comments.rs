@@ -1,7 +1,4 @@
-use std::rc::Rc;
-
 use futures::future::join_all;
-use typesafe_idb::StoreMarker;
 
 use super::{
     changes::Changes,

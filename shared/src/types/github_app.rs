@@ -28,7 +28,7 @@ pub struct GithubApp {
     pub id: GithubAppId,
 
     #[doc = "The number of installations associated with the GitHub app"]
-    pub installations_count: Avail<Option<i64>>,
+    pub installations_count: Avail<i64>,
     #[doc = "The name of the GitHub app"]
     pub name: Avail<String>,
     pub node_id: Avail<String>,

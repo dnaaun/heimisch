@@ -1,5 +1,3 @@
-use tracing::warn;
-
 use crate::sync_engine::changes::AddChanges;
 use crate::{
     avail::{Avail, MergeError},
@@ -8,7 +6,6 @@ use crate::{
 };
 
 use super::from_nullable_simple_user::from_nullable_simple_user;
-use super::from_user2::from_user2;
 
 pub fn from_nullable_integration(
     api_integration: github_api::models::NullableIntegration,
@@ -44,11 +41,11 @@ pub fn from_nullable_integration(
         external_url: external_url.into(),
         html_url: html_url.into(),
         id: (id as i64).into(),
-        installations_count: Avail::No,
+        installations_count: Avail::from_option(installations_count.map(|i| i64::from(i))),
         name: name.into(),
         node_id: node_id.into(),
         owner_id: Avail::from_option(db_owner.as_ref().map(|o| o.id)),
-        pem: Avail::No,
+        pem: pem.into(),
         permissions: Avail::Yes(permissions.into()),
         slug: slug.into(),
         updated_at: updated_at.into(),
