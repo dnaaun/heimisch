@@ -1,6 +1,6 @@
 use parking_lot::Mutex;
 use registry::Registry;
-use typesafe_idb::{Chain, ReactivityTrackers, TypesafeDb};
+use typesafe_idb::{ReactivityTrackers, TypesafeDb};
 mod conversions;
 mod ensure_initial_sync_issues;
 mod ensure_initial_sync_one_repository;
@@ -22,59 +22,72 @@ use crate::{
         endpoint_request::EndpointRequest,
     },
     types::{
-        github_app::{GithubApp, GithubAppStoreMarker},
         installation::InstallationId,
-        installation_access_token_row::{
-            InstallationAccessToken, InstallationAccessTokenRow,
-            InstallationAccessTokenRowStoreMarker,
-        },
-        issue::{Issue, IssueStoreMarker},
-        issue_comment::{IssueComment, IssueCommentStoreMarker},
-        issue_comment_initial_sync_status::{
-            IssueCommentInitialSyncStatus, IssueCommentInitialSyncStatusStoreMarker,
-        },
-        issue_initial_sync_status::{IssueInitialSyncStatus, IssueInitialSyncStatusStoreMarker},
-        license::{License, LicenseStoreMarker},
-        milestone::{Milestone, MilestoneStoreMarker},
-        repository::{Repository, RepositoryStoreMarker},
-        repository_initial_sync_status::{
-            RepositoryInitialSyncStatus, RepositoryInitialSyncStatusStoreMarker,
-        },
-        user::{User, UserStoreMarker},
+        installation_access_token_row::{InstallationAccessToken, InstallationAccessTokenRow},
     },
 };
 use error::SyncResult;
 use jiff::{Timestamp, ToSpan};
 use url::Url;
 
-pub type DbStoreMarkers = Chain<
-    IssueCommentInitialSyncStatusStoreMarker,
-    Chain<
-        IssueCommentStoreMarker,
-        Chain<
-            InstallationAccessTokenRowStoreMarker,
-            Chain<
-                RepositoryInitialSyncStatusStoreMarker,
-                Chain<
-                    IssueInitialSyncStatusStoreMarker,
-                    Chain<
-                        LicenseStoreMarker,
-                        Chain<
-                            MilestoneStoreMarker,
-                            Chain<
-                                RepositoryStoreMarker,
-                                Chain<
-                                    GithubAppStoreMarker,
-                                    Chain<UserStoreMarker, Chain<IssueStoreMarker, Chain<(), ()>>>,
-                                >,
-                            >,
-                        >,
-                    >,
-                >,
-            >,
-        >,
-    >,
->;
+/// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
+/// "defining use."
+mod isolate_db_store_markers_impl_type {
+    use std::rc::Rc;
+
+    use crate::types::{
+        github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
+        issue::Issue, issue_comment::IssueComment,
+        issue_comment_initial_sync_status::IssueCommentInitialSyncStatus,
+        issue_initial_sync_status::IssueInitialSyncStatus, license::License, milestone::Milestone,
+        repository::Repository, repository_initial_sync_status::RepositoryInitialSyncStatus,
+        user::User,
+    };
+    use typesafe_idb::{StoreMarker, TypesafeDb};
+    use url::Url;
+
+    use super::{error::SyncResult, SyncEngine};
+
+    pub type DbStoreMarkers = impl StoreMarker<IssueCommentInitialSyncStatus>
+        + StoreMarker<IssueComment>
+        + StoreMarker<InstallationAccessTokenRow>
+        + StoreMarker<RepositoryInitialSyncStatus>
+        + StoreMarker<IssueInitialSyncStatus>
+        + StoreMarker<License>
+        + StoreMarker<Milestone>
+        + StoreMarker<Repository>
+        + StoreMarker<GithubApp>
+        + StoreMarker<User>
+        + StoreMarker<Issue>;
+
+    impl SyncEngine {
+        pub async fn new(domain: Url) -> SyncResult<Self> {
+            let db = TypesafeDb::builder("heimisch".into())
+                .with_store::<Issue>()
+                .with_store::<User>()
+                .with_store::<GithubApp>()
+                .with_store::<Repository>()
+                .with_store::<Milestone>()
+                .with_store::<License>()
+                .with_store::<IssueInitialSyncStatus>()
+                .with_store::<RepositoryInitialSyncStatus>()
+                .with_store::<InstallationAccessTokenRow>()
+                .with_store::<IssueComment>()
+                .with_store::<IssueCommentInitialSyncStatus>()
+                .build()
+                .await?;
+
+            Ok(Self {
+                db: Rc::new(db),
+                domain,
+                idb_notifiers: Default::default(),
+                client: Default::default(),
+            })
+        }
+    }
+}
+
+pub use isolate_db_store_markers_impl_type::DbStoreMarkers;
 
 pub enum IdbNotification {
     BulkStoreUpdate {
@@ -119,32 +132,7 @@ pub struct SyncEngine {
 
 const MAX_PER_PAGE: i32 = 100;
 
-#[allow(unused)]
 impl SyncEngine {
-    pub async fn new(domain: Url) -> SyncResult<Self> {
-        let db = TypesafeDb::builder("heimisch".into())
-            .with_store::<Issue>()
-            .with_store::<User>()
-            .with_store::<GithubApp>()
-            .with_store::<Repository>()
-            .with_store::<Milestone>()
-            .with_store::<License>()
-            .with_store::<IssueInitialSyncStatus>()
-            .with_store::<RepositoryInitialSyncStatus>()
-            .with_store::<InstallationAccessTokenRow>()
-            .with_store::<IssueComment>()
-            .with_store::<IssueCommentInitialSyncStatus>()
-            .build()
-            .await?;
-
-        Ok(Self {
-            db: Rc::new(db),
-            domain,
-            idb_notifiers: Default::default(),
-            client: Default::default(),
-        })
-    }
-
     async fn get_api_conf(
         &self,
         id: &InstallationId,

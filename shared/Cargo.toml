@@ -20,6 +20,7 @@ idalloc = "0.1.1"
 parking_lot = "0.12.3"
 send_wrapper = "0.6.0"
 futures = "0.3.31"
+codee = { version = "0.2.0", features = ["json_serde"] }
 
 [features]
 hydrate = ["jiff/js",

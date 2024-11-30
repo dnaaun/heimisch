@@ -2,7 +2,7 @@ use std::{any::TypeId, collections::HashMap, marker::PhantomData};
 
 use idb::builder::ObjectStoreBuilder;
 
-use crate::{Chain, Store, Txn, TxnBuilder};
+use crate::{chain::Chain, Store, Txn, TxnBuilder};
 
 pub struct TypesafeDb<TableMarkers> {
     markers: PhantomData<TableMarkers>,
@@ -24,7 +24,6 @@ impl TypesafeDb<()> {
         }
     }
 }
-
 
 impl<DbTableMarkers> TypesafeDb<DbTableMarkers> {
     pub fn txn<'db>(&'db self) -> TxnBuilder<'db, Chain<(), ()>, DbTableMarkers> {

@@ -19,6 +19,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    sessions (id) {
+        id -> Uuid,
+        data -> Jsonb,
+        expiry_date -> Timestamp,
+    }
+}
+
+diesel::table! {
     temp_auths (csrf_token) {
         csrf_token -> Text,
         created_at -> Timestamp,
@@ -36,4 +44,10 @@ diesel::table! {
 
 diesel::joinable!(webhooks -> installations (installation_id));
 
-diesel::allow_tables_to_appear_in_same_query!(installations, login_users, temp_auths, webhooks,);
+diesel::allow_tables_to_appear_in_same_query!(
+    installations,
+    login_users,
+    sessions,
+    temp_auths,
+    webhooks,
+);

@@ -12,7 +12,6 @@ mod store;
 mod object_store;
 mod index;
 
-pub use chain::Chain;
 pub use db::{TypesafeDb, TypesafeDbBuilder};
 pub use error::Error;
 pub use store::Store;

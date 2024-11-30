@@ -38,3 +38,8 @@ derive_more = { version = "1.0.0", features = ["display", "error"] }
 assert-json-diff = "2.0.2"
 github_api = { path = "../github_api" }
 jiff = "0.1.14"
+axum-typed-websockets = { version = "0.6.0", features = ["json"] }
+futures = "0.3.31"
+tower-sessions = "0.13.0"
+uuid = "1.11.0"
+opaque-debug = "0.3.1"

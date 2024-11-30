@@ -1,3 +1,6 @@
+mod websocket_updates;
+mod sse_updates;
+
 use github_api::apis::apps_api::apps_slash_get_installation;
 use github_api::apis::configuration::Configuration;
 use github_api::apis::users_api::users_slash_get_authenticated;

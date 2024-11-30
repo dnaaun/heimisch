@@ -28,6 +28,7 @@ pub mod hookup_endpoint;
 #[cfg(test)]
 mod tests;
 pub mod github_auth;
+mod sessions;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 

@@ -3,8 +3,20 @@ use backtrace::Backtrace;
 use github_webhook_body::WebhookBody;
 use shared::types::installation::InstallationId;
 use utils::{ReqwestJsonError, ReqwestSendError};
+use uuid::Uuid;
 
 use crate::axum_helpers::extractors::HeaderError;
+
+#[derive(Debug)]
+pub enum DbIntegrityError {
+    SessionsDataIsNotMap { session_id: Uuid, session_data: serde_json::Value },
+}
+
+impl From<DbIntegrityError> for Error {
+    fn from(value: DbIntegrityError) -> Self {
+        ErrorSource::DbIntegrity(value).into()
+    }
+}
 
 #[derive(Debug)]
 pub enum ErrorSource {
@@ -21,6 +33,8 @@ pub enum ErrorSource {
     GithubWebhookNoInstallationId { body: WebhookBody },
     GithubWebhookHeaderError { message: String },
     GithubWebhookBodyDeser(serde_json::Error),
+    // Db integrity errors
+    DbIntegrity(DbIntegrityError),
 }
 
 #[derive(Debug)]
@@ -180,6 +194,7 @@ Backtrace:
             | &ErrorSource::DeadpoolInteractError(_)
             | &ErrorSource::Github(_)
             | &ErrorSource::GithubIdOutOfI64Bounds
+            | &ErrorSource::DbIntegrity(_)
             | &ErrorSource::GithubUserDetailsNotFound => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!(

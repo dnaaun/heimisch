@@ -6,6 +6,7 @@ mod local_storage;
 mod idb_signal;
 mod idb_signal_from_sync_engine;
 mod utils;
+mod websocket_updates;
 use hydration::{AutoReload, HydrationScripts};
 use leptos::prelude::*;
 use leptos::{config::LeptosOptions, *};

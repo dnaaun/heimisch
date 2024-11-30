@@ -37,11 +37,12 @@ wasm-bindgen-test = "0.3.45"
 heck = "0.5.0"
 strum_macros = "0.26.4"
 derive_more = { version = "1.0.0", features = ["from_str", "display"] }
-leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "f032a57" }
+leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "f032a57", features = ["use_websocket"] }
 strum = "0.26.3"
 send_wrapper = "0.6.0"
 itertools = "0.13.0"
 jiff = { version = "0.1.14", features = ["serde"] }
+codee = "0.2.0"
 
 [features]
 default = []
