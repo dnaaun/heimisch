@@ -1,15 +1,19 @@
 use axum::{http::StatusCode, response::IntoResponse};
 use backtrace::Backtrace;
 use github_webhook_body::WebhookBody;
+use parking_lot::Mutex;
 use shared::types::installation::InstallationId;
 use utils::{ReqwestJsonError, ReqwestSendError};
 use uuid::Uuid;
 
-use crate::axum_helpers::extractors::HeaderError;
+use crate::{axum_helpers::extractors::HeaderError, session_and_auth::AuthBackend};
 
 #[derive(Debug)]
 pub enum DbIntegrityError {
-    SessionsDataIsNotMap { session_id: Uuid, session_data: serde_json::Value },
+    SessionsDataIsNotMap {
+        session_id: Uuid,
+        session_data: serde_json::Value,
+    },
 }
 
 impl From<DbIntegrityError> for Error {
@@ -21,7 +25,10 @@ impl From<DbIntegrityError> for Error {
 #[derive(Debug)]
 pub enum ErrorSource {
     DieselError(diesel::result::Error),
-    DeadpoolInteractError(deadpool_diesel::InteractError),
+
+    // ~Mutex~ only to make `ErrorSource` (and by consequence, `Error`) implement `Sync`.
+    DeadpoolInteractError(Mutex<deadpool_diesel::InteractError>),
+
     DeadpoolPoolError(deadpool_diesel::PoolError),
     Github(github_api::simple_error::SimpleError),
     ReqwestSendError(ReqwestSendError),
@@ -35,12 +42,85 @@ pub enum ErrorSource {
     GithubWebhookBodyDeser(serde_json::Error),
     // Db integrity errors
     DbIntegrity(DbIntegrityError),
+    Session(tower_sessions::session::Error),
 }
 
 #[derive(Debug)]
 pub struct Error {
     source: ErrorSource,
     backtrace: Backtrace,
+}
+impl std::error::Error for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let error_msg = match &self.source {
+            // These GithubWebhook* errors will be emitted only for the webhook endpoint, and we don't return non
+            // 2xx values there, because that could cause re-deliveries.
+            ErrorSource::GithubWebhookHeaderError { message } => {
+                format!("Error deserializing webhook headers: {message}")
+            }
+            ErrorSource::GithubWebhookBodyDeser(err) => {
+                format!("Error deserializing webhook body: {err:#?}")
+            }
+            ErrorSource::GithubWebhookNoInstallationId { body } => {
+                format!(
+                    "Webhook body has no installation id: {}",
+                    serde_json::to_string_pretty(&body).expect("")
+                )
+            }
+            ErrorSource::InstallationIdNotFound(id) => {
+                format!("installation id not found: {id}")
+            }
+            ErrorSource::HeaderError(header_error) => match header_error {
+                HeaderError::Utf8(_) => "Header values were not utf8".to_owned(),
+                HeaderError::SerdeJson(err) => {
+                    format!("Couldn't deserialize headers: {err:#?}")
+                }
+            },
+            ErrorSource::ReqwestSendError(err) => {
+                format!(
+                    "Reqwest send error:
+Url: {}
+Payload: {:#?}
+Reqwest reported error: {:?}
+Backtrace:
+{:?}
+",
+                    err.url, err.payload, err.request_error, self.backtrace
+                )
+            }
+            ErrorSource::ReqwestJsonError(err) => {
+                format!(
+                    "Reqwest json error:
+Body: {:#?}
+Reqwest error: {:?}
+Deserialization error: {:?}
+Backtrace:
+{}
+",
+                    err.body,
+                    err.reqwest_error,
+                    err.serde_error,
+                    print_backtrace_nicely(&self.backtrace)
+                )
+            }
+            &ErrorSource::DieselError(_)
+            | &ErrorSource::DeadpoolPoolError(_)
+            | &ErrorSource::DeadpoolInteractError(_)
+            | &ErrorSource::Github(_)
+            | &ErrorSource::GithubIdOutOfI64Bounds
+            | &ErrorSource::DbIntegrity(_)
+            | &ErrorSource::Session(_)
+            | &ErrorSource::GithubUserDetailsNotFound => format!(
+                "{:?}
+{}",
+                self.source,
+                print_backtrace_nicely(&self.backtrace)
+            ),
+        };
+        f.write_str(&error_msg)
+    }
 }
 
 impl Error {
@@ -66,7 +146,7 @@ impl From<diesel::result::Error> for Error {
 impl From<deadpool_diesel::InteractError> for Error {
     fn from(err: deadpool_diesel::InteractError) -> Self {
         Error {
-            source: ErrorSource::DeadpoolInteractError(err),
+            source: ErrorSource::DeadpoolInteractError(Mutex::new(err)),
             backtrace: Backtrace::new(),
         }
     }
@@ -123,89 +203,42 @@ impl From<ErrorSource> for Error {
     }
 }
 
+impl From<axum_login::Error<AuthBackend>> for Error {
+    fn from(value: axum_login::Error<AuthBackend>) -> Self {
+        match value {
+            axum_login::Error::Session(error) => Error {
+                source: ErrorSource::Session(error),
+                backtrace: Backtrace::new(),
+            },
+            axum_login::Error::Backend(error) => error,
+        }
+    }
+}
+
 // TODO: Implement the prod/dev distinction.
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        let (code, error_msg) = match &self.source {
+        let code = match &self.source {
             // These GithubWebhook* errors will be emitted only for the webhook endpoint, and we don't return non
             // 2xx values there, because that could cause re-deliveries.
-            ErrorSource::GithubWebhookHeaderError { message } => {
-                let error_msg = format!("Error deserializing webhook headers: {message}");
-                (StatusCode::OK, error_msg)
-            }
-            ErrorSource::GithubWebhookBodyDeser(err) => {
-                let error_msg = format!("Error deserializing webhook body: {err:#?}");
-                (StatusCode::OK, error_msg)
-            }
-            ErrorSource::GithubWebhookNoInstallationId { body } => {
-                let error_msg = format!(
-                    "Webhook body has no installation id: {}",
-                    serde_json::to_string_pretty(&body).expect("")
-                );
-                (StatusCode::OK, error_msg)
-            }
-            ErrorSource::InstallationIdNotFound(id) => {
-                let error_msg = format!("installation id not found: {id}");
-                (StatusCode::UNAUTHORIZED, error_msg)
-            }
-            ErrorSource::HeaderError(header_error) => {
-                let error_msg = match header_error {
-                    HeaderError::Utf8(_) => "Header values were not utf8".to_owned(),
-                    HeaderError::SerdeJson(err) => {
-                        format!("Couldn't deserialize headers: {err:#?}")
-                    }
-                };
-
-                (StatusCode::BAD_REQUEST, error_msg)
-            }
-            ErrorSource::ReqwestSendError(err) => {
-                let error_msg = format!(
-                    "Reqwest send error:
-Url: {}
-Payload: {:#?}
-Reqwest reported error: {:?}
-Backtrace:
-{:?}
-",
-                    err.url, err.payload, err.request_error, self.backtrace
-                );
-
-                (StatusCode::INTERNAL_SERVER_ERROR, error_msg)
-            }
-            ErrorSource::ReqwestJsonError(err) => {
-                let error_msg = format!(
-                    "Reqwest json error:
-Body: {:#?}
-Reqwest error: {:?}
-Deserialization error: {:?}
-Backtrace:
-{}
-",
-                    err.body,
-                    err.reqwest_error,
-                    err.serde_error,
-                    print_backtrace_nicely(self.backtrace)
-                );
-
-                (StatusCode::INTERNAL_SERVER_ERROR, error_msg)
-            }
-            &ErrorSource::DieselError(_)
+            ErrorSource::GithubWebhookHeaderError { .. }
+            | ErrorSource::GithubWebhookBodyDeser(_)
+            | ErrorSource::GithubWebhookNoInstallationId { .. } => StatusCode::OK,
+            ErrorSource::InstallationIdNotFound(_) => StatusCode::UNAUTHORIZED,
+            ErrorSource::HeaderError(_) => StatusCode::BAD_REQUEST,
+            ErrorSource::ReqwestSendError(_)
+            | ErrorSource::ReqwestJsonError(_)
+            | &ErrorSource::DieselError(_)
             | &ErrorSource::DeadpoolPoolError(_)
             | &ErrorSource::DeadpoolInteractError(_)
             | &ErrorSource::Github(_)
             | &ErrorSource::GithubIdOutOfI64Bounds
             | &ErrorSource::DbIntegrity(_)
-            | &ErrorSource::GithubUserDetailsNotFound => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!(
-                    "{:?}
-{}",
-                    self.source,
-                    print_backtrace_nicely(self.backtrace)
-                ),
-            ),
+            | &ErrorSource::Session(_)
+            | &ErrorSource::GithubUserDetailsNotFound => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
+        let error_msg = self.to_string();
         tracing::error!("{}", error_msg);
 
         (code, error_msg).into_response()
@@ -213,7 +246,7 @@ Backtrace:
 }
 
 /// Filters backtrace frames to those in our codebase.
-fn print_backtrace_nicely(backtrace: Backtrace) -> String {
+fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
     let frames = backtrace
         .frames()
         .iter()

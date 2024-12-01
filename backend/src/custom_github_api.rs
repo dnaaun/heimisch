@@ -1,7 +1,7 @@
 use serde::Deserialize;
-use shared::types::{
+use shared::{endpoints::defns::api::auth::finish::GithubAccessToken, types::{
     installation::InstallationId, installation_access_token_row::InstallationAccessToken,
-};
+}};
 use url::Url;
 use utils::{ExecuteNicely, JsonNicely};
 
@@ -11,7 +11,7 @@ pub async fn get_user_access_token(
     code: &str,
     client_id: String,
     client_secret: String,
-) -> Result<String> {
+) -> Result<GithubAccessToken> {
     let mut github_url = Url::parse("https://github.com/login/oauth/access_token").expect("");
     github_url.query_pairs_mut().extend_pairs([
         ("client_id", client_id.as_str()),
@@ -21,7 +21,7 @@ pub async fn get_user_access_token(
 
     #[derive(Deserialize)]
     struct ATResp {
-        access_token: String,
+        access_token: GithubAccessToken,
     }
 
     let client = reqwest::Client::new();

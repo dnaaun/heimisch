@@ -1,4 +1,4 @@
-use derive_more::derive::{AsRef, Deref, From, Into};
+use derive_more::derive::{AsRef, Deref, Display, From, Into};
 use github_api::models::user::Type;
 use jiff::Timestamp;
 use macros::AvailMerge;
@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::avail::Avail;
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Copy, Hash)]
+#[cfg_attr(feature="ssr", derive(diesel_derive_newtype::DieselNewType))]
+#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Copy, Hash, Display, Default)]
 pub struct UserId(i64);
 
 #[derive(macros::TypesafeIdb)]

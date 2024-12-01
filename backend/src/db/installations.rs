@@ -4,7 +4,7 @@ use super::schema::installations::{self, *};
 use deadpool_diesel::postgres::Pool;
 use diesel::prelude::*;
 
-use shared::types::installation::InstallationId;
+use shared::types::{installation::InstallationId, user::UserId};
 
 use crate::error::Result;
 
@@ -13,7 +13,7 @@ use crate::error::Result;
 pub struct Installation {
     pub id: i64,
     pub created_at: SystemTime,
-    pub github_user_id: i64,
+    pub github_user_id: UserId,
 }
 pub async fn insert_installation_if_not_exists(
     pool: impl AsRef<Pool>,

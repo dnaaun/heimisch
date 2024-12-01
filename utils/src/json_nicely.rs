@@ -7,7 +7,7 @@ use crate::DisplayDebug;
 pub struct ReqwestJsonError {
     /// Not just a straight up string in case the body supports pretty printing (and maybe
     /// it's json, who knows).
-    pub body: Option<Box<dyn DisplayDebug + Send>>,
+    pub body: Option<Box<dyn DisplayDebug + Send + Sync>>,
     pub reqwest_error: Option<reqwest::Error>,
     pub serde_error: Option<serde_json::error::Error>,
 }
@@ -38,7 +38,7 @@ impl JsonNicely for reqwest::Response {
 
         let body = match String::from_utf8(body_bytes.to_vec()) {
             Ok(string_body) => match serde_json::Value::from_str(&string_body) {
-                Ok(value) => Box::new(value) as Box<dyn DisplayDebug + Send>,
+                Ok(value) => Box::new(value) as Box<dyn DisplayDebug + Send + Sync>,
                 Err(_) => Box::new(string_body),
             },
             Err(_) => Box::new("BODY IS SOME BINARY/NON-TEXTUAL VALUE"),

@@ -24,7 +24,7 @@ lib-package = "web_hydrate"
 tailwind-input-file = "style/tailwind_input.css"
 
 # The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
-site-addr = "127.0.0.1:3210"
+site-addr = "0.0.0.0:3210"
 
 site-pkg-dir = "pkg"
 

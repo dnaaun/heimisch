@@ -8,7 +8,7 @@ pub struct ReqwestSendError {
     pub url: url::Url,
     /// Not just a straight up string in case the request body supports pretty printing (and maybe
     /// it's json, who knows).
-    pub payload: Option<Box<dyn DisplayDebug + Send>>,
+    pub payload: Option<Box<dyn DisplayDebug + Send + Sync>>,
     pub request_error: reqwest::Error,
 }
 
@@ -35,7 +35,7 @@ impl ExecuteNicely for reqwest::Client {
             payload_bytes.map(
                 |payload_bytes| match String::from_utf8(payload_bytes.to_vec()) {
                     Ok(string_payload) => match serde_json::Value::from_str(&string_payload) {
-                        Ok(value) => Box::new(value) as Box<dyn DisplayDebug + Send>,
+                        Ok(value) => Box::new(value) as Box<dyn DisplayDebug + Send + Sync>,
                         Err(_) => Box::new(string_payload),
                     },
                     Err(_) => Box::new("PAYLOADD IS SOME BINARY/NON-TEXTUAL VALUE"),

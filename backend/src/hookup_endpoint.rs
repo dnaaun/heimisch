@@ -1,3 +1,4 @@
+use crate::session_and_auth::AuthBackend;
 use std::future::Future;
 
 use axum::{
@@ -6,15 +7,10 @@ use axum::{
     routing::{get, post},
     Json,
 };
+use axum_login::AuthSession;
 use http::StatusCode;
 
-pub trait HookupEndpoint<State, Endpoint, Error, Fut, Func>
-where
-    Endpoint: shared::endpoints::endpoint::Endpoint,
-    Error: IntoResponse,
-    Fut: Future<Output = Result<(StatusCode, Endpoint::JsonResponse), Error>>,
-    Func: FnOnce(State, Endpoint::JsonPayload) -> Fut,
-{
+pub trait HookupEndpoint<State, Endpoint, Error, Fut, Func> {
     fn hookup(self, endpoint: Endpoint, func: Func) -> Self;
 }
 
@@ -25,12 +21,17 @@ where
     Endpoint::JsonPayload: Send + 'static,
     Error: IntoResponse,
     Fut: Future<Output = Result<(StatusCode, Endpoint::JsonResponse), Error>> + Send,
-    Func: FnOnce(State, Endpoint::JsonPayload) -> Fut + Send + 'static + Clone,
+    Func: FnOnce(AuthSession<AuthBackend>, State, Endpoint::JsonPayload) -> Fut
+        + Send
+        + 'static
+        + Clone,
     State: Clone + Send + Sync + 'static,
 {
     fn hookup(self, _endpoint: Endpoint, func: Func) -> Self {
-        let method_body = |extract::State(state): extract::State<_>, Json(json): Json<_>| async {
-            func(state, json)
+        let method_body = |auth_session: AuthSession<AuthBackend>,
+                           extract::State(state): extract::State<_>,
+                           Json(json): Json<_>| async {
+            func(auth_session, state, json)
                 .await
                 .map(|(status_code, response)| (status_code, Json(response)))
         };

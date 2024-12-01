@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-shared =  { path = "../shared" }
+shared =  { path = "../shared", features = ["ssr"] }
 utils =  { path = "../utils" }
 deadpool-diesel = { version = "0.6.1", features = ["postgres"] }
 diesel = { version = "2.2.4", features = ["postgres", "serde_json", "time", "uuid"] }
+diesel-derive-newtype = { version = "2.1.2" }
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 axum = { version = "0.7", features = ["macros"] }
@@ -43,3 +44,4 @@ futures = "0.3.31"
 tower-sessions = "0.13.0"
 uuid = "1.11.0"
 opaque-debug = "0.3.1"
+axum-login = "0.16.0"

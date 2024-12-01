@@ -21,9 +21,14 @@ parking_lot = "0.12.3"
 send_wrapper = "0.6.0"
 futures = "0.3.31"
 codee = { version = "0.2.0", features = ["json_serde"] }
+diesel-derive-newtype = { version = "2.1.2", optional = true }
+diesel = { version = "2.2.4", optional = true }
 
 [features]
 hydrate = ["jiff/js",
 # "dep:typesafe_idb", "dep:idb"
 ]
-ssr = []
+ssr = [
+"dep:diesel-derive-newtype",
+"dep:diesel"
+]

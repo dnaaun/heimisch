@@ -19,7 +19,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 use crate::{
     config::init_config,
-    db::{self, insert_installation_if_not_exists, upsert_user},
+    db::{self, insert_installation_if_not_exists, upsert_login_user},
     get_router, MIGRATIONS,
 };
 
@@ -115,14 +115,14 @@ async fn with_test_server<Fut: Future>(
 async fn test_simple_webhook_delivery() -> TestResult<()> {
     with_test_server(|pool, server| async move {
         let pool = Box::new(pool); // makes it easier to pass it to impl AsRef<Pool> args
-        let login_user: db::LoginUser = Default::default();
+        let login_user: db::UpsertLoginUser = Default::default();
         let expected_installation_id = 56385187; // Must match the installation id in the fixture.
         let installation = db::Installation {
             id: expected_installation_id,
             created_at: SystemTime::now(),
             github_user_id: login_user.github_user_id,
         };
-        upsert_user(&pool, login_user).await?;
+        upsert_login_user(&pool, login_user).await?;
         insert_installation_if_not_exists(&pool, installation).await?;
         let req = ParsedHttpRequest::from_file(&PathBuf::from(
             "./test_fixtures/issue_comment_webhook.request",

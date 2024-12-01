@@ -1,16 +1,15 @@
 #![feature(str_lines_remainder)]
 
-use crate::controllers::api_auth_initiate;
 use app_state::AppState;
+use axum_login::AuthManagerLayerBuilder;
 use config::{init_config, Config};
-use controllers::{
-    api_app_installs_create, api_auth_finish, api_github_webhooks, api_installations_get_token,
-};
 use deadpool_diesel::postgres::Manager;
 use leptos::config::{get_configuration, ConfFile};
 use leptos_axum::{generate_route_list, LeptosRoutes};
+use session_and_auth::{AuthBackend, PgSessionStore};
 use std::sync::Arc;
 use tower_http::trace::TraceLayer;
+use tower_sessions::SessionManagerLayer;
 
 use axum::Router;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -25,10 +24,10 @@ mod db;
 mod error;
 pub mod hookup_endpoint;
 
+pub mod github_auth;
+pub mod session_and_auth;
 #[cfg(test)]
 mod tests;
-pub mod github_auth;
-mod sessions;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
@@ -69,19 +68,27 @@ async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Route
 
     let leptos_routes = generate_route_list(web::App);
     let leptos_options = state.leptos_options.clone();
+
+    let auth_backend = AuthBackend::new(&state);
+    let pg_session_store = PgSessionStore::new(&state);
+
+    let session_layer = SessionManagerLayer::new(pg_session_store);
+    let auth_layer = AuthManagerLayerBuilder::new(auth_backend, session_layer).build();
+
     Router::new()
         .leptos_routes(&state, leptos_routes, {
             move || web::shell(leptos_options.clone())
         })
-        .then(api_auth_initiate)
-        .then(api_auth_finish)
-        .then(api_app_installs_create)
-        .then(api_github_webhooks)
-        .then(api_installations_get_token)
+        .then(controllers::api::auth::initiate)
+        .then(controllers::api::auth::finish)
+        .then(controllers::api::app_installs::create)
+        .then(controllers::api::github_hooks::github_hooks)
+        .then(controllers::api::installations::get_token)
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(
             web::shell,
         ))
         .layer(TraceLayer::new_for_http())
+        .layer(auth_layer)
         .with_state(state)
 }
 

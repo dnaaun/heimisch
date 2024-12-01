@@ -6,16 +6,16 @@ use shared::endpoints::defns::api::websocket_updates::{
 
 use crate::app_state::AppState;
 
-pub async fn api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
+pub async fn _api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
     router.route(
         WEBSOCKET_UPDATES_URL,
         get(|ws: WebSocketUpgrade<ServerMsg, ClientMsg>| async {
-            ws.on_upgrade(handle_websocket_updates)
+            ws.on_upgrade(_handle_websocket_updates)
         }),
     )
 }
 
-async fn handle_websocket_updates(mut socket: WebSocket<ServerMsg, ClientMsg>) {}
+async fn _handle_websocket_updates(mut _socket: WebSocket<ServerMsg, ClientMsg>) {}
 
 // mod updates_state_machine {
 //     use super::*;

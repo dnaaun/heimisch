@@ -4,7 +4,7 @@ use shared::endpoints::defns::api::websocket_updates::{
     ClientMsg, ServerMsg, WEBSOCKET_UPDATES_URL,
 };
 
-pub fn use_websocket_updates() -> UseWebSocketReturn<
+pub fn _use_websocket_updates() -> UseWebSocketReturn<
     ClientMsg,
     ServerMsg,
     impl Fn() + Clone + Send + Sync,

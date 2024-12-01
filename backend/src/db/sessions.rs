@@ -127,9 +127,10 @@ pub async fn upsert_session(pool: impl AsRef<Pool>, record: &Record) -> Result<(
             .on_conflict(id)
             .do_update()
             .set(&row)
-            .execute(conn);
+            .execute(conn)?;
+        Ok::<_, diesel::result::Error>(())
     })
-    .await?;
+    .await??;
     Ok(())
 }
 

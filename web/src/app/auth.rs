@@ -3,9 +3,9 @@ use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use shared::{
     endpoints::{
-        defns::api::app_installs::create::{
+        defns::api::{app_installs::create::{
             CreateAppInstallEndpoint, CreateAppInstallPayload, CreateAppInstallResponse,
-        },
+        }, auth::finish::GithubAccessToken},
         endpoint_request::{EndpointRequest, OwnApiError},
     },
     types::installation::InstallationId,
@@ -216,7 +216,7 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                             match result.deref() {
                                 Ok(AuthFinishResponse::Success { user_access_token }) => {
                                     local_storage()
-                                        .set(USER_ACCESS_TOKEN_KEY, &user_access_token)
+                                        .set(USER_ACCESS_TOKEN_KEY, user_access_token.as_ref())
                                         .expect("");
 
                                     view! {
@@ -267,7 +267,7 @@ fn LoggingIn() -> impl IntoView {
 }
 
 #[component]
-fn Success(user_access_token: String, show_copy_to_cli: bool) -> impl IntoView {
+fn Success(user_access_token: GithubAccessToken, show_copy_to_cli: bool) -> impl IntoView {
     let user_access_token2 = user_access_token.clone();
     let toaster = ToasterInjection::expect_context();
     let on_click = move |_| {
@@ -277,13 +277,14 @@ fn Success(user_access_token: String, show_copy_to_cli: bool) -> impl IntoView {
                 window()
                     .navigator()
                     .clipboard()
-                    .write_text(&user_access_token3),
+                    .write_text(user_access_token3.as_ref()),
             )
             .await
             .unwrap();
             toast_copied_to_clipboard(toaster);
         })
     };
+    let user_access_token: String = user_access_token.into();
     if show_copy_to_cli {
         view! {
             <>
