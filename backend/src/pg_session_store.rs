@@ -1,12 +1,11 @@
 use deadpool_diesel::postgres::Pool;
-use shared::endpoints::defns::api::auth::finish::GithubAccessToken;
 use shared::types::user::UserId;
 use tower_sessions::session::Id;
 use tower_sessions::session_store::{Error as TSError, Result as TSResult};
 use tower_sessions::{session::Record, SessionStore};
 
 use crate::db::get_session;
-use crate::db::{create_session, delete_session, get_login_user, upsert_session, LoginUser};
+use crate::db::{create_session, delete_session, upsert_session, LoginUser};
 
 #[derive(Clone)]
 pub struct PgSessionStore {

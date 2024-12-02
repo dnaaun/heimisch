@@ -1,12 +1,21 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Redirect},
+};
 use backtrace::Backtrace;
 use github_webhook_body::WebhookBody;
 use parking_lot::Mutex;
-use shared::types::installation::InstallationId;
+use shared::{
+    endpoints::{defns::api::auth::initiate::AuthInitiateEndpoint, endpoint::Endpoint},
+    types::installation::InstallationId,
+};
 use utils::{ReqwestJsonError, ReqwestSendError};
 use uuid::Uuid;
 
-use crate::{auth_backend::AuthBackend, axum_helpers::extractors::HeaderError};
+use crate::{
+    auth_backend::AuthBackend,
+    axum_helpers::extractors::{AuthenticationFailedError, HeaderError},
+};
 
 #[derive(Debug)]
 pub enum DbIntegrityError {
@@ -43,6 +52,7 @@ pub enum ErrorSource {
     // Db integrity errors
     DbIntegrity(DbIntegrityError),
     Session(tower_sessions::session::Error),
+    AuthenticationFailed(AuthenticationFailedError),
 }
 
 #[derive(Debug)]
@@ -112,6 +122,7 @@ Backtrace:
             | &ErrorSource::GithubIdOutOfI64Bounds
             | &ErrorSource::DbIntegrity(_)
             | &ErrorSource::Session(_)
+            | &ErrorSource::AuthenticationFailed(_)
             | &ErrorSource::GithubUserDetailsNotFound => format!(
                 "{:?}
 {}",
@@ -194,6 +205,15 @@ impl From<HeaderError> for Error {
     }
 }
 
+impl From<AuthenticationFailedError> for Error {
+    fn from(value: AuthenticationFailedError) -> Self {
+        Self {
+            source: ErrorSource::AuthenticationFailed(value),
+            backtrace: Backtrace::new(),
+        }
+    }
+}
+
 impl From<ErrorSource> for Error {
     fn from(source: ErrorSource) -> Self {
         Error {
@@ -219,6 +239,9 @@ impl From<axum_login::Error<AuthBackend>> for Error {
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         let code = match &self.source {
+            ErrorSource::AuthenticationFailed(_) => {
+                return Redirect::temporary(AuthInitiateEndpoint::PATH).into_response()
+            }
             // These GithubWebhook* errors will be emitted only for the webhook endpoint, and we don't return non
             // 2xx values there, because that could cause re-deliveries.
             ErrorSource::GithubWebhookHeaderError { .. }

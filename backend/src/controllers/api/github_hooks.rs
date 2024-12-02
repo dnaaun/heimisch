@@ -39,6 +39,7 @@ pub struct GitHubWebhookHeaders {
 }
 
 pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
+    // TODO: Do webhook verification.
     router.route(
         "/api/github_webhooks",
         post(

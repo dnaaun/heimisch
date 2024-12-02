@@ -1,20 +1,25 @@
-use url::Url;
-use rand::{rngs::StdRng, Rng, SeedableRng};
 use crate::{
     custom_github_api::get_user_access_token,
-    db::{self, delete_csrf_token, does_csrf_token_exist, store_csrf_token, upsert_login_user, LoginUser},
+    db::{
+        self, delete_csrf_token, does_csrf_token_exist, store_csrf_token, upsert_login_user,
+        LoginUser,
+    },
     error::Error,
     hookup_endpoint::HookupEndpoint,
 };
 use axum::{extract::State, response::Redirect, routing::get, Router};
 use github_api::apis::users_api::users_slash_get_authenticated;
 use http::StatusCode;
+use rand::{rngs::StdRng, Rng, SeedableRng};
+use shared::endpoints::endpoint::Endpoint;
 use shared::{
-    endpoints::defns::api::auth::finish::{
-        AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse,
+    endpoints::defns::api::auth::{
+        finish::{AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse},
+        initiate::AuthInitiateEndpoint,
     },
     types::user::UserId,
 };
+use url::Url;
 
 use crate::app_state::AppState;
 
@@ -94,7 +99,7 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
 
 pub fn initiate(router: Router<AppState>) -> Router<AppState> {
     router.route(
-        "/api/auth/initiate",
+        AuthInitiateEndpoint::PATH,
         get(|State(state): State<AppState>| async move {
             let mut rng = StdRng::from_entropy();
             let csrf_token: String = (0..20).map(|_| rng.gen_range('a'..'z')).collect();
