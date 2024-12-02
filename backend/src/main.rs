@@ -24,7 +24,6 @@ mod db;
 mod error;
 pub mod hookup_endpoint;
 
-pub mod github_auth;
 pub mod session_and_auth;
 #[cfg(test)]
 mod tests;

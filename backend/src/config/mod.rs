@@ -1,10 +1,13 @@
+mod github_auth;
+
 use std::env;
 
 use dotenvy::dotenv;
+use github_auth::AppAuth;
 use jsonwebtoken::EncodingKey;
 use url::Url;
 
-use crate::github_auth::AppAuth;
+pub use github_auth::WithAppAuth;
 
 #[derive(Debug, Clone, Default)]
 pub struct DatabaseConfig {

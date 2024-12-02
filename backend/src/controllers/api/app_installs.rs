@@ -1,7 +1,7 @@
+use crate::config::WithAppAuth;
 use crate::app_state::AppState;
 use crate::db::{self, insert_installation_if_not_exists};
 use crate::error::Error;
-use crate::github_auth::WithAppAuth;
 use crate::hookup_endpoint::HookupEndpoint;
 use axum::Router;
 use diesel::prelude::*;
