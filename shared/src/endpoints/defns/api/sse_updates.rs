@@ -1,4 +1,3 @@
-const _SSE_UPDATES_URL: &'static str = "/api/sse_updates";
+const _SSE_UPDATES_URL: &str = "/api/sse_updates";
 
-pub enum SseEvent {
-}
+pub enum SseEvent {}

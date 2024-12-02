@@ -61,7 +61,7 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
                 // The `Webhook` enum is structured in this way.
                 let value = Value::Object([(x_github_event.clone(), value)].into_iter().collect());
                 let body = serde_json::from_value::<WebhookBody>(value)
-                    .map_err(|e| ErrorSource::GithubWebhookBodyDeser(e))?;
+                    .map_err(ErrorSource::GithubWebhookBodyDeser)?;
 
                 let installation_id = match body.get_installation_id() {
                     Some(installation_id) => installation_id,

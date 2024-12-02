@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-pub const WEBSOCKET_UPDATES_URL: &'static str = "/api/websocket_updates";
+pub const WEBSOCKET_UPDATES_URL: &str = "/api/websocket_updates";
 
 #[derive(Serialize, Deserialize)]
 pub enum ServerMsg {

@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::{ops::Deref, rc::Rc};
 
 use leptos::{prelude::*, task::spawn_local};
 use send_wrapper::SendWrapper;
@@ -6,14 +6,14 @@ use shared::sync_engine::SyncEngine;
 
 use crate::{consts::HEIMISCH_DOMAIN_URL, local_storage::get_installation_ids_from_local_storage};
 
-pub type SyncEngineContext = SendWrapper<Arc<SyncEngine>>;
+pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
 
 /// Will provide a context with the above `SyncEngineWrapper` type, and it will kick off.
 #[component]
 pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
     let sync_engine = LocalResource::new(|| async {
-        Arc::new(
-            shared::sync_engine::SyncEngine::new(HEIMISCH_DOMAIN_URL.deref().clone())
+        Rc::new(
+            shared::sync_engine::SyncEngine::new(HEIMISCH_DOMAIN_URL.with(Clone::clone))
                 .await
                 .unwrap(),
         )
@@ -41,6 +41,6 @@ pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
     }
 }
 
-pub fn use_sync_engine() -> impl Deref<Target = Arc<SyncEngine>> {
+pub fn use_sync_engine() -> impl Deref<Target = Rc<SyncEngine>> {
     use_context::<SyncEngineContext>().expect("")
 }

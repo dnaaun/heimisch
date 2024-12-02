@@ -175,13 +175,13 @@ pub fn from_repository(
         merges_url: merges_url.into(),
         milestones_url: milestones_url.into(),
         mirror_url: mirror_url.into(),
-        name: name.into(),
+        name,
         node_id: node_id.into(),
         notifications_url: notifications_url.into(),
         open_issues: i64::from(open_issues).into(),
         open_issues_count: i64::from(open_issues_count).into(),
         owner_id: match &db_owner {
-            Some(db_owner) => db_owner.id.clone().into(),
+            Some(db_owner) => db_owner.id.into(),
             None => Avail::No,
         },
         organization: organization.into(),
@@ -214,7 +214,7 @@ pub fn from_repository(
         watchers: i64::from(watchers).into(),
         watchers_count: i64::from(watchers_count).into(),
         web_commit_signoff_required: Avail::from_option(web_commit_signoff_required),
-        installation_id: installation_id.into(),
+        installation_id,
     };
 
     let id = db_repo.id;

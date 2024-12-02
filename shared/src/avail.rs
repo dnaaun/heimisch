@@ -39,7 +39,7 @@ impl<T> Avail<T> {
 
     pub fn as_ref(&self) -> Avail<&T> {
         match self {
-            Avail::Yes(t) => Avail::Yes(&t),
+            Avail::Yes(t) => Avail::Yes(t),
             Avail::No => Avail::No,
         }
     }

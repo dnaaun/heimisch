@@ -28,7 +28,7 @@ pub fn from_nullable_simple_user(
         starred_at,
     } = api_user;
 
-    let db_user = crate::types::user::User {
+    crate::types::user::User {
         avatar_url: avatar_url.into(),
         email: Avail::from_option(email),
         events_url: events_url.into(),
@@ -37,8 +37,8 @@ pub fn from_nullable_simple_user(
         gists_url: gists_url.into(),
         gravatar_id: gravatar_id.into(),
         html_url: html_url.into(),
-        id: i64::from(id).into(),
-        login: login.into(),
+        id: id.into(),
+        login,
         name: Avail::from_option(name),
         node_id: node_id.into(),
         organizations_url: organizations_url.into(),
@@ -73,7 +73,5 @@ pub fn from_nullable_simple_user(
         updated_at: Avail::No,
         deleted: Avail::No,
         starred_at: starred_at.into(),
-    };
-
-    db_user
+    }
 }

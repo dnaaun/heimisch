@@ -34,31 +34,3 @@ pub struct ReactionRollup {
     #[serde(rename = "rocket")]
     pub rocket: i32,
 }
-
-impl ReactionRollup {
-    pub fn new(
-        url: String,
-        total_count: i32,
-        plus_1: i32,
-        _1: i32,
-        laugh: i32,
-        confused: i32,
-        heart: i32,
-        hooray: i32,
-        eyes: i32,
-        rocket: i32,
-    ) -> ReactionRollup {
-        ReactionRollup {
-            url,
-            total_count,
-            plus_1,
-            _1,
-            laugh,
-            confused,
-            heart,
-            hooray,
-            eyes,
-            rocket,
-        }
-    }
-}

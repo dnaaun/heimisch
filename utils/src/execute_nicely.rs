@@ -15,7 +15,7 @@ pub struct ReqwestSendError {
 #[async_trait::async_trait]
 pub trait ExecuteNicely {
     async fn execute_nicely(
-        self: &Self,
+        &self,
         request: reqwest::Request,
     ) -> std::result::Result<reqwest::Response, ReqwestSendError>;
 }
@@ -24,13 +24,13 @@ pub trait ExecuteNicely {
 impl ExecuteNicely for reqwest::Client {
     /// Has a nicer error (at the cost of more clones).
     async fn execute_nicely(
-        self: &Self,
+        &self,
         request: reqwest::Request,
     ) -> std::result::Result<reqwest::Response, ReqwestSendError> {
         // TODO: as_bytes() returns None in case the body is a stream/file, but I don't have
         // reqwests's `stream` feature on, so we should be good without taking care of that edge
         // case.
-        let payload_bytes = request.body().map(|b| b.as_bytes()).flatten();
+        let payload_bytes = request.body().and_then(|b| b.as_bytes());
         let payload =
             payload_bytes.map(
                 |payload_bytes| match String::from_utf8(payload_bytes.to_vec()) {

@@ -163,14 +163,12 @@ impl SyncEngine {
                     return false;
                 }
 
-                if let Ordering::Greater = (iac.token.expires_at - Timestamp::now())
-                    .compare(1.minute())
-                    .unwrap()
-                {
-                    return true;
-                } else {
-                    return false;
-                }
+                matches!(
+                    (iac.token.expires_at - Timestamp::now())
+                        .compare(1.minute())
+                        .unwrap(),
+                    Ordering::Greater
+                )
             })
             .map(|i| i.token)
             .next();

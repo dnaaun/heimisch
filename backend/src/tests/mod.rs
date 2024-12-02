@@ -1,6 +1,6 @@
 mod parse_request;
 
-use std::{cell::LazyCell, future::Future, path::PathBuf, time::SystemTime};
+use std::{cell::LazyCell, future::Future, path::PathBuf, sync::Arc, time::SystemTime};
 
 use crate::error::Error as CrateError;
 use assert_json_diff::assert_json_include;
@@ -23,7 +23,9 @@ use crate::{
     get_router, MIGRATIONS,
 };
 
-const DB_COUNTER: LazyCell<Mutex<u32>> = LazyCell::new(|| Default::default());
+/// Not sure if global mutable state is best practice lol.
+#[allow(clippy::declare_interior_mutable_const)]
+const DB_COUNTER: LazyCell<Arc<Mutex<u32>>> = LazyCell::new(Default::default);
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -98,7 +100,7 @@ async fn with_test_server<Fut: Future>(
         db_url_factory,
     };
 
-    Ok(diesel_test_config
+    diesel_test_config
         .with_pool(|pool, db_url| async {
             let mut config = config.clone();
             config.db.url = db_url;
@@ -108,7 +110,7 @@ async fn with_test_server<Fut: Future>(
 
             Ok::<Fut::Output, TestError>(func(pool, test_server).await)
         })
-        .await?)
+        .await
 }
 
 #[tokio::test]

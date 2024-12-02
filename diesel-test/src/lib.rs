@@ -54,9 +54,9 @@ where
         self.db_url_factory
             .tear_down_db_url(&db_url)
             .await
-            .expect(&format!(
-                "Tearing database down failed. The database url was: {db_url}"
-            ));
+            .unwrap_or_else(|_| {
+                panic!("Tearing database down failed. The database url was: {db_url}")
+            });
 
         match result {
             Ok(output) => output,

@@ -20,7 +20,7 @@ pub struct Index<'txn, IS> {
     pub(crate) _markers: PhantomData<IS>,
 }
 
-impl<'txn, IS: IndexSpec> Index<'txn, IS> {
+impl<IS: IndexSpec> Index<'_, IS> {
     pub async fn get(&self, value: &IS::Type) -> Result<Option<IS::Store>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
@@ -44,9 +44,7 @@ impl<'txn, IS: IndexSpec> Index<'txn, IS> {
         Ok(self
             .actual_index
             .get_all(
-                value
-                    .map(|v| to_value(v).map(|r| Query::Key(r)))
-                    .transpose()?,
+                value.map(|v| to_value(v).map(Query::Key)).transpose()?,
                 None,
             )?
             .await?

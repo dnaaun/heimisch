@@ -52,13 +52,14 @@ pub fn from_issue(
     let db_milestone_info = milestone.map(|m| from_milestone1(*m)).transpose()?;
     let db_github_app_info = performed_via_github_app.map(|p| p.map(|p| from_app10(*p)));
     let (db_github_app_id, changes_from_github_app) = match db_github_app_info {
-        Some(db_github_app_info) => match db_github_app_info {
-            Some(db_github_app_info) => {
+        Some(db_github_app_info) => {
+            if let Some(db_github_app_info) = db_github_app_info {
                 let db_github_app_info = db_github_app_info?;
                 (Some(db_github_app_info.0), Some(db_github_app_info.1))
+            } else {
+                (None, None)
             }
-            None => (None, None),
-        },
+        }
         None => (None, None),
     };
 
@@ -79,16 +80,12 @@ pub fn from_issue(
         events_url: events_url.into(),
         html_url: html_url.into(),
         id: id.into(),
-        labels: match labels {
-            Some(l) => l,
-            None => vec![],
-        }
-        .into(),
+        labels: labels.unwrap_or_default().into(),
         labels_url: labels_url.into(),
         locked: Avail::from_option(locked),
         milestone_id: db_milestone_info.as_ref().map(|(m, _)| *m).into(),
         node_id: node_id.into(),
-        number: i64::from(number).into(),
+        number: i64::from(number),
         performed_via_github_app_id: Avail::from_option(db_github_app_id),
         pull_request: pull_request.map(|i| *i).into(),
         reactions: (*reactions).into(),

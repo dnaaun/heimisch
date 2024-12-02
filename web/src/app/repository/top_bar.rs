@@ -7,7 +7,7 @@ pub fn AppHeaderContextItem(
     on_click: Box<dyn Fn()>,
     #[prop(optional)] bold: bool,
 ) -> impl IntoView {
-    return view! {
+    view! {
         <a
             on:click={move |_| on_click()}
         class="flex items-center min-w-xs leading-6 text-inherit no-underline rounded-md px-1.5 py-1 cursor-pointer hover:bg-gray-200"
@@ -15,7 +15,7 @@ pub fn AppHeaderContextItem(
             >
             <span>{text}</span>
             </a>
-    };
+    }
 }
 
 #[component]

@@ -41,7 +41,7 @@ pub fn from_nullable_integration(
         external_url: external_url.into(),
         html_url: html_url.into(),
         id: (id as i64).into(),
-        installations_count: Avail::from_option(installations_count.map(|i| i64::from(i))),
+        installations_count: Avail::from_option(installations_count.map(i64::from)),
         name: name.into(),
         node_id: node_id.into(),
         owner_id: Avail::from_option(db_owner.as_ref().map(|o| o.id)),
@@ -51,7 +51,7 @@ pub fn from_nullable_integration(
         updated_at: updated_at.into(),
         webhook_secret: Avail::from_option(webhook_secret),
     };
-    let id = db_app.id.clone();
+    let id = db_app.id;
 
     let mut changes = Changes::default();
     changes.add(db_app)?.add(db_owner)?;

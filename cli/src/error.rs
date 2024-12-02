@@ -8,10 +8,10 @@ pub struct Error {
 
 #[derive(Debug)]
 pub enum ErrorSource {
-    DieselError(diesel::result::Error),
-    DeadpoolInteractError(deadpool_diesel::InteractError),
-    DeadpoolPoolError(deadpool_diesel::PoolError),
-    BackendApiError(reqwest::Error),
+    Diesel(diesel::result::Error),
+    DeadpoolInteract(deadpool_diesel::InteractError),
+    DeadpoolPool(deadpool_diesel::PoolError),
+    BackendApi(reqwest::Error),
 }
 
 impl Error {
@@ -25,7 +25,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 impl From<diesel::result::Error> for Error {
     fn from(err: diesel::result::Error) -> Self {
         Error {
-            source: ErrorSource::DieselError(err),
+            source: ErrorSource::Diesel(err),
             backtrace: Backtrace::capture(),
         }
     }
@@ -34,7 +34,7 @@ impl From<diesel::result::Error> for Error {
 impl From<deadpool_diesel::InteractError> for Error {
     fn from(err: deadpool_diesel::InteractError) -> Self {
         Error {
-            source: ErrorSource::DeadpoolInteractError(err),
+            source: ErrorSource::DeadpoolInteract(err),
             backtrace: Backtrace::capture(),
         }
     }
@@ -43,7 +43,7 @@ impl From<deadpool_diesel::InteractError> for Error {
 impl From<deadpool_diesel::PoolError> for Error {
     fn from(err: deadpool_diesel::PoolError) -> Self {
         Error {
-            source: ErrorSource::DeadpoolPoolError(err),
+            source: ErrorSource::DeadpoolPool(err),
             backtrace: Backtrace::capture(),
         }
     }
@@ -52,7 +52,7 @@ impl From<deadpool_diesel::PoolError> for Error {
 impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Self {
         Error {
-            source: ErrorSource::BackendApiError(err),
+            source: ErrorSource::BackendApi(err),
             backtrace: Backtrace::capture(),
         }
     }
@@ -67,10 +67,10 @@ impl Display for Error {
 impl Display for ErrorSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ErrorSource::DieselError(err) => err.fmt(f),
-            ErrorSource::DeadpoolInteractError(err) => err.fmt(f),
-            ErrorSource::DeadpoolPoolError(err) => err.fmt(f),
-            ErrorSource::BackendApiError(err) => {
+            ErrorSource::Diesel(err) => err.fmt(f),
+            ErrorSource::DeadpoolInteract(err) => err.fmt(f),
+            ErrorSource::DeadpoolPool(err) => err.fmt(f),
+            ErrorSource::BackendApi(err) => {
                 let mut fmt_result = err.fmt(f);
                 if let Some(url) = err.url() {
                     fmt_result = fmt_result.and(

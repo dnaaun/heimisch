@@ -25,7 +25,7 @@ pub fn from_user(api_user: github_api::models::User) -> crate::types::user::User
         url,
     } = api_user;
 
-    let db_user = crate::types::user::User {
+    crate::types::user::User {
         avatar_url: Avail::from_option(avatar_url),
         deleted: Avail::from_option(deleted),
         email: Avail::from_option(email),
@@ -36,7 +36,7 @@ pub fn from_user(api_user: github_api::models::User) -> crate::types::user::User
         gravatar_id: gravatar_id.into(),
         html_url: Avail::from_option(html_url),
         id: i64::from(id).into(),
-        login: login.into(),
+        login,
         name: name.into(),
         node_id: Avail::from_option(node_id),
         organizations_url: Avail::from_option(organizations_url),
@@ -70,7 +70,5 @@ pub fn from_user(api_user: github_api::models::User) -> crate::types::user::User
         two_factor_authentication: Avail::No,
         updated_at: Avail::No,
         starred_at: Avail::No,
-    };
-
-    db_user
+    }
 }

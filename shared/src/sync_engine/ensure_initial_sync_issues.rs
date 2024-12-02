@@ -36,7 +36,7 @@ impl SyncEngine {
                     page = (txn
                         .object_store::<Issue>()?
                         .index::<RepositoryIdIndex>()?
-                        .get_all(Some(&id))
+                        .get_all(Some(id))
                         .await?
                         .len() as f64
                         / f64::from(MAX_PER_PAGE))
@@ -56,7 +56,7 @@ impl SyncEngine {
             .ro();
         let repo = txn
             .object_store::<Repository>()?
-            .get(&id)
+            .get(id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
@@ -98,7 +98,7 @@ impl SyncEngine {
             )
             .await?;
             let last_fetched_num = issues.len();
-            let changes = Changes::try_from_iter(
+            let changes = Changes::try_try_from_iter(
                 issues.into_iter().map(|r| from_issue(r, id).map(|r| r.1)),
             )??;
 

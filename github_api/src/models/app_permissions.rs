@@ -158,7 +158,6 @@ impl AppPermissions {
         }
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Actions {
     #[serde(rename = "read")]
@@ -172,7 +171,6 @@ impl Default for Actions {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Administration {
     #[serde(rename = "read")]
@@ -186,7 +184,6 @@ impl Default for Administration {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Checks {
     #[serde(rename = "read")]
@@ -200,7 +197,6 @@ impl Default for Checks {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ContentReferences {
     #[serde(rename = "read")]
@@ -214,7 +210,6 @@ impl Default for ContentReferences {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Contents {
     #[serde(rename = "read")]
@@ -228,7 +223,6 @@ impl Default for Contents {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Deployments {
     #[serde(rename = "read")]
@@ -242,7 +236,6 @@ impl Default for Deployments {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Discussions {
     #[serde(rename = "read")]
@@ -256,7 +249,6 @@ impl Default for Discussions {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Emails {
     #[serde(rename = "read")]
@@ -270,7 +262,6 @@ impl Default for Emails {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Environments {
     #[serde(rename = "read")]
@@ -284,7 +275,6 @@ impl Default for Environments {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Issues {
     #[serde(rename = "read")]
@@ -298,7 +288,6 @@ impl Default for Issues {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Keys {
     #[serde(rename = "read")]
@@ -312,7 +301,6 @@ impl Default for Keys {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Members {
     #[serde(rename = "read")]
@@ -326,7 +314,6 @@ impl Default for Members {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Metadata {
     #[serde(rename = "read")]
@@ -340,7 +327,6 @@ impl Default for Metadata {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationAdministration {
     #[serde(rename = "read")]
@@ -354,7 +340,6 @@ impl Default for OrganizationAdministration {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationHooks {
     #[serde(rename = "read")]
@@ -368,7 +353,6 @@ impl Default for OrganizationHooks {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationPackages {
     #[serde(rename = "read")]
@@ -382,7 +366,6 @@ impl Default for OrganizationPackages {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationPlan {
     #[serde(rename = "read")]
@@ -396,7 +379,6 @@ impl Default for OrganizationPlan {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationProjects {
     #[serde(rename = "read")]
@@ -412,7 +394,6 @@ impl Default for OrganizationProjects {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationSecrets {
     #[serde(rename = "read")]
@@ -426,7 +407,6 @@ impl Default for OrganizationSecrets {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationSelfHostedRunners {
     #[serde(rename = "read")]
@@ -440,7 +420,6 @@ impl Default for OrganizationSelfHostedRunners {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum OrganizationUserBlocking {
     #[serde(rename = "read")]
@@ -454,7 +433,6 @@ impl Default for OrganizationUserBlocking {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Packages {
     #[serde(rename = "read")]
@@ -468,7 +446,6 @@ impl Default for Packages {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Pages {
     #[serde(rename = "read")]
@@ -482,7 +459,6 @@ impl Default for Pages {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum PullRequests {
     #[serde(rename = "read")]
@@ -496,7 +472,6 @@ impl Default for PullRequests {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum RepositoryHooks {
     #[serde(rename = "read")]
@@ -510,7 +485,6 @@ impl Default for RepositoryHooks {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum RepositoryProjects {
     #[serde(rename = "read")]
@@ -524,7 +498,6 @@ impl Default for RepositoryProjects {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum SecretScanningAlerts {
     #[serde(rename = "read")]
@@ -538,7 +511,6 @@ impl Default for SecretScanningAlerts {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Secrets {
     #[serde(rename = "read")]
@@ -552,7 +524,6 @@ impl Default for Secrets {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum SecurityEvents {
     #[serde(rename = "read")]
@@ -566,7 +537,6 @@ impl Default for SecurityEvents {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum SecurityScanningAlert {
     #[serde(rename = "read")]
@@ -580,7 +550,6 @@ impl Default for SecurityScanningAlert {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum SingleFile {
     #[serde(rename = "read")]
@@ -594,7 +563,6 @@ impl Default for SingleFile {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Statuses {
     #[serde(rename = "read")]
@@ -608,7 +576,6 @@ impl Default for Statuses {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum TeamDiscussions {
     #[serde(rename = "read")]
@@ -622,7 +589,6 @@ impl Default for TeamDiscussions {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum VulnerabilityAlerts {
     #[serde(rename = "read")]
@@ -636,7 +602,6 @@ impl Default for VulnerabilityAlerts {
         Self::Read
     }
 }
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Workflows {
     #[serde(rename = "read")]

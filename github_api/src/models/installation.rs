@@ -67,59 +67,6 @@ pub struct Installation {
     pub contact_email: Option<Option<String>>,
 }
 
-impl Installation {
-    /// Installation
-    pub fn new(
-        id: i32,
-        account: Option<models::InstallationAccount>,
-        repository_selection: RepositorySelection,
-        access_tokens_url: String,
-        repositories_url: String,
-        html_url: String,
-        app_id: i32,
-        target_id: i32,
-        target_type: String,
-        permissions: models::AppPermissions,
-        events: Vec<String>,
-        created_at: String,
-        updated_at: String,
-        single_file_name: Option<String>,
-        app_slug: String,
-        suspended_by: Option<models::NullableSimpleUser>,
-        suspended_at: Option<String>,
-    ) -> Installation {
-        Installation {
-            id,
-            account: if let Some(x) = account {
-                Some(Box::new(x))
-            } else {
-                None
-            },
-            repository_selection,
-            access_tokens_url,
-            repositories_url,
-            html_url,
-            app_id,
-            target_id,
-            target_type,
-            permissions: Box::new(permissions),
-            events,
-            created_at,
-            updated_at,
-            single_file_name,
-            has_multiple_single_files: None,
-            single_file_paths: None,
-            app_slug,
-            suspended_by: if let Some(x) = suspended_by {
-                Some(Box::new(x))
-            } else {
-                None
-            },
-            suspended_at,
-            contact_email: None,
-        }
-    }
-}
 /// Describe whether all repositories have been selected or there's a selection involved
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum RepositorySelection {

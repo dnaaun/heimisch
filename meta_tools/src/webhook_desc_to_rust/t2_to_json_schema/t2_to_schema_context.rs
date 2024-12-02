@@ -102,8 +102,7 @@ impl T2ToSchemaContext {
             ..
         } = self;
         literal_string_union_definitions
-            .into_iter()
-            .map(|(_, v)| v)
-            .chain(object_definitions.into_iter().map(|(_, v)| v))
+            .into_values()
+            .chain(object_definitions.into_values())
     }
 }

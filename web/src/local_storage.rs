@@ -31,7 +31,6 @@ pub fn get_installation_ids_from_local_storage() -> HashSet<InstallationId> {
     local_storage()
         .get_item(INSTALLATION_IDS_KEY)
         .expect("")
-        .map(|ids| serde_json::from_str(&ids).ok())
-        .flatten()
-        .unwrap_or(HashSet::new())
+        .and_then(|ids| serde_json::from_str(&ids).ok())
+        .unwrap_or_default()
 }

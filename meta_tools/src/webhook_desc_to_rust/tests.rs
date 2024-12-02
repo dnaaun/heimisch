@@ -60,7 +60,7 @@ fn literal_bool() -> Result<()> {
         enum_values: Some(vec![Some(true.into())]),
         ..Default::default()
     }]);
-    let schema_json = serde_json::to_value(&t1_top_level_to_json_schema(&top_level))?;
+    let schema_json = serde_json::to_value(t1_top_level_to_json_schema(&top_level))?;
 
     let expected_schema_json = json!({
       "title": "CatAct",
@@ -95,7 +95,7 @@ fn required_object_props() -> Result<()> {
             ..Default::default()
         },
     ]);
-    let schema_json = serde_json::to_value(&t1_top_level_to_json_schema(&top_level))?;
+    let schema_json = serde_json::to_value(t1_top_level_to_json_schema(&top_level))?;
 
     let expected_schema_json = serde_json::json!({
       "description": "",
@@ -127,7 +127,7 @@ fn string_or_null_enum() -> Result<()> {
         enum_values: Some(vec![Some("ho".to_string().into()), None]),
         ..Default::default()
     }]);
-    let schema_json = serde_json::to_value(&t1_top_level_to_json_schema(&top_level))?;
+    let schema_json = serde_json::to_value(t1_top_level_to_json_schema(&top_level))?;
 
     let expected_schema_json = serde_json::json!({
       "description": "",
@@ -157,29 +157,29 @@ fn string_or_null_enum() -> Result<()> {
 
 #[test]
 fn increment_name_suffix() -> Result<()> {
-    let address_identically_named = Box::new(WebhookSchema {
+    let address_identically_named = WebhookSchema {
         name: "po_box".into(),
         r#type: ParameterType::Integer,
         ..Default::default()
-    });
+    };
 
-    let name_identically_named = Box::new(WebhookSchema {
+    let name_identically_named = WebhookSchema {
         name: "IdenticallyNamedObject".into(),
         r#type: ParameterType::Object,
         child_params_groups: Some(vec![
-            Box::new(WebhookSchema {
+            WebhookSchema {
                 name: "first".into(),
                 r#type: ParameterType::String,
                 ..Default::default()
-            }),
-            Box::new(WebhookSchema {
+            },
+            WebhookSchema {
                 name: "last".into(),
                 r#type: ParameterType::String,
                 ..Default::default()
-            }),
+            },
         ]),
         ..Default::default()
-    });
+    };
 
     let top_level = wrap_in_toplevel(vec![
         WebhookSchema {
@@ -195,19 +195,16 @@ fn increment_name_suffix() -> Result<()> {
                             name: "so_mediator_doesnt_get_deduped_left".to_owned(),
                             r#type: ParameterType::Integer,
                             ..Default::default()
-                        }
-                        .into(),
+                        },
                     ]),
                     ..Default::default()
-                }
-                .into(),
+                },
                 WebhookSchema {
                     name: "IdenticallyNamedObject".into(),
                     r#type: ParameterType::Object,
                     child_params_groups: Some(vec![address_identically_named.clone()]),
                     ..Default::default()
-                }
-                .into(),
+                },
             ]),
             ..Default::default()
         },
@@ -224,19 +221,16 @@ fn increment_name_suffix() -> Result<()> {
                             name: "so_mediator_doesnt_get_deduped_right".to_owned(),
                             r#type: ParameterType::Integer,
                             ..Default::default()
-                        }
-                        .into(),
+                        },
                     ]),
                     ..Default::default()
-                }
-                .into(),
+                },
                 WebhookSchema {
                     name: "IdenticallyNamedObject".into(),
                     r#type: ParameterType::Object,
                     child_params_groups: Some(vec![address_identically_named]),
                     ..Default::default()
-                }
-                .into(),
+                },
             ]),
             ..Default::default()
         },
@@ -284,16 +278,16 @@ fn simple_object_deduplication() -> Result<()> {
         r#type: ParameterType::Object,
         name: "to_be_dedup".to_string(),
         child_params_groups: Some(vec![
-            Box::new(WebhookSchema {
+            WebhookSchema {
                 r#type: ParameterType::Integer,
                 name: "age".to_string(),
                 ..Default::default()
-            }),
-            Box::new(WebhookSchema {
+            },
+            WebhookSchema {
                 r#type: ParameterType::String,
                 name: "first_name".to_string(),
                 ..Default::default()
-            }),
+            },
         ]),
         ..Default::default()
     };
@@ -308,7 +302,7 @@ fn simple_object_deduplication() -> Result<()> {
         },
     ]);
 
-    let schema_json = serde_json::to_value(&t1_top_level_to_json_schema(&t1_top_level))?;
+    let schema_json = serde_json::to_value(t1_top_level_to_json_schema(&t1_top_level))?;
     let expected_schema_json = serde_json::json!(
     {
       "title": "CatAct",

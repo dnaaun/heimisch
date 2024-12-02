@@ -17,7 +17,7 @@ pub async fn login(pool: &Pool) -> Result<()> {
 pub async fn login_logic(pool: &Pool) -> Result<String> {
     // TODO: Polish.
     println!("Follow the URL below to authenticate Heimisch CLI with Github.");
-    let url = HEIMISCH_DOMAIN_URL.join("/api/auth/initiate").expect("");
+    let url = HEIMISCH_DOMAIN_URL.with(|i| i.join("/api/auth/initiate").expect(""));
     println!("{}", url.as_str());
     print!("You should eventually be asked to copy back an access token. Please paste that here: ");
     stdout().flush().expect("");

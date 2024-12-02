@@ -39,21 +39,11 @@ impl PartialEq for Type {
 }
 impl Eq for Type {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Meta {
     pub title: Option<String>,
     pub description: Option<String>,
     pub is_required: bool,
-}
-
-impl Default for Meta {
-    fn default() -> Self {
-        Meta {
-            title: None,
-            description: None,
-            is_required: false,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -136,7 +126,7 @@ impl From<TypeRef<LiteralStringUnionInner>> for TypeInner {
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct UnionInner {
-    pub variants: Vec<Box<TypeInner>>,
+    pub variants: Vec<TypeInner>,
 }
 
 impl From<UnionInner> for TypeInner {

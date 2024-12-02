@@ -53,7 +53,7 @@ pub fn derive_avail_merge(input: proc_macro::TokenStream) -> TokenStream {
     .collect::<Vec<_>>()
     );
 
-    let checks = checks.into_iter().filter_map(|i| i).collect::<Vec<_>>();
+    let checks = checks.into_iter().flatten().collect::<Vec<_>>();
 
     // Expand into a complete implementation
     let expanded = quote! {
@@ -76,5 +76,5 @@ pub fn derive_avail_merge(input: proc_macro::TokenStream) -> TokenStream {
         }
     };
 
-    expanded.into()
+    expanded
 }

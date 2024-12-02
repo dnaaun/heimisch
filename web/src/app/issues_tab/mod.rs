@@ -1,11 +1,14 @@
 use std::ops::Deref;
 
-use thaw::*;
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
-    issue::{Issue, RepositoryIdIndex}, issue_comment::{IssueComment, IssueIdIndex}, repository::Repository, user::User
+    issue::{Issue, RepositoryIdIndex},
+    issue_comment::{IssueComment, IssueIdIndex},
+    repository::Repository,
+    user::User,
 };
+use thaw::*;
 
 use crate::{
     app::sync_engine_provider::use_sync_engine,
@@ -82,30 +85,30 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
             }
         },
     );
-    let issue_id = issue.id.clone();
+    let issue_id = issue.id;
     let comments_count = sync_engine.idb_signal(
         |db| db.txn().with_store::<IssueComment>().ro(),
         move |txn| {
-            let issue_id = issue_id.clone();
+            let issue_id = issue_id;
             async move {
-            txn.object_store::<IssueComment>()
-                .unwrap()
-                .index::<IssueIdIndex>()
-                .unwrap()
-                .get_all(Some(&Some(issue_id.clone())))
-                .await
-                .unwrap()
-                .len()
-        }});
-    let comments_count = move || comments_count.read().deref().deref().clone();
-
-
+                txn.object_store::<IssueComment>()
+                    .unwrap()
+                    .index::<IssueIdIndex>()
+                    .unwrap()
+                    .get_all(Some(&Some(issue_id)))
+                    .await
+                    .unwrap()
+                    .len()
+            }
+        },
+    );
+    let comments_count = move || *comments_count.read().deref().deref();
 
     move || {
         let created_at = issue.created_at.clone();
         let closed_at = issue.closed_at.clone();
         let title = issue.title.clone();
-        let number = issue.number.clone();
+        let number = issue.number;
 
         let user = user.read();
         let user = user.as_ref();
@@ -122,7 +125,6 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                     .to_option()
                     .map(|i| format!("opened on {}", strtime::format("%b %d, %Y", i).expect("")))
             });
-
 
         view! {
             <div class="border-r border-l border-b p-3 flex justify-between items-center"

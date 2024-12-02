@@ -10,12 +10,14 @@ use crate::utils::rc;
 
 type Inner<S> = RwSignal<SendWrapper<Option<S>>>;
 
+type DeregisterNotifierFunc = Arc<Mutex<Option<Box<dyn Fn() + Sync + Send>>>>;
+
 pub struct IdbSignalInner<S> {
     /// Is an Option because idb is async, and so on initial render, this will be None
     inner: Inner<S>,
 
     /// Is an Option because idb is async, and so on initial render, this will be None
-    deregister_notifier: Arc<Mutex<Option<Box<dyn Fn() + Sync + Send>>>>,
+    deregister_notifier: DeregisterNotifierFunc,
 }
 
 /// NOTE: I'm actually not sure if this is ever called due to not understanding totally the life
@@ -63,8 +65,7 @@ where
         Deregister: Fn() + Send + Sync + 'static,
     {
         let rw_signal = RwSignal::new(SendWrapper::new(Option::<T>::None));
-        let deregister_notifier: Arc<Mutex<Option<Box<dyn Fn() + Sync + Send>>>> =
-            Arc::new(Mutex::new(None));
+        let deregister_notifier: DeregisterNotifierFunc = Arc::new(Mutex::new(None));
         let deregister_notifier2 = deregister_notifier.clone();
 
         let make_txn = Rc::new(make_txn);

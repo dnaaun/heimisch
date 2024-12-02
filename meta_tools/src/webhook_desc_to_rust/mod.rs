@@ -53,9 +53,8 @@ pub fn webhook_desc_to_rust(dir_containing_webhooks: &Path) -> Result<()> {
             let deser = &mut serde_json::Deserializer::from_reader(File::open(&path)?);
             let t1_top_level_many: HashMap<String, t1::TopLevelWebhookSchema> =
                 serde_path_to_error::deserialize(deser)
-                    .context(format!("{}", path.to_str().unwrap()))?;
-            let t1_top_level_schemas_by_event =
-                t1_top_level_many.into_iter().map(|(_, v)| v).collect_vec();
+                    .context(path.to_str().unwrap().to_string())?;
+            let t1_top_level_schemas_by_event = t1_top_level_many.into_values().collect_vec();
             let events = t1_top_level_schemas_by_event
                 .iter()
                 .map(|i| i.category.clone())
@@ -104,7 +103,7 @@ pub fn webhook_desc_to_rust(dir_containing_webhooks: &Path) -> Result<()> {
 
             // For some events, none will have webhooks available to Github Apps, which is
             // indicated by None being returned by `t1_top_level_to_t2`.
-            if t2_types.len() == 0 {
+            if t2_types.is_empty() {
                 None
             } else {
                 Some((event, t2_types))

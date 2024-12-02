@@ -57,8 +57,7 @@ pub fn RepositoryPage() -> impl IntoView {
         params()
             .tab
             .as_ref()
-            .map(|i| TabName::from_str(i).ok())
-            .flatten()
+            .and_then(|i| TabName::from_str(i).ok())
             .unwrap_or(TabName::Issues)
     });
     let active_tab = Memo::new(move |_| active_tab_enum.read().to_string());
@@ -109,8 +108,7 @@ pub fn RepositoryPage() -> impl IntoView {
                             .get_all(Some(&repo_name))
                             .await?
                             .into_iter()
-                            .filter(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false))
-                            .next();
+                            .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
 
                         Ok::<_, typesafe_idb::Error>(repo)
                     }

@@ -318,7 +318,7 @@ impl Default for SquashMergeCommitTitle {
         Self::PrTitle
     }
 }
-///
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Visibility {
     #[serde(rename = "public")]

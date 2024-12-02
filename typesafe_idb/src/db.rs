@@ -26,7 +26,7 @@ impl TypesafeDb<()> {
 }
 
 impl<DbTableMarkers> TypesafeDb<DbTableMarkers> {
-    pub fn txn<'db>(&'db self) -> TxnBuilder<'db, Chain<(), ()>, DbTableMarkers> {
+    pub fn txn(&self) -> TxnBuilder<'_, Chain<(), ()>, DbTableMarkers> {
         Txn::builder(self)
     }
 }

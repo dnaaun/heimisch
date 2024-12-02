@@ -37,11 +37,7 @@ pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
         None => (None, None),
     };
 
-    let issue_number: Option<i64> = issue_url
-        .split('/')
-        .last()
-        .map(|i| i.parse().ok())
-        .flatten();
+    let issue_number: Option<i64> = issue_url.split('/').last().and_then(|i| i.parse().ok());
 
     let issue_id = match issue_number {
         Some(issue_number) => issue_id_from_number(issue_number).await,
@@ -60,9 +56,9 @@ pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
         reactions: (*reactions).into(),
         updated_at: updated_at.into(),
         url: url.into(),
-        user_id: db_user.as_ref().map(|u| u.id.clone()).into(),
+        user_id: db_user.as_ref().map(|u| u.id).into(),
         issue_id,
-        repository_id: repository_id.clone().into(),
+        repository_id: *repository_id,
     };
 
     let issue_comment_id = db_issue_comment.id;

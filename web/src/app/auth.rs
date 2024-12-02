@@ -3,9 +3,12 @@ use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use shared::{
     endpoints::{
-        defns::api::{app_installs::create::{
-            CreateAppInstallEndpoint, CreateAppInstallPayload, CreateAppInstallResponse,
-        }, auth::finish::GithubAccessToken},
+        defns::api::{
+            app_installs::create::{
+                CreateAppInstallEndpoint, CreateAppInstallPayload, CreateAppInstallResponse,
+            },
+            auth::finish::GithubAccessToken,
+        },
         endpoint_request::{EndpointRequest, OwnApiError},
     },
     types::installation::InstallationId,
@@ -56,7 +59,7 @@ pub struct AppInstallationQParams {
 fn use_serde_query_string<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
     let query_string = use_query_map().get().to_query_string();
     let query_string = query_string.strip_prefix("?").unwrap_or("");
-    serde_urlencoded::from_str(&query_string)
+    serde_urlencoded::from_str(query_string)
 }
 
 #[component]
@@ -103,8 +106,7 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
         let user_access_token = user_access_token
             .read()
             .as_ref()
-            .map(|u| u.deref().clone())
-            .flatten();
+            .and_then(|u| u.deref().clone());
         match user_access_token {
             Some(user_access_token) => {
                 view! { <AppInstallationAttempt user_access_token installation_id={
@@ -141,12 +143,11 @@ pub fn AppInstallationAttempt(
 ) -> impl IntoView {
     let installation_rsrc: LocalResource<Result<CreateAppInstallResponse, OwnApiError>> =
         LocalResource::new(move || {
-            let installation_id = installation_id.clone();
             let user_access_token = user_access_token.clone();
             async move {
                 let client = Client::new();
                 CreateAppInstallEndpoint::make_request(
-                    &HEIMISCH_DOMAIN_URL,
+                    &HEIMISCH_DOMAIN_URL.with(|i| i.clone()),
                     &client,
                     CreateAppInstallPayload {
                         installation_id,
@@ -165,7 +166,7 @@ pub fn AppInstallationAttempt(
                     add_installation_id_to_local_storage(*installation_id);
                     view! { <div>Installed app!</div> }.into_any()
                 },
-                other @ _ => {
+                other => {
                     tracing::error!("{:?}", other);
                     view! { <div>Failed to install Heimisch to Github repo. Please try again.</div> }.into_any()
                 },
@@ -196,7 +197,7 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                 let state = state.clone();
                 async move {
                     AuthFinishEndpoint::make_request(
-                        &HEIMISCH_DOMAIN_URL,
+                        &HEIMISCH_DOMAIN_URL.with(|i| i.clone()),
                         &reqwest::Client::new(),
                         AuthFinishPayload { state, code },
                         (),

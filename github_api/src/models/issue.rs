@@ -104,7 +104,6 @@ pub struct Issue {
     pub user: Option<Box<models::User1>>,
 }
 
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ActiveLockReason {
     #[serde(rename = "resolved")]

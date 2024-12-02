@@ -14,9 +14,7 @@ pub struct ReqwestJsonError {
 
 #[async_trait::async_trait]
 pub trait JsonNicely {
-    async fn json_nicely<T: DeserializeOwned>(
-        self: Self,
-    ) -> std::result::Result<T, ReqwestJsonError>;
+    async fn json_nicely<T: DeserializeOwned>(self) -> std::result::Result<T, ReqwestJsonError>;
 }
 
 #[async_trait::async_trait]

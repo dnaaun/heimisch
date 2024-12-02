@@ -166,7 +166,7 @@ impl From<&BranchProtectionRuleCreatedRuleAllowDeletionsEnforcementLevel>
     for BranchProtectionRuleCreatedRuleAllowDeletionsEnforcementLevel
 {
     fn from(value: &BranchProtectionRuleCreatedRuleAllowDeletionsEnforcementLevel) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for BranchProtectionRuleCreatedRuleAllowDeletionsEnforcementLevel {
@@ -661,7 +661,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuiteRepositorySecurityAndAnalysisAdvan
     fn from(
         value : & CheckRunCompletedCheckRunCheckSuiteRepositorySecurityAndAnalysisAdvancedSecurityStatus,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -737,7 +737,7 @@ pub enum CheckRunCompletedCheckRunConclusion {
 }
 impl From<&CheckRunCompletedCheckRunConclusion> for CheckRunCompletedCheckRunConclusion {
     fn from(value: &CheckRunCompletedCheckRunConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CheckRunCompletedCheckRunConclusion {
@@ -846,7 +846,7 @@ pub enum CheckRunCompletedCheckRunStatus {
 }
 impl From<&CheckRunCompletedCheckRunStatus> for CheckRunCompletedCheckRunStatus {
     fn from(value: &CheckRunCompletedCheckRunStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CheckRunCompletedCheckRunStatus {
@@ -1038,7 +1038,7 @@ pub enum CheckSuiteRequestedCheckSuiteStatus {
 }
 impl From<&CheckSuiteRequestedCheckSuiteStatus> for CheckSuiteRequestedCheckSuiteStatus {
     fn from(value: &CheckSuiteRequestedCheckSuiteStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CheckSuiteRequestedCheckSuiteStatus {
@@ -1241,7 +1241,7 @@ impl From<&CodeScanningAlertAppearedInBranchAlertDismissedReason>
     for CodeScanningAlertAppearedInBranchAlertDismissedReason
 {
     fn from(value: &CodeScanningAlertAppearedInBranchAlertDismissedReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CodeScanningAlertAppearedInBranchAlertDismissedReason {
@@ -1352,7 +1352,7 @@ impl From<&CodeScanningAlertAppearedInBranchAlertMostRecentInstanceState>
     for CodeScanningAlertAppearedInBranchAlertMostRecentInstanceState
 {
     fn from(value: &CodeScanningAlertAppearedInBranchAlertMostRecentInstanceState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CodeScanningAlertAppearedInBranchAlertMostRecentInstanceState {
@@ -1425,7 +1425,7 @@ impl From<&CodeScanningAlertAppearedInBranchAlertRuleSeverity>
     for CodeScanningAlertAppearedInBranchAlertRuleSeverity
 {
     fn from(value: &CodeScanningAlertAppearedInBranchAlertRuleSeverity) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CodeScanningAlertAppearedInBranchAlertRuleSeverity {
@@ -1530,7 +1530,7 @@ pub enum CodeScanningAlertClosedByUserAlertState {
 }
 impl From<&CodeScanningAlertClosedByUserAlertState> for CodeScanningAlertClosedByUserAlertState {
     fn from(value: &CodeScanningAlertClosedByUserAlertState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CodeScanningAlertClosedByUserAlertState {
@@ -1618,7 +1618,7 @@ pub enum CodeScanningAlertCreatedAlertState {
 }
 impl From<&CodeScanningAlertCreatedAlertState> for CodeScanningAlertCreatedAlertState {
     fn from(value: &CodeScanningAlertCreatedAlertState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CodeScanningAlertCreatedAlertState {
@@ -1730,7 +1730,7 @@ impl From<&CodeScanningAlertReopenedByUserAlertState>
     for CodeScanningAlertReopenedByUserAlertState
 {
     fn from(value: &CodeScanningAlertReopenedByUserAlertState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CodeScanningAlertReopenedByUserAlertState {
@@ -1933,7 +1933,7 @@ pub enum CustomPropertyCreatedDefinitionValueType {
 }
 impl From<&CustomPropertyCreatedDefinitionValueType> for CustomPropertyCreatedDefinitionValueType {
     fn from(value: &CustomPropertyCreatedDefinitionValueType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CustomPropertyCreatedDefinitionValueType {
@@ -1987,7 +1987,7 @@ impl From<&CustomPropertyCreatedDefinitionValuesEditableBy>
     for CustomPropertyCreatedDefinitionValuesEditableBy
 {
     fn from(value: &CustomPropertyCreatedDefinitionValuesEditableBy) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for CustomPropertyCreatedDefinitionValuesEditableBy {
@@ -2116,7 +2116,7 @@ pub enum DeleteDefaultRefType {
 }
 impl From<&DeleteDefaultRefType> for DeleteDefaultRefType {
     fn from(value: &DeleteDefaultRefType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeleteDefaultRefType {
@@ -2311,7 +2311,7 @@ impl From<&DependabotAlertAutoDismissedAlertDependencyScope>
     for DependabotAlertAutoDismissedAlertDependencyScope
 {
     fn from(value: &DependabotAlertAutoDismissedAlertDependencyScope) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DependabotAlertAutoDismissedAlertDependencyScope {
@@ -2367,7 +2367,7 @@ impl From<&DependabotAlertAutoDismissedAlertDismissedReason>
     for DependabotAlertAutoDismissedAlertDismissedReason
 {
     fn from(value: &DependabotAlertAutoDismissedAlertDismissedReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DependabotAlertAutoDismissedAlertDismissedReason {
@@ -2487,7 +2487,7 @@ pub enum DependabotAlertAutoDismissedAlertState {
 }
 impl From<&DependabotAlertAutoDismissedAlertState> for DependabotAlertAutoDismissedAlertState {
     fn from(value: &DependabotAlertAutoDismissedAlertState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DependabotAlertAutoDismissedAlertState {
@@ -2726,7 +2726,7 @@ pub enum DeploymentCreatedWorkflowRunConclusion {
 }
 impl From<&DeploymentCreatedWorkflowRunConclusion> for DeploymentCreatedWorkflowRunConclusion {
     fn from(value: &DeploymentCreatedWorkflowRunConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentCreatedWorkflowRunConclusion {
@@ -2946,7 +2946,7 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsAutoMergeMergeMethod>
     for DeploymentProtectionRuleRequestedPullRequestsAutoMergeMergeMethod
 {
     fn from(value: &DeploymentProtectionRuleRequestedPullRequestsAutoMergeMergeMethod) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentProtectionRuleRequestedPullRequestsAutoMergeMergeMethod {
@@ -3188,17 +3188,19 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsMilestone>
     }
 }
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Default)]
 pub enum DeploymentProtectionRuleRequestedPullRequestsMilestoneState {
     #[serde(rename = "closed")]
     Closed,
     #[serde(rename = "open")]
+    #[default]
     Open,
 }
 impl From<&DeploymentProtectionRuleRequestedPullRequestsMilestoneState>
     for DeploymentProtectionRuleRequestedPullRequestsMilestoneState
 {
     fn from(value: &DeploymentProtectionRuleRequestedPullRequestsMilestoneState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentProtectionRuleRequestedPullRequestsMilestoneState {
@@ -3239,11 +3241,6 @@ impl std::convert::TryFrom<String> for DeploymentProtectionRuleRequestedPullRequ
         value.parse()
     }
 }
-impl Default for DeploymentProtectionRuleRequestedPullRequestsMilestoneState {
-    fn default() -> Self {
-        DeploymentProtectionRuleRequestedPullRequestsMilestoneState::Open
-    }
-}
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsRequestedTeams {
     pub description: Option<String>,
@@ -3281,7 +3278,7 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsState>
     for DeploymentProtectionRuleRequestedPullRequestsState
 {
     fn from(value: &DeploymentProtectionRuleRequestedPullRequestsState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentProtectionRuleRequestedPullRequestsState {
@@ -3790,7 +3787,7 @@ impl From<&DeploymentReviewRejectedWorkflowRunStatus>
     for DeploymentReviewRejectedWorkflowRunStatus
 {
     fn from(value: &DeploymentReviewRejectedWorkflowRunStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentReviewRejectedWorkflowRunStatus {
@@ -3854,7 +3851,7 @@ pub enum DeploymentReviewRequestedReviewersType {
 }
 impl From<&DeploymentReviewRequestedReviewersType> for DeploymentReviewRequestedReviewersType {
     fn from(value: &DeploymentReviewRequestedReviewersType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentReviewRequestedReviewersType {
@@ -4019,7 +4016,7 @@ impl From<&DeploymentStatusCreatedCheckRunConclusion>
     for DeploymentStatusCreatedCheckRunConclusion
 {
     fn from(value: &DeploymentStatusCreatedCheckRunConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentStatusCreatedCheckRunConclusion {
@@ -4085,7 +4082,7 @@ pub enum DeploymentStatusCreatedCheckRunStatus {
 }
 impl From<&DeploymentStatusCreatedCheckRunStatus> for DeploymentStatusCreatedCheckRunStatus {
     fn from(value: &DeploymentStatusCreatedCheckRunStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentStatusCreatedCheckRunStatus {
@@ -4220,7 +4217,7 @@ impl From<&DeploymentStatusCreatedDeploymentCreatorType>
     for DeploymentStatusCreatedDeploymentCreatorType
 {
     fn from(value: &DeploymentStatusCreatedDeploymentCreatorType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentStatusCreatedDeploymentCreatorType {
@@ -4417,7 +4414,7 @@ impl From<&DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsActi
     fn from(
         value: &DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsActions,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -4588,7 +4585,7 @@ impl From<&DeploymentStatusCreatedWorkflowRunConclusion>
     for DeploymentStatusCreatedWorkflowRunConclusion
 {
     fn from(value: &DeploymentStatusCreatedWorkflowRunConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentStatusCreatedWorkflowRunConclusion {
@@ -4860,7 +4857,7 @@ pub enum DeploymentStatusCreatedWorkflowRunStatus {
 }
 impl From<&DeploymentStatusCreatedWorkflowRunStatus> for DeploymentStatusCreatedWorkflowRunStatus {
     fn from(value: &DeploymentStatusCreatedWorkflowRunStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DeploymentStatusCreatedWorkflowRunStatus {
@@ -4913,7 +4910,7 @@ pub enum Discussion {
     Answered {
         action: String,
         answer: DiscussionAnsweredAnswer,
-        discussion: DiscussionAnsweredDiscussion,
+        discussion: Box<DiscussionAnsweredDiscussion>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         enterprise: Option<Untyped>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -5142,7 +5139,7 @@ impl From<&DiscussionAnsweredAnswerAuthorAssociation>
     for DiscussionAnsweredAnswerAuthorAssociation
 {
     fn from(value: &DiscussionAnsweredAnswerAuthorAssociation) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DiscussionAnsweredAnswerAuthorAssociation {
@@ -5296,7 +5293,7 @@ pub enum DiscussionAnsweredDiscussionState {
 }
 impl From<&DiscussionAnsweredDiscussionState> for DiscussionAnsweredDiscussionState {
     fn from(value: &DiscussionAnsweredDiscussionState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DiscussionAnsweredDiscussionState {
@@ -5354,7 +5351,7 @@ pub enum DiscussionAnsweredDiscussionStateReason {
 }
 impl From<&DiscussionAnsweredDiscussionStateReason> for DiscussionAnsweredDiscussionStateReason {
     fn from(value: &DiscussionAnsweredDiscussionStateReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for DiscussionAnsweredDiscussionStateReason {
@@ -5946,7 +5943,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryTemplateRepositoryMergeCommi
     fn from(
         value: &DiscussionTransferredChangesNewRepositoryTemplateRepositoryMergeCommitMessage,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -6010,7 +6007,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryTemplateRepositoryMergeCommi
     fn from(
         value: &DiscussionTransferredChangesNewRepositoryTemplateRepositoryMergeCommitTitle,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -6142,7 +6139,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryTemplateRepositorySquashMerg
     fn from(
         value: &DiscussionTransferredChangesNewRepositoryTemplateRepositorySquashMergeCommitMessage,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -6206,7 +6203,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryTemplateRepositorySquashMerg
     fn from(
         value: &DiscussionTransferredChangesNewRepositoryTemplateRepositorySquashMergeCommitTitle,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -6583,7 +6580,7 @@ pub enum GollumDefaultPagesAction {
 }
 impl From<&GollumDefaultPagesAction> for GollumDefaultPagesAction {
     fn from(value: &GollumDefaultPagesAction) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for GollumDefaultPagesAction {
@@ -6637,7 +6634,7 @@ pub enum Installation {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         repository: Option<Untyped>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        requester: Option<DeploymentStatusCreatedDeploymentCreator>,
+        requester: Option<Box<DeploymentStatusCreatedDeploymentCreator>>,
         sender: Untyped,
     },
     #[serde(rename = "deleted")]
@@ -6778,7 +6775,7 @@ impl From<&InstallationRepositoriesAddedRepositorySelection>
     for InstallationRepositoriesAddedRepositorySelection
 {
     fn from(value: &InstallationRepositoriesAddedRepositorySelection) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for InstallationRepositoriesAddedRepositorySelection {
@@ -7056,7 +7053,7 @@ pub enum IssueCommentCreatedIssueActiveLockReason {
 }
 impl From<&IssueCommentCreatedIssueActiveLockReason> for IssueCommentCreatedIssueActiveLockReason {
     fn from(value: &IssueCommentCreatedIssueActiveLockReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for IssueCommentCreatedIssueActiveLockReason {
@@ -8751,7 +8748,7 @@ pub enum MemberAddedChangesPermissionTo {
 }
 impl From<&MemberAddedChangesPermissionTo> for MemberAddedChangesPermissionTo {
     fn from(value: &MemberAddedChangesPermissionTo) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for MemberAddedChangesPermissionTo {
@@ -8871,7 +8868,7 @@ pub enum MembershipRemovedScope {
 }
 impl From<&MembershipRemovedScope> for MembershipRemovedScope {
     fn from(value: &MembershipRemovedScope) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for MembershipRemovedScope {
@@ -8997,7 +8994,7 @@ pub enum MergeGroupDestroyedReason {
 }
 impl From<&MergeGroupDestroyedReason> for MergeGroupDestroyedReason {
     fn from(value: &MergeGroupDestroyedReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for MergeGroupDestroyedReason {
@@ -9101,7 +9098,7 @@ pub enum MetaDeletedHookConfigContentType {
 }
 impl From<&MetaDeletedHookConfigContentType> for MetaDeletedHookConfigContentType {
     fn from(value: &MetaDeletedHookConfigContentType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for MetaDeletedHookConfigContentType {
@@ -9293,7 +9290,7 @@ pub enum MilestoneClosedMilestoneCreatorType {
 }
 impl From<&MilestoneClosedMilestoneCreatorType> for MilestoneClosedMilestoneCreatorType {
     fn from(value: &MilestoneClosedMilestoneCreatorType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for MilestoneClosedMilestoneCreatorType {
@@ -9441,7 +9438,7 @@ pub enum Organization {
         enterprise: Option<Untyped>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         installation: Option<InstallationAttribute>,
-        invitation: OrganizationMemberInvitedInvitation,
+        invitation: Box<OrganizationMemberInvitedInvitation>,
         organization: Untyped,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         repository: Option<Untyped>,
@@ -9550,7 +9547,7 @@ pub enum Package {
         installation: Option<InstallationAttribute>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         organization: Option<Untyped>,
-        package: PackageUpdatedPackage,
+        package: Box<PackageUpdatedPackage>,
         repository: Untyped,
         sender: Untyped,
     },
@@ -10231,7 +10228,7 @@ impl From<&PersonalAccessTokenRequestApprovedPersonalAccessTokenRequestRepositor
     fn from(
         value: &PersonalAccessTokenRequestApprovedPersonalAccessTokenRequestRepositorySelection,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -11782,7 +11779,7 @@ pub enum PullRequestDequeuedReason {
 }
 impl From<&PullRequestDequeuedReason> for PullRequestDequeuedReason {
     fn from(value: &PullRequestDequeuedReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for PullRequestDequeuedReason {
@@ -12185,7 +12182,7 @@ impl From<&PullRequestReviewCommentCreatedCommentSide>
     for PullRequestReviewCommentCreatedCommentSide
 {
     fn from(value: &PullRequestReviewCommentCreatedCommentSide) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for PullRequestReviewCommentCreatedCommentSide {
@@ -12225,17 +12222,19 @@ impl std::convert::TryFrom<String> for PullRequestReviewCommentCreatedCommentSid
     }
 }
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Default)]
 pub enum PullRequestReviewCommentCreatedCommentStartSide {
     #[serde(rename = "LEFT")]
     Left,
     #[serde(rename = "RIGHT")]
+    #[default]
     Right,
 }
 impl From<&PullRequestReviewCommentCreatedCommentStartSide>
     for PullRequestReviewCommentCreatedCommentStartSide
 {
     fn from(value: &PullRequestReviewCommentCreatedCommentStartSide) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for PullRequestReviewCommentCreatedCommentStartSide {
@@ -12274,11 +12273,6 @@ impl std::convert::TryFrom<String> for PullRequestReviewCommentCreatedCommentSta
         value.parse()
     }
 }
-impl Default for PullRequestReviewCommentCreatedCommentStartSide {
-    fn default() -> Self {
-        PullRequestReviewCommentCreatedCommentStartSide::Right
-    }
-}
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum PullRequestReviewCommentCreatedCommentSubjectType {
     #[serde(rename = "file")]
@@ -12290,7 +12284,7 @@ impl From<&PullRequestReviewCommentCreatedCommentSubjectType>
     for PullRequestReviewCommentCreatedCommentSubjectType
 {
     fn from(value: &PullRequestReviewCommentCreatedCommentSubjectType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for PullRequestReviewCommentCreatedCommentSubjectType {
@@ -12698,7 +12692,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestBaseRepoVisibility>
     for PullRequestReviewCommentCreatedPullRequestBaseRepoVisibility
 {
     fn from(value: &PullRequestReviewCommentCreatedPullRequestBaseRepoVisibility) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for PullRequestReviewCommentCreatedPullRequestBaseRepoVisibility {
@@ -13107,7 +13101,7 @@ pub enum PullRequestReviewDismissedReviewState {
 }
 impl From<&PullRequestReviewDismissedReviewState> for PullRequestReviewDismissedReviewState {
     fn from(value: &PullRequestReviewDismissedReviewState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for PullRequestReviewDismissedReviewState {
@@ -15167,7 +15161,7 @@ pub enum Repository {
     },
     #[serde(rename = "transferred")]
     Transferred {
-        changes: RepositoryTransferredChanges,
+        changes: Box<RepositoryTransferredChanges>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         enterprise: Option<Untyped>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -15354,7 +15348,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsDetailedState>
     for RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsDetailedState
 {
     fn from(value: &RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsDetailedState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsDetailedState {
@@ -15428,7 +15422,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsType>
     for RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsType
 {
     fn from(value: &RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsType {
@@ -15545,7 +15539,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryIdentifiersType>
     for RepositoryAdvisoryPublishedRepositoryAdvisoryIdentifiersType
 {
     fn from(value: &RepositoryAdvisoryPublishedRepositoryAdvisoryIdentifiersType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryAdvisoryPublishedRepositoryAdvisoryIdentifiersType {
@@ -15659,7 +15653,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisorySeverity>
     for RepositoryAdvisoryPublishedRepositoryAdvisorySeverity
 {
     fn from(value: &RepositoryAdvisoryPublishedRepositoryAdvisorySeverity) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryAdvisoryPublishedRepositoryAdvisorySeverity {
@@ -15719,7 +15713,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryState>
     for RepositoryAdvisoryPublishedRepositoryAdvisoryState
 {
     fn from(value: &RepositoryAdvisoryPublishedRepositoryAdvisoryState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryAdvisoryPublishedRepositoryAdvisoryState {
@@ -15836,7 +15830,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilitiesPackageEc
     fn from(
         value: &RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilitiesPackageEcosystem,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -16090,7 +16084,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetBypassActorsActorType>
     for RepositoryRulesetCreatedRepositoryRulesetBypassActorsActorType
 {
     fn from(value: &RepositoryRulesetCreatedRepositoryRulesetBypassActorsActorType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryRulesetCreatedRepositoryRulesetBypassActorsActorType {
@@ -16142,8 +16136,10 @@ impl std::convert::TryFrom<String>
     }
 }
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Default)]
 pub enum RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode {
     #[serde(rename = "always")]
+    #[default]
     Always,
     #[serde(rename = "pull_request")]
     PullRequest,
@@ -16152,7 +16148,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode>
     for RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode
 {
     fn from(value: &RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode {
@@ -16197,11 +16193,6 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-impl Default for RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode {
-    fn default() -> Self {
-        RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode::Always
-    }
-}
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum RepositoryRulesetCreatedRepositoryRulesetCurrentUserCanBypass {
     #[serde(rename = "always")]
@@ -16215,7 +16206,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetCurrentUserCanBypass>
     for RepositoryRulesetCreatedRepositoryRulesetCurrentUserCanBypass
 {
     fn from(value: &RepositoryRulesetCreatedRepositoryRulesetCurrentUserCanBypass) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryRulesetCreatedRepositoryRulesetCurrentUserCanBypass {
@@ -16273,7 +16264,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetEnforcement>
     for RepositoryRulesetCreatedRepositoryRulesetEnforcement
 {
     fn from(value: &RepositoryRulesetCreatedRepositoryRulesetEnforcement) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryRulesetCreatedRepositoryRulesetEnforcement {
@@ -16467,7 +16458,7 @@ pub enum RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCod
     #[serde(rename = "none")]
     None,
 }
-impl From < & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold { fn from (value : & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold) -> Self { value . clone () } }
+impl From < & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold { fn from (value : & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold) -> Self { *value } }
 impl :: std :: fmt :: Display for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold { fn fmt (& self , f : & mut :: std :: fmt :: Formatter < '_ >) -> :: std :: fmt :: Result { match * self { Self :: All => write ! (f , "all") , Self :: Errors => write ! (f , "errors") , Self :: ErrorsAndWarnings => write ! (f , "errors_and_warnings") , Self :: None => write ! (f , "none") , } } }
 impl std :: str :: FromStr for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold { type Err = self :: error :: ConversionError ; fn from_str (value : & str) -> Result < Self , self :: error :: ConversionError > { match value { "all" => Ok (Self :: All) , "errors" => Ok (Self :: Errors) , "errors_and_warnings" => Ok (Self :: ErrorsAndWarnings) , "none" => Ok (Self :: None) , _ => Err ("invalid value" . into ()) , } } }
 impl std :: convert :: TryFrom < & str > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold { type Error = self :: error :: ConversionError ; fn try_from (value : & str) -> Result < Self , self :: error :: ConversionError > { value . parse () } }
@@ -16487,7 +16478,7 @@ pub enum RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCod
     #[serde(rename = "none")]
     None,
 }
-impl From < & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { fn from (value : & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold) -> Self { value . clone () } }
+impl From < & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { fn from (value : & RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold) -> Self { *value } }
 impl :: std :: fmt :: Display for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { fn fmt (& self , f : & mut :: std :: fmt :: Formatter < '_ >) -> :: std :: fmt :: Result { match * self { Self :: All => write ! (f , "all") , Self :: Critical => write ! (f , "critical") , Self :: HighOrHigher => write ! (f , "high_or_higher") , Self :: MediumOrHigher => write ! (f , "medium_or_higher") , Self :: None => write ! (f , "none") , } } }
 impl std :: str :: FromStr for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { type Err = self :: error :: ConversionError ; fn from_str (value : & str) -> Result < Self , self :: error :: ConversionError > { match value { "all" => Ok (Self :: All) , "critical" => Ok (Self :: Critical) , "high_or_higher" => Ok (Self :: HighOrHigher) , "medium_or_higher" => Ok (Self :: MediumOrHigher) , "none" => Ok (Self :: None) , _ => Err ("invalid value" . into ()) , } } }
 impl std :: convert :: TryFrom < & str > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { type Error = self :: error :: ConversionError ; fn try_from (value : & str) -> Result < Self , self :: error :: ConversionError > { value . parse () } }
@@ -16561,7 +16552,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCommitMessagePatternPar
     fn from(
         value : & RepositoryRulesetCreatedRepositoryRulesetRulesCommitMessagePatternParametersOperator,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -16809,7 +16800,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueueParametersGro
     fn from(
         value: &RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueueParametersGroupingStrategy,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -16873,7 +16864,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueueParametersMer
     fn from(
         value: &RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueueParametersMergeMethod,
     ) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display
@@ -17145,7 +17136,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetSourceType>
     for RepositoryRulesetCreatedRepositoryRulesetSourceType
 {
     fn from(value: &RepositoryRulesetCreatedRepositoryRulesetSourceType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryRulesetCreatedRepositoryRulesetSourceType {
@@ -17197,7 +17188,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetTarget>
     for RepositoryRulesetCreatedRepositoryRulesetTarget
 {
     fn from(value: &RepositoryRulesetCreatedRepositoryRulesetTarget) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for RepositoryRulesetCreatedRepositoryRulesetTarget {
@@ -17591,7 +17582,7 @@ impl From<&SecretScanningAlertLocationCreatedAlertResolution>
     for SecretScanningAlertLocationCreatedAlertResolution
 {
     fn from(value: &SecretScanningAlertLocationCreatedAlertResolution) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for SecretScanningAlertLocationCreatedAlertResolution {
@@ -17651,7 +17642,7 @@ impl From<&SecretScanningAlertLocationCreatedAlertValidity>
     for SecretScanningAlertLocationCreatedAlertValidity
 {
     fn from(value: &SecretScanningAlertLocationCreatedAlertValidity) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for SecretScanningAlertLocationCreatedAlertValidity {
@@ -17739,7 +17730,7 @@ impl From<&SecretScanningAlertLocationCreatedLocationType>
     for SecretScanningAlertLocationCreatedLocationType
 {
     fn from(value: &SecretScanningAlertLocationCreatedLocationType) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for SecretScanningAlertLocationCreatedLocationType {
@@ -18139,7 +18130,7 @@ impl From<&StatusDefaultCommitCommitVerificationReason>
     for StatusDefaultCommitCommitVerificationReason
 {
     fn from(value: &StatusDefaultCommitCommitVerificationReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for StatusDefaultCommitCommitVerificationReason {
@@ -18228,7 +18219,7 @@ pub enum StatusDefaultState {
 }
 impl From<&StatusDefaultState> for StatusDefaultState {
     fn from(value: &StatusDefaultState) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for StatusDefaultState {
@@ -18450,7 +18441,7 @@ impl From<&SubIssuesParentIssueAddedParentIssueStateReason>
     for SubIssuesParentIssueAddedParentIssueStateReason
 {
     fn from(value: &SubIssuesParentIssueAddedParentIssueStateReason) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for SubIssuesParentIssueAddedParentIssueStateReason {
@@ -18645,7 +18636,7 @@ impl From<&TeamAddDefaultTeamParentNotificationSetting>
     for TeamAddDefaultTeamParentNotificationSetting
 {
     fn from(value: &TeamAddDefaultTeamParentNotificationSetting) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for TeamAddDefaultTeamParentNotificationSetting {
@@ -18695,7 +18686,7 @@ pub enum TeamAddDefaultTeamParentPrivacy {
 }
 impl From<&TeamAddDefaultTeamParentPrivacy> for TeamAddDefaultTeamParentPrivacy {
     fn from(value: &TeamAddDefaultTeamParentPrivacy) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for TeamAddDefaultTeamParentPrivacy {
@@ -19438,7 +19429,7 @@ impl From<&WorkflowJobCompletedWorkflowJobConclusion>
     for WorkflowJobCompletedWorkflowJobConclusion
 {
     fn from(value: &WorkflowJobCompletedWorkflowJobConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowJobCompletedWorkflowJobConclusion {
@@ -19500,7 +19491,7 @@ pub enum WorkflowJobCompletedWorkflowJobStatus {
 }
 impl From<&WorkflowJobCompletedWorkflowJobStatus> for WorkflowJobCompletedWorkflowJobStatus {
     fn from(value: &WorkflowJobCompletedWorkflowJobStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowJobCompletedWorkflowJobStatus {
@@ -19572,7 +19563,7 @@ impl From<&WorkflowJobCompletedWorkflowJobStepsConclusion>
     for WorkflowJobCompletedWorkflowJobStepsConclusion
 {
     fn from(value: &WorkflowJobCompletedWorkflowJobStepsConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowJobCompletedWorkflowJobStepsConclusion {
@@ -19628,7 +19619,7 @@ impl From<&WorkflowJobCompletedWorkflowJobStepsStatus>
     for WorkflowJobCompletedWorkflowJobStepsStatus
 {
     fn from(value: &WorkflowJobCompletedWorkflowJobStepsStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowJobCompletedWorkflowJobStepsStatus {
@@ -19715,7 +19706,7 @@ impl From<&WorkflowJobInProgressWorkflowJobConclusion>
     for WorkflowJobInProgressWorkflowJobConclusion
 {
     fn from(value: &WorkflowJobInProgressWorkflowJobConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowJobInProgressWorkflowJobConclusion {
@@ -19966,7 +19957,7 @@ impl From<&WorkflowRunCompletedWorkflowRunConclusion>
     for WorkflowRunCompletedWorkflowRunConclusion
 {
     fn from(value: &WorkflowRunCompletedWorkflowRunConclusion) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowRunCompletedWorkflowRunConclusion {
@@ -20261,7 +20252,7 @@ pub enum WorkflowRunInProgressWorkflowRunStatus {
 }
 impl From<&WorkflowRunInProgressWorkflowRunStatus> for WorkflowRunInProgressWorkflowRunStatus {
     fn from(value: &WorkflowRunInProgressWorkflowRunStatus) -> Self {
-        value.clone()
+        *value
     }
 }
 impl ::std::fmt::Display for WorkflowRunInProgressWorkflowRunStatus {

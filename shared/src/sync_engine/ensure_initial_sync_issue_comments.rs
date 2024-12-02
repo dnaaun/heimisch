@@ -43,7 +43,7 @@ impl SyncEngine {
                     page = (txn
                         .object_store::<IssueComment>()?
                         .index::<RepositoryIdIndex>()?
-                        .get_all(Some(&id))
+                        .get_all(Some(id))
                         .await?
                         .len() as f64
                         / f64::from(MAX_PER_PAGE))
@@ -63,7 +63,7 @@ impl SyncEngine {
             .ro();
         let repo = txn
             .object_store::<Repository>()?
-            .get(&id)
+            .get(id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
@@ -113,8 +113,7 @@ impl SyncEngine {
                         .await
                         .unwrap()
                         .into_iter()
-                        .filter(|issue| issue.repository_id == id)
-                        .next()
+                        .find(|issue| issue.repository_id == id)
                         .map(|i| i.id)
                 }
             };
@@ -127,7 +126,7 @@ impl SyncEngine {
             .into_iter()
             .collect::<Result<Vec<_>, _>>()?;
             let changes =
-                Changes::from_iter(issue_comment_ids_and_changes.into_iter().map(|r| r.1))?;
+                Changes::try_from_iter(issue_comment_ids_and_changes.into_iter().map(|r| r.1))?;
 
             let txn = Changes::txn(&self.db)
                 .with_store::<IssueCommentInitialSyncStatus>()

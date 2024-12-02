@@ -1,4 +1,7 @@
-use crate::types::{installation::InstallationId, repository::{InstallationIdIndex, Repository}};
+use crate::types::{
+    installation::InstallationId,
+    repository::{InstallationIdIndex, Repository},
+};
 
 use super::{SyncEngine, SyncResult};
 
@@ -10,13 +13,12 @@ impl SyncEngine {
         let repos = txn
             .object_store::<Repository>()?
             .index::<InstallationIdIndex>()?
-            .get_all(Some(&id))
+            .get_all(Some(id))
             .await?;
 
         let test_repo = repos
             .into_iter()
-            .filter(|r| r.name == "test_for_heimisch".to_owned())
-            .next()
+            .find(|r| r.name == "test_for_heimisch")
             .unwrap();
 
         self.ensure_initial_sync_one_repository(&test_repo).await?;

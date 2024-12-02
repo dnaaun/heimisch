@@ -102,7 +102,7 @@ pub fn initiate(router: Router<AppState>) -> Router<AppState> {
         AuthInitiateEndpoint::PATH,
         get(|State(state): State<AppState>| async move {
             let mut rng = StdRng::from_entropy();
-            let csrf_token: String = (0..20).map(|_| rng.gen_range('a'..'z')).collect();
+            let csrf_token: String = (0..20).map(|_| rng.gen_range('a'..='z')).collect();
 
             store_csrf_token(&state, csrf_token.clone()).await?;
 

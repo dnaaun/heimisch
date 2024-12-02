@@ -46,7 +46,6 @@ pub fn t2_to_schema_object(t2_type: t2::Type, context: &mut T2ToSchemaContext) -
             metadata: Some(Box::new(Metadata {
                 default: float_inner
                     .default
-                    .clone()
                     .map(|f| serde_json::Value::from(f.into_inner())),
                 ..default_metadata
             })),
@@ -91,7 +90,7 @@ pub fn t2_to_schema_object(t2_type: t2::Type, context: &mut T2ToSchemaContext) -
                 .map(|variant| {
                     Schema::Object(t2_to_schema_object(
                         t2::Type {
-                            inner: *variant.clone(),
+                            inner: variant.clone(),
                             meta: Default::default(),
                         },
                         context,
@@ -189,7 +188,7 @@ fn t2_object_to_schema(
         })
         .collect();
 
-    let schema_object = SchemaObject {
+    SchemaObject {
         metadata: Some(Box::new(default_metadata)),
         instance_type: Some(InstanceType::Object.into()),
         object: Some(Box::new(ObjectValidation {
@@ -198,9 +197,7 @@ fn t2_object_to_schema(
             ..Default::default()
         })),
         ..Default::default()
-    };
-
-    schema_object
+    }
 }
 
 fn make_schema_nullable(schema: SchemaObject) -> SchemaObject {

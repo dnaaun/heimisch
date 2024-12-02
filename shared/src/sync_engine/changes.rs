@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use typesafe_idb::TypesafeDb;
 
@@ -59,9 +60,9 @@ impl Changes {
     }
 
     /// A transaction builder that contains all the stores that `Changes` might interact with.
-    pub fn txn<'db, DbStoreMarkers>(
-        db: &'db TypesafeDb<DbStoreMarkers>,
-    ) -> TxnBuilder<'db, impl StoreMarkersForChanges, DbStoreMarkers>
+    pub fn txn<DbStoreMarkers>(
+        db: &TypesafeDb<DbStoreMarkers>,
+    ) -> TxnBuilder<'_, impl StoreMarkersForChanges, DbStoreMarkers>
     where
         DbStoreMarkers: StoreMarkersForChanges,
     {
@@ -86,7 +87,7 @@ impl Changes {
         Ok(())
     }
 
-    pub fn from_iter<A>(iter: impl IntoIterator<Item = A>) -> Result<Self, MergeError>
+    pub fn try_from_iter<A>(iter: impl IntoIterator<Item = A>) -> Result<Self, MergeError>
     where
         Changes: AddChanges<A>,
     {
@@ -113,7 +114,7 @@ impl Changes {
 
     /// Just trying to make life easier for myself is all: I do often collect changes from iterators
     /// whose items are results.
-    pub fn try_from_iter<A, E>(
+    pub fn try_try_from_iter<A, E>(
         iter: impl IntoIterator<Item = Result<A, E>>,
     ) -> Result<Result<Self, MergeError>, E>
     where
@@ -135,11 +136,11 @@ pub trait AddChanges<T> {
 
 impl AddChanges<GithubApp> for Changes {
     fn add(&mut self, change: GithubApp) -> Result<&mut Self, MergeError> {
-        if self.github_apps.contains_key(&change.id) {
+        if let Entry::Vacant(e) = self.github_apps.entry(change.id) {
+            e.insert(change);
+        } else {
             let cur = self.github_apps.get_mut(&change.id).expect("");
             cur.merge(change)?;
-        } else {
-            self.github_apps.insert(change.id, change);
         }
         Ok(self)
     }
@@ -147,11 +148,11 @@ impl AddChanges<GithubApp> for Changes {
 
 impl AddChanges<User> for Changes {
     fn add(&mut self, change: User) -> Result<&mut Self, MergeError> {
-        if self.users.contains_key(&change.id) {
+        if let Entry::Vacant(e) = self.users.entry(change.id) {
+            e.insert(change);
+        } else {
             let cur = self.users.get_mut(&change.id).expect("");
             cur.merge(change)?;
-        } else {
-            self.users.insert(change.id, change);
         }
         Ok(self)
     }
@@ -159,11 +160,11 @@ impl AddChanges<User> for Changes {
 
 impl AddChanges<Issue> for Changes {
     fn add(&mut self, change: Issue) -> Result<&mut Self, MergeError> {
-        if self.issues.contains_key(&change.id) {
+        if let Entry::Vacant(e) = self.issues.entry(change.id) {
+            e.insert(change);
+        } else {
             let cur = self.issues.get_mut(&change.id).expect("");
             cur.merge(change)?;
-        } else {
-            self.issues.insert(change.id, change);
         }
         Ok(self)
     }
@@ -171,11 +172,11 @@ impl AddChanges<Issue> for Changes {
 
 impl AddChanges<IssueComment> for Changes {
     fn add(&mut self, change: IssueComment) -> Result<&mut Self, MergeError> {
-        if self.issue_comments.contains_key(&change.id) {
+        if let Entry::Vacant(e) = self.issue_comments.entry(change.id) {
+            e.insert(change);
+        } else {
             let cur = self.issue_comments.get_mut(&change.id).expect("");
             cur.merge(change)?;
-        } else {
-            self.issue_comments.insert(change.id, change);
         }
         Ok(self)
     }
@@ -183,11 +184,11 @@ impl AddChanges<IssueComment> for Changes {
 
 impl AddChanges<Repository> for Changes {
     fn add(&mut self, change: Repository) -> Result<&mut Self, MergeError> {
-        if self.repositorys.contains_key(&change.id) {
+        if let Entry::Vacant(e) = self.repositorys.entry(change.id) {
+            e.insert(change);
+        } else {
             let cur = self.repositorys.get_mut(&change.id).expect("");
             cur.merge(change)?;
-        } else {
-            self.repositorys.insert(change.id, change);
         }
         Ok(self)
     }
@@ -207,11 +208,11 @@ impl AddChanges<License> for Changes {
 
 impl AddChanges<Milestone> for Changes {
     fn add(&mut self, change: Milestone) -> Result<&mut Self, MergeError> {
-        if self.milestones.contains_key(&change.id) {
+        if let Entry::Vacant(e) = self.milestones.entry(change.id) {
+            e.insert(change);
+        } else {
             let cur = self.milestones.get_mut(&change.id).expect("");
             cur.merge(change)?;
-        } else {
-            self.milestones.insert(change.id.clone(), change);
         }
         Ok(self)
     }

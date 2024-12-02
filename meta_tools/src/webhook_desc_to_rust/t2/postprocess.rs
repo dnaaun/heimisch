@@ -24,7 +24,7 @@ pub fn postprocess_t2_inner(
         TypeInner::Union(UnionInner { variants }) => {
             let variants = variants
                 .into_iter()
-                .map(|i| postprocess_t2_inner(*i, object_store, false).into())
+                .map(|i| postprocess_t2_inner(i, object_store, false))
                 .collect();
             TypeInner::Union(UnionInner { variants })
         }
@@ -43,7 +43,7 @@ pub fn postprocess_t2_inner(
                         match &member.value.inner {
                             TypeInner::Nullable(type_inner) => {
                                 if let TypeInner::ObjectRef(object_ref) = type_inner.as_ref() {
-                                    if object_ref.r#type().members.len() == 0 {
+                                    if object_ref.r#type().members.is_empty() {
                                         let Type { inner, meta } = installation_attribute_type(
                                             member.value.meta,
                                             object_store,
@@ -60,7 +60,7 @@ pub fn postprocess_t2_inner(
                                 }
                             }
                             TypeInner::ObjectRef(object_ref)
-                                if object_ref.r#type().members.len() == 0 =>
+                                if object_ref.r#type().members.is_empty() =>
                             {
                                 return ObjectMember {
                                     key: member.key,

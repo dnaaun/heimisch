@@ -98,9 +98,9 @@ pub struct TxnBuilder<'db, TxnTableMarkers, DbTableMarkers> {
 }
 
 impl Txn<(), ()> {
-    pub fn builder<'db, DbTableMarkers>(
-        db: &'db TypesafeDb<DbTableMarkers>,
-    ) -> TxnBuilder<'db, Chain<(), ()>, DbTableMarkers> {
+    pub fn builder<DbTableMarkers>(
+        db: &TypesafeDb<DbTableMarkers>,
+    ) -> TxnBuilder<'_, Chain<(), ()>, DbTableMarkers> {
         TxnBuilder {
             store_names: Default::default(),
             txn_table_markers: Chain::new(),
@@ -153,7 +153,7 @@ impl<'db, TxnTableMarkers, DbTableMarkers> TxnBuilder<'db, TxnTableMarkers, DbTa
                                 self.db.inner.store_names(),
                                 store_names,
                                 );
-                        Err(err).unwrap()
+                        panic!("{:?}", err)
                     }
                 },
             ),
@@ -179,7 +179,7 @@ impl<'db, TxnTableMarkers, DbTableMarkers> TxnBuilder<'db, TxnTableMarkers, DbTa
                                 self.db.inner.store_names(),
                                 store_names,
                                 );
-                        Err(err).unwrap()
+                        panic!("{:?}", err)
                     }
                 },
             ),

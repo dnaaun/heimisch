@@ -81,11 +81,7 @@ impl NullableMilestone {
             state,
             title,
             description,
-            creator: if let Some(x) = creator {
-                Some(Box::new(x))
-            } else {
-                None
-            },
+            creator: creator.map(Box::new),
             open_issues,
             closed_issues,
             created_at,

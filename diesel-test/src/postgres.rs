@@ -1,6 +1,6 @@
 use diesel_migrations::EmbeddedMigrations;
 use itertools::Itertools;
-use std::{cell::LazyCell, str::FromStr};
+use std::{cell::LazyCell, str::FromStr, sync::Arc};
 use tokio_postgres::Client;
 
 use diesel::PgConnection;
@@ -12,7 +12,7 @@ use crate::{DbUrlFactory, DieselTestConfig};
 pub struct PostgresDbUrlFactory {
     conn_str_parsed: ConnectionString,
     db_name_prefix: String,
-    db_counter: LazyCell<Mutex<u32>>,
+    db_counter: LazyCell<Arc<Mutex<u32>>>,
     extension_names: Vec<&'static str>,
 }
 
@@ -49,7 +49,7 @@ impl PostgresDbUrlFactory {
     pub fn new(
         base_db_url: &str,
         db_name_prefix: Option<String>,
-        db_counter: LazyCell<Mutex<u32>>,
+        db_counter: LazyCell<Arc<Mutex<u32>>>,
         extension_names: Vec<&'static str>,
     ) -> Result<Self, ParsingDbUrlError> {
         let conn_str_parsed = ConnectionString::from_str(base_db_url)?;
@@ -144,7 +144,7 @@ impl<D: DbUrlFactory> DieselTestConfig<D> {
     pub fn for_pg(
         base_db_url: &str,
         migrations: EmbeddedMigrations,
-        db_counter: LazyCell<Mutex<u32>>,
+        db_counter: LazyCell<Arc<Mutex<u32>>>,
         db_name_prefix: Option<String>,
         extension_names: Vec<&'static str>,
     ) -> Result<DieselTestConfig<PostgresDbUrlFactory>, ParsingDbUrlError> {

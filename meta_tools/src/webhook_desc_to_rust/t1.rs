@@ -132,7 +132,7 @@ pub struct WebhookSchema {
     #[serde(rename = "enum", default, skip_serializing_if = "Option::is_none")]
     pub enum_values: Option<Vec<Option<T1Enum>>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub child_params_groups: Option<Vec<Box<WebhookSchema>>>,
+    pub child_params_groups: Option<Vec<WebhookSchema>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default: Option<serde_json::Value>,
 }

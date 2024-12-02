@@ -34,31 +34,3 @@ pub struct Reactions {
     #[serde(rename = "url")]
     pub url: String,
 }
-
-impl Reactions {
-    pub fn new(
-        plus_1: i32,
-        _1: i32,
-        confused: i32,
-        eyes: i32,
-        heart: i32,
-        hooray: i32,
-        laugh: i32,
-        rocket: i32,
-        total_count: i32,
-        url: String,
-    ) -> Reactions {
-        Reactions {
-            plus_1,
-            _1,
-            confused,
-            eyes,
-            heart,
-            hooray,
-            laugh,
-            rocket,
-            total_count,
-            url,
-        }
-    }
-}

@@ -9,7 +9,7 @@ pub struct ObjectStore<'txn, Store, Mode> {
     pub(crate) _markers: PhantomData<(Store, Mode)>,
 }
 
-impl<'txn, S, Mode> ObjectStore<'txn, S, Mode>
+impl<S, Mode> ObjectStore<'_, S, Mode>
 where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadOnly = Present>,
@@ -46,14 +46,14 @@ where
 
     pub fn index<IS: IndexSpec<Store = S>>(&self) -> Result<Index<'_, IS>, crate::Error> {
         Ok(Index {
-            reactivity_trackers: &self.reactivity_trackers,
+            reactivity_trackers: self.reactivity_trackers,
             actual_index: self.actual_object_store.index(IS::NAME)?,
             _markers: PhantomData,
         })
     }
 }
 
-impl<'txn, S, Mode> ObjectStore<'txn, S, Mode>
+impl<S, Mode> ObjectStore<'_, S, Mode>
 where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,

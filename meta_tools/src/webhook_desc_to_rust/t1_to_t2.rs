@@ -14,10 +14,10 @@ pub fn t1_top_level_to_t2(
     literal_string_union_store: &mut HashMap<t2::TypeRef<t2::LiteralStringUnionInner>, u32>,
     object_store: &mut HashMap<t2::TypeRef<t2::ObjectInner>, u32>,
 ) -> Option<t2::Type> {
-    let avail_to_app = t1_top_level.availability.iter().any(|a| match a {
-        t1::Availability::App => true,
-        _ => false,
-    });
+    let avail_to_app = t1_top_level
+        .availability
+        .iter()
+        .any(|a| matches!(a, t1::Availability::App));
 
     if avail_to_app {
         let prefix = t1_top_level.category.to_case(Case::Pascal)
@@ -29,14 +29,7 @@ pub fn t1_top_level_to_t2(
                     name: String::new(),
                     description: Some(t1_top_level.description_html.clone()),
                     is_required: Some(true.into()),
-                    child_params_groups: Some(
-                        t1_top_level
-                            .body_parameters
-                            .iter()
-                            .cloned()
-                            .map(Box::new)
-                            .collect(),
-                    ),
+                    child_params_groups: Some(t1_top_level.body_parameters.to_vec()),
                     ..Default::default()
                 },
                 &[prefix],
@@ -130,7 +123,7 @@ fn t1_to_t2(
             let (boolean, meta) = parse_boolean(t1_schema, current_name_path)?;
             if let Some(enum_values) = &t1_schema.enum_values {
                 let enum_values = enum_values
-                    .into_iter()
+                    .iter()
                     .map(|i| match i {
                         Some(i) => Ok(i),
                         None => Err(anyhow!(
@@ -156,7 +149,7 @@ fn t1_to_t2(
                     return Err(anyhow!("Expecting one value in enum_values since type is bool, but found: {t1_schema:#?}"));
                 } else {
                     t2::Type {
-                        inner: t2::TypeInner::LiteralBool(**enum_values.iter().next().unwrap()),
+                        inner: t2::TypeInner::LiteralBool(**enum_values.first().unwrap()),
                         meta,
                     }
                 }
@@ -245,7 +238,7 @@ fn t1_to_t2(
             let (integer, _) = parse_integer(t1_schema, current_name_path)?;
             t2::Type {
                 inner: t2::TypeInner::Union(t2::UnionInner {
-                    variants: vec![Box::new(string.into()), Box::new(integer.into())],
+                    variants: vec![string.into(), integer.into()],
                 }),
                 meta,
             }
@@ -264,7 +257,7 @@ fn t1_to_t2(
             let (string, _) = parse_string(t1_schema, current_name_path)?;
             t2::Type {
                 inner: t2::UnionInner {
-                    variants: vec![Box::new(object.into()), Box::new(string.into())],
+                    variants: vec![object.into(), string.into()],
                 }
                 .into(),
                 meta,
@@ -279,7 +272,7 @@ fn t1_to_t2(
             let (float, _) = parse_float(t1_schema, current_name_path)?;
             t2::Type {
                 inner: t2::UnionInner {
-                    variants: vec![Box::new(float.into()), Box::new(string.into())],
+                    variants: vec![float.into(), string.into()],
                 }
                 .into(),
                 meta,
@@ -347,13 +340,13 @@ fn t1_to_t2(
 
             let (string, meta) = parse_string(t1_schema, current_name_path)?;
             let array = t2::ArrayInner {
-                members: Box::new(t2::TypeInner::Unspecified.into()),
+                members: Box::new(t2::TypeInner::Unspecified),
             };
 
             t2::Type {
                 inner: t2::TypeInner::Nullable(Box::new(
                     t2::UnionInner {
-                        variants: vec![Box::new(string.into()), Box::new(array.into())],
+                        variants: vec![string.into(), array.into()],
                     }
                     .into(),
                 )),
@@ -370,10 +363,7 @@ fn t1_to_t2(
             t2::Type {
                 inner: t2::TypeInner::Nullable(Box::new(
                     t2::UnionInner {
-                        variants: vec![
-                            Box::new(string.into()),
-                            Box::new(t2::IntegerInner { default: None }.into()),
-                        ],
+                        variants: vec![string.into(), t2::IntegerInner { default: None }.into()],
                     }
                     .into(),
                 )),
@@ -426,7 +416,7 @@ fn t1_to_t2(
             t2::Type {
                 inner: t2::TypeInner::Nullable(Box::new(
                     t2::UnionInner {
-                        variants: vec![Box::new(object.into()), Box::new(string.into())],
+                        variants: vec![object.into(), string.into()],
                     }
                     .into(),
                 )),
@@ -485,7 +475,6 @@ fn t1_to_t2(
                 inner: t2::UnionInner {
                     variants: [boolean.into(), string.into(), integer.into(), object.into()]
                         .into_iter()
-                        .map(Box::new)
                         .collect(),
                 }
                 .into(),
@@ -509,7 +498,6 @@ fn t1_to_t2(
                     t2::UnionInner {
                         variants: [string.into(), integer.into(), object.into()]
                             .into_iter()
-                            .map(Box::new)
                             .collect(),
                     }
                     .into(),
@@ -523,7 +511,7 @@ fn t1_to_t2(
 fn make_name(current_name_path: &[String], name: &String) -> String {
     let mut parts = current_name_path.iter();
     let new_part = name.to_case(Case::Pascal);
-    if current_name_path.len() == 0 {
+    if current_name_path.is_empty() {
         name.clone()
     } else if current_name_path[current_name_path.len() - 1] != new_part {
         parts.chain(once(&new_part)).join("")
@@ -679,7 +667,7 @@ pub fn parse_literal_string_union(
     let type_inner = match t1_enum_values {
         Some(members) => {
             let members: Vec<_> = if allow_null_in_union {
-                members.clone().into_iter().filter_map(|i| i).collect()
+                members.clone().into_iter().flatten().collect()
             } else {
                 members
                     .clone()
@@ -860,7 +848,7 @@ pub fn parse_boolean(
     } = t1_schema;
     let is_required = t1_is_required.as_ref().map(bool::from).unwrap_or(false);
     let description = t1_description.clone();
-    if let Some(_) = t1_child_params_groups {
+    if t1_child_params_groups.is_some() {
         return Err(anyhow!(
             "child_params_groups should be null for a bool: {t1_schema:?}"
         ));
@@ -878,7 +866,7 @@ pub fn parse_boolean(
 }
 
 pub fn parse_members_for_object(
-    t1_child_params_groups: &Option<Vec<Box<t1::WebhookSchema>>>,
+    t1_child_params_groups: &Option<Vec<t1::WebhookSchema>>,
     current_name_path: &[String],
     literal_string_union_store: &mut HashMap<t2::TypeRef<t2::LiteralStringUnionInner>, u32>,
     object_store: &mut HashMap<t2::TypeRef<t2::ObjectInner>, u32>,
@@ -891,7 +879,7 @@ pub fn parse_members_for_object(
                 Ok(t2::ObjectMember {
                     key: key.clone(),
                     value: t1_to_t2(
-                        t1_child_params_group.deref(),
+                        t1_child_params_group,
                         &current_name_path
                             .iter()
                             .cloned()
