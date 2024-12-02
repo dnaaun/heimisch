@@ -61,7 +61,7 @@ impl ParsedHttpRequest {
         }
 
         let mut headers: HashMap<_, _> = Default::default();
-        while let Some(line) = lines.next() {
+        for line in lines.by_ref() {
             if line.trim().is_empty() {
                 break;
             }
@@ -83,7 +83,7 @@ impl ParsedHttpRequest {
         let body = lines
             .remainder()
             .map(|t| Bytes::from(t.as_bytes().to_vec()))
-            .unwrap_or_else(|| Bytes::new());
+            .unwrap_or_default();
 
         Ok(Self {
             method,

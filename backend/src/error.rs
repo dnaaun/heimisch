@@ -277,14 +277,13 @@ fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
             frame.symbols().iter().any(|symbol| {
                 symbol
                     .filename()
-                    .map(|filename| filename.to_str())
-                    .flatten()
+                    .and_then(|filename| filename.to_str())
                     .map(|filename| filename.contains("heimisch")) // TODO: change this to be more robust?
                     .unwrap_or(false)
             })
         })
         .skip(1) // The first item of the backtrace is going to be `Backtrace::new()`
-        .map(|i| i.clone())
+        .cloned()
         .collect::<Vec<_>>();
 
     let shorter_bt = Backtrace::from(frames);

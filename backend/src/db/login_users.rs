@@ -47,7 +47,7 @@ pub async fn upsert_login_user(pool: impl AsRef<Pool>, user: UpsertLoginUser) ->
 
 pub async fn get_login_user(pool: impl AsRef<Pool>, id_arg: &UserId) -> Result<Option<LoginUser>> {
     let conn = pool.as_ref().get().await?;
-    let id_arg = id_arg.clone();
+    let id_arg = *id_arg;
     Ok(conn
         .interact(move |conn| {
             table

@@ -37,7 +37,7 @@ fn offset_date_time_from_system_time(system_time: SystemTime) -> OffsetDateTime 
     match system_time.duration_since(UNIX_EPOCH) {
         Ok(duration) => {
             // Extract seconds and nanoseconds
-            let nanos = u128::from(duration.as_nanos());
+            let nanos = duration.as_nanos();
             OffsetDateTime::from_unix_timestamp_nanos(
                 nanos.try_into().expect("Bruv, if OffsetDateTime::from_unix_timestamp_nanos expects i128,
                 I presume that the fact that we got something that a u128 can represent but i128 can't means
@@ -101,7 +101,7 @@ pub async fn get_session(pool: impl AsRef<Pool>, id_arg: &Id) -> Result<Option<R
     Ok(match row {
         Some(row) => {
             let err = DbIntegrityError::SessionsDataIsNotMap {
-                session_id: row.id.clone(),
+                session_id: row.id,
                 session_data: row.data.clone(),
             };
             Some(row.try_into().map_err(|_| err)?)

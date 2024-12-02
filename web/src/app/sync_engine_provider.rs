@@ -19,7 +19,7 @@ pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
         )
     });
 
-    return view! {
+    view! {
         <Suspense>
         {
             move || sync_engine.get().map(|sync_engine| {
@@ -38,7 +38,7 @@ pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
             })
         }
         </Suspense>
-    };
+    }
 }
 
 pub fn use_sync_engine() -> impl Deref<Target = Arc<SyncEngine>> {

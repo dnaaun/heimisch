@@ -45,7 +45,7 @@ impl<T> Then for T {}
 /// `leptos_conf_file` is `Option`al because passing None (and consecuently building a
 /// `Default::default()` was the only way I could get backend tests to pass).
 async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Router<()> {
-    let leptos_conf_file = leptos_conf_file.unwrap_or_else(|| Default::default());
+    let leptos_conf_file = leptos_conf_file.unwrap_or_default();
     let leptos_options = leptos_conf_file.leptos_options;
     // set up connection pool
     let manager = Manager::new(&config.db.url, deadpool_diesel::Runtime::Tokio1);

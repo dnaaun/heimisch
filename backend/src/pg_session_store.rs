@@ -36,9 +36,10 @@ fn crate_err_to_sessions_err(err: crate::error::Error) -> TSError {
 impl SessionStore for PgSessionStore {
     async fn create(&self, record: &mut Record) -> TSResult<()> {
         loop {
-            if let None = get_session(&self, &record.id)
+            if get_session(&self, &record.id)
                 .await
                 .map_err(crate_err_to_sessions_err)?
+                .is_none()
             {
                 break;
             }
