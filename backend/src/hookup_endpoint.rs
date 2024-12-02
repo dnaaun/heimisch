@@ -1,4 +1,3 @@
-use crate::session_and_auth::AuthBackend;
 use std::future::Future;
 
 use axum::{
@@ -9,6 +8,8 @@ use axum::{
 };
 use axum_login::AuthSession;
 use http::StatusCode;
+
+use crate::auth_backend::AuthBackend;
 
 pub trait HookupEndpoint<State, Endpoint, Error, Fut, Func> {
     fn hookup(self, endpoint: Endpoint, func: Func) -> Self;

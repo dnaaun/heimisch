@@ -1,12 +1,13 @@
 #![feature(str_lines_remainder)]
 
 use app_state::AppState;
+use auth_backend::AuthBackend;
 use axum_login::AuthManagerLayerBuilder;
 use config::{init_config, Config};
 use deadpool_diesel::postgres::Manager;
 use leptos::config::{get_configuration, ConfFile};
 use leptos_axum::{generate_route_list, LeptosRoutes};
-use session_and_auth::{AuthBackend, PgSessionStore};
+use pg_session_store::PgSessionStore;
 use std::sync::Arc;
 use tower_http::trace::TraceLayer;
 use tower_sessions::SessionManagerLayer;
@@ -24,7 +25,9 @@ mod db;
 mod error;
 pub mod hookup_endpoint;
 
-pub mod session_and_auth;
+pub mod auth_backend;
+pub mod pg_session_store;
+
 #[cfg(test)]
 mod tests;
 

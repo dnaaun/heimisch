@@ -6,7 +6,7 @@ use shared::types::installation::InstallationId;
 use utils::{ReqwestJsonError, ReqwestSendError};
 use uuid::Uuid;
 
-use crate::{axum_helpers::extractors::HeaderError, session_and_auth::AuthBackend};
+use crate::{auth_backend::AuthBackend, axum_helpers::extractors::HeaderError};
 
 #[derive(Debug)]
 pub enum DbIntegrityError {
