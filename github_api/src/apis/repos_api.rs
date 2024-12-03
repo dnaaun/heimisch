@@ -1668,7 +1668,7 @@ pub async fn repos_slash_accept_invitation_for_authenticated_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1721,7 +1721,7 @@ pub async fn repos_slash_add_app_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1774,7 +1774,7 @@ pub async fn repos_slash_add_collaborator(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1827,7 +1827,7 @@ pub async fn repos_slash_add_status_check_contexts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1882,7 +1882,7 @@ pub async fn repos_slash_add_team_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1935,7 +1935,7 @@ pub async fn repos_slash_add_user_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1986,7 +1986,7 @@ pub async fn repos_slash_cancel_pages_deployment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2036,7 +2036,7 @@ pub async fn repos_slash_check_automated_security_fixes(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2087,7 +2087,7 @@ pub async fn repos_slash_check_collaborator(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2139,7 +2139,7 @@ pub async fn repos_slash_check_private_vulnerability_reporting(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2188,7 +2188,7 @@ pub async fn repos_slash_check_vulnerability_alerts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2241,7 +2241,7 @@ pub async fn repos_slash_codeowners_errors(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2302,7 +2302,7 @@ pub async fn repos_slash_compare_commits(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2353,7 +2353,7 @@ pub async fn repos_slash_create_attestation(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2404,7 +2404,7 @@ pub async fn repos_slash_create_autolink(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2457,7 +2457,7 @@ pub async fn repos_slash_create_commit_comment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2511,7 +2511,7 @@ pub async fn repos_slash_create_commit_signature_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2564,7 +2564,7 @@ pub async fn repos_slash_create_commit_status(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2615,7 +2615,7 @@ pub async fn repos_slash_create_deploy_key(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2666,7 +2666,7 @@ pub async fn repos_slash_create_deployment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2720,7 +2720,7 @@ pub async fn repos_slash_create_deployment_branch_policy(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2775,7 +2775,7 @@ pub async fn repos_slash_create_deployment_protection_rule(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2828,7 +2828,7 @@ pub async fn repos_slash_create_deployment_status(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2879,7 +2879,7 @@ pub async fn repos_slash_create_dispatch_event(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2924,7 +2924,7 @@ pub async fn repos_slash_create_for_authenticated_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -2975,7 +2975,7 @@ pub async fn repos_slash_create_fork(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3024,7 +3024,7 @@ pub async fn repos_slash_create_in_org(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3076,7 +3076,7 @@ pub async fn repos_slash_create_or_update_custom_properties_values(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3131,7 +3131,7 @@ pub async fn repos_slash_create_or_update_environment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3185,7 +3185,7 @@ pub async fn repos_slash_create_or_update_file_contents(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3234,7 +3234,7 @@ pub async fn repos_slash_create_org_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3285,7 +3285,7 @@ pub async fn repos_slash_create_pages_deployment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3336,7 +3336,7 @@ pub async fn repos_slash_create_pages_site(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3387,7 +3387,7 @@ pub async fn repos_slash_create_release(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3438,7 +3438,7 @@ pub async fn repos_slash_create_repo_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3489,7 +3489,7 @@ pub async fn repos_slash_create_tag_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3540,7 +3540,7 @@ pub async fn repos_slash_create_using_template(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3591,7 +3591,7 @@ pub async fn repos_slash_create_webhook(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3638,7 +3638,7 @@ pub async fn repos_slash_decline_invitation_for_authenticated_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3687,7 +3687,7 @@ pub async fn repos_slash_delete(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3738,7 +3738,7 @@ pub async fn repos_slash_delete_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3789,7 +3789,7 @@ pub async fn repos_slash_delete_admin_branch_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3840,7 +3840,7 @@ pub async fn repos_slash_delete_an_environment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3891,7 +3891,7 @@ pub async fn repos_slash_delete_autolink(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3942,7 +3942,7 @@ pub async fn repos_slash_delete_branch_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -3993,7 +3993,7 @@ pub async fn repos_slash_delete_commit_comment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4044,7 +4044,7 @@ pub async fn repos_slash_delete_commit_signature_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4095,7 +4095,7 @@ pub async fn repos_slash_delete_deploy_key(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4146,7 +4146,7 @@ pub async fn repos_slash_delete_deployment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4192,7 +4192,7 @@ pub async fn repos_slash_delete_deployment_branch_policy(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4245,7 +4245,7 @@ pub async fn repos_slash_delete_file(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4296,7 +4296,7 @@ pub async fn repos_slash_delete_invitation(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4345,7 +4345,7 @@ pub async fn repos_slash_delete_org_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4394,7 +4394,7 @@ pub async fn repos_slash_delete_pages_site(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4445,7 +4445,7 @@ pub async fn repos_slash_delete_pull_request_review_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4496,7 +4496,7 @@ pub async fn repos_slash_delete_release(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4547,7 +4547,7 @@ pub async fn repos_slash_delete_release_asset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4598,7 +4598,7 @@ pub async fn repos_slash_delete_repo_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4649,7 +4649,7 @@ pub async fn repos_slash_delete_tag_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4700,7 +4700,7 @@ pub async fn repos_slash_delete_webhook(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4749,7 +4749,7 @@ pub async fn repos_slash_disable_automated_security_fixes(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4795,7 +4795,7 @@ pub async fn repos_slash_disable_deployment_protection_rule(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4844,7 +4844,7 @@ pub async fn repos_slash_disable_private_vulnerability_reporting(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4893,7 +4893,7 @@ pub async fn repos_slash_disable_vulnerability_alerts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4938,7 +4938,7 @@ pub async fn repos_slash_download_tarball_archive(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -4983,7 +4983,7 @@ pub async fn repos_slash_download_zipball_archive(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5032,7 +5032,7 @@ pub async fn repos_slash_enable_automated_security_fixes(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5081,7 +5081,7 @@ pub async fn repos_slash_enable_private_vulnerability_reporting(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5130,7 +5130,7 @@ pub async fn repos_slash_enable_vulnerability_alerts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5181,7 +5181,7 @@ pub async fn repos_slash_generate_release_notes(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5230,7 +5230,7 @@ pub async fn repos_slash_get(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5281,7 +5281,7 @@ pub async fn repos_slash_get_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5332,7 +5332,7 @@ pub async fn repos_slash_get_admin_branch_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5386,7 +5386,7 @@ pub async fn repos_slash_get_all_deployment_protection_rules(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5445,7 +5445,7 @@ pub async fn repos_slash_get_all_environments(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5496,7 +5496,7 @@ pub async fn repos_slash_get_all_status_check_contexts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5555,7 +5555,7 @@ pub async fn repos_slash_get_all_topics(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5606,7 +5606,7 @@ pub async fn repos_slash_get_apps_with_access_to_protected_branch(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5657,7 +5657,7 @@ pub async fn repos_slash_get_autolink(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5708,7 +5708,7 @@ pub async fn repos_slash_get_branch(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5759,7 +5759,7 @@ pub async fn repos_slash_get_branch_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5820,7 +5820,7 @@ pub async fn repos_slash_get_branch_rules(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5873,7 +5873,7 @@ pub async fn repos_slash_get_clones(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5922,7 +5922,7 @@ pub async fn repos_slash_get_code_frequency_stats(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -5976,7 +5976,7 @@ pub async fn repos_slash_get_collaborator_permission_level(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6031,7 +6031,7 @@ pub async fn repos_slash_get_combined_status_for_ref(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6086,7 +6086,7 @@ pub async fn repos_slash_get_commit(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6135,7 +6135,7 @@ pub async fn repos_slash_get_commit_activity_stats(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6186,7 +6186,7 @@ pub async fn repos_slash_get_commit_comment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6238,7 +6238,7 @@ pub async fn repos_slash_get_commit_signature_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6287,7 +6287,7 @@ pub async fn repos_slash_get_community_profile_metrics(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6342,7 +6342,7 @@ pub async fn repos_slash_get_content(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6391,7 +6391,7 @@ pub async fn repos_slash_get_contributors_stats(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6438,7 +6438,7 @@ pub async fn repos_slash_get_custom_deployment_protection_rule(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6487,7 +6487,7 @@ pub async fn repos_slash_get_custom_properties_values(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6538,7 +6538,7 @@ pub async fn repos_slash_get_deploy_key(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6589,7 +6589,7 @@ pub async fn repos_slash_get_deployment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6635,7 +6635,7 @@ pub async fn repos_slash_get_deployment_branch_policy(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6688,7 +6688,7 @@ pub async fn repos_slash_get_deployment_status(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6739,7 +6739,7 @@ pub async fn repos_slash_get_environment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6788,7 +6788,7 @@ pub async fn repos_slash_get_latest_pages_build(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6837,7 +6837,7 @@ pub async fn repos_slash_get_latest_release(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6886,7 +6886,7 @@ pub async fn repos_slash_get_org_rule_suite(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -6967,7 +6967,7 @@ pub async fn repos_slash_get_org_rule_suites(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7016,7 +7016,7 @@ pub async fn repos_slash_get_org_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7078,7 +7078,7 @@ pub async fn repos_slash_get_org_rulesets(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7127,7 +7127,7 @@ pub async fn repos_slash_get_pages(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7178,7 +7178,7 @@ pub async fn repos_slash_get_pages_build(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7229,7 +7229,7 @@ pub async fn repos_slash_get_pages_deployment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7278,7 +7278,7 @@ pub async fn repos_slash_get_pages_health_check(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7327,7 +7327,7 @@ pub async fn repos_slash_get_participation_stats(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7381,7 +7381,7 @@ pub async fn repos_slash_get_pull_request_review_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7430,7 +7430,7 @@ pub async fn repos_slash_get_punch_card_stats(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7483,7 +7483,7 @@ pub async fn repos_slash_get_readme(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7538,7 +7538,7 @@ pub async fn repos_slash_get_readme_in_directory(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7589,7 +7589,7 @@ pub async fn repos_slash_get_release(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7640,7 +7640,7 @@ pub async fn repos_slash_get_release_asset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7691,7 +7691,7 @@ pub async fn repos_slash_get_release_by_tag(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7742,7 +7742,7 @@ pub async fn repos_slash_get_repo_rule_suite(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7820,7 +7820,7 @@ pub async fn repos_slash_get_repo_rule_suites(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7876,7 +7876,7 @@ pub async fn repos_slash_get_repo_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7945,7 +7945,7 @@ pub async fn repos_slash_get_repo_rulesets(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -7996,7 +7996,7 @@ pub async fn repos_slash_get_status_checks_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8047,7 +8047,7 @@ pub async fn repos_slash_get_teams_with_access_to_protected_branch(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8096,7 +8096,7 @@ pub async fn repos_slash_get_top_paths(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8145,7 +8145,7 @@ pub async fn repos_slash_get_top_referrers(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8196,7 +8196,7 @@ pub async fn repos_slash_get_users_with_access_to_protected_branch(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8249,7 +8249,7 @@ pub async fn repos_slash_get_views(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8300,7 +8300,7 @@ pub async fn repos_slash_get_webhook(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8351,7 +8351,7 @@ pub async fn repos_slash_get_webhook_config_for_repo(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8404,7 +8404,7 @@ pub async fn repos_slash_get_webhook_delivery(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8492,7 +8492,7 @@ pub async fn repos_slash_list_activities(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8558,7 +8558,7 @@ pub async fn repos_slash_list_attestations(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8607,7 +8607,7 @@ pub async fn repos_slash_list_autolinks(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8671,7 +8671,7 @@ pub async fn repos_slash_list_branches(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8722,7 +8722,7 @@ pub async fn repos_slash_list_branches_for_head_commit(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8791,7 +8791,7 @@ pub async fn repos_slash_list_collaborators(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8852,7 +8852,7 @@ pub async fn repos_slash_list_comments_for_commit(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8911,7 +8911,7 @@ pub async fn repos_slash_list_commit_comments_for_repo(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -8966,7 +8966,7 @@ pub async fn repos_slash_list_commit_statuses_for_ref(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9054,7 +9054,7 @@ pub async fn repos_slash_list_commits(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9118,7 +9118,7 @@ pub async fn repos_slash_list_contributors(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9182,7 +9182,7 @@ pub async fn repos_slash_list_custom_deployment_rule_integrations(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9241,7 +9241,7 @@ pub async fn repos_slash_list_deploy_keys(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9305,7 +9305,7 @@ pub async fn repos_slash_list_deployment_branch_policies(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9366,7 +9366,7 @@ pub async fn repos_slash_list_deployment_statuses(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9443,7 +9443,7 @@ pub async fn repos_slash_list_deployments(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9530,7 +9530,7 @@ pub async fn repos_slash_list_for_authenticated_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9602,7 +9602,7 @@ pub async fn repos_slash_list_for_org(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9674,7 +9674,7 @@ pub async fn repos_slash_list_for_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9738,7 +9738,7 @@ pub async fn repos_slash_list_forks(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9797,7 +9797,7 @@ pub async fn repos_slash_list_invitations(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9855,7 +9855,7 @@ pub async fn repos_slash_list_invitations_for_authenticated_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9904,7 +9904,7 @@ pub async fn repos_slash_list_languages(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -9963,7 +9963,7 @@ pub async fn repos_slash_list_pages_builds(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10010,7 +10010,7 @@ pub async fn repos_slash_list_public(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10074,7 +10074,7 @@ pub async fn repos_slash_list_pull_requests_associated_with_commit(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10135,7 +10135,7 @@ pub async fn repos_slash_list_release_assets(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10194,7 +10194,7 @@ pub async fn repos_slash_list_releases(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10243,7 +10243,7 @@ pub async fn repos_slash_list_tag_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10302,7 +10302,7 @@ pub async fn repos_slash_list_tags(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10361,7 +10361,7 @@ pub async fn repos_slash_list_teams(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10422,7 +10422,7 @@ pub async fn repos_slash_list_webhook_deliveries(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10481,7 +10481,7 @@ pub async fn repos_slash_list_webhooks(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10532,7 +10532,7 @@ pub async fn repos_slash_merge(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10583,7 +10583,7 @@ pub async fn repos_slash_merge_upstream(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10634,7 +10634,7 @@ pub async fn repos_slash_ping_webhook(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10687,7 +10687,7 @@ pub async fn repos_slash_redeliver_webhook_delivery(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10740,7 +10740,7 @@ pub async fn repos_slash_remove_app_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10791,7 +10791,7 @@ pub async fn repos_slash_remove_collaborator(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10844,7 +10844,7 @@ pub async fn repos_slash_remove_status_check_contexts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10895,7 +10895,7 @@ pub async fn repos_slash_remove_status_check_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -10950,7 +10950,7 @@ pub async fn repos_slash_remove_team_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11003,7 +11003,7 @@ pub async fn repos_slash_remove_user_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11056,7 +11056,7 @@ pub async fn repos_slash_rename_branch(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11107,7 +11107,7 @@ pub async fn repos_slash_replace_all_topics(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11156,7 +11156,7 @@ pub async fn repos_slash_request_pages_build(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11207,7 +11207,7 @@ pub async fn repos_slash_set_admin_branch_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11260,7 +11260,7 @@ pub async fn repos_slash_set_app_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11313,7 +11313,7 @@ pub async fn repos_slash_set_status_check_contexts(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11368,7 +11368,7 @@ pub async fn repos_slash_set_team_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11421,7 +11421,7 @@ pub async fn repos_slash_set_user_access_restrictions(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11472,7 +11472,7 @@ pub async fn repos_slash_test_push_webhook(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11523,7 +11523,7 @@ pub async fn repos_slash_transfer(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11574,7 +11574,7 @@ pub async fn repos_slash_update(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11627,7 +11627,7 @@ pub async fn repos_slash_update_branch_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11680,7 +11680,7 @@ pub async fn repos_slash_update_commit_comment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11728,7 +11728,7 @@ pub async fn repos_slash_update_deployment_branch_policy(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11782,7 +11782,7 @@ pub async fn repos_slash_update_information_about_pages_site(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11835,7 +11835,7 @@ pub async fn repos_slash_update_invitation(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11886,7 +11886,7 @@ pub async fn repos_slash_update_org_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11945,7 +11945,7 @@ pub async fn repos_slash_update_pull_request_review_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -11998,7 +11998,7 @@ pub async fn repos_slash_update_release(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -12051,7 +12051,7 @@ pub async fn repos_slash_update_release_asset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -12104,7 +12104,7 @@ pub async fn repos_slash_update_repo_ruleset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -12160,7 +12160,7 @@ pub async fn repos_slash_update_status_check_protection(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -12213,7 +12213,7 @@ pub async fn repos_slash_update_webhook(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -12269,7 +12269,7 @@ pub async fn repos_slash_update_webhook_config_for_repo(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -12329,7 +12329,7 @@ pub async fn repos_slash_upload_release_asset(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;

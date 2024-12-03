@@ -1,7 +1,7 @@
 use crate::endpoints::{endpoint::No, endpoint_client::MaybePageRedirect};
 
 use super::super::super::super::endpoint::{Endpoint, Method};
-use derive_more::derive::{AsRef, Deref, Into};
+use derive_more::derive::{AsRef, Deref, Display, Into};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -11,7 +11,7 @@ pub struct AuthFinishPayload {
 }
 
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Into, AsRef, Deref)]
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Into, AsRef, Deref, Display)]
 pub struct GithubAccessToken(String);
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -4,12 +4,13 @@ use app_state::AppState;
 use auth_backend::AuthBackend;
 use axum_login::AuthManagerLayerBuilder;
 use config::{init_config, Config};
+use controllers::api::get_api_router;
 use deadpool_diesel::postgres::Manager;
 use leptos::config::{get_configuration, ConfFile};
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use pg_session_store::PgSessionStore;
-use std::sync::Arc;
-use tower_http::trace::TraceLayer;
+use std::{ops::Deref, path::PathBuf, sync::Arc};
+use tower_http::{services::ServeDir, trace::TraceLayer};
 use tower_sessions::SessionManagerLayer;
 
 use axum::Router;
@@ -28,6 +29,7 @@ pub mod hookup_endpoint;
 pub mod auth_backend;
 pub mod pg_session_store;
 
+mod file_and_error_handler;
 #[cfg(test)]
 mod tests;
 
@@ -71,26 +73,16 @@ async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Route
     let leptos_routes = generate_route_list(web::App);
     let leptos_options = state.leptos_options.clone();
 
-    let auth_backend = AuthBackend::new(&state);
-    let pg_session_store = PgSessionStore::new(&state);
-
-    let session_layer = SessionManagerLayer::new(pg_session_store);
-    let auth_layer = AuthManagerLayerBuilder::new(auth_backend, session_layer).build();
-
     Router::new()
+        .route_service(
+            "/pkg/*rest",
+            ServeDir::new(PathBuf::try_from(leptos_options.site_root.deref()).unwrap()),
+        )
         .leptos_routes(&state, leptos_routes, {
             move || web::shell(leptos_options.clone())
         })
-        .then(controllers::api::auth::initiate)
-        .then(controllers::api::auth::finish)
-        .then(controllers::api::app_installs::create)
-        .then(controllers::api::github_hooks::github_hooks)
-        .then(controllers::api::installations::get_token)
-        .fallback(leptos_axum::file_and_error_handler::<AppState, _>(
-            web::shell,
-        ))
+        .merge(get_api_router(state.clone()))
         .layer(TraceLayer::new_for_http())
-        .layer(auth_layer)
         .with_state(state)
 }
 

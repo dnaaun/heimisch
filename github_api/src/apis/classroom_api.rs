@@ -82,7 +82,7 @@ pub async fn classroom_slash_get_a_classroom(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -129,7 +129,7 @@ pub async fn classroom_slash_get_an_assignment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -176,7 +176,7 @@ pub async fn classroom_slash_get_assignment_grades(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -236,7 +236,7 @@ pub async fn classroom_slash_list_accepted_assignments_for_an_assignment(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -296,7 +296,7 @@ pub async fn classroom_slash_list_assignments_for_a_classroom(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -348,7 +348,7 @@ pub async fn classroom_slash_list_classrooms(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;

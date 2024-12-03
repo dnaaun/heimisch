@@ -79,7 +79,7 @@ pub async fn billing_slash_get_github_actions_billing_org(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -126,7 +126,7 @@ pub async fn billing_slash_get_github_actions_billing_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -173,7 +173,7 @@ pub async fn billing_slash_get_github_packages_billing_org(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -220,7 +220,7 @@ pub async fn billing_slash_get_github_packages_billing_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -267,7 +267,7 @@ pub async fn billing_slash_get_shared_storage_billing_org(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -314,7 +314,7 @@ pub async fn billing_slash_get_shared_storage_billing_user(
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
         local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
     }
 
     let local_var_req = local_var_req_builder.build()?;

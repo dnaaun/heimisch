@@ -28,7 +28,6 @@ use crate::{
 };
 use error::SyncResult;
 use jiff::{Timestamp, ToSpan};
-use url::Url;
 
 /// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
 /// "defining use."
@@ -47,7 +46,6 @@ mod isolate_db_store_markers_impl_type {
         },
     };
     use typesafe_idb::{StoreMarker, TypesafeDb};
-    use url::Url;
 
     use super::{error::SyncResult, SyncEngine};
 
@@ -138,7 +136,7 @@ impl SyncEngine {
         &self,
         id: &InstallationId,
     ) -> SyncResult<github_api::apis::configuration::Configuration> {
-        let bearer_access_token = Some(format!("Bearer {}", self.get_valid_iac(id).await?.token));
+        let bearer_access_token = Some(self.get_valid_iac(id).await?.token);
         let conf = github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
             client: self.endpoint_client.client.clone(),

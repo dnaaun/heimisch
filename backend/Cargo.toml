@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-shared =  { path = "../shared", features = ["ssr"] }
+shared =  { path = "../shared", version = "*", features = ["ssr"] }
 utils =  { path = "../utils" }
 deadpool-diesel = { version = "0.6.1", features = ["postgres"] }
 diesel = { version = "2.2.4", features = ["postgres", "serde_json", "time", "uuid"] }
@@ -24,24 +24,25 @@ url = { version = "2.5.2", features = ["serde"] }
 reqwest = { version = "0.12.8", features = ["json"] }
 github_webhook_body = { path = "../github_webhook_body" }
 
-leptos = { version = "=0.7.0-rc1", features = ["nightly", "ssr", "tracing"] }
-leptos_axum = { version = "=0.7.0-rc1" }
-web = { path = "../web", default-features = false, features = [ "ssr" ] }
+leptos = { version = "0.7", features = ["nightly", "ssr", "tracing"] }
+leptos_axum = { version = "0.7" }
+web = { path = "../web", version = "*", features = ["ssr"] }
 dotenvy = "0.15.7"
 backtrace = "0.3.74"
 jsonwebtoken = "9.3.0"
 diesel_test = { path = "../diesel-test" }
 parking_lot = "0.12.3"
 axum-test = "16.3.0"
-anyhow = "1.0.92"
 bytes = "1.8.0"
 derive_more = { version = "1.0.0", features = ["display", "error"] }
 assert-json-diff = "2.0.2"
 github_api = { path = "../github_api" }
-jiff = "0.1.14"
-axum-typed-websockets = { version = "0.6.0", features = ["json"] }
+jiff = { version = "0.1.14", default-features = false }
+axum-typed-websockets = "0.6.0"
 futures = "0.3.31"
 tower-sessions = "0.13.0"
 uuid = "1.11.0"
 opaque-debug = "0.3.1"
 axum-login = "0.16.0"
+anyhow = "1.0.94"
+tower = "0.5.1"

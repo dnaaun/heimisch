@@ -8,16 +8,13 @@ edition = "2021"
 # This specific combination of versions for leptos and thaw was selected simply because it's the one
 # that compiles :).
 # https://discord.com/channels/1031524867910148188/1290135091179294730/1290404436321112084
-leptos = { version = "0.7.0-rc1", features = [ "tracing", "nightly"] }
+leptos = { version = "0.7", features = ["nightly", "tracing"] }
 leptos_reactive = { version = "*" } 
-leptos_router = { version = "0.7.0-rc1", features = ["nightly"] }
-thaw = { git = "https://github.com/thaw-ui/thaw", rev = "4954e63", features = ["nightly"] }
-
-wasm-bindgen = "^0.2.93"
-web-sys = { version = "*", features = [ "Storage", "Clipboard", "Navigator" ] }
+leptos_router = { version = "0.7", features = ["nightly"] }
+wasm-bindgen = { version = "0.2.93", default-features = false }
+web-sys = { version = "*", default-features = false, features = ["Window", "Clipboard", "Navigator", "Storage"] }
 tracing = "0.1.40"
 url = "2.5.2"
-icondata = "0.4.0"
 
 wasm-bindgen-futures = "0.4.43"
 
@@ -26,7 +23,7 @@ reqwest = { version = "0.12.8", features = ["json"] }
 serde = "1.0.210"
 serde_urlencoded = "0.7.1"
 serde_json = "1.0.132"
-idb = { version = "0.6.4", default-features = false, features = ["builder", "doc"] }
+idb = { version = "0.6.4", features = ["doc"] }
 typesafe_idb = { path = "../typesafe_idb" }
 # serde-wasm-bindgen = "0.6.5"
 # serde-wasm-bindgen = { path = "../../serde-wasm-bindgen" }
@@ -36,16 +33,16 @@ js-sys = "0.3.72"
 wasm-bindgen-test = "0.3.45"
 heck = "0.5.0"
 strum_macros = "0.26.4"
-derive_more = { version = "1.0.0", features = ["from_str", "display"] }
-leptos-use = { git = "https://github.com/Synphonyte/leptos-use", rev = "f032a57", features = ["use_websocket"] }
+derive_more = { version = "1.0.0", features = ["display", "from_str"] }
+leptos-use = { version = "0.14", default-features = false, features = ["use_websocket"] }
 strum = "0.26.3"
 send_wrapper = "0.6.0"
 itertools = "0.13.0"
-jiff = { version = "0.1.14", features = ["serde"] }
+jiff = { version = "0.1.14", default-features = false, features = ["serde", "alloc", "std"] }
 codee = "0.2.0"
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "thaw/hydrate", "shared/hydrate", "jiff/js"]
-ssr = ["leptos/ssr", "leptos_router/ssr", "thaw/ssr"]
+hydrate = ["leptos/hydrate", "shared/hydrate", "jiff/js"]
+ssr = ["leptos/ssr", "leptos_router/ssr"]
 tracing = []

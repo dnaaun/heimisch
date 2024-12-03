@@ -1,4 +1,4 @@
-use std::{ops::Deref, str::FromStr};
+use std::{ops::Deref, str::FromStr, sync::Arc};
 
 use leptos::prelude::*;
 use leptos_router::{
@@ -12,12 +12,13 @@ use shared::types::{
 };
 use top_bar::TopBar;
 mod top_bar;
-use thaw::*;
 
 use crate::{app::not_found::NotFound, idb_signal_from_sync_engine::IdbSignalFromSyncEngine};
 
 use super::{
-    issues_tab::IssuesTab, pull_requests_tab::PullRequestsTab,
+    flowbite::{Tab, Tabs},
+    issues_tab::IssuesTab,
+    pull_requests_tab::PullRequestsTab,
     sync_engine_provider::use_sync_engine,
 };
 
@@ -28,12 +29,12 @@ struct RepositoryPageParams {
     tab: Option<String>,
 }
 
-#[derive(strum_macros::EnumString, strum_macros::Display, Clone, PartialEq)]
+#[derive(strum_macros::EnumString, strum_macros::Display, Clone, PartialEq, Eq, Hash)]
 #[strum(serialize_all = "snake_case")]
 enum TabName {
-    #[strum(to_string = "issues")]
+    #[strum(to_string = "Issues")]
     Issues,
-    #[strum(to_string = "pulls")]
+    #[strum(to_string = "Pull Requests")]
     Pulls,
 }
 
@@ -119,37 +120,41 @@ pub fn RepositoryPage() -> impl IntoView {
     );
 
     move || {
-        tracing::info!("HEY");
         let repository = repository.read();
         let repository = match repository.deref().deref() {
             Some(r) => r.as_ref().unwrap(),
             None => return view! { <div>Loading...</div> }.into_any(),
-        };
+        }.clone();
 
         let repository = match repository {
             Some(r) => r,
             None => return view! { <NotFound /> }.into_any(),
         };
 
-        let active_tab_el = match *active_tab_enum.read() {
-            TabName::Issues => view! { <IssuesTab repository=repository.clone() /> }.into_any(),
-            TabName::Pulls => view! { <PullRequestsTab _repository_id=42.into() /> }.into_any(),
-        };
+        let tabs: Vec<Tab<_>> = vec![
+            Tab {
+                content_el: Arc::new(move || {
+                    view! { <IssuesTab repository=repository.clone() /> }.into_any()
+                }),
+                key: TabName::Issues,
+            },
+            Tab {
+                content_el: Arc::new(move || {
+                    view! { <PullRequestsTab _repository_id=42.into() /> }.into_any()
+                }),
+                key: TabName::Pulls,
+            },
+        ];
 
         view! {
             <TopBar
                 owner_name=Box::new(move || params().owner_name)
                 repo_name=Box::new(move || params().repo_name)
             />
-            <div class="pl-6">
-                <TabList selected_value=(active_tab, active_tab_setter)>
-                    <Tab value=TabName::Pulls.to_string()>Pull Requests</Tab>
-                    <Tab value=TabName::Issues.to_string()>Issues</Tab>
-                </TabList>
-            </div>
-            <div class="border-t border-t-gray-200">
-                <div class="w-full max-w-screen-xl mx-auto py-4 px-6">{active_tab_el}</div>
-            </div>
+            <Tabs
+             tabs
+             active=active_tab_enum
+            />
         }
         .into_any()
     }

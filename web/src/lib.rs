@@ -28,6 +28,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
             </body>
         </html>
     }
+
 }
 
 pub use app::App;

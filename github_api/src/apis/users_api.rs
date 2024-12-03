@@ -446,7 +446,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -492,7 +492,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -539,7 +539,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -586,7 +586,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -635,7 +635,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -682,7 +682,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -727,7 +727,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -772,7 +772,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -820,7 +820,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -867,7 +867,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -914,7 +914,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -961,7 +961,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1006,7 +1006,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1053,7 +1053,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1100,7 +1100,7 @@ pub enum UsersSlashGetAuthenticatedError {
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1141,8 +1141,10 @@ pub async fn users_slash_get_authenticated(
     }
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-        local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1189,7 +1191,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1236,7 +1238,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1293,7 +1295,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1340,7 +1342,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1387,7 +1389,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1434,7 +1436,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1486,7 +1488,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1550,7 +1552,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1602,7 +1604,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1654,7 +1656,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1706,7 +1708,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1758,7 +1760,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1815,7 +1817,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1872,7 +1874,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1924,7 +1926,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -1981,7 +1983,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2033,7 +2035,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2090,7 +2092,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2142,7 +2144,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2195,7 +2197,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2252,7 +2254,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2308,7 +2310,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2365,7 +2367,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2414,7 +2416,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2461,7 +2463,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2508,7 +2510,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;
@@ -2552,7 +2554,7 @@ pub async fn users_slash_get_authenticated(
 //
 //     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
 //         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, bearer_access_token);
+//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
 //     }
 //
 //     let local_var_req = local_var_req_builder.build()?;

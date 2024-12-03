@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 use super::endpoint::{Endpoint, Method, QueryParams};
 use http::{header::LOCATION, StatusCode};
@@ -40,15 +40,15 @@ impl<T> From<T> for MaybePageRedirect<T> {
 
 #[derive(Clone)]
 pub struct EndpointClient {
-    redirect_handler: Rc<dyn Fn(Url)>,
+    redirect_handler: Arc<dyn Fn(Url) + Send + Sync>,
     pub client: Client,
     pub domain: Url,
 }
 
 impl EndpointClient {
-    pub fn new(redirect_handler: impl Fn(Url) + 'static, domain: Url) -> Self {
+    pub fn new(redirect_handler: impl Fn(Url) + Send + Sync + 'static, domain: Url) -> Self {
         Self {
-            redirect_handler: Rc::new(redirect_handler),
+            redirect_handler: Arc::new(redirect_handler),
             client: ClientBuilder::new().build().expect(""),
             domain,
         }

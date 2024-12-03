@@ -1,3 +1,5 @@
+use std::{cell::LazyCell, ops::Deref, path::PathBuf};
+
 use axum::{http::StatusCode, response::IntoResponse};
 use backtrace::Backtrace;
 use github_webhook_body::WebhookBody;
@@ -127,7 +129,7 @@ Backtrace:
             | &ErrorSource::AuthenticationFailed(_)
             | &ErrorSource::AuthorizationFailed
             | &ErrorSource::GithubUserDetailsNotFound => format!(
-                "{:?}
+                "YOOOOO {:?}
 {}",
                 self.source,
                 print_backtrace_nicely(&self.backtrace)
@@ -277,6 +279,13 @@ impl IntoResponse for Error {
     }
 }
 
+/// I know this is absolute cuz https://man7.org/linux/man-pages/man3/getcwd.3.html says so.
+const ABSOLUTE_CUR_DIR: LazyCell<PathBuf> =
+    LazyCell::new(|| std::fs::canonicalize(std::env::current_dir().expect("")).expect(""));
+
+const THIS_VERY_FILE: LazyCell<PathBuf> =
+    LazyCell::new(|| std::fs::canonicalize(PathBuf::from(file!())).expect(""));
+
 /// Filters backtrace frames to those in our codebase.
 fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
     let frames = backtrace
@@ -287,11 +296,21 @@ fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
                 symbol
                     .filename()
                     .and_then(|filename| filename.to_str())
-                    .map(|filename| filename.contains("heimisch")) // TODO: change this to be more robust?
-                    .unwrap_or(false)
+                    .map(|f| {
+                        let path_buf = std::fs::canonicalize(PathBuf::from(f));
+                        let path_buf = match path_buf {
+                            Ok(p) => p,
+                            Err(_) => return false,
+                        };
+                        path_buf.starts_with(ABSOLUTE_CUR_DIR.deref())
+                            && &path_buf != THIS_VERY_FILE.deref()
+                    })
+                    .unwrap_or(true)
+                // .map(|filename| filename.contains("heimisch")) // TODO: change this to be more robust?
+                // .unwrap_or(false)
             })
         })
-        .skip(1) // The first item of the backtrace is going to be `Backtrace::new()`
+        // .skip(1) // The first item of the backtrace is going to be `Backtrace::new()`
         .cloned()
         .collect::<Vec<_>>();
 

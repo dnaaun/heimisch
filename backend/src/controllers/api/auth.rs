@@ -16,7 +16,7 @@ use axum::{
 use github_api::apis::users_api::users_slash_get_authenticated;
 use http::StatusCode;
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use shared::endpoints::{endpoint::Endpoint, endpoint_client::MaybePageRedirect};
+use shared::endpoints::endpoint::Endpoint;
 use shared::{
     endpoints::defns::api::auth::{
         finish::{AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse},
@@ -57,6 +57,7 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
             )
             .await?;
 
+            tracing::info!("YO {access_token}");
             let resp =
                 users_slash_get_authenticated(&github_api::apis::configuration::Configuration {
                     user_agent: Some("Heimisch".into()),

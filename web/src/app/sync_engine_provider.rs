@@ -2,36 +2,21 @@ use std::{ops::Deref, rc::Rc};
 
 use leptos::{prelude::*, task::spawn_local};
 use send_wrapper::SendWrapper;
-use shared::{endpoints::endpoint_client::EndpointClient, sync_engine::SyncEngine};
-use url::Url;
+use shared::sync_engine::SyncEngine;
 
-use crate::{consts::HEIMISCH_DOMAIN_URL, local_storage::get_installation_ids_from_local_storage};
+use crate::{consts::ENDPOINT_CLIENT, local_storage::get_installation_ids_from_local_storage};
 
 pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
-pub type EndpointClientContext = SendWrapper<EndpointClient>;
-
-pub fn redirect_handler(path: Url) {
-    location().set_href(path.as_str()).expect("");
-    panic!("Received a redirect without a (valid) URL: {path:?}")
-}
 
 /// Will provide a context with the above `SyncEngineWrapper` type, and it will kick off.
 #[component]
 pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
-    let endpoint_client = SendWrapper::new(EndpointClient::new(
-        redirect_handler,
-        HEIMISCH_DOMAIN_URL.with(Clone::clone),
-    ));
-    let endpoint_client2 = endpoint_client.clone();
-    let sync_engine = LocalResource::new(move || {
-        let endpoint_client2 = endpoint_client2.clone();
-        async move {
-            Rc::new(
-                shared::sync_engine::SyncEngine::new(endpoint_client2.take())
-                    .await
-                    .unwrap(),
-            )
-        }
+    let sync_engine = LocalResource::new(move || async move {
+        Rc::new(
+            shared::sync_engine::SyncEngine::new(ENDPOINT_CLIENT.clone())
+                .await
+                .unwrap(),
+        )
     });
 
     view! {
@@ -52,7 +37,6 @@ pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
                                 });
                         });
                         provide_context::<SyncEngineContext>(sync_engine.clone());
-                        provide_context::<EndpointClientContext>(endpoint_client.clone());
                         children()
                     })
             }}

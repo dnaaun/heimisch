@@ -8,7 +8,6 @@ use shared::types::{
     repository::Repository,
     user::User,
 };
-use thaw::*;
 
 use crate::{
     app::sync_engine_provider::use_sync_engine,
@@ -141,8 +140,8 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                     </div>
                 </div>
                 <div>
-                    <div class="flex gap-1 items-center">
-                        <Icon icon=icondata::AiCommentOutlined />
+                    <div class="flex gap-2 items-center">
+                        <div>comments</div>
                         {comments_count}
                     </div>
                 </div>

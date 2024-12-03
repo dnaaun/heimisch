@@ -8,7 +8,7 @@ use shared::{
             },
             auth::finish::GithubAccessToken,
         },
-        endpoint_client::{EndpointClient, OwnApiError},
+        endpoint_client::OwnApiError,
     },
     types::installation::InstallationId,
 };
@@ -18,16 +18,12 @@ use leptos::{prelude::*, task::spawn_local_scoped};
 use shared::endpoints::defns::api::auth::finish::{
     AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse,
 };
-use thaw::*;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::{
-    consts::HEIMISCH_DOMAIN_URL,
-    local_storage::{add_installation_id_to_local_storage, local_storage},
-    use_unwrapped_context::use_unwrapped_context,
+    app::flowbite::Spinner, consts::ENDPOINT_CLIENT,
+    local_storage::add_installation_id_to_local_storage
 };
-
-pub const USER_ACCESS_TOKEN_KEY: &str = "access_token";
 
 #[derive(PartialEq, Deserialize, Serialize, Clone)]
 #[serde(untagged)]
@@ -73,15 +69,9 @@ pub fn Auth() -> impl IntoView {
     };
 
     view! {
-        <Flex
-            vertical=true
-            justify=FlexJustify::Center
-            align=FlexAlign::Center
-            gap=FlexGap::Large
-            style="height: 100vh"
-        >
-            <ToasterProvider>{body}</ToasterProvider>
-        </Flex>
+        <div class="flex justify-center items-center h-screen">
+            {body}
+        </div>
     }
 }
 
@@ -101,7 +91,7 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
         }
     };
 
-    let fallback = || view! { <Spinner size=SpinnerSize::Huge /> };
+    let fallback = || view! { <Spinner  /> };
     view! { <Suspense fallback>{body}</Suspense> }
 }
 
@@ -109,7 +99,7 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
 pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView {
     let installation_rsrc: LocalResource<Result<CreateAppInstallResponse, OwnApiError>> =
         LocalResource::new(move || async move {
-            use_unwrapped_context::<EndpointClient>()
+            ENDPOINT_CLIENT
                 .make_request(
                     CreateAppInstallEndpoint,
                     CreateAppInstallPayload { installation_id },
@@ -132,8 +122,14 @@ pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView 
             }
         })
     };
-    let fallback =
-        || view! { <Spinner size=SpinnerSize::Huge label="Installing Heimisch on Github Repo" /> };
+    let fallback = || {
+        view! {
+            <div class="flex gap-x-3 items-center justify-center">
+                <Spinner />
+                <div>Installing Heimisch on Github Repo</div>
+            </div>
+        }
+    };
     view! { <Suspense fallback>{body}</Suspense> }
 }
 
@@ -144,21 +140,19 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
         state,
         show_copy_to_cli,
     } = params;
-    let body = {
-        let user_access_token_rsrc = LocalResource::new(
-            // || (),
-            move || {
+    let body =
+        {
+            let user_access_token_rsrc = LocalResource::new(move || {
                 let code = code.clone();
                 let state = state.clone();
                 async move {
-                    use_unwrapped_context::<EndpointClient>()
+                    ENDPOINT_CLIENT
                         .make_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
                         .await
                 }
-            },
-        );
-        let show_copy_to_cli = show_copy_to_cli.is_some();
-        (move || view! {
+            });
+            let show_copy_to_cli = show_copy_to_cli.is_some();
+            (move || view! {
             <Suspense fallback=LoggingIn>
                 {move || {
                     user_access_token_rsrc
@@ -183,11 +177,10 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                                 }
                                 _ => {
                                     view! {
-                                        <Text style="font-size: 2em; padding: 0.4em; border-radius: var(--borderRadiusMedium)">
+                                        <div class="text-lg">
                                             "Authenticating Heimisch failed. Please try again."
-                                        </Text>
-                                    }
-                                        .into_any()
+                                        </div>
+                                    }.into_any()
                                 }
                             }
                         })
@@ -195,24 +188,23 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
             </Suspense>
         })
                         .into_any()
-    };
+        };
 
     view! {
-        <Flex
-            vertical=true
-            justify=FlexJustify::Center
-            align=FlexAlign::Center
-            gap=FlexGap::Large
-            style="height: 100vh"
-        >
-            <ToasterProvider>{body}</ToasterProvider>
-        </Flex>
+        <div class="flex justify-center items-center h-screen">
+            {body}
+        </div>
     }
 }
 
 #[component]
 fn LoggingIn() -> impl IntoView {
-    view! { <Spinner size=SpinnerSize::Huge label="Logging you into Heimisch CLI" /> }
+    view! {
+        <div class="flex gap-3 items-center justify-center">
+            <Spinner />
+            <div>Logging you into Heimisch CLI</div>
+        </div>
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -223,7 +215,6 @@ enum SuccessSettings {
 
 #[component]
 fn Success(settings: SuccessSettings) -> impl IntoView {
-    let toaster = ToasterInjection::expect_context();
     let make_on_click = |access_token: GithubAccessToken| {
         move |_| {
             let access_token = access_token.clone();
@@ -231,7 +222,6 @@ fn Success(settings: SuccessSettings) -> impl IntoView {
                 JsFuture::from(window().navigator().clipboard().write_text(&access_token))
                     .await
                     .unwrap();
-                toast_copied_to_clipboard(toaster);
             })
         }
     };
@@ -243,19 +233,13 @@ fn Success(settings: SuccessSettings) -> impl IntoView {
                     <div>
                         Copy the below back into your CLI prompt to finish authenticating Heimisch CLI.
                     </div>
-                    <Text
-                        tag=TextTag::Code
-                        style="font-size: 2em; padding: 0.4em; border-radius: var(--borderRadiusMedium)"
-                    >
+                    <div
+                    class="bg-gray-100 p-2 rounded font-mono">
                         {github_access_token.deref().clone()}
-                    </Text>
-                    <Button
-                        icon=icondata::BiClipboardRegular
-                        appearance=ButtonAppearance::Primary
-                        on_click
-                    >
+                    </div>
+                    <button on:click=on_click>
                         Copy to clipboard
-                    </Button>
+                    </button>
                 </>
             }
         }
@@ -264,17 +248,4 @@ fn Success(settings: SuccessSettings) -> impl IntoView {
             view! { <div style="font-size: 2em">"You're logged in!"</div> }.into_any()
         }
     }
-}
-
-pub fn toast_copied_to_clipboard(toaster: ToasterInjection) {
-    toaster.dispatch_toast(
-        || {
-            view! {
-                <Toast>
-                    <ToastTitle>"Copied."</ToastTitle>
-                </Toast>
-            }
-        },
-        ToastOptions::default().with_position(ToastPosition::Top),
-    );
 }

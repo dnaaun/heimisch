@@ -72,7 +72,7 @@ impl WithAppAuth for Configuration {
     ) -> Result<Configuration, jsonwebtoken::errors::Error> {
         let thingy = app_auth.generate_bearer_token()?;
         Ok(Self {
-            bearer_access_token: Some(format!("Bearer {thingy}")),
+            bearer_access_token: Some(thingy),
             ..self
         })
     }

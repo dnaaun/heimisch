@@ -9,7 +9,7 @@ serde = { version = "1.0.210", features = ["derive"] }
 url = { version = "2.5.2", features = ["serde"] }
 github_webhook_body = { path = "../github_webhook_body" }
 derive_more = { version = "1.0.0", features = ["as_ref", "deref", "display", "error", "from", "into"] }
-jiff = { version = "0.1.14", features = ["serde"] }
+jiff = { version = "0.1.14", default-features = false, features = ["serde"] }
 serde_json = "1.0.132"
 tracing = "0.1.40"
 github_api = { path = "../github_api" }
