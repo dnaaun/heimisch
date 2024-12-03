@@ -11,8 +11,7 @@ pub struct InstallationAccessToken {
 }
 
 /// When storing this in the db, we need to store the installation id.
-#[derive(macros::TypesafeIdb)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(macros::TypesafeIdb, Debug, Serialize, Deserialize, Clone)]
 pub struct InstallationAccessTokenRow {
     #[idb(id)]
     pub installation_id: InstallationId,

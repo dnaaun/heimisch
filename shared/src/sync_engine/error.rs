@@ -1,4 +1,4 @@
-use crate::{avail::MergeError, endpoints::endpoint_request::OwnApiError};
+use crate::{avail::MergeError, endpoints::endpoint_client::OwnApiError};
 
 #[derive(Debug)]
 pub enum SyncErrorSrc {

@@ -7,8 +7,7 @@ use crate::avail::Avail;
 #[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct LicenseId(String);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug, AvailMerge)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge)]
 pub struct License {
     pub body: Avail<String>,
     pub conditions: Avail<Vec<String>>,

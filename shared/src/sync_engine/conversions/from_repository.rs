@@ -1,8 +1,7 @@
 use crate::{
-    avail::{Avail, MergeError}, sync_engine::changes::{AddChanges, Changes}, types::{
-        installation::InstallationId,
-        repository::RepositoryId,
-    }
+    avail::{Avail, MergeError},
+    sync_engine::changes::{AddChanges, Changes},
+    types::{installation::InstallationId, repository::RepositoryId},
 };
 
 use super::{from_license::from_license, from_user2::from_user2};

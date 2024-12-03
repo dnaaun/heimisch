@@ -37,8 +37,7 @@ pub struct Link {
 #[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
 pub struct PullRequestId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
 pub struct PullRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_lock_reason: Option<String>,

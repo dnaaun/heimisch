@@ -7,14 +7,14 @@ mod error;
 mod txn;
 mod txn_valid_for_store;
 
+mod index;
+mod object_store;
 pub mod serde_abstraction;
 mod store;
-mod object_store;
-mod index;
 
 pub use db::{TypesafeDb, TypesafeDbBuilder};
 pub use error::Error;
-pub use store::Store;
-pub use txn::{Present, ReadOnly, ReadWrite, Txn, TxnBuilder, TxnMode, ReactivityTrackers};
-pub use txn_valid_for_store::StoreMarker;
 pub use index::{Index, IndexSpec};
+pub use store::Store;
+pub use txn::{Present, ReactivityTrackers, ReadOnly, ReadWrite, Txn, TxnBuilder, TxnMode};
+pub use txn_valid_for_store::StoreMarker;

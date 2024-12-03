@@ -3794,6 +3794,7 @@ dependencies = [
  "futures",
  "github_api",
  "github_webhook_body",
+ "http 1.1.0",
  "idalloc",
  "idb",
  "jiff",
@@ -4789,6 +4790,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

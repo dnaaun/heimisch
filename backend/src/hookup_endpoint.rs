@@ -4,21 +4,21 @@ use axum::{
     extract,
     response::IntoResponse,
     routing::{get, post},
-    Json,
+    Json, Router,
 };
 use axum_login::AuthSession;
 use http::StatusCode;
+use shared::endpoints::endpoint::No;
 
-use crate::auth_backend::AuthBackend;
+use crate::{auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser};
 
-pub trait HookupEndpoint<State, Endpoint, Error, Fut, Func> {
-    fn hookup(self, endpoint: Endpoint, func: Func) -> Self;
-}
-
-impl<State, Endpoint, Error, Fut, Func> HookupEndpoint<State, Endpoint, Error, Fut, Func>
-    for axum::Router<State>
+pub fn hookup<Endpoint, State, Error, Fut, Func>(
+    _: Endpoint,
+    router: Router<State>,
+    func: Func,
+) -> Router<State>
 where
-    Endpoint: shared::endpoints::endpoint::Endpoint,
+    Endpoint: shared::endpoints::endpoint::Endpoint<AuthRequired = No>,
     Endpoint::JsonPayload: Send + 'static,
     Error: IntoResponse,
     Fut: Future<Output = Result<(StatusCode, Endpoint::JsonResponse), Error>> + Send,
@@ -28,21 +28,48 @@ where
         + Clone,
     State: Clone + Send + Sync + 'static,
 {
-    fn hookup(self, _endpoint: Endpoint, func: Func) -> Self {
-        let method_body = |auth_session: AuthSession<AuthBackend>,
-                           extract::State(state): extract::State<_>,
-                           Json(json): Json<_>| async {
-            func(auth_session, state, json)
-                .await
-                .map(|(status_code, response)| (status_code, Json(response)))
-        };
-        match Endpoint::METHOD {
-            shared::endpoints::endpoint::Method::Post => {
-                self.route(Endpoint::PATH, post(method_body))
-            }
-            shared::endpoints::endpoint::Method::Get => {
-                self.route(Endpoint::PATH, get(method_body))
-            }
+    let method_body = |auth_session: AuthSession<AuthBackend>,
+                       extract::State(state): extract::State<_>,
+                       Json(json): Json<_>| async {
+        func(auth_session, state, json)
+            .await
+            .map(|(status_code, response)| (status_code, Json(response)))
+    };
+    match Endpoint::METHOD {
+        shared::endpoints::endpoint::Method::Post => {
+            router.route(Endpoint::PATH, post(method_body))
         }
+        shared::endpoints::endpoint::Method::Get => router.route(Endpoint::PATH, get(method_body)),
+    }
+}
+
+pub fn hookup_authenticated<Endpoint, State, Error, Fut, Func>(
+    _: Endpoint,
+    router: Router<State>,
+    func: Func,
+) -> Router<State>
+where
+    Endpoint: shared::endpoints::endpoint::Endpoint<AuthRequired = No>,
+    Endpoint::JsonPayload: Send + 'static,
+    Error: IntoResponse,
+    Fut: Future<Output = Result<(StatusCode, Endpoint::JsonResponse), Error>> + Send,
+    Func: FnOnce(AuthenticatedUser<AuthBackend>, State, Endpoint::JsonPayload) -> Fut
+        + Send
+        + 'static
+        + Clone,
+    State: Clone + Send + Sync + 'static,
+{
+    let method_body = |authenticated_user: AuthenticatedUser<AuthBackend>,
+                       extract::State(state): extract::State<_>,
+                       Json(json): Json<_>| async {
+        func(authenticated_user, state, json)
+            .await
+            .map(|(status_code, response)| (status_code, Json(response)))
+    };
+    match Endpoint::METHOD {
+        shared::endpoints::endpoint::Method::Post => {
+            router.route(Endpoint::PATH, post(method_body))
+        }
+        shared::endpoints::endpoint::Method::Get => router.route(Endpoint::PATH, get(method_body)),
     }
 }

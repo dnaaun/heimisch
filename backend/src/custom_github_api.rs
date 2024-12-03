@@ -1,7 +1,8 @@
 use serde::Deserialize;
-use shared::{endpoints::defns::api::auth::finish::GithubAccessToken, types::{
-    installation::InstallationId, installation_access_token_row::InstallationAccessToken,
-}};
+use shared::{
+    endpoints::defns::api::auth::finish::GithubAccessToken,
+    types::{installation::InstallationId, installation_access_token_row::InstallationAccessToken},
+};
 use url::Url;
 use utils::{ExecuteNicely, JsonNicely};
 

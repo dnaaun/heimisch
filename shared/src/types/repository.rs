@@ -33,10 +33,10 @@ use super::{installation::InstallationId, license::LicenseId, user::UserId};
 )]
 pub struct RepositoryId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Eq)]
+#[derive(
+    macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Eq,
+)]
 pub struct Repository {
-
     #[doc = "Whether to allow Auto-merge to be used on pull requests."]
     pub allow_auto_merge: Avail<bool>,
     #[doc = "Whether to allow forking this repo"]

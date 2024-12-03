@@ -15,6 +15,6 @@ use serde::{Deserialize, Serialize};
     Hash,
     Copy,
     Display,
-    Default
+    Default,
 )]
 pub struct InstallationId(i64);

@@ -1,3 +1,5 @@
+use crate::endpoints::{endpoint::No, endpoint_client::MaybePageRedirect};
+
 use super::super::super::super::endpoint::{Endpoint, Method};
 
 pub struct AuthInitiateEndpoint;
@@ -11,5 +13,7 @@ impl Endpoint for AuthInitiateEndpoint {
     const PATH: &'static str = "/api/auth/initiate";
 
     type JsonPayload = ();
-    type JsonResponse = ();
+    type JsonResponse = MaybePageRedirect<()>;
+
+    type AuthRequired = No;
 }

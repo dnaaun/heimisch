@@ -81,7 +81,7 @@ pub struct Issue {
     pub state: Option<State>,
 
     /// This was a String, but I think `StateReason` is a tighter bound on the values,
-    /// and there was probably some mishap with the OpenAPI generator used that didnt' catch 
+    /// and there was probably some mishap with the OpenAPI generator used that didnt' catch
     /// this constraint.
     #[serde(
         rename = "state_reason",

@@ -19,7 +19,7 @@ use crate::{
         defns::api::installations::{
             GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
         },
-        endpoint_request::EndpointRequest,
+        endpoint_client::EndpointClient,
     },
     types::{
         installation::InstallationId,
@@ -35,13 +35,16 @@ use url::Url;
 mod isolate_db_store_markers_impl_type {
     use std::rc::Rc;
 
-    use crate::types::{
-        github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
-        issue::Issue, issue_comment::IssueComment,
-        issue_comment_initial_sync_status::IssueCommentInitialSyncStatus,
-        issue_initial_sync_status::IssueInitialSyncStatus, license::License, milestone::Milestone,
-        repository::Repository, repository_initial_sync_status::RepositoryInitialSyncStatus,
-        user::User,
+    use crate::{
+        endpoints::endpoint_client::EndpointClient,
+        types::{
+            github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
+            issue::Issue, issue_comment::IssueComment,
+            issue_comment_initial_sync_status::IssueCommentInitialSyncStatus,
+            issue_initial_sync_status::IssueInitialSyncStatus, license::License,
+            milestone::Milestone, repository::Repository,
+            repository_initial_sync_status::RepositoryInitialSyncStatus, user::User,
+        },
     };
     use typesafe_idb::{StoreMarker, TypesafeDb};
     use url::Url;
@@ -61,7 +64,7 @@ mod isolate_db_store_markers_impl_type {
         + StoreMarker<Issue>;
 
     impl SyncEngine {
-        pub async fn new(domain: Url) -> SyncResult<Self> {
+        pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self> {
             let db = TypesafeDb::builder("heimisch".into())
                 .with_store::<Issue>()
                 .with_store::<User>()
@@ -79,9 +82,8 @@ mod isolate_db_store_markers_impl_type {
 
             Ok(Self {
                 db: Rc::new(db),
-                domain,
                 idb_notifiers: Default::default(),
-                client: Default::default(),
+                endpoint_client,
             })
         }
     }
@@ -125,9 +127,8 @@ pub type IdbNotifier = Box<dyn Fn(IdbNotification)>;
 #[allow(unused)]
 pub struct SyncEngine {
     pub db: Rc<TypesafeDb<DbStoreMarkers>>,
-    domain: Url,
-    client: reqwest::Client,
     pub idb_notifiers: Arc<Mutex<Registry<IdbNotifier>>>,
+    endpoint_client: EndpointClient,
 }
 
 const MAX_PER_PAGE: i32 = 100;
@@ -140,7 +141,7 @@ impl SyncEngine {
         let bearer_access_token = Some(format!("Bearer {}", self.get_valid_iac(id).await?.token));
         let conf = github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
-            client: self.client.clone(),
+            client: self.endpoint_client.client.clone(),
             bearer_access_token,
             ..Default::default()
         };
@@ -179,13 +180,10 @@ impl SyncEngine {
                 let payload = GetInstallationAccessTokenPayload {
                     installation_id: *id,
                 };
-                let resp = GetInstallationAccessTokenEndpoint::make_request(
-                    &self.domain,
-                    &Default::default(),
-                    payload,
-                    (),
-                )
-                .await?;
+                let resp = self
+                    .endpoint_client
+                    .make_request(GetInstallationAccessTokenEndpoint, payload, ())
+                    .await?;
 
                 let txn = self
                     .db

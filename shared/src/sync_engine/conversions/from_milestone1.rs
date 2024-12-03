@@ -1,4 +1,8 @@
-use crate::{avail::MergeError, sync_engine::changes::{AddChanges, Changes}, types::milestone::MilestoneId};
+use crate::{
+    avail::MergeError,
+    sync_engine::changes::{AddChanges, Changes},
+    types::milestone::MilestoneId,
+};
 
 use super::from_user2::from_user2;
 

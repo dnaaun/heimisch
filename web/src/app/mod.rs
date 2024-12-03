@@ -1,10 +1,10 @@
 mod auth;
 mod authenticated_home_page;
-mod sync_engine_provider;
 mod issues_tab;
+mod not_found;
 mod pull_requests_tab;
 mod repository;
-mod not_found;
+mod sync_engine_provider;
 use auth::{Auth, USER_ACCESS_TOKEN_KEY};
 use leptos_router::components::Routes;
 
@@ -65,12 +65,7 @@ pub fn LoginDialog(open: RwSignal<bool>) -> impl IntoView {
                         <div>You need to login to Github!</div>
                     </DialogContent>
                     <DialogActions>
-                        <Button
-                            appearance=ButtonAppearance::Primary
-                            on_click=|_| {
-                                window().location().set_pathname("/api/auth/initiate").expect("")
-                            }
-                        >
+                        <Button appearance=ButtonAppearance::Primary on_click=|_| { todo!() }>
                             Click here to login
                         </Button>
                     </DialogActions>

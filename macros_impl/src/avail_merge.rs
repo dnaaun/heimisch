@@ -22,7 +22,6 @@ pub fn derive_avail_merge(input: proc_macro::TokenStream) -> TokenStream {
     let (checks, with_merged_fields, merge_fields): (Vec<_>, Vec<_>, Vec<_>) = multiunzip(
         fields.iter().map(|field| {
         let field_name = &field.ident;
-        
         // Check if the field has the `#[id]` attribute
         let is_not_avail_field = match &field.ty {
             syn::Type::Path(type_path) => type_path.path.segments.last().map(|segment|

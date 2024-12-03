@@ -1,12 +1,13 @@
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Redirect},
-};
+use axum::{http::StatusCode, response::IntoResponse};
 use backtrace::Backtrace;
 use github_webhook_body::WebhookBody;
+use http::header::LOCATION;
 use parking_lot::Mutex;
 use shared::{
-    endpoints::{defns::api::auth::initiate::AuthInitiateEndpoint, endpoint::Endpoint},
+    endpoints::{
+        defns::api::auth::initiate::AuthInitiateEndpoint, endpoint::Endpoint,
+        endpoint_client::CUSTOM_REDIRECT_STATUS_CODE,
+    },
     types::installation::InstallationId,
 };
 use utils::{ReqwestJsonError, ReqwestSendError};
@@ -53,6 +54,7 @@ pub enum ErrorSource {
     DbIntegrity(DbIntegrityError),
     Session(tower_sessions::session::Error),
     AuthenticationFailed(AuthenticationFailedError),
+    AuthorizationFailed,
 }
 
 #[derive(Debug)]
@@ -123,6 +125,7 @@ Backtrace:
             | &ErrorSource::DbIntegrity(_)
             | &ErrorSource::Session(_)
             | &ErrorSource::AuthenticationFailed(_)
+            | &ErrorSource::AuthorizationFailed
             | &ErrorSource::GithubUserDetailsNotFound => format!(
                 "{:?}
 {}",
@@ -240,14 +243,20 @@ impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         let code = match &self.source {
             ErrorSource::AuthenticationFailed(_) => {
-                return Redirect::temporary(AuthInitiateEndpoint::PATH).into_response()
+                return (
+                    CUSTOM_REDIRECT_STATUS_CODE.with(|i| *i),
+                    [(LOCATION, AuthInitiateEndpoint::PATH)],
+                )
+                    .into_response()
             }
             // These GithubWebhook* errors will be emitted only for the webhook endpoint, and we don't return non
             // 2xx values there, because that could cause re-deliveries.
             ErrorSource::GithubWebhookHeaderError { .. }
             | ErrorSource::GithubWebhookBodyDeser(_)
             | ErrorSource::GithubWebhookNoInstallationId { .. } => StatusCode::OK,
-            ErrorSource::InstallationIdNotFound(_) => StatusCode::UNAUTHORIZED,
+            ErrorSource::InstallationIdNotFound(_) | ErrorSource::AuthorizationFailed => {
+                StatusCode::UNAUTHORIZED
+            }
             ErrorSource::HeaderError(_) => StatusCode::BAD_REQUEST,
             ErrorSource::ReqwestSendError(_)
             | ErrorSource::ReqwestJsonError(_)

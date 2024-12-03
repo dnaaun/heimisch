@@ -2,7 +2,7 @@
 pub enum Error {
     Idb(idb::Error),
     SerdeToObject(crate::serde_abstraction::Error),
-    SerdeToString(serde_json::Error)
+    SerdeToString(serde_json::Error),
 }
 
 impl From<idb::Error> for Error {

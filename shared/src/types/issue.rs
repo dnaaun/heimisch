@@ -13,11 +13,24 @@ use super::milestone::MilestoneId;
 use super::repository::RepositoryId;
 use super::user::UserId;
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Default)]
+#[derive(
+    From,
+    Into,
+    Deref,
+    AsRef,
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Copy,
+    Default,
+)]
 pub struct IssueId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug, AvailMerge)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge)]
 pub struct Issue {
     pub active_lock_reason: Avail<Option<ActiveLockReason>>,
     pub assignee_id: Avail<Option<UserId>>,

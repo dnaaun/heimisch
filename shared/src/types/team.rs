@@ -7,8 +7,7 @@ use super::team_organization::TeamOrganizationId;
 #[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
 pub struct TeamId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
 pub struct Team {
     /// This is optional only because the `TeamSimple` returned
     /// sometimes doesn't contain it.

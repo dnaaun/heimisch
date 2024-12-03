@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 reqwest = { version = "0.12.8", features = ["json"] }
 serde = { version = "1.0.210", features = ["derive"] }
-url = "2.5.2"
+url = { version = "2.5.2", features = ["serde"] }
 github_webhook_body = { path = "../github_webhook_body" }
 derive_more = { version = "1.0.0", features = ["as_ref", "deref", "display", "error", "from", "into"] }
 jiff = { version = "0.1.14", features = ["serde"] }
@@ -23,6 +23,7 @@ futures = "0.3.31"
 codee = { version = "0.2.0", features = ["json_serde"] }
 diesel-derive-newtype = { version = "2.1.2", optional = true }
 diesel = { version = "2.2.4", optional = true }
+http = "1.1.0"
 
 [features]
 hydrate = ["jiff/js",

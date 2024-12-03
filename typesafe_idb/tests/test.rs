@@ -77,7 +77,7 @@ pub async fn various_tests() {
     let repo2 = Repository {
         id: RepositoryId(repo.id.0 + 4),
         installation_id: InstallationId(repo.installation_id.0 + 1),
-        name: "Heyyoo".into()
+        name: "Heyyoo".into(),
     };
     repository_object_store.put(&repo).await.unwrap();
     repository_object_store.put(&repo2).await.unwrap();

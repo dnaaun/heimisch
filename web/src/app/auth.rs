@@ -1,5 +1,4 @@
 use leptos_router::hooks::use_query_map;
-use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use shared::{
     endpoints::{
@@ -9,7 +8,7 @@ use shared::{
             },
             auth::finish::GithubAccessToken,
         },
-        endpoint_request::{EndpointRequest, OwnApiError},
+        endpoint_client::{EndpointClient, OwnApiError},
     },
     types::installation::InstallationId,
 };
@@ -25,6 +24,7 @@ use wasm_bindgen_futures::JsFuture;
 use crate::{
     consts::HEIMISCH_DOMAIN_URL,
     local_storage::{add_installation_id_to_local_storage, local_storage},
+    use_unwrapped_context::use_unwrapped_context,
 };
 
 pub const USER_ACCESS_TOKEN_KEY: &str = "access_token";
@@ -91,72 +91,31 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
         installation_id, ..
     } = params;
 
-    let user_access_token =
-        LocalResource::new(|| async { local_storage().get_item(USER_ACCESS_TOKEN_KEY).expect("") });
-
-    let on_click = |_| {
-        window()
-            .location()
-            .set_href("/api/auth/initiate")
-            .expect("");
-    };
-
     let body = move || {
         let installation_id = installation_id.clone();
-        let user_access_token = user_access_token
-            .read()
-            .as_ref()
-            .and_then(|u| u.deref().clone());
-        match user_access_token {
-            Some(user_access_token) => {
-                view! { <AppInstallationAttempt user_access_token installation_id={
-                    InstallationId::from(installation_id.parse::<i64>().unwrap())
-                } /> }
-                .into_any()
-            }
-            _ => view! {
-                <>
-                    <div style="font-size: 1.3em">
-                        You must first login with your Github account.
-                    </div>
-                    <Button on_click appearance=ButtonAppearance::Primary>
-                        Sign in with Github
-                    </Button>
-                </>
-            }
-            .into_any(),
+
+        view! {
+            <AppInstallationAttempt installation_id=InstallationId::from(
+                installation_id.parse::<i64>().unwrap(),
+            ) />
         }
     };
 
     let fallback = || view! { <Spinner size=SpinnerSize::Huge /> };
-    view! {
-        <Suspense fallback>
-            {body}
-        </Suspense>
-    }
+    view! { <Suspense fallback>{body}</Suspense> }
 }
 
 #[component]
-pub fn AppInstallationAttempt(
-    installation_id: InstallationId,
-    user_access_token: String,
-) -> impl IntoView {
+pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView {
     let installation_rsrc: LocalResource<Result<CreateAppInstallResponse, OwnApiError>> =
-        LocalResource::new(move || {
-            let user_access_token = user_access_token.clone();
-            async move {
-                let client = Client::new();
-                CreateAppInstallEndpoint::make_request(
-                    &HEIMISCH_DOMAIN_URL.with(|i| i.clone()),
-                    &client,
-                    CreateAppInstallPayload {
-                        installation_id,
-                        user_access_token,
-                    },
+        LocalResource::new(move || async move {
+            use_unwrapped_context::<EndpointClient>()
+                .make_request(
+                    CreateAppInstallEndpoint,
+                    CreateAppInstallPayload { installation_id },
                     (),
                 )
                 .await
-            }
         });
 
     let body = move || {
@@ -174,12 +133,8 @@ pub fn AppInstallationAttempt(
         })
     };
     let fallback =
-        || view! { <Spinner size=SpinnerSize::Huge label="Installing Heimisch on Github Repo"/> };
-    view! {
-        <Suspense fallback>
-            {body}
-        </Suspense>
-    }
+        || view! { <Spinner size=SpinnerSize::Huge label="Installing Heimisch on Github Repo" /> };
+    view! { <Suspense fallback>{body}</Suspense> }
 }
 
 #[component]
@@ -196,13 +151,9 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                 let code = code.clone();
                 let state = state.clone();
                 async move {
-                    AuthFinishEndpoint::make_request(
-                        &HEIMISCH_DOMAIN_URL.with(|i| i.clone()),
-                        &reqwest::Client::new(),
-                        AuthFinishPayload { state, code },
-                        (),
-                    )
-                    .await
+                    use_unwrapped_context::<EndpointClient>()
+                        .make_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
+                        .await
                 }
             },
         );
@@ -215,21 +166,18 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                         .as_ref()
                         .map(move |result| {
                             match result.deref() {
-                                Ok(AuthFinishResponse::Success { user_access_token }) => {
-                                    local_storage()
-                                        .set(USER_ACCESS_TOKEN_KEY, user_access_token.as_ref())
-                                        .expect("");
-
+                                Ok(AuthFinishResponse::Success(access_token)) => {
                                     view! {
                                         // I'm fairly certain show_copy_to_cli will
                                         // have to depend on the `state` query param
                                         // and not another query param because Github
                                         // won't let me do it otherwise, but who cares
                                         // for now, since I've abandoned the CLI?
-                                        <Success
-                                            user_access_token=user_access_token.clone()
-                                            show_copy_to_cli
-                                        />
+                                        <Success settings=if show_copy_to_cli {
+                                            SuccessSettings::ShowCopyToCli(access_token.clone())
+                                        } else {
+                                            SuccessSettings::NoCopyToCli
+                                        } />
                                     }
                                         .into_any()
                                 }
@@ -267,49 +215,54 @@ fn LoggingIn() -> impl IntoView {
     view! { <Spinner size=SpinnerSize::Huge label="Logging you into Heimisch CLI" /> }
 }
 
+#[derive(Clone, Debug)]
+enum SuccessSettings {
+    ShowCopyToCli(GithubAccessToken),
+    NoCopyToCli,
+}
+
 #[component]
-fn Success(user_access_token: GithubAccessToken, show_copy_to_cli: bool) -> impl IntoView {
-    let user_access_token2 = user_access_token.clone();
+fn Success(settings: SuccessSettings) -> impl IntoView {
     let toaster = ToasterInjection::expect_context();
-    let on_click = move |_| {
-        let user_access_token3 = user_access_token2.clone();
-        spawn_local_scoped(async move {
-            JsFuture::from(
-                window()
-                    .navigator()
-                    .clipboard()
-                    .write_text(user_access_token3.as_ref()),
-            )
-            .await
-            .unwrap();
-            toast_copied_to_clipboard(toaster);
-        })
-    };
-    let user_access_token: String = user_access_token.into();
-    if show_copy_to_cli {
-        view! {
-            <>
-                <div>
-                    Copy the below back into your CLI prompt to finish authenticating Heimisch CLI.
-                </div>
-                <Text
-                    tag=TextTag::Code
-                    style="font-size: 2em; padding: 0.4em; border-radius: var(--borderRadiusMedium)"
-                >
-                    {user_access_token}
-                </Text>
-                <Button
-                    icon=icondata::BiClipboardRegular
-                    appearance=ButtonAppearance::Primary
-                    on_click
-                >
-                    Copy to clipboard
-                </Button>
-            </>
+    let make_on_click = |access_token: GithubAccessToken| {
+        move |_| {
+            let access_token = access_token.clone();
+            spawn_local_scoped(async move {
+                JsFuture::from(window().navigator().clipboard().write_text(&access_token))
+                    .await
+                    .unwrap();
+                toast_copied_to_clipboard(toaster);
+            })
         }
-        .into_any()
-    } else {
-        view! { <div style="font-size: 2em">"You're logged in!"</div> }.into_any()
+    };
+    match settings {
+        SuccessSettings::ShowCopyToCli(github_access_token) => {
+            let on_click = make_on_click(github_access_token.clone());
+            view! {
+                <>
+                    <div>
+                        Copy the below back into your CLI prompt to finish authenticating Heimisch CLI.
+                    </div>
+                    <Text
+                        tag=TextTag::Code
+                        style="font-size: 2em; padding: 0.4em; border-radius: var(--borderRadiusMedium)"
+                    >
+                        {github_access_token.deref().clone()}
+                    </Text>
+                    <Button
+                        icon=icondata::BiClipboardRegular
+                        appearance=ButtonAppearance::Primary
+                        on_click
+                    >
+                        Copy to clipboard
+                    </Button>
+                </>
+            }
+        }
+        .into_any(),
+        SuccessSettings::NoCopyToCli => {
+            view! { <div style="font-size: 2em">"You're logged in!"</div> }.into_any()
+        }
     }
 }
 

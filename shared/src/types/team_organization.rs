@@ -5,8 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
 pub struct TeamOrganizationId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
 pub struct TeamOrganization {
     pub archived_at: Option<Timestamp>,
     pub avatar_url: String,

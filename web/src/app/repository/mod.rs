@@ -132,25 +132,23 @@ pub fn RepositoryPage() -> impl IntoView {
         };
 
         let active_tab_el = match *active_tab_enum.read() {
-            TabName::Issues => view! { <IssuesTab repository={repository.clone()} /> }.into_any(),
-            TabName::Pulls => view! { <PullRequestsTab _repository_id={42.into()} /> }.into_any(),
+            TabName::Issues => view! { <IssuesTab repository=repository.clone() /> }.into_any(),
+            TabName::Pulls => view! { <PullRequestsTab _repository_id=42.into() /> }.into_any(),
         };
 
         view! {
             <TopBar
-                owner_name={Box::new(move || params().owner_name)}
-                repo_name={Box::new(move || params().repo_name)}
+                owner_name=Box::new(move || params().owner_name)
+                repo_name=Box::new(move || params().repo_name)
             />
             <div class="pl-6">
-                <TabList selected_value={(active_tab, active_tab_setter)}>
+                <TabList selected_value=(active_tab, active_tab_setter)>
                     <Tab value=TabName::Pulls.to_string()>Pull Requests</Tab>
                     <Tab value=TabName::Issues.to_string()>Issues</Tab>
                 </TabList>
             </div>
             <div class="border-t border-t-gray-200">
-                <div class="w-full max-w-screen-xl mx-auto py-4 px-6">
-                    {active_tab_el}
-                </div>
+                <div class="w-full max-w-screen-xl mx-auto py-4 px-6">{active_tab_el}</div>
             </div>
         }
         .into_any()

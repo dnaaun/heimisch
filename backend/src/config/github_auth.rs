@@ -61,11 +61,15 @@ impl AppAuth {
 }
 
 pub trait WithAppAuth {
-    fn with_app_auth(self, app_auth: AppAuth) -> Result<Configuration, jsonwebtoken::errors::Error>;
+    fn with_app_auth(self, app_auth: AppAuth)
+        -> Result<Configuration, jsonwebtoken::errors::Error>;
 }
 
 impl WithAppAuth for Configuration {
-    fn with_app_auth(self, app_auth: AppAuth) -> Result<Configuration, jsonwebtoken::errors::Error> {
+    fn with_app_auth(
+        self,
+        app_auth: AppAuth,
+    ) -> Result<Configuration, jsonwebtoken::errors::Error> {
         let thingy = app_auth.generate_bearer_token()?;
         Ok(Self {
             bearer_access_token: Some(format!("Bearer {thingy}")),

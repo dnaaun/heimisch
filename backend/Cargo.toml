@@ -20,7 +20,7 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "sma
 async-trait = "0.1.83"
 http = "1.1.0"
 rand = "0.8.5"
-url = "2.5.2"
+url = { version = "2.5.2", features = ["serde"] }
 reqwest = { version = "0.12.8", features = ["json"] }
 github_webhook_body = { path = "../github_webhook_body" }
 

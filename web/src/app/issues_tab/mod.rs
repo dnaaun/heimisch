@@ -45,20 +45,20 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
     move || {
         view! {
             <>
-            <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
-                <div class="flex flex-nowrap gap-x-2">
-                    <div>Open {counts().map(|c| c.0)}</div>
-                    <div>Closed {counts().map(|c| c.1)}</div>
+                <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
+                    <div class="flex flex-nowrap gap-x-2">
+                        <div>Open {counts().map(|c| c.0)}</div>
+                        <div>Closed {counts().map(|c| c.1)}</div>
+                    </div>
+                    <div>Author</div>
                 </div>
-                <div>Author</div>
-            </div>
-            <For
-                each={move || issues().into_iter().enumerate()}
-                key={move |(_, i)|i.id}
-                children={move |(i, issue)| view! { <IssueRow issue=issue is_last={i == issues().len() - 1} /> }
-                }
-            />
-
+                <For
+                    each=move || issues().into_iter().enumerate()
+                    key=move |(_, i)| i.id
+                    children=move |(i, issue)| {
+                        view! { <IssueRow issue=issue is_last=i == issues().len() - 1 /> }
+                    }
+                />
             </>
         }
     }
@@ -127,9 +127,10 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
             });
 
         view! {
-            <div class="border-r border-l border-b p-3 flex justify-between items-center"
+            <div
+                class="border-r border-l border-b p-3 flex justify-between items-center"
                 class=("rounded-b", is_last)
-                >
+            >
                 <div>
                     <a class="mb-1.5 font-bold">{title.to_option()}</a>
                     <div class="flex gap-1.5 text-sm text-gray-500">
@@ -140,10 +141,10 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                     </div>
                 </div>
                 <div>
-                <div class="flex gap-1 items-center">
-                    <Icon icon={icondata::AiCommentOutlined} />
-                    {comments_count}
-                </div>
+                    <div class="flex gap-1 items-center">
+                        <Icon icon=icondata::AiCommentOutlined />
+                        {comments_count}
+                    </div>
                 </div>
             </div>
         }

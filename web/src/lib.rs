@@ -2,9 +2,10 @@
 
 pub mod app;
 mod consts;
-mod local_storage;
 mod idb_signal;
 mod idb_signal_from_sync_engine;
+mod local_storage;
+mod use_unwrapped_context;
 mod utils;
 mod websocket_updates;
 use hydration::{AutoReload, HydrationScripts};
@@ -20,13 +21,12 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <AutoReload options=options.clone() />
                 <HydrationScripts options />
-                <link rel="stylesheet" id="leptos" href="/pkg/heimisch.css"/>
+                <link rel="stylesheet" id="leptos" href="/pkg/heimisch.css" />
             </head>
             <body>
                 <App />
             </body>
         </html>
-
     }
 }
 

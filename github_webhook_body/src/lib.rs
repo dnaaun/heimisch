@@ -3187,8 +3187,9 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsMilestone>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Default)]
+#[derive(
+    Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Default,
+)]
 pub enum DeploymentProtectionRuleRequestedPullRequestsMilestoneState {
     #[serde(rename = "closed")]
     Closed,
@@ -12221,8 +12222,9 @@ impl std::convert::TryFrom<String> for PullRequestReviewCommentCreatedCommentSid
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Default)]
+#[derive(
+    Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Default,
+)]
 pub enum PullRequestReviewCommentCreatedCommentStartSide {
     #[serde(rename = "LEFT")]
     Left,
@@ -16135,8 +16137,9 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Default)]
+#[derive(
+    Deserialize, Serialize, Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Default,
+)]
 pub enum RepositoryRulesetCreatedRepositoryRulesetBypassActorsBypassMode {
     #[serde(rename = "always")]
     #[default]

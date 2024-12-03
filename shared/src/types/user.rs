@@ -6,12 +6,26 @@ use serde::{Deserialize, Serialize};
 
 use crate::avail::Avail;
 
-#[cfg_attr(feature="ssr", derive(diesel_derive_newtype::DieselNewType))]
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Copy, Hash, Display, Default)]
+#[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
+#[derive(
+    From,
+    Into,
+    Deref,
+    AsRef,
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Copy,
+    Hash,
+    Display,
+    Default,
+)]
 pub struct UserId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Serialize, Deserialize, Clone, Debug, AvailMerge)]
+#[derive(macros::TypesafeIdb, Serialize, Deserialize, Clone, Debug, AvailMerge)]
 pub struct User {
     pub avatar_url: Avail<String>,
     pub bio: Avail<Option<String>>,

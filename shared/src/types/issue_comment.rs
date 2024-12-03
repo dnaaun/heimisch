@@ -43,7 +43,6 @@ pub struct IssueComment {
     pub url: Avail<String>,
     pub user_id: Avail<Option<UserId>>,
 
-
     /// I don't support indexing on nested attrs yet, which I'd have to support if I want to index
     /// `Avail<IssueId>`, hence:
     #[idb(index)]

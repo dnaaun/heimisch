@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::types::{
-    installation::InstallationId, installation_access_token_row::InstallationAccessToken,
+use crate::{
+    endpoints::{endpoint::No, endpoint_client::MaybePageRedirect},
+    types::{installation::InstallationId, installation_access_token_row::InstallationAccessToken},
 };
 
 use super::super::super::endpoint::{Endpoint, Method};
@@ -22,5 +23,7 @@ impl Endpoint for GetInstallationAccessTokenEndpoint {
 
     type JsonPayload = GetInstallationAccessTokenPayload;
 
-    type JsonResponse = InstallationAccessToken;
+    type JsonResponse = MaybePageRedirect<InstallationAccessToken>;
+
+    type AuthRequired = No;
 }

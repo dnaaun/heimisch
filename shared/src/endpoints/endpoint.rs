@@ -1,4 +1,4 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::HashMap;
 
 pub trait QueryParams {
@@ -31,10 +31,15 @@ pub enum Method {
     Get,
 }
 
+pub struct Yes;
+pub struct No;
+
 pub trait Endpoint {
     type QueryParams: QueryParams;
     const METHOD: Method;
     const PATH: &'static str;
     type JsonPayload: Serialize + DeserializeOwned;
     type JsonResponse: Serialize + DeserializeOwned;
+
+    type AuthRequired;
 }

@@ -1,8 +1,8 @@
-use crate::config::WithAppAuth;
 use crate::app_state::AppState;
+use crate::config::WithAppAuth;
 use crate::db::{self, insert_installation_if_not_exists};
 use crate::error::Error;
-use crate::hookup_endpoint::HookupEndpoint;
+use crate::hookup_endpoint::hookup_authenticated;
 use axum::Router;
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
@@ -16,20 +16,21 @@ use shared::types::user::UserId;
 use std::time::SystemTime;
 
 pub fn create(router: Router<AppState>) -> Router<AppState> {
-    router.hookup(
+    hookup_authenticated(
         CreateAppInstallEndpoint,
-        |_auth_session, state, payload| async move {
-            let CreateAppInstallPayload {
-                installation_id,
-                user_access_token,
-            } = payload;
+        router,
+        |auth_user, state, payload| async move {
+            let CreateAppInstallPayload { installation_id } = payload;
 
             // Make sure the current user (verified via user access token) owns the current
             // installation.
             // NOTE: Assumption that user access token doesn't change.
             let stmt = db::schema::login_users::table
                 .select(db::schema::login_users::github_user_id)
-                .filter(db::schema::login_users::github_access_token.eq(user_access_token.clone()));
+                .filter(
+                    db::schema::login_users::github_access_token
+                        .eq(auth_user.github_access_token.clone()),
+                );
             let github_user_id = state
                 .pool
                 .get()
@@ -57,7 +58,7 @@ pub fn create(router: Router<AppState>) -> Router<AppState> {
 
             Ok::<_, Error>((
                 StatusCode::OK,
-                CreateAppInstallResponse::Success { installation_id },
+                CreateAppInstallResponse::Success { installation_id }.into(),
             ))
         },
     )

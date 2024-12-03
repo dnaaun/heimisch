@@ -8,11 +8,12 @@ use crate::avail::Avail;
 
 use super::user::UserId;
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Copy, PartialEq, Eq, Hash)]
+#[derive(
+    From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Copy, PartialEq, Eq, Hash,
+)]
 pub struct GithubAppId(i64);
 
-#[derive(macros::TypesafeIdb)]
-#[derive(Deserialize, Serialize, Clone, Debug, AvailMerge)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge)]
 pub struct GithubApp {
     pub client_id: Avail<Option<String>>,
     pub client_secret: Avail<Option<String>>,

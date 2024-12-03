@@ -45,7 +45,6 @@ pub struct App10 {
     pub updated_at: Option<Timestamp>,
 }
 
-
 /// The list of events for the GitHub app
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Events {
