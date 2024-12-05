@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use super::endpoint::{Endpoint, Method, QueryParams};
 use http::{header::LOCATION, StatusCode};

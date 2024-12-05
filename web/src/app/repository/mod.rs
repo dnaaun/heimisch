@@ -1,4 +1,4 @@
-use std::{ops::Deref, str::FromStr, sync::Arc};
+use std::{ops::Deref, sync::Arc};
 
 use leptos::prelude::*;
 use leptos_router::{
@@ -22,20 +22,44 @@ use super::{
     sync_engine_provider::use_sync_engine,
 };
 
-#[derive(Params, PartialEq, Clone)]
+#[derive(Params, PartialEq, Clone, Debug)]
 struct RepositoryPageParams {
     owner_name: String,
     repo_name: String,
     tab: Option<String>,
 }
 
-#[derive(strum_macros::EnumString, strum_macros::Display, Clone, PartialEq, Eq, Hash)]
-#[strum(serialize_all = "snake_case")]
+#[derive(PartialEq, Clone, Eq, Hash, Debug)]
 enum TabName {
-    #[strum(to_string = "Issues")]
     Issues,
-    #[strum(to_string = "Pull Requests")]
     Pulls,
+}
+
+impl TabName {
+    fn to_url_segment(&self) -> String {
+        match self {
+            TabName::Issues => "issues",
+            TabName::Pulls => "pulls",
+        }
+        .into()
+    }
+
+    fn from_url_segment(segment: &str) -> Result<Self, ()> {
+        match segment.to_lowercase().as_str() {
+            "issues" => Ok(TabName::Issues),
+            "pulls" => Ok(TabName::Pulls),
+            _ => Err(()),
+        }
+    }
+}
+
+impl std::fmt::Display for TabName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            TabName::Issues => "Issues",
+            TabName::Pulls => "Pull Requests",
+        })
+    }
 }
 
 /// RTI: URL params of shape `RepositoryPageParams`.
@@ -47,6 +71,7 @@ pub fn RepositoryPage() -> impl IntoView {
             .clone()
             .expect("RepositoryPage should be mounted only if these params are available")
     };
+    Effect::new(move || tracing::debug!("params: {:?}", params()));
     let params_untracked = || {
         use_params::<RepositoryPageParams>()
             .read_untracked()
@@ -54,21 +79,26 @@ pub fn RepositoryPage() -> impl IntoView {
             .expect("RepositoryPage should be mounted only if these params are available")
     };
 
-    let active_tab_enum = Memo::new(move |_| {
+    let active_tab = move || {
         params()
             .tab
             .as_ref()
-            .and_then(|i| TabName::from_str(i).ok())
+            .and_then(|i| TabName::from_url_segment(i).ok())
             .unwrap_or(TabName::Issues)
-    });
-    let active_tab = Memo::new(move |_| active_tab_enum.read().to_string());
-
-    let (new_active_tab, active_tab_setter) = signal(active_tab());
+    };
+    Effect::new(move || tracing::debug!("active_tab: {:?}", active_tab()));
+    let active_tab_str = Memo::new(move |_| active_tab().to_url_segment());
+    let (new_active_tab_str, set_new_active_tab_str) = signal(active_tab_str());
 
     Effect::new(move || {
         let params_untracked = params_untracked();
-        let new_active_tab = new_active_tab.read().clone();
-        if active_tab.read_untracked() != new_active_tab {
+        let new_active_tab = new_active_tab_str.read().clone();
+        tracing::debug!(
+            "Navigating {} and {} are being compared",
+            active_tab_str.read_untracked(),
+            new_active_tab
+        );
+        if active_tab_str.read_untracked() != new_active_tab {
             let navigate = use_navigate();
             navigate(
                 &format!(
@@ -124,7 +154,8 @@ pub fn RepositoryPage() -> impl IntoView {
         let repository = match repository.deref().deref() {
             Some(r) => r.as_ref().unwrap(),
             None => return view! { <div>Loading...</div> }.into_any(),
-        }.clone();
+        }
+        .clone();
 
         let repository = match repository {
             Some(r) => r,
@@ -153,7 +184,8 @@ pub fn RepositoryPage() -> impl IntoView {
             />
             <Tabs
              tabs
-             active=active_tab_enum
+             active_tab={Signal::derive(active_tab)}
+             set_active_tab={move |t| set_new_active_tab_str(t.to_url_segment())}
             />
         }
         .into_any()

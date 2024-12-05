@@ -23,7 +23,6 @@ impl SyncEngine {
         id: &RepositoryId,
         installation_id: &InstallationId,
     ) -> SyncResult<()> {
-        tracing::info!("DUDE, tAT LEAST HERE");
         let mut page = 1;
         let txn = self
             .db
@@ -35,7 +34,6 @@ impl SyncEngine {
             .object_store::<IssueCommentInitialSyncStatus>()?
             .get(id)
             .await?;
-        tracing::info!("DUDE, GOT HERE");
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
                 InitialSyncStatusEnum::Full => return Ok(()),
@@ -97,7 +95,6 @@ impl SyncEngine {
                 page.into(),
             )
             .await?;
-            tracing::info!("DUDE, I GOT: {issue_comments:?}");
             let last_fetched_num = issue_comments.len();
 
             let db = self.db.clone();
