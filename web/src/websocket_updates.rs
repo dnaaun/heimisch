@@ -1,7 +1,7 @@
 use codee::string::JsonSerdeCodec;
 use leptos_use::{use_websocket, UseWebSocketReturn};
 use shared::endpoints::defns::api::websocket_updates::{
-    ClientMsg, ServerMsg, WEBSOCKET_UPDATES_URL,
+    ClientMsg, ServerMsg, WEBSOCKET_UPDATES_ENDPOINT,
 };
 
 pub fn _use_websocket_updates() -> UseWebSocketReturn<
@@ -11,5 +11,5 @@ pub fn _use_websocket_updates() -> UseWebSocketReturn<
     impl Fn() + Clone + Send + Sync,
     impl Fn(&ClientMsg) + Clone + Send + Sync,
 > {
-    use_websocket::<ClientMsg, ServerMsg, JsonSerdeCodec>(WEBSOCKET_UPDATES_URL)
+    use_websocket::<ClientMsg, ServerMsg, JsonSerdeCodec>(WEBSOCKET_UPDATES_ENDPOINT)
 }

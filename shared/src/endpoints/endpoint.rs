@@ -40,6 +40,4 @@ pub trait Endpoint {
     const PATH: &'static str;
     type JsonPayload: Serialize + DeserializeOwned;
     type JsonResponse: Serialize + DeserializeOwned;
-
-    type AuthRequired;
 }

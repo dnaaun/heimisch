@@ -8,7 +8,6 @@ use axum::{
 };
 use axum_login::AuthSession;
 use http::StatusCode;
-use shared::endpoints::endpoint::No;
 
 use crate::{auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser};
 
@@ -18,7 +17,7 @@ pub fn hookup<Endpoint, State, Error, Fut, Func>(
     func: Func,
 ) -> Router<State>
 where
-    Endpoint: shared::endpoints::endpoint::Endpoint<AuthRequired = No>,
+    Endpoint: shared::endpoints::endpoint::Endpoint,
     Endpoint::JsonPayload: Send + 'static,
     Error: IntoResponse,
     Fut: Future<Output = Result<(StatusCode, Endpoint::JsonResponse), Error>> + Send,
@@ -49,7 +48,7 @@ pub fn hookup_authenticated<Endpoint, State, Error, Fut, Func>(
     func: Func,
 ) -> Router<State>
 where
-    Endpoint: shared::endpoints::endpoint::Endpoint<AuthRequired = No>,
+    Endpoint: shared::endpoints::endpoint::Endpoint,
     Endpoint::JsonPayload: Send + 'static,
     Error: IntoResponse,
     Fut: Future<Output = Result<(StatusCode, Endpoint::JsonResponse), Error>> + Send,

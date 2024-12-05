@@ -14,6 +14,4 @@ impl Endpoint for AuthInitiateEndpoint {
 
     type JsonPayload = ();
     type JsonResponse = MaybePageRedirect<()>;
-
-    type AuthRequired = No;
 }

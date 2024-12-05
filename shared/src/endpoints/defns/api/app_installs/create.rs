@@ -30,6 +30,4 @@ impl Endpoint for CreateAppInstallEndpoint {
     type JsonPayload = CreateAppInstallPayload;
 
     type JsonResponse = MaybePageRedirect<CreateAppInstallResponse>;
-
-    type AuthRequired = No;
 }

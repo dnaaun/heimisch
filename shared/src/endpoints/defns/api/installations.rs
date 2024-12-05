@@ -24,6 +24,4 @@ impl Endpoint for GetInstallationAccessTokenEndpoint {
     type JsonPayload = GetInstallationAccessTokenPayload;
 
     type JsonResponse = MaybePageRedirect<InstallationAccessToken>;
-
-    type AuthRequired = No;
 }

@@ -10,6 +10,7 @@ mod app_installs;
 mod auth;
 mod github_hooks;
 mod installations;
+mod websocket_updates;
 
 pub fn get_api_router(state: AppState) -> Router<AppState> {
     let auth_backend = AuthBackend::new(&state);
@@ -24,6 +25,7 @@ pub fn get_api_router(state: AppState) -> Router<AppState> {
         .then(app_installs::create)
         .then(github_hooks::github_hooks)
         .then(installations::get_token)
+        .then(websocket_updates::api_websocket_updates)
         .layer(auth_layer);
 
     router

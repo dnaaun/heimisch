@@ -11,7 +11,9 @@ pub struct AuthFinishPayload {
 }
 
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Into, AsRef, Deref, Display)]
+#[derive(
+    Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Into, AsRef, Deref, Display,
+)]
 pub struct GithubAccessToken(String);
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -32,6 +34,4 @@ impl Endpoint for AuthFinishEndpoint {
     type JsonPayload = AuthFinishPayload;
 
     type JsonResponse = MaybePageRedirect<AuthFinishResponse>;
-
-    type AuthRequired = No;
 }

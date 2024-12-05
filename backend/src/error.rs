@@ -26,6 +26,12 @@ pub enum DbIntegrityError {
         session_id: Uuid,
         session_data: serde_json::Value,
     },
+    WebhookWebhookContentIsNotValid {
+        webhook_id: i64,
+        webhook_content: serde_json::Value,
+        error: serde_json::Error
+
+    }
 }
 
 impl From<DbIntegrityError> for Error {

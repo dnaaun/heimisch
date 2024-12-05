@@ -27,6 +27,7 @@ pub mod pg_session_store;
 
 #[cfg(test)]
 mod tests;
+mod websocket_updates_bucket;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
@@ -63,6 +64,7 @@ async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Route
         pool,
         config: Arc::new(config),
         leptos_options: leptos_options.clone(),
+        websocket_updates_bucket: Default::default(),
     };
 
     let leptos_routes = generate_route_list(web::App);

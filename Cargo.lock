@@ -355,6 +355,7 @@ dependencies = [
  "axum-typed-websockets",
  "backtrace",
  "bytes",
+ "dashmap",
  "deadpool-diesel",
  "derive_more",
  "diesel",
