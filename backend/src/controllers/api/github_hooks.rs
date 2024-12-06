@@ -2,7 +2,9 @@ use axum::{extract::State, routing::post, Json, Router};
 use github_webhook_body::WebhookBody;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::endpoints::utils::GetInstallationIdFromWebhookBody;
+use shared::endpoints::{
+    defns::api::websocket_updates::Webhook, utils::GetInstallationIdFromWebhookBody,
+};
 
 use crate::{
     app_state::AppState,
@@ -65,16 +67,25 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
 
                 let installation_id = match body.get_installation_id() {
                     Some(installation_id) => installation_id,
-                    None => return Err(ErrorSource::GithubWebhookNoInstallationId { body }.into()),
+                    None => {
+                        return Err(ErrorSource::GithubWebhookNoInstallationId {
+                            body: body.clone(),
+                        }
+                        .into())
+                    }
                 };
 
-                get_installation(&state, installation_id)
+                let installation = get_installation(&state, installation_id)
                     .await?
                     .ok_or_else(|| ErrorSource::GithubWebhookHeaderError {
                         message: format!("installation id not found in db: {installation_id}"),
                     })?;
 
-                upsert_webhook(&state, webhook_id, installation_id, body).await?;
+                let created_at = upsert_webhook(&state, webhook_id, installation_id, &body).await?;
+
+                state
+                    .websocket_updates_bucket
+                    .broadcast(&installation.github_user_id, Webhook { body, created_at });
 
                 Ok::<_, Error>(())
             },

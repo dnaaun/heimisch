@@ -1,6 +1,4 @@
-use macros::TypesafeIdb;
 use serde::{Deserialize, Serialize};
-use typesafe_idb::{Store, TypesafeDb};
 
 #[derive(Serialize, Deserialize)]
 struct InstallationId(u64);
@@ -11,7 +9,7 @@ struct RepositoryId(u64);
 #[derive(Serialize, Deserialize)]
 struct UserId(u64);
 
-#[derive(TypesafeIdb, Serialize, Deserialize)]
+#[derive(macros::TypesafeIdb, Serialize, Deserialize)]
 struct Repository {
     #[idb(id)]
     id: RepositoryId,
@@ -22,7 +20,7 @@ struct Repository {
     installation_id: InstallationId,
 }
 
-#[derive(TypesafeIdb, Serialize, Deserialize)]
+#[derive(macros::TypesafeIdb, Serialize, Deserialize)]
 struct User {
     #[idb(id)]
     id: UserId,
@@ -35,13 +33,13 @@ struct User {
 
 pub fn main() {
     async {
-        let db = TypesafeDb::builder("just test".into())
+        let db = typesafe_idb::TypesafeDb::builder("just test".into())
             .with_store::<Repository>()
             .build()
             .await
             .unwrap();
 
-        // Should raise error
-        User::txn(&db).rw();
+        // Should raise type error
+        db.txn().with_store::<User>();
     };
 }

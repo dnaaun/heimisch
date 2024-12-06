@@ -11,8 +11,7 @@ use shared::{
 };
 
 use crate::{
-    app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser,
-    db::get_webhooks_for_user_since, websocket_updates_bucket::CAPACITY,
+    app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser, db::get_webhooks_for_user_since, error::LogErr, websocket_updates_bucket::CAPACITY
 };
 
 pub fn api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
@@ -28,20 +27,6 @@ async fn inner(
     ws.on_upgrade(move |socket| {
         handle_websocket_updates(app_state, auth_user.github_user_id, payload, socket)
     })
-}
-
-trait LogErrAnd {
-    fn log_err(self) -> Self;
-    // fn log_err_and<F, R>(f: F) -> R;
-}
-
-impl<T, E: std::fmt::Debug> LogErrAnd for Result<T, E> {
-    fn log_err(self) -> Self {
-        if let Err(err) = &self {
-            tracing::error!("{err:?}");
-        }
-        self
-    }
 }
 
 async fn handle_websocket_updates(

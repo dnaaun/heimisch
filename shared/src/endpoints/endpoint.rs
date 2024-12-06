@@ -31,9 +31,6 @@ pub enum Method {
     Get,
 }
 
-pub struct Yes;
-pub struct No;
-
 pub trait Endpoint {
     type QueryParams: QueryParams;
     const METHOD: Method;

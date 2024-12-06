@@ -1,4 +1,4 @@
-use crate::endpoints::{endpoint::No, endpoint_client::MaybePageRedirect};
+use crate::endpoints::endpoint_client::MaybePageRedirect;
 
 use super::super::super::super::endpoint::{Endpoint, Method};
 use derive_more::derive::{AsRef, Deref, Display, Into};

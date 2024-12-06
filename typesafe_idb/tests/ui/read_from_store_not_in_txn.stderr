@@ -1,49 +1,15 @@
-error[E0277]: the trait bound `typesafe_idb::Chain<UserStoreMarker, typesafe_idb::Chain<(), ()>>: StoreMarker<Repository>` is not satisfied
-  --> tests/ui/read_from_store_not_in_txn.rs:48:27
+error[E0277]: the trait bound `typesafe_idb::chain::Chain<UserStoreMarker, typesafe_idb::chain::Chain<(), ()>>: StoreMarker<Repository>` is not satisfied
+  --> tests/ui/read_from_store_not_in_txn.rs:46:13
    |
-48 |         Repository::by_id(&txn, &RepositoryId(4)).await.unwrap();
-   |         ----------------- ^^^^ the trait `StoreMarker<Repository>` is not implemented for `typesafe_idb::Chain<UserStoreMarker, typesafe_idb::Chain<(), ()>>`
-   |         |
-   |         required by a bound introduced by this call
+46 |         txn.object_store::<Repository>().unwrap();
+   |             ^^^^^^^^^^^^ the trait `StoreMarker<Repository>` is not implemented for `typesafe_idb::chain::Chain<UserStoreMarker, typesafe_idb::chain::Chain<(), ()>>`
    |
-   = help: the trait `StoreMarker<Store>` is implemented for `typesafe_idb::Chain<Head, Tail>`
-note: required by a bound in `by_id`
-  --> src/store.rs
+   = help: the trait `StoreMarker<S>` is implemented for `typesafe_idb::chain::Chain<Head, Tail>`
+note: required by a bound in `Txn::<Markers, Mode>::object_store`
+  --> src/txn.rs
    |
-   |     async fn by_id<Marker, M>(
-   |              ----- required by a bound in this associated function
+   |     pub fn object_store<S>(&self) -> Result<ObjectStore<'_, S, Mode>, crate::Error>
+   |            ------------ required by a bound in this associated function
 ...
-   |         Marker: StoreMarker<Self>,
-   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `Store::by_id`
-
-error[E0277]: the trait bound `typesafe_idb::Chain<UserStoreMarker, typesafe_idb::Chain<(), ()>>: StoreMarker<Repository>` is not satisfied
-  --> tests/ui/read_from_store_not_in_txn.rs:48:9
-   |
-48 |         Repository::by_id(&txn, &RepositoryId(4)).await.unwrap();
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `StoreMarker<Repository>` is not implemented for `typesafe_idb::Chain<UserStoreMarker, typesafe_idb::Chain<(), ()>>`
-   |
-   = help: the trait `StoreMarker<Store>` is implemented for `typesafe_idb::Chain<Head, Tail>`
-note: required by a bound in `by_id`
-  --> src/store.rs
-   |
-   |     async fn by_id<Marker, M>(
-   |              ----- required by a bound in this associated function
-...
-   |         Marker: StoreMarker<Self>,
-   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `Store::by_id`
-
-error[E0277]: the trait bound `typesafe_idb::Chain<UserStoreMarker, typesafe_idb::Chain<(), ()>>: StoreMarker<Repository>` is not satisfied
-  --> tests/ui/read_from_store_not_in_txn.rs:48:51
-   |
-48 |         Repository::by_id(&txn, &RepositoryId(4)).await.unwrap();
-   |                                                   ^^^^^ the trait `StoreMarker<Repository>` is not implemented for `typesafe_idb::Chain<UserStoreMarker, typesafe_idb::Chain<(), ()>>`
-   |
-   = help: the trait `StoreMarker<Store>` is implemented for `typesafe_idb::Chain<Head, Tail>`
-note: required by a bound in `by_id`
-  --> src/store.rs
-   |
-   |     async fn by_id<Marker, M>(
-   |              ----- required by a bound in this associated function
-...
-   |         Marker: StoreMarker<Self>,
-   |                 ^^^^^^^^^^^^^^^^^ required by this bound in `Store::by_id`
+   |         Markers: StoreMarker<S>,
+   |                  ^^^^^^^^^^^^^^ required by this bound in `Txn::<Markers, Mode>::object_store`

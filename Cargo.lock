@@ -310,9 +310,11 @@ dependencies = [
  "assert-json-diff",
  "auto-future",
  "axum",
+ "base64 0.22.1",
  "bytes",
  "bytesize",
  "cookie",
+ "futures-util",
  "http 1.1.0",
  "http-body-util",
  "hyper",
@@ -326,8 +328,10 @@ dependencies = [
  "serde_urlencoded",
  "smallvec",
  "tokio",
+ "tokio-tungstenite",
  "tower",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -379,6 +383,7 @@ dependencies = [
  "serde_json",
  "shared",
  "tokio",
+ "tokio-tungstenite",
  "tower",
  "tower-http 0.5.2",
  "tower-sessions",

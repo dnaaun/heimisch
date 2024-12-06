@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 pub const WEBSOCKET_UPDATES_ENDPOINT: &str = "/api/websocket_updates";
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Webhook {
     pub body: WebhookBody,
     pub created_at: Timestamp,

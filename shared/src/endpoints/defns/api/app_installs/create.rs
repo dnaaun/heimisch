@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    endpoints::{endpoint::No, endpoint_client::MaybePageRedirect},
-    types::installation::InstallationId,
-};
+use crate::{endpoints::endpoint_client::MaybePageRedirect, types::installation::InstallationId};
 
 use super::super::super::super::endpoint::{Endpoint, Method};
 

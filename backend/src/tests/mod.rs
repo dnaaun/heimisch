@@ -1,6 +1,13 @@
 mod parse_request;
 
-use std::{cell::LazyCell, future::Future, path::PathBuf, sync::Arc, time::SystemTime};
+use std::{
+    cell::LazyCell,
+    future::Future,
+    net::{Ipv4Addr, SocketAddr},
+    path::PathBuf,
+    sync::Arc,
+    time::SystemTime,
+};
 
 use crate::error::Error as CrateError;
 use assert_json_diff::assert_json_include;
@@ -15,6 +22,7 @@ use diesel_test::{
 use parking_lot::Mutex;
 use parse_request::ParsedHttpRequest;
 use serde_json::Value;
+use shared::endpoints::defns::api::websocket_updates::WEBSOCKET_UPDATES_ENDPOINT;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use crate::{
@@ -168,4 +176,14 @@ async fn test_simple_webhook_delivery() -> TestResult<()> {
         Ok::<_, TestError>(())
     })
     .await?
+}
+
+#[tokio::test]
+async fn test_websocket_updates() -> TestResult<()> {
+    // with_test_server(|pool, server| async move {
+    //     let req = server.get(WEBSOCKET_UPDATES_ENDPOINT);
+    //     Ok(())
+    // })
+    // .await?
+    Ok(())
 }

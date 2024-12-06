@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    endpoints::{endpoint::No, endpoint_client::MaybePageRedirect},
+    endpoints::endpoint_client::MaybePageRedirect,
     types::{installation::InstallationId, installation_access_token_row::InstallationAccessToken},
 };
 

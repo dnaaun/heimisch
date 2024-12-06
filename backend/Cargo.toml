@@ -30,9 +30,7 @@ web = { path = "../web", version = "*", features = ["ssr"] }
 dotenvy = "0.15.7"
 backtrace = "0.3.74"
 jsonwebtoken = "9.3.0"
-diesel_test = { path = "../diesel-test" }
 parking_lot = "0.12.3"
-axum-test = "16.3.0"
 bytes = "1.8.0"
 derive_more = { version = "1.0.0", features = ["display", "error"] }
 assert-json-diff = "2.0.2"
@@ -47,3 +45,8 @@ axum-login = "0.16.0"
 anyhow = "1.0.94"
 tower = "0.5.1"
 dashmap = "6.1.0"
+
+[dev-dependencies]
+axum-test = { version = "16.3.0", features = ["ws"] }
+diesel_test = { path = "../diesel-test" }
+tokio-tungstenite = "0.24.0"

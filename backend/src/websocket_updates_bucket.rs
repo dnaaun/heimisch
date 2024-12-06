@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use dashmap::DashMap;
+use crate::error::LogErr;
 use shared::{endpoints::defns::api::websocket_updates::Webhook, types::user::UserId};
 
 #[derive(Default)]
@@ -42,6 +43,16 @@ impl WebsocketUpdatesBucket {
             bucket: self.clone(),
             user_id: id,
         }
+    }
+
+    pub fn broadcast(&self, id: &UserId, webhook: Webhook) {
+        let sender = match self.senders.get(id) {
+            Some(sender) => sender,
+            None => return,
+        };
+
+        // We don't let websocket errors affect HTTP return status codes, we just log them.
+        let _ = sender.send(webhook).log_err();
     }
 }
 

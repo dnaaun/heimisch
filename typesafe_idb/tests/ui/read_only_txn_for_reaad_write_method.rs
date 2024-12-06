@@ -1,18 +1,16 @@
-use macros::TypesafeIdb;
 use serde::{Deserialize, Serialize};
-use typesafe_idb::{Store, TypesafeDb};
 
 #[derive(Serialize, Deserialize)]
-struct InstallationId(u64);
+pub struct InstallationId(u64);
 
 #[derive(Serialize, Deserialize)]
-struct RepositoryId(u64);
+pub struct RepositoryId(u64);
 
 #[derive(Serialize, Deserialize)]
-struct UserId(u64);
+pub struct UserId(u64);
 
-#[derive(TypesafeIdb, Serialize, Deserialize)]
-struct Repository {
+#[derive(macros::TypesafeIdb, Serialize, Deserialize)]
+pub struct Repository {
     #[idb(id)]
     id: RepositoryId,
 
@@ -22,8 +20,8 @@ struct Repository {
     installation_id: InstallationId,
 }
 
-#[derive(TypesafeIdb, Serialize, Deserialize)]
-struct User {
+#[derive(macros::TypesafeIdb, Serialize, Deserialize)]
+pub struct User {
     #[idb(id)]
     id: UserId,
 
@@ -33,17 +31,19 @@ struct User {
     repository_id: RepositoryId,
 }
 
-pub fn main() {
+fn main() {
+    #[allow(unused_must_use)]
     async {
-        let db = TypesafeDb::builder("just test".into())
+        let db = typesafe_idb::TypesafeDb::builder("just test".into())
             .with_store::<Repository>()
             .build()
             .await
             .unwrap();
 
-        let txn = Repository::txn(&db).ro();
+        let txn = db.txn().with_store::<Repository>().ro();
+        let object_store = txn.object_store::<Repository>().unwrap();
 
-        // Should raise error
-        Repository::delete(&txn, &RepositoryId(4)).await.unwrap();
+        // Should raise type error
+        object_store.delete(&RepositoryId(4)).await.unwrap();
     };
 }
