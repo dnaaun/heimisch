@@ -47,7 +47,8 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
         post(
             |State(state): State<AppState>,
              extractors::Header(header): extractors::Header<GitHubWebhookHeaders>,
-             Json(value): Json<Value>| async move {
+             value: String| async move {
+                 println!("Inside handler for github webhooks");
                 let GitHubWebhookHeaders {
                     x_github_hook_id: webhook_id,
                     x_github_event,
@@ -61,6 +62,8 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
                 })?;
 
                 // The `Webhook` enum is structured in this way.
+                println!("THE VALUE IS: {value}");
+                let value: Value = serde_json::from_str(&value).unwrap();
                 let value = Value::Object([(x_github_event.clone(), value)].into_iter().collect());
                 let body = serde_json::from_value::<WebhookBody>(value)
                     .map_err(ErrorSource::GithubWebhookBodyDeser)?;
@@ -83,6 +86,7 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
 
                 let created_at = upsert_webhook(&state, webhook_id, installation_id, &body).await?;
 
+                println!("Yoo, about to call broadcast!");
                 state
                     .websocket_updates_bucket
                     .broadcast(&installation.github_user_id, Webhook { body, created_at });

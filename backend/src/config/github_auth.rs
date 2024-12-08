@@ -1,6 +1,5 @@
 //! Authentication related types and functions.
 
-use github_api::apis::configuration::Configuration;
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use serde::Serialize;
 use std::fmt;
@@ -57,23 +56,5 @@ impl AppAuth {
     /// an RSA signature operation per App-authorized API call.
     pub fn generate_bearer_token(&self) -> Result<String, jsonwebtoken::errors::Error> {
         create_jwt(self.app_id, &self.key)
-    }
-}
-
-pub trait WithAppAuth {
-    fn with_app_auth(self, app_auth: AppAuth)
-        -> Result<Configuration, jsonwebtoken::errors::Error>;
-}
-
-impl WithAppAuth for Configuration {
-    fn with_app_auth(
-        self,
-        app_auth: AppAuth,
-    ) -> Result<Configuration, jsonwebtoken::errors::Error> {
-        let thingy = app_auth.generate_bearer_token()?;
-        Ok(Self {
-            bearer_access_token: Some(thingy),
-            ..self
-        })
     }
 }

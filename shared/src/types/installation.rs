@@ -1,6 +1,7 @@
 use derive_more::derive::{AsRef, Deref, Display, From, Into};
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
 #[derive(
     From,
     Into,

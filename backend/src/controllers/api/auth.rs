@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use crate::{
     custom_github_api::get_user_access_token,
     db::{
@@ -6,17 +8,11 @@ use crate::{
     },
     error::Error,
     hookup_endpoint::hookup,
+    utils::gen_rand_string,
 };
-use axum::{
-    extract::State,
-    response::{IntoResponse, Redirect},
-    routing::get,
-    Router,
-};
+use axum::{extract::State, response::Redirect, routing::get, Router};
 use github_api::apis::users_api::users_slash_get_authenticated;
 use http::StatusCode;
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use shared::endpoints::endpoint::Endpoint;
 use shared::{
     endpoints::defns::api::auth::{
         finish::{AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse},
@@ -24,7 +20,6 @@ use shared::{
     },
     types::user::UserId,
 };
-use url::Url;
 
 use crate::app_state::AppState;
 
@@ -51,20 +46,19 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
             delete_csrf_token(&state, csrf_token).await?;
 
             let access_token = get_user_access_token(
+                &state.config.github_api.non_api_root,
                 code.as_str(),
-                state.config.github_api.client_id.clone(),
-                state.config.github_api.client_secret.clone(),
+                &state.config.github_api.client_id,
+                &state.config.github_api.client_secret,
             )
             .await?;
 
-            tracing::info!("YO {access_token}");
-            let resp =
-                users_slash_get_authenticated(&github_api::apis::configuration::Configuration {
-                    user_agent: Some("Heimisch".into()),
-                    bearer_access_token: Some(access_token.clone().into()),
-                    ..Default::default()
-                })
-                .await?;
+            let resp = users_slash_get_authenticated(
+                &state
+                    .config
+                    .get_gh_api_conf_with_access_token(access_token.deref().clone()),
+            )
+            .await?;
 
             let (id, login, email) = match resp {
                 github_api::models::UsersGetAuthenticated200Response::Private(private_user) => {
@@ -108,25 +102,27 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
 pub fn initiate(router: Router<AppState>) -> Router<AppState> {
     router.route(
         AuthInitiateEndpoint::PATH,
-        get(|State(state): State<AppState>| async move { intiate_github_login(state).await }),
+        get(|State(state): State<AppState>| async move {
+            let csrf_token = gen_rand_string(20);
+
+            store_csrf_token(&state, csrf_token.clone()).await?;
+
+            let mut redirect_uri = state.config.heimisch_domain_url.clone();
+            redirect_uri.set_path("/auth");
+
+            let mut github_oauth_url = state
+                .config
+                .github_api
+                .non_api_root
+                .join("/login/oauth/authorize")
+                .expect("");
+            github_oauth_url.query_pairs_mut().extend_pairs([
+                ("state", csrf_token),
+                ("client_id", state.config.github_api.client_id.to_owned()),
+                ("redirect_uri", redirect_uri.as_str().to_owned()),
+            ]);
+
+            Ok::<_, Error>(Redirect::to(github_oauth_url.as_str()))
+        }),
     )
-}
-
-async fn intiate_github_login(state: AppState) -> impl IntoResponse {
-    let mut rng = StdRng::from_entropy();
-    let csrf_token: String = (0..20).map(|_| rng.gen_range('a'..='z')).collect();
-
-    store_csrf_token(&state, csrf_token.clone()).await?;
-
-    let mut redirect_uri = state.config.heimisch_domain_url.clone();
-    redirect_uri.set_path("/auth");
-
-    let mut github_oauth_url = Url::parse("https://github.com/login/oauth/authorize").expect("");
-    github_oauth_url.query_pairs_mut().extend_pairs([
-        ("state", csrf_token),
-        ("client_id", state.config.github_api.client_id.to_owned()),
-        ("redirect_uri", redirect_uri.as_str().to_owned()),
-    ]);
-
-    Ok::<_, Error>(Redirect::to(github_oauth_url.as_str()))
 }

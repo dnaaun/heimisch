@@ -28,6 +28,7 @@ pub mod pg_session_store;
 #[cfg(test)]
 mod tests;
 mod websocket_updates_bucket;
+pub mod utils;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 

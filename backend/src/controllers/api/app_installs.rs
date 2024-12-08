@@ -1,5 +1,4 @@
 use crate::app_state::AppState;
-use crate::config::WithAppAuth;
 use crate::db::{self, insert_installation_if_not_exists};
 use crate::error::Error;
 use crate::hookup_endpoint::hookup_authenticated;
@@ -7,7 +6,6 @@ use axum::Router;
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
 use github_api::apis::apps_api::apps_slash_get_installation;
-use github_api::apis::configuration::Configuration;
 use http::StatusCode;
 use shared::endpoints::defns::api::app_installs::create::{
     CreateAppInstallEndpoint, CreateAppInstallPayload, CreateAppInstallResponse,
@@ -39,9 +37,7 @@ pub fn create(router: Router<AppState>) -> Router<AppState> {
                 .await??;
 
             apps_slash_get_installation(
-                &Configuration::default()
-                    .with_app_auth(state.config.github_api.app_auth.clone())
-                    .expect(""),
+                &state.config.get_gh_api_conf_with_app_auth(),
                 *installation_id as i32,
             )
             .await?;

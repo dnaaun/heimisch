@@ -21,6 +21,6 @@ pub enum ClientMsg {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct WebsocketUpdatesPayload {
+pub struct WebsocketUpdatesQueryParams {
     pub updates_since: Timestamp,
 }

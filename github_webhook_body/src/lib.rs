@@ -26,7 +26,7 @@ pub mod error {
         }
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum BranchProtectionConfiguration {
     #[serde(rename = "disabled")]
@@ -57,7 +57,7 @@ impl From<&BranchProtectionConfiguration> for BranchProtectionConfiguration {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum BranchProtectionRule {
     #[serde(rename = "created")]
@@ -104,7 +104,7 @@ impl From<&BranchProtectionRule> for BranchProtectionRule {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct BranchProtectionRuleCreatedRule {
     pub admin_enforced: bool,
     pub allow_deletions_enforcement_level:
@@ -211,7 +211,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct BranchProtectionRuleEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub admin_enforced: Option<BranchProtectionRuleEditedChangesAdminEnforced>,
@@ -247,7 +247,7 @@ impl From<&BranchProtectionRuleEditedChanges> for BranchProtectionRuleEditedChan
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct BranchProtectionRuleEditedChangesAdminEnforced {
     pub from: Option<bool>,
 }
@@ -258,7 +258,7 @@ impl From<&BranchProtectionRuleEditedChangesAdminEnforced>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct BranchProtectionRuleEditedChangesLinearHistoryRequirementEnforcementLevel {
     pub from: BranchProtectionRuleCreatedRuleAllowDeletionsEnforcementLevel,
 }
@@ -271,7 +271,7 @@ impl From<&BranchProtectionRuleEditedChangesLinearHistoryRequirementEnforcementL
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum CheckRun {
     Completed {
@@ -325,7 +325,7 @@ impl From<&CheckRun> for CheckRun {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRun {
     pub app: (),
     pub check_suite: CheckRunCompletedCheckRunCheckSuite,
@@ -351,7 +351,7 @@ impl From<&CheckRunCompletedCheckRun> for CheckRunCompletedCheckRun {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuite {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after: Option<String>,
@@ -387,7 +387,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuite> for CheckRunCompletedCheckRunChe
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuitePullRequests {
     pub base: CheckRunCompletedCheckRunCheckSuitePullRequestsHead,
     pub head: CheckRunCompletedCheckRunCheckSuitePullRequestsHead,
@@ -402,7 +402,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuitePullRequests>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuitePullRequestsHead {
     #[serde(rename = "ref")]
     pub ref_: String,
@@ -416,7 +416,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuitePullRequestsHead>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuitePullRequestsHeadRepo {
     pub id: i64,
     pub name: String,
@@ -429,7 +429,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuitePullRequestsHeadRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuiteRepository {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub allow_forking: Option<bool>,
@@ -568,7 +568,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuiteRepository>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuiteRepositoryCodeOfConduct {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
@@ -584,7 +584,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuiteRepositoryCodeOfConduct>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuiteRepositoryLicense {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
@@ -604,7 +604,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuiteRepositoryLicense>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuiteRepositorySecurityAndAnalysis {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub advanced_security:
@@ -632,7 +632,7 @@ impl From<&CheckRunCompletedCheckRunCheckSuiteRepositorySecurityAndAnalysis>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunCheckSuiteRepositorySecurityAndAnalysisAdvancedSecurity {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<
@@ -794,7 +794,7 @@ impl std::convert::TryFrom<String> for CheckRunCompletedCheckRunConclusion {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunDeployment {
     pub created_at: String,
     pub description: Option<String>,
@@ -820,7 +820,7 @@ impl From<&CheckRunCompletedCheckRunDeployment> for CheckRunCompletedCheckRunDep
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunCompletedCheckRunOutput {
     pub annotations_count: i64,
     pub annotations_url: String,
@@ -889,7 +889,7 @@ impl std::convert::TryFrom<String> for CheckRunCompletedCheckRunStatus {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckRunRequestedActionRequestedAction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub identifier: Option<String>,
@@ -899,7 +899,7 @@ impl From<&CheckRunRequestedActionRequestedAction> for CheckRunRequestedActionRe
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum CheckSuite {
     #[serde(rename = "completed")]
@@ -944,7 +944,7 @@ impl From<&CheckSuite> for CheckSuite {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckSuiteCompletedCheckSuite {
     pub after: Option<String>,
     pub app: CheckSuiteCompletedCheckSuiteApp,
@@ -972,7 +972,7 @@ impl From<&CheckSuiteCompletedCheckSuite> for CheckSuiteCompletedCheckSuite {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckSuiteCompletedCheckSuiteApp {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_id: Option<String>,
@@ -997,7 +997,7 @@ impl From<&CheckSuiteCompletedCheckSuiteApp> for CheckSuiteCompletedCheckSuiteAp
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckSuiteRequestedCheckSuite {
     pub after: Option<String>,
     pub app: CheckSuiteCompletedCheckSuiteApp,
@@ -1081,7 +1081,7 @@ impl std::convert::TryFrom<String> for CheckSuiteRequestedCheckSuiteStatus {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CheckSuiteRerequestedCheckSuite {
     pub after: Option<String>,
     pub app: CheckSuiteCompletedCheckSuiteApp,
@@ -1109,7 +1109,7 @@ impl From<&CheckSuiteRerequestedCheckSuite> for CheckSuiteRerequestedCheckSuite 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum CodeScanningAlert {
     #[serde(rename = "appeared_in_branch")]
@@ -1208,7 +1208,7 @@ impl From<&CodeScanningAlert> for CodeScanningAlert {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertAppearedInBranchAlert {
     pub created_at: String,
     pub dismissed_at: Option<String>,
@@ -1282,7 +1282,7 @@ impl std::convert::TryFrom<String> for CodeScanningAlertAppearedInBranchAlertDis
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertAppearedInBranchAlertMostRecentInstance {
     pub analysis_key: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1307,7 +1307,7 @@ impl From<&CodeScanningAlertAppearedInBranchAlertMostRecentInstance>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertAppearedInBranchAlertMostRecentInstanceLocation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub end_column: Option<i64>,
@@ -1327,7 +1327,7 @@ impl From<&CodeScanningAlertAppearedInBranchAlertMostRecentInstanceLocation>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertAppearedInBranchAlertMostRecentInstanceMessage {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
@@ -1397,7 +1397,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertAppearedInBranchAlertRule {
     pub description: String,
     pub id: String,
@@ -1468,7 +1468,7 @@ impl std::convert::TryFrom<String> for CodeScanningAlertAppearedInBranchAlertRul
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertAppearedInBranchAlertTool {
     pub name: String,
     pub version: Option<String>,
@@ -1480,7 +1480,7 @@ impl From<&CodeScanningAlertAppearedInBranchAlertTool>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertClosedByUserAlert {
     pub created_at: String,
     pub dismissed_at: String,
@@ -1500,7 +1500,7 @@ impl From<&CodeScanningAlertClosedByUserAlert> for CodeScanningAlertClosedByUser
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertClosedByUserAlertRule {
     pub description: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1569,7 +1569,7 @@ impl std::convert::TryFrom<String> for CodeScanningAlertClosedByUserAlertState {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertClosedByUserAlertTool {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub guid: Option<String>,
@@ -1581,7 +1581,7 @@ impl From<&CodeScanningAlertClosedByUserAlertTool> for CodeScanningAlertClosedBy
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertCreatedAlert {
     pub created_at: Option<String>,
     pub dismissed_at: (),
@@ -1657,7 +1657,7 @@ impl std::convert::TryFrom<String> for CodeScanningAlertCreatedAlertState {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertFixedAlert {
     pub created_at: String,
     pub dismissed_at: Option<String>,
@@ -1679,7 +1679,7 @@ impl From<&CodeScanningAlertFixedAlert> for CodeScanningAlertFixedAlert {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertReopenedAlert {
     pub created_at: String,
     pub dismissed_at: Option<String>,
@@ -1699,7 +1699,7 @@ impl From<&CodeScanningAlertReopenedAlert> for CodeScanningAlertReopenedAlert {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CodeScanningAlertReopenedByUserAlert {
     pub created_at: String,
     pub dismissed_at: (),
@@ -1769,7 +1769,7 @@ impl std::convert::TryFrom<String> for CodeScanningAlertReopenedByUserAlertState
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum CommitComment {
     #[serde(rename = "created")]
@@ -1790,7 +1790,7 @@ impl From<&CommitComment> for CommitComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CommitCommentCreatedComment {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -1813,7 +1813,7 @@ impl From<&CommitCommentCreatedComment> for CommitCommentCreatedComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Create {
     pub description: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1835,7 +1835,7 @@ impl From<&Create> for Create {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum CustomProperty {
     #[serde(rename = "created")]
@@ -1880,7 +1880,7 @@ impl From<&CustomProperty> for CustomProperty {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CustomPropertyCreatedDefinition {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub allowed_values: Option<Vec<String>>,
@@ -1902,7 +1902,7 @@ impl From<&CustomPropertyCreatedDefinition> for CustomPropertyCreatedDefinition 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum CustomPropertyCreatedDefinitionDefaultValue {
     Variant0(String),
@@ -2026,7 +2026,7 @@ impl std::convert::TryFrom<String> for CustomPropertyCreatedDefinitionValuesEdit
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CustomPropertyDeletedDefinition {
     pub property_name: String,
 }
@@ -2035,7 +2035,7 @@ impl From<&CustomPropertyDeletedDefinition> for CustomPropertyDeletedDefinition 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum CustomPropertyValues {
     #[serde(rename = "updated")]
@@ -2057,7 +2057,7 @@ impl From<&CustomPropertyValues> for CustomPropertyValues {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct CustomPropertyValuesUpdatedNewPropertyValues {
     pub property_name: String,
     pub value: Option<CustomPropertyValuesUpdatedNewPropertyValuesValue>,
@@ -2069,7 +2069,7 @@ impl From<&CustomPropertyValuesUpdatedNewPropertyValues>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum CustomPropertyValuesUpdatedNewPropertyValuesValue {
     Variant0(String),
@@ -2087,7 +2087,7 @@ impl From<Vec<::serde_json::Value>> for CustomPropertyValuesUpdatedNewPropertyVa
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Delete {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enterprise: Option<Untyped>,
@@ -2155,7 +2155,7 @@ impl std::convert::TryFrom<String> for DeleteDefaultRefType {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum DependabotAlert {
     #[serde(rename = "auto_dismissed")]
@@ -2248,7 +2248,7 @@ impl From<&DependabotAlert> for DependabotAlert {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlert {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_dismissed_at: Option<String>,
@@ -2272,7 +2272,7 @@ impl From<&DependabotAlertAutoDismissedAlert> for DependabotAlertAutoDismissedAl
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlertDependency {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub manifest_path: Option<String>,
@@ -2288,7 +2288,7 @@ impl From<&DependabotAlertAutoDismissedAlertDependency>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlertDependencyPackage {
     pub ecosystem: String,
     pub name: String,
@@ -2412,7 +2412,7 @@ impl std::convert::TryFrom<String> for DependabotAlertAutoDismissedAlertDismisse
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlertSecurityAdvisory {
     pub cve_id: Option<String>,
     pub cvss: DependabotAlertAutoDismissedAlertSecurityAdvisoryCvss,
@@ -2437,7 +2437,7 @@ impl From<&DependabotAlertAutoDismissedAlertSecurityAdvisory>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlertSecurityAdvisoryCvss {
     pub score: f64,
     pub vector_string: Option<String>,
@@ -2449,7 +2449,7 @@ impl From<&DependabotAlertAutoDismissedAlertSecurityAdvisoryCvss>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlertSecurityAdvisoryReferences {
     pub url: String,
 }
@@ -2460,7 +2460,7 @@ impl From<&DependabotAlertAutoDismissedAlertSecurityAdvisoryReferences>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DependabotAlertAutoDismissedAlertSecurityAdvisoryVulnerabilities {
     pub first_patched_version: Option<CheckRunRequestedActionRequestedAction>,
     pub package: DependabotAlertAutoDismissedAlertDependencyPackage,
@@ -2530,7 +2530,7 @@ impl std::convert::TryFrom<String> for DependabotAlertAutoDismissedAlertState {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum DeployKey {
     #[serde(rename = "created")]
@@ -2563,7 +2563,7 @@ impl From<&DeployKey> for DeployKey {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeployKeyCreatedKey {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub added_by: Option<String>,
@@ -2582,7 +2582,7 @@ impl From<&DeployKeyCreatedKey> for DeployKeyCreatedKey {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Deployment {
     #[serde(rename = "created")]
@@ -2605,7 +2605,7 @@ impl From<&Deployment> for Deployment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentCreatedDeployment {
     pub created_at: String,
     pub creator: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -2635,7 +2635,7 @@ impl From<&DeploymentCreatedDeployment> for DeploymentCreatedDeployment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum DeploymentCreatedDeploymentPayload {
     Variant0(Untyped),
@@ -2651,7 +2651,7 @@ impl From<Untyped> for DeploymentCreatedDeploymentPayload {
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentCreatedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2775,7 +2775,7 @@ impl std::convert::TryFrom<String> for DeploymentCreatedWorkflowRunConclusion {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRule {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub action: Option<String>,
@@ -2803,7 +2803,7 @@ impl From<&DeploymentProtectionRule> for DeploymentProtectionRule {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedDeployment {
     pub created_at: String,
     pub creator: DiscussionTransferredChangesNewRepositoryOrganization,
@@ -2836,7 +2836,7 @@ impl From<&DeploymentProtectionRuleRequestedDeployment>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum DeploymentProtectionRuleRequestedDeploymentPayload {
     Variant0(Untyped),
@@ -2854,7 +2854,7 @@ impl From<Untyped> for DeploymentProtectionRuleRequestedDeploymentPayload {
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequests {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_lock_reason: Option<String>,
@@ -2919,7 +2919,7 @@ impl From<&DeploymentProtectionRuleRequestedPullRequests>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsAutoMerge {
     pub commit_message: String,
     pub commit_title: String,
@@ -2993,7 +2993,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsHead {
     pub label: String,
     #[serde(rename = "ref")]
@@ -3009,7 +3009,7 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsHead>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsHeadRepo {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -3142,7 +3142,7 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsHeadRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsLinks {
     pub comments: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
     pub commits: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
@@ -3161,7 +3161,7 @@ impl From<&DeploymentProtectionRuleRequestedPullRequestsLinks>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsMilestone {
     pub closed_at: Option<String>,
     pub closed_issues: i64,
@@ -3242,7 +3242,7 @@ impl std::convert::TryFrom<String> for DeploymentProtectionRuleRequestedPullRequ
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentProtectionRuleRequestedPullRequestsRequestedTeams {
     pub description: Option<String>,
     pub html_url: String,
@@ -3318,7 +3318,7 @@ impl std::convert::TryFrom<String> for DeploymentProtectionRuleRequestedPullRequ
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum DeploymentReview {
     #[serde(rename = "approved")]
@@ -3387,7 +3387,7 @@ impl From<&DeploymentReview> for DeploymentReview {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedApprover {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -3433,7 +3433,7 @@ impl From<&DeploymentReviewApprovedApprover> for DeploymentReviewApprovedApprove
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedReviewers {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<DeploymentReviewApprovedReviewersReviewer>,
@@ -3445,7 +3445,7 @@ impl From<&DeploymentReviewApprovedReviewers> for DeploymentReviewApprovedReview
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedReviewersReviewer {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -3495,7 +3495,7 @@ impl From<&DeploymentReviewApprovedReviewersReviewer>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedWorkflowJobRun {
     pub conclusion: (),
     pub created_at: String,
@@ -3511,7 +3511,7 @@ impl From<&DeploymentReviewApprovedWorkflowJobRun> for DeploymentReviewApprovedW
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedWorkflowJobRuns {
     #[serde(default)]
     pub conclusion: (),
@@ -3535,7 +3535,7 @@ impl From<&DeploymentReviewApprovedWorkflowJobRuns> for DeploymentReviewApproved
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -3590,7 +3590,7 @@ impl From<&DeploymentReviewApprovedWorkflowRun> for DeploymentReviewApprovedWork
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewApprovedWorkflowRunHeadRepository {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub archive_url: Option<String>,
@@ -3692,7 +3692,7 @@ impl From<&DeploymentReviewApprovedWorkflowRunHeadRepository>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewRejectedWorkflowJobRuns {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conclusion: Option<String>,
@@ -3716,7 +3716,7 @@ impl From<&DeploymentReviewRejectedWorkflowJobRuns> for DeploymentReviewRejected
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewRejectedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -3833,7 +3833,7 @@ impl std::convert::TryFrom<String> for DeploymentReviewRejectedWorkflowRunStatus
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewRequestedReviewers {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -3891,7 +3891,7 @@ impl std::convert::TryFrom<String> for DeploymentReviewRequestedReviewersType {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentReviewRequestedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -3946,7 +3946,7 @@ impl From<&DeploymentReviewRequestedWorkflowRun> for DeploymentReviewRequestedWo
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum DeploymentStatus {
     #[serde(rename = "created")]
@@ -3974,7 +3974,7 @@ impl From<&DeploymentStatus> for DeploymentStatus {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedCheckRun {
     pub completed_at: Option<String>,
     pub conclusion: Option<DeploymentStatusCreatedCheckRunConclusion>,
@@ -4128,7 +4128,7 @@ impl std::convert::TryFrom<String> for DeploymentStatusCreatedCheckRunStatus {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedDeployment {
     pub created_at: String,
     pub creator: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -4158,7 +4158,7 @@ impl From<&DeploymentStatusCreatedDeployment> for DeploymentStatusCreatedDeploym
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedDeploymentCreator {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -4259,7 +4259,7 @@ impl std::convert::TryFrom<String> for DeploymentStatusCreatedDeploymentCreatorT
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum DeploymentStatusCreatedDeploymentPayload {
     Variant0(Untyped),
@@ -4275,7 +4275,7 @@ impl From<Untyped> for DeploymentStatusCreatedDeploymentPayload {
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedDeploymentPerformedViaGithubApp {
     pub created_at: Option<String>,
     pub description: Option<String>,
@@ -4300,7 +4300,7 @@ impl From<&DeploymentStatusCreatedDeploymentPerformedViaGithubApp>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub actions: Option<DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsActions>,
@@ -4464,7 +4464,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedDeploymentStatus {
     pub created_at: String,
     pub creator: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -4490,7 +4490,7 @@ impl From<&DeploymentStatusCreatedDeploymentStatus> for DeploymentStatusCreatedD
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflow {
     pub badge_url: String,
     pub created_at: String,
@@ -4508,7 +4508,7 @@ impl From<&DeploymentStatusCreatedWorkflow> for DeploymentStatusCreatedWorkflow 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -4637,7 +4637,7 @@ impl std::convert::TryFrom<String> for DeploymentStatusCreatedWorkflowRunConclus
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRunHeadRepository {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub archive_url: Option<String>,
@@ -4739,7 +4739,7 @@ impl From<&DeploymentStatusCreatedWorkflowRunHeadRepository>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRunHeadRepositoryOwner {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -4785,7 +4785,7 @@ impl From<&DeploymentStatusCreatedWorkflowRunHeadRepositoryOwner>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRunPullRequests {
     pub base: DeploymentStatusCreatedWorkflowRunPullRequestsBase,
     pub head: DeploymentStatusCreatedWorkflowRunPullRequestsBase,
@@ -4800,7 +4800,7 @@ impl From<&DeploymentStatusCreatedWorkflowRunPullRequests>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRunPullRequestsBase {
     #[serde(rename = "ref")]
     pub ref_: String,
@@ -4814,7 +4814,7 @@ impl From<&DeploymentStatusCreatedWorkflowRunPullRequestsBase>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRunPullRequestsBaseRepo {
     pub id: i64,
     pub name: String,
@@ -4827,7 +4827,7 @@ impl From<&DeploymentStatusCreatedWorkflowRunPullRequestsBaseRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DeploymentStatusCreatedWorkflowRunReferencedWorkflows {
     pub path: String,
     #[serde(rename = "ref", default, skip_serializing_if = "Option::is_none")]
@@ -4905,7 +4905,7 @@ impl std::convert::TryFrom<String> for DeploymentStatusCreatedWorkflowRunStatus 
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum Discussion {
     Answered {
@@ -5095,7 +5095,7 @@ impl From<DiscussionUnanswered> for Discussion {
         Self::Unanswered(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionAnsweredAnswer {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -5191,7 +5191,7 @@ impl std::convert::TryFrom<String> for DiscussionAnsweredAnswerAuthorAssociation
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionAnsweredAnswerReactions {
     pub confused: i64,
     pub eyes: i64,
@@ -5211,7 +5211,7 @@ impl From<&DiscussionAnsweredAnswerReactions> for DiscussionAnsweredAnswerReacti
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionAnsweredDiscussion {
     pub active_lock_reason: Option<String>,
     pub answer_chosen_at: Option<String>,
@@ -5245,7 +5245,7 @@ impl From<&DiscussionAnsweredDiscussion> for DiscussionAnsweredDiscussion {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionAnsweredDiscussionCategory {
     pub created_at: String,
     pub description: String,
@@ -5264,7 +5264,7 @@ impl From<&DiscussionAnsweredDiscussionCategory> for DiscussionAnsweredDiscussio
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionAnsweredDiscussionLabels {
     pub color: String,
     pub default: bool,
@@ -5395,7 +5395,7 @@ impl std::convert::TryFrom<String> for DiscussionAnsweredDiscussionStateReason {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionCategoryChangedChanges {
     pub category: DiscussionCategoryChangedChangesCategory,
 }
@@ -5404,7 +5404,7 @@ impl From<&DiscussionCategoryChangedChanges> for DiscussionCategoryChangedChange
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionCategoryChangedChangesCategory {
     pub from: DiscussionAnsweredDiscussionCategory,
 }
@@ -5413,7 +5413,7 @@ impl From<&DiscussionCategoryChangedChangesCategory> for DiscussionCategoryChang
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum DiscussionComment {
     #[serde(rename = "created")]
@@ -5462,7 +5462,7 @@ impl From<&DiscussionComment> for DiscussionComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionCommentCreatedComment {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -5483,7 +5483,7 @@ impl From<&DiscussionCommentCreatedComment> for DiscussionCommentCreatedComment 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<DiscussionEditedChangesBody>,
@@ -5495,7 +5495,7 @@ impl From<&DiscussionEditedChanges> for DiscussionEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionEditedChangesBody {
     pub from: String,
 }
@@ -5504,7 +5504,7 @@ impl From<&DiscussionEditedChangesBody> for DiscussionEditedChangesBody {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionLabeledLabel {
     pub color: String,
     pub default: bool,
@@ -5519,7 +5519,7 @@ impl From<&DiscussionLabeledLabel> for DiscussionLabeledLabel {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChanges {
     pub new_discussion: DiscussionAnsweredDiscussion,
     pub new_repository: DiscussionTransferredChangesNewRepository,
@@ -5529,7 +5529,7 @@ impl From<&DiscussionTransferredChanges> for DiscussionTransferredChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepository {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -5670,7 +5670,7 @@ impl From<&DiscussionTransferredChangesNewRepository>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepositoryLicense {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub html_url: Option<String>,
@@ -5687,7 +5687,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryLicense>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepositoryOrganization {
     pub avatar_url: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -5724,7 +5724,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryOrganization>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepositoryPermissions {
     pub admin: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -5741,7 +5741,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryPermissions>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepositoryTemplateRepository {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub allow_auto_merge: Option<bool>,
@@ -6057,7 +6057,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepositoryTemplateRepositoryOwner {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -6103,7 +6103,7 @@ impl From<&DiscussionTransferredChangesNewRepositoryTemplateRepositoryOwner>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionTransferredChangesNewRepositoryTemplateRepositoryPermissions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub admin: Option<bool>,
@@ -6253,7 +6253,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct DiscussionUnanswered {
     pub action: String,
     pub discussion: DiscussionAnsweredDiscussion,
@@ -6269,7 +6269,7 @@ impl From<&DiscussionUnanswered> for DiscussionUnanswered {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Fork {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enterprise: Option<Untyped>,
@@ -6286,7 +6286,7 @@ impl From<&Fork> for Fork {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ForkDefaultForkee {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -6400,7 +6400,7 @@ impl From<&ForkDefaultForkee> for ForkDefaultForkee {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ForkDefaultForkeeCreatedAt {
     Variant0(String),
@@ -6454,7 +6454,7 @@ impl From<i64> for ForkDefaultForkeeCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ForkDefaultForkeePushedAt {
     Variant0(String),
@@ -6508,7 +6508,7 @@ impl From<i64> for ForkDefaultForkeePushedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct GithubAppAuthorization(pub GithubAppAuthorizationRevoked);
 impl ::std::ops::Deref for GithubAppAuthorization {
     type Target = GithubAppAuthorizationRevoked;
@@ -6531,7 +6531,7 @@ impl From<GithubAppAuthorizationRevoked> for GithubAppAuthorization {
         Self(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct GithubAppAuthorizationRevoked {
     pub action: String,
     pub sender: Untyped,
@@ -6541,7 +6541,7 @@ impl From<&GithubAppAuthorizationRevoked> for GithubAppAuthorizationRevoked {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Gollum {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enterprise: Option<Untyped>,
@@ -6558,7 +6558,7 @@ impl From<&Gollum> for Gollum {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct GollumDefaultPages {
     pub action: GollumDefaultPagesAction,
     pub html_url: String,
@@ -6620,7 +6620,7 @@ impl std::convert::TryFrom<String> for GollumDefaultPagesAction {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Installation {
     #[serde(rename = "created")]
@@ -6704,7 +6704,7 @@ impl From<&Installation> for Installation {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct InstallationAttribute {
     pub id: i64,
 }
@@ -6713,7 +6713,7 @@ impl From<&InstallationAttribute> for InstallationAttribute {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct InstallationCreatedRepositories {
     pub full_name: String,
     pub id: i64,
@@ -6726,7 +6726,7 @@ impl From<&InstallationCreatedRepositories> for InstallationCreatedRepositories 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum InstallationRepositories {
     #[serde(rename = "added")]
@@ -6815,7 +6815,7 @@ impl std::convert::TryFrom<String> for InstallationRepositoriesAddedRepositorySe
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum InstallationTarget {
     #[serde(rename = "renamed")]
@@ -6839,7 +6839,7 @@ impl From<&InstallationTarget> for InstallationTarget {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct InstallationTargetRenamedAccount {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub archived_at: Option<String>,
@@ -6917,7 +6917,7 @@ impl From<&InstallationTargetRenamedAccount> for InstallationTargetRenamedAccoun
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct InstallationTargetRenamedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub login: Option<DiscussionEditedChangesBody>,
@@ -6929,7 +6929,7 @@ impl From<&InstallationTargetRenamedChanges> for InstallationTargetRenamedChange
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum IssueComment {
     #[serde(rename = "created")]
@@ -6978,7 +6978,7 @@ impl From<&IssueComment> for IssueComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentCreatedComment {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -6998,7 +6998,7 @@ impl From<&IssueCommentCreatedComment> for IssueCommentCreatedComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentCreatedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<MilestoneClosedMilestoneCreator>,
@@ -7097,7 +7097,7 @@ impl std::convert::TryFrom<String> for IssueCommentCreatedIssueActiveLockReason 
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentCreatedIssuePullRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub diff_url: Option<String>,
@@ -7115,7 +7115,7 @@ impl From<&IssueCommentCreatedIssuePullRequest> for IssueCommentCreatedIssuePull
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentDeletedComment {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -7135,7 +7135,7 @@ impl From<&IssueCommentDeletedComment> for IssueCommentDeletedComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentDeletedCommentPerformedViaGithubApp {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_id: Option<String>,
@@ -7168,7 +7168,7 @@ impl From<&IssueCommentDeletedCommentPerformedViaGithubApp>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentDeletedCommentPerformedViaGithubAppPermissions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checks: Option<String>,
@@ -7188,7 +7188,7 @@ impl From<&IssueCommentDeletedCommentPerformedViaGithubAppPermissions>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssueCommentEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<DiscussionEditedChangesBody>,
@@ -7198,7 +7198,7 @@ impl From<&IssueCommentEditedChanges> for IssueCommentEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Issues {
     #[serde(rename = "assigned")]
@@ -7416,7 +7416,7 @@ impl From<&Issues> for Issues {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesAssignedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7463,7 +7463,7 @@ impl From<&IssuesAssignedIssue> for IssuesAssignedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesAssignedIssuePerformedViaGithubApp {
     pub created_at: Option<String>,
     pub description: Option<String>,
@@ -7486,7 +7486,7 @@ impl From<&IssuesAssignedIssuePerformedViaGithubApp> for IssuesAssignedIssuePerf
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesAssignedIssuePerformedViaGithubAppPermissions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub actions: Option<DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsActions>,
@@ -7587,7 +7587,7 @@ impl From<&IssuesAssignedIssuePerformedViaGithubAppPermissions>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesClosedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7633,7 +7633,7 @@ impl From<&IssuesClosedIssue> for IssuesClosedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesDeletedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7680,7 +7680,7 @@ impl From<&IssuesDeletedIssue> for IssuesDeletedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesDemilestonedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7727,7 +7727,7 @@ impl From<&IssuesDemilestonedIssue> for IssuesDemilestonedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesDemilestonedIssueAssignee {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -7775,7 +7775,7 @@ impl From<&IssuesDemilestonedIssueAssignee> for IssuesDemilestonedIssueAssignee 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesLockedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7821,7 +7821,7 @@ impl From<&IssuesLockedIssue> for IssuesLockedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesMilestonedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7868,7 +7868,7 @@ impl From<&IssuesMilestonedIssue> for IssuesMilestonedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesOpenedChanges {
     pub old_issue: Option<IssuesDeletedIssue>,
     pub old_repository: IssuesOpenedChangesOldRepository,
@@ -7878,7 +7878,7 @@ impl From<&IssuesOpenedChanges> for IssuesOpenedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesOpenedChangesOldRepository {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -7996,7 +7996,7 @@ impl From<&IssuesOpenedChangesOldRepository> for IssuesOpenedChangesOldRepositor
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum IssuesOpenedChangesOldRepositoryCreatedAt {
     Variant0(String),
@@ -8052,7 +8052,7 @@ impl From<i64> for IssuesOpenedChangesOldRepositoryCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum IssuesOpenedChangesOldRepositoryPushedAt {
     Variant0(String),
@@ -8106,7 +8106,7 @@ impl From<i64> for IssuesOpenedChangesOldRepositoryPushedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesOpenedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -8153,7 +8153,7 @@ impl From<&IssuesOpenedIssue> for IssuesOpenedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesReopenedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -8199,7 +8199,7 @@ impl From<&IssuesReopenedIssue> for IssuesReopenedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesReopenedIssuePerformedViaGithubApp {
     pub created_at: Option<String>,
     pub description: Option<String>,
@@ -8222,7 +8222,7 @@ impl From<&IssuesReopenedIssuePerformedViaGithubApp> for IssuesReopenedIssuePerf
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesReopenedIssuePerformedViaGithubAppPermissions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub actions: Option<DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsActions>,
@@ -8322,7 +8322,7 @@ impl From<&IssuesReopenedIssuePerformedViaGithubAppPermissions>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesTransferredChanges {
     pub new_issue: IssuesDeletedIssue,
     pub new_repository: IssuesTransferredChangesNewRepository,
@@ -8332,7 +8332,7 @@ impl From<&IssuesTransferredChanges> for IssuesTransferredChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesTransferredChangesNewRepository {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -8449,7 +8449,7 @@ impl From<&IssuesTransferredChangesNewRepository> for IssuesTransferredChangesNe
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum IssuesTransferredChangesNewRepositoryCreatedAt {
     Variant0(String),
@@ -8505,7 +8505,7 @@ impl From<i64> for IssuesTransferredChangesNewRepositoryCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum IssuesTransferredChangesNewRepositoryPushedAt {
     Variant0(String),
@@ -8561,7 +8561,7 @@ impl From<i64> for IssuesTransferredChangesNewRepositoryPushedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct IssuesUnlockedIssue {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -8607,7 +8607,7 @@ impl From<&IssuesUnlockedIssue> for IssuesUnlockedIssue {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Label {
     #[serde(rename = "created")]
@@ -8655,7 +8655,7 @@ impl From<&Label> for Label {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct LabelEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub color: Option<DiscussionEditedChangesBody>,
@@ -8669,7 +8669,7 @@ impl From<&LabelEditedChanges> for LabelEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Member {
     #[serde(rename = "added")]
@@ -8717,7 +8717,7 @@ impl From<&Member> for Member {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MemberAddedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub permission: Option<MemberAddedChangesPermission>,
@@ -8729,7 +8729,7 @@ impl From<&MemberAddedChanges> for MemberAddedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MemberAddedChangesPermission {
     pub to: MemberAddedChangesPermissionTo,
 }
@@ -8790,7 +8790,7 @@ impl std::convert::TryFrom<String> for MemberAddedChangesPermissionTo {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MemberAddedChangesRoleName {
     pub to: String,
 }
@@ -8799,7 +8799,7 @@ impl From<&MemberAddedChangesRoleName> for MemberAddedChangesRoleName {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MemberEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub old_permission: Option<DiscussionEditedChangesBody>,
@@ -8811,7 +8811,7 @@ impl From<&MemberEditedChanges> for MemberEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MemberEditedChangesPermission {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<String>,
@@ -8823,7 +8823,7 @@ impl From<&MemberEditedChangesPermission> for MemberEditedChangesPermission {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Membership {
     #[serde(rename = "added")]
@@ -8908,7 +8908,7 @@ impl std::convert::TryFrom<String> for MembershipRemovedScope {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum MergeGroup {
     #[serde(rename = "checks_requested")]
@@ -8943,7 +8943,7 @@ impl From<&MergeGroup> for MergeGroup {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MergeGroupChecksRequestedMergeGroup {
     pub base_ref: String,
     pub base_sha: String,
@@ -8956,7 +8956,7 @@ impl From<&MergeGroupChecksRequestedMergeGroup> for MergeGroupChecksRequestedMer
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MergeGroupChecksRequestedMergeGroupHeadCommit {
     pub author: Option<MergeGroupChecksRequestedMergeGroupHeadCommitAuthor>,
     pub committer: Option<MergeGroupChecksRequestedMergeGroupHeadCommitAuthor>,
@@ -8972,7 +8972,7 @@ impl From<&MergeGroupChecksRequestedMergeGroupHeadCommit>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MergeGroupChecksRequestedMergeGroupHeadCommitAuthor {
     pub email: String,
     pub name: String,
@@ -9036,7 +9036,7 @@ impl std::convert::TryFrom<String> for MergeGroupDestroyedReason {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Meta {
     #[serde(rename = "deleted")]
@@ -9060,7 +9060,7 @@ impl From<&Meta> for Meta {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MetaDeletedHook {
     pub active: bool,
     pub config: MetaDeletedHookConfig,
@@ -9077,7 +9077,7 @@ impl From<&MetaDeletedHook> for MetaDeletedHook {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MetaDeletedHookConfig {
     pub content_type: MetaDeletedHookConfigContentType,
     pub insecure_ssl: String,
@@ -9138,7 +9138,7 @@ impl std::convert::TryFrom<String> for MetaDeletedHookConfigContentType {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Milestone {
     #[serde(rename = "closed")]
@@ -9208,7 +9208,7 @@ impl From<&Milestone> for Milestone {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MilestoneClosedMilestone {
     pub closed_at: Option<String>,
     pub closed_issues: i64,
@@ -9232,7 +9232,7 @@ impl From<&MilestoneClosedMilestone> for MilestoneClosedMilestone {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MilestoneClosedMilestoneCreator {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -9334,7 +9334,7 @@ impl std::convert::TryFrom<String> for MilestoneClosedMilestoneCreatorType {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MilestoneCreatedMilestone {
     pub closed_at: Option<String>,
     pub closed_issues: i64,
@@ -9358,7 +9358,7 @@ impl From<&MilestoneCreatedMilestone> for MilestoneCreatedMilestone {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct MilestoneEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<DiscussionEditedChangesBody>,
@@ -9372,7 +9372,7 @@ impl From<&MilestoneEditedChanges> for MilestoneEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum OrgBlock {
     #[serde(rename = "blocked")]
@@ -9405,7 +9405,7 @@ impl From<&OrgBlock> for OrgBlock {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Organization {
     #[serde(rename = "deleted")]
@@ -9480,7 +9480,7 @@ impl From<&Organization> for Organization {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct OrganizationDeletedMembership {
     pub organization_url: String,
     pub role: String,
@@ -9493,7 +9493,7 @@ impl From<&OrganizationDeletedMembership> for OrganizationDeletedMembership {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct OrganizationMemberInvitedInvitation {
     pub created_at: String,
     pub email: Option<String>,
@@ -9514,7 +9514,7 @@ impl From<&OrganizationMemberInvitedInvitation> for OrganizationMemberInvitedInv
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct OrganizationRenamedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub login: Option<DiscussionEditedChangesBody>,
@@ -9524,7 +9524,7 @@ impl From<&OrganizationRenamedChanges> for OrganizationRenamedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Package {
     #[serde(rename = "published")]
@@ -9558,7 +9558,7 @@ impl From<&Package> for Package {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackage {
     pub created_at: Option<String>,
     pub description: Option<String>,
@@ -9578,7 +9578,7 @@ impl From<&PackagePublishedPackage> for PackagePublishedPackage {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersion {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub author: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -9633,7 +9633,7 @@ impl From<&PackagePublishedPackagePackageVersion> for PackagePublishedPackagePac
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PackagePublishedPackagePackageVersionBody {
     Variant0(Untyped),
@@ -9651,7 +9651,7 @@ impl From<Untyped> for PackagePublishedPackagePackageVersionBody {
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionContainerMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub labels: Option<Untyped>,
@@ -9667,7 +9667,7 @@ impl From<&PackagePublishedPackagePackageVersionContainerMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionContainerMetadataTag {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub digest: Option<String>,
@@ -9681,7 +9681,7 @@ impl From<&PackagePublishedPackagePackageVersionContainerMetadataTag>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionDockerMetadata {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
@@ -9693,7 +9693,7 @@ impl From<&PackagePublishedPackagePackageVersionDockerMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionNpmMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub author: Option<Untyped>,
@@ -9777,7 +9777,7 @@ impl From<&PackagePublishedPackagePackageVersionNpmMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionNugetMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<PackagePublishedPackagePackageVersionNugetMetadataId>,
@@ -9793,7 +9793,7 @@ impl From<&PackagePublishedPackagePackageVersionNugetMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PackagePublishedPackagePackageVersionNugetMetadataId {
     Variant0(String),
@@ -9849,7 +9849,7 @@ impl From<i64> for PackagePublishedPackagePackageVersionNugetMetadataId {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PackagePublishedPackagePackageVersionNugetMetadataValue {
     Variant0(bool),
@@ -9879,7 +9879,7 @@ impl From<Untyped> for PackagePublishedPackagePackageVersionNugetMetadataValue {
         Self::Variant3(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionPackageFiles {
     pub content_type: String,
     pub created_at: String,
@@ -9900,7 +9900,7 @@ impl From<&PackagePublishedPackagePackageVersionPackageFiles>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionRelease {
     pub author: Option<DeploymentStatusCreatedDeploymentCreator>,
     pub created_at: String,
@@ -9921,7 +9921,7 @@ impl From<&PackagePublishedPackagePackageVersionRelease>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionRubygemsMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub commit_oid: Option<String>,
@@ -9951,7 +9951,7 @@ impl From<&PackagePublishedPackagePackageVersionRubygemsMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackagePackageVersionRubygemsMetadataVersionInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
@@ -9963,7 +9963,7 @@ impl From<&PackagePublishedPackagePackageVersionRubygemsMetadataVersionInfo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackagePublishedPackageRegistry {
     pub about_url: String,
     pub name: String,
@@ -9977,7 +9977,7 @@ impl From<&PackagePublishedPackageRegistry> for PackagePublishedPackageRegistry 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackageUpdatedPackage {
     pub created_at: String,
     pub description: Option<String>,
@@ -9997,7 +9997,7 @@ impl From<&PackageUpdatedPackage> for PackageUpdatedPackage {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackageUpdatedPackagePackageVersion {
     pub author: Option<DeploymentStatusCreatedDeploymentCreator>,
     pub body: String,
@@ -10039,7 +10039,7 @@ impl From<&PackageUpdatedPackagePackageVersion> for PackageUpdatedPackagePackage
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackageUpdatedPackagePackageVersionPackageFiles {
     pub content_type: String,
     pub created_at: String,
@@ -10060,7 +10060,7 @@ impl From<&PackageUpdatedPackagePackageVersionPackageFiles>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PackageUpdatedPackagePackageVersionRelease {
     pub author: Option<DeploymentStatusCreatedDeploymentCreator>,
     pub created_at: String,
@@ -10081,7 +10081,7 @@ impl From<&PackageUpdatedPackagePackageVersionRelease>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PageBuild {
     pub build: PageBuildDefaultBuild,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -10099,7 +10099,7 @@ impl From<&PageBuild> for PageBuild {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PageBuildDefaultBuild {
     pub commit: Option<String>,
     pub created_at: String,
@@ -10115,7 +10115,7 @@ impl From<&PageBuildDefaultBuild> for PageBuildDefaultBuild {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PageBuildDefaultBuildError {
     pub message: Option<String>,
 }
@@ -10124,7 +10124,7 @@ impl From<&PageBuildDefaultBuildError> for PageBuildDefaultBuildError {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum PersonalAccessTokenRequest {
     #[serde(rename = "approved")]
@@ -10170,7 +10170,7 @@ impl From<&PersonalAccessTokenRequest> for PersonalAccessTokenRequest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PersonalAccessTokenRequestApprovedPersonalAccessTokenRequest {
     pub created_at: String,
     pub id: i64,
@@ -10196,7 +10196,7 @@ impl From<&PersonalAccessTokenRequestApprovedPersonalAccessTokenRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PersonalAccessTokenRequestApprovedPersonalAccessTokenRequestPermissionsAdded {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub organization: Option<Untyped>,
@@ -10280,7 +10280,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Ping(pub PingDefault);
 impl ::std::ops::Deref for Ping {
     type Target = PingDefault;
@@ -10303,7 +10303,7 @@ impl From<PingDefault> for Ping {
         Self(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PingDefault {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hook: Option<PingDefaultHook>,
@@ -10323,7 +10323,7 @@ impl From<&PingDefault> for PingDefault {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PingDefaultHook {
     pub active: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -10352,7 +10352,7 @@ impl From<&PingDefaultHook> for PingDefaultHook {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PingDefaultHookConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_type: Option<String>,
@@ -10368,7 +10368,7 @@ impl From<&PingDefaultHookConfig> for PingDefaultHookConfig {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PingDefaultHookConfigInsecureSsl {
     Variant0(f64),
@@ -10422,7 +10422,7 @@ impl From<f64> for PingDefaultHookConfigInsecureSsl {
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PingDefaultHookLastResponse {
     pub code: Option<i64>,
     pub message: Option<String>,
@@ -10433,7 +10433,7 @@ impl From<&PingDefaultHookLastResponse> for PingDefaultHookLastResponse {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Project {
     #[serde(rename = "closed")]
@@ -10511,7 +10511,7 @@ impl From<&Project> for Project {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum ProjectCard {
     #[serde(rename = "converted")]
@@ -10589,7 +10589,7 @@ impl From<&ProjectCard> for ProjectCard {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardConvertedChanges {
     pub note: DiscussionEditedChangesBody,
 }
@@ -10598,7 +10598,7 @@ impl From<&ProjectCardConvertedChanges> for ProjectCardConvertedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardConvertedProjectCard {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after_id: Option<i64>,
@@ -10621,7 +10621,7 @@ impl From<&ProjectCardConvertedProjectCard> for ProjectCardConvertedProjectCard 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardDeletedProjectCard {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after_id: Option<i64>,
@@ -10644,7 +10644,7 @@ impl From<&ProjectCardDeletedProjectCard> for ProjectCardDeletedProjectCard {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardEditedChanges {
     pub note: RepositoryEditedChangesDescription,
 }
@@ -10653,7 +10653,7 @@ impl From<&ProjectCardEditedChanges> for ProjectCardEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardMovedChanges {
     pub column_id: ProjectCardMovedChangesColumnId,
 }
@@ -10662,7 +10662,7 @@ impl From<&ProjectCardMovedChanges> for ProjectCardMovedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardMovedChangesColumnId {
     pub from: i64,
 }
@@ -10671,7 +10671,7 @@ impl From<&ProjectCardMovedChangesColumnId> for ProjectCardMovedChangesColumnId 
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectCardMovedProjectCard {
     pub after_id: Option<f64>,
     pub archived: bool,
@@ -10693,7 +10693,7 @@ impl From<&ProjectCardMovedProjectCard> for ProjectCardMovedProjectCard {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectClosedProject {
     pub body: Option<String>,
     pub columns_url: String,
@@ -10714,7 +10714,7 @@ impl From<&ProjectClosedProject> for ProjectClosedProject {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum ProjectColumn {
     #[serde(rename = "created")]
@@ -10779,7 +10779,7 @@ impl From<&ProjectColumn> for ProjectColumn {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectColumnCreatedProjectColumn {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after_id: Option<i64>,
@@ -10797,7 +10797,7 @@ impl From<&ProjectColumnCreatedProjectColumn> for ProjectColumnCreatedProjectCol
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ProjectEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<DiscussionEditedChangesBody>,
@@ -10809,7 +10809,7 @@ impl From<&ProjectEditedChanges> for ProjectEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Public {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enterprise: Option<Untyped>,
@@ -10825,7 +10825,7 @@ impl From<&Public> for Public {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequest {
     Assigned {
@@ -11113,7 +11113,7 @@ impl From<PullRequestMilestoned> for PullRequest {
         Self::Milestoned(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestAssignedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -11182,7 +11182,7 @@ impl From<&PullRequestAssignedPullRequest> for PullRequestAssignedPullRequest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestAutoMergeDisabledPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -11251,7 +11251,7 @@ impl From<&PullRequestAutoMergeDisabledPullRequest> for PullRequestAutoMergeDisa
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestAutoMergeDisabledPullRequestBase {
     pub label: String,
     #[serde(rename = "ref")]
@@ -11267,7 +11267,7 @@ impl From<&PullRequestAutoMergeDisabledPullRequestBase>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestAutoMergeDisabledPullRequestBaseRepo {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -11398,7 +11398,7 @@ impl From<&PullRequestAutoMergeDisabledPullRequestBaseRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestAutoMergeDisabledPullRequestBaseRepoCreatedAt {
     Variant0(String),
@@ -11454,7 +11454,7 @@ impl From<i64> for PullRequestAutoMergeDisabledPullRequestBaseRepoCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestAutoMergeDisabledPullRequestBaseRepoPushedAt {
     Variant0(String),
@@ -11510,7 +11510,7 @@ impl From<i64> for PullRequestAutoMergeDisabledPullRequestBaseRepoPushedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestAutoMergeEnabledPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -11579,7 +11579,7 @@ impl From<&PullRequestAutoMergeEnabledPullRequest> for PullRequestAutoMergeEnabl
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestClosedPullRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_lock_reason: Option<String>,
@@ -11662,7 +11662,7 @@ impl From<&PullRequestClosedPullRequest> for PullRequestClosedPullRequest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestDemilestoned {
     pub action: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -11682,7 +11682,7 @@ impl From<&PullRequestDemilestoned> for PullRequestDemilestoned {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestDemilestonedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -11839,7 +11839,7 @@ impl std::convert::TryFrom<String> for PullRequestDequeuedReason {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub base: Option<PullRequestEditedChangesBase>,
@@ -11853,7 +11853,7 @@ impl From<&PullRequestEditedChanges> for PullRequestEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestEditedChangesBase {
     #[serde(rename = "ref")]
     pub ref_: DiscussionEditedChangesBody,
@@ -11864,7 +11864,7 @@ impl From<&PullRequestEditedChangesBase> for PullRequestEditedChangesBase {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestLabeledPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -11933,7 +11933,7 @@ impl From<&PullRequestLabeledPullRequest> for PullRequestLabeledPullRequest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestLockedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -12002,7 +12002,7 @@ impl From<&PullRequestLockedPullRequest> for PullRequestLockedPullRequest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestMilestoned {
     pub action: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -12022,7 +12022,7 @@ impl From<&PullRequestMilestoned> for PullRequestMilestoned {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum PullRequestReview {
     #[serde(rename = "dismissed")]
@@ -12071,7 +12071,7 @@ impl From<&PullRequestReview> for PullRequestReview {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum PullRequestReviewComment {
     #[serde(rename = "created")]
@@ -12120,7 +12120,7 @@ impl From<&PullRequestReviewComment> for PullRequestReviewComment {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedComment {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -12158,7 +12158,7 @@ impl From<&PullRequestReviewCommentCreatedComment> for PullRequestReviewCommentC
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedCommentLinks {
     pub html: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
     pub pull_request: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
@@ -12325,7 +12325,7 @@ impl std::convert::TryFrom<String> for PullRequestReviewCommentCreatedCommentSub
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<MilestoneClosedMilestoneCreator>,
@@ -12374,7 +12374,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestAutoMerge {
     pub commit_message: Option<String>,
     pub commit_title: Option<String>,
@@ -12388,7 +12388,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestAutoMerge>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestBase {
     pub label: String,
     #[serde(rename = "ref")]
@@ -12404,7 +12404,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestBase>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestBaseRepo {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -12535,7 +12535,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestBaseRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestReviewCommentCreatedPullRequestBaseRepoCreatedAt {
     Variant0(String),
@@ -12593,7 +12593,7 @@ impl From<i64> for PullRequestReviewCommentCreatedPullRequestBaseRepoCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestBaseRepoLicense {
     pub key: String,
     pub name: String,
@@ -12608,7 +12608,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestBaseRepoLicense>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestBaseRepoPermissions {
     pub admin: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -12625,7 +12625,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestBaseRepoPermissions>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestReviewCommentCreatedPullRequestBaseRepoPushedAt {
     Variant0(String),
@@ -12739,7 +12739,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestHead {
     pub label: String,
     #[serde(rename = "ref")]
@@ -12755,7 +12755,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestHead>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestLinks {
     pub comments: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
     pub commits: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
@@ -12774,7 +12774,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestLinks>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestRequestedTeams {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deleted: Option<bool>,
@@ -12808,7 +12808,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestRequestedTeams>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentCreatedPullRequestRequestedTeamsParent {
     pub description: Option<String>,
     pub html_url: String,
@@ -12829,7 +12829,7 @@ impl From<&PullRequestReviewCommentCreatedPullRequestRequestedTeamsParent>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentDeletedComment {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -12867,7 +12867,7 @@ impl From<&PullRequestReviewCommentDeletedComment> for PullRequestReviewCommentD
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentDeletedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -12916,7 +12916,7 @@ impl From<&PullRequestReviewCommentDeletedPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentEditedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -12965,7 +12965,7 @@ impl From<&PullRequestReviewCommentEditedPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewCommentEditedPullRequestUser {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -13017,7 +13017,7 @@ impl From<&PullRequestReviewCommentEditedPullRequestUser>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewDismissedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<MilestoneClosedMilestoneCreator>,
@@ -13062,7 +13062,7 @@ impl From<&PullRequestReviewDismissedPullRequest> for PullRequestReviewDismissed
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewDismissedReview {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: Option<String>,
@@ -13082,7 +13082,7 @@ impl From<&PullRequestReviewDismissedReview> for PullRequestReviewDismissedRevie
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewDismissedReviewLinks {
     pub html: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
     pub pull_request: RepositoryRulesetCreatedRepositoryRulesetLinksSelf,
@@ -13144,7 +13144,7 @@ impl std::convert::TryFrom<String> for PullRequestReviewDismissedReviewState {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewEditedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<MilestoneClosedMilestoneCreator>,
@@ -13189,7 +13189,7 @@ impl From<&PullRequestReviewEditedPullRequest> for PullRequestReviewEditedPullRe
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewEditedPullRequestBase {
     pub label: String,
     #[serde(rename = "ref")]
@@ -13203,7 +13203,7 @@ impl From<&PullRequestReviewEditedPullRequestBase> for PullRequestReviewEditedPu
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewEditedPullRequestBaseRepo {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -13317,7 +13317,7 @@ impl From<&PullRequestReviewEditedPullRequestBaseRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestReviewEditedPullRequestBaseRepoCreatedAt {
     Variant0(String),
@@ -13373,7 +13373,7 @@ impl From<i64> for PullRequestReviewEditedPullRequestBaseRepoCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestReviewEditedPullRequestBaseRepoPushedAt {
     Variant0(String),
@@ -13429,7 +13429,7 @@ impl From<i64> for PullRequestReviewEditedPullRequestBaseRepoPushedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewEditedPullRequestHead {
     pub label: String,
     #[serde(rename = "ref")]
@@ -13443,7 +13443,7 @@ impl From<&PullRequestReviewEditedPullRequestHead> for PullRequestReviewEditedPu
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewEditedReview {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: Option<String>,
@@ -13463,7 +13463,7 @@ impl From<&PullRequestReviewEditedReview> for PullRequestReviewEditedReview {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewRequestRemovedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -13534,7 +13534,7 @@ impl From<&PullRequestReviewRequestRemovedPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewRequestedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -13603,7 +13603,7 @@ impl From<&PullRequestReviewRequestedPullRequest> for PullRequestReviewRequested
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewSubmittedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<MilestoneClosedMilestoneCreator>,
@@ -13648,7 +13648,7 @@ impl From<&PullRequestReviewSubmittedPullRequest> for PullRequestReviewSubmitted
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewSubmittedPullRequestHead {
     pub label: Option<String>,
     #[serde(rename = "ref")]
@@ -13664,7 +13664,7 @@ impl From<&PullRequestReviewSubmittedPullRequestHead>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum PullRequestReviewThread {
     #[serde(rename = "resolved")]
@@ -13701,7 +13701,7 @@ impl From<&PullRequestReviewThread> for PullRequestReviewThread {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadResolvedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -13748,7 +13748,7 @@ impl From<&PullRequestReviewThreadResolvedPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadResolvedPullRequestBase {
     pub label: String,
     #[serde(rename = "ref")]
@@ -13764,7 +13764,7 @@ impl From<&PullRequestReviewThreadResolvedPullRequestBase>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadResolvedPullRequestBaseRepo {
     #[serde(default)]
     pub allow_auto_merge: bool,
@@ -13881,7 +13881,7 @@ impl From<&PullRequestReviewThreadResolvedPullRequestBaseRepo>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestReviewThreadResolvedPullRequestBaseRepoCreatedAt {
     Variant0(String),
@@ -13939,7 +13939,7 @@ impl From<i64> for PullRequestReviewThreadResolvedPullRequestBaseRepoCreatedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum PullRequestReviewThreadResolvedPullRequestBaseRepoPushedAt {
     Variant0(String),
@@ -13995,7 +13995,7 @@ impl From<i64> for PullRequestReviewThreadResolvedPullRequestBaseRepoPushedAt {
         Self::Variant1(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadResolvedPullRequestHead {
     pub label: Option<String>,
     #[serde(rename = "ref")]
@@ -14011,7 +14011,7 @@ impl From<&PullRequestReviewThreadResolvedPullRequestHead>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadResolvedThread {
     pub comments: Vec<PullRequestReviewThreadResolvedThreadComments>,
     pub node_id: String,
@@ -14021,7 +14021,7 @@ impl From<&PullRequestReviewThreadResolvedThread> for PullRequestReviewThreadRes
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadResolvedThreadComments {
     pub author_association: DiscussionAnsweredAnswerAuthorAssociation,
     pub body: String,
@@ -14061,7 +14061,7 @@ impl From<&PullRequestReviewThreadResolvedThreadComments>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadUnresolvedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     pub assignee: Option<DeploymentStatusCreatedDeploymentCreator>,
@@ -14108,7 +14108,7 @@ impl From<&PullRequestReviewThreadUnresolvedPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadUnresolvedPullRequestAutoMerge {
     pub commit_message: Option<String>,
     pub commit_title: String,
@@ -14122,7 +14122,7 @@ impl From<&PullRequestReviewThreadUnresolvedPullRequestAutoMerge>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestReviewThreadUnresolvedThread {
     pub comments: Vec<PullRequestReviewCommentDeletedComment>,
     pub node_id: String,
@@ -14132,7 +14132,7 @@ impl From<&PullRequestReviewThreadUnresolvedThread> for PullRequestReviewThreadU
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestUnassignedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -14201,7 +14201,7 @@ impl From<&PullRequestUnassignedPullRequest> for PullRequestUnassignedPullReques
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestUnassignedPullRequestBase {
     pub label: Option<String>,
     #[serde(rename = "ref")]
@@ -14215,7 +14215,7 @@ impl From<&PullRequestUnassignedPullRequestBase> for PullRequestUnassignedPullRe
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PullRequestUnlockedPullRequest {
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -14284,7 +14284,7 @@ impl From<&PullRequestUnlockedPullRequest> for PullRequestUnlockedPullRequest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Push {
     pub after: String,
     pub base_ref: Option<String>,
@@ -14313,7 +14313,7 @@ impl From<&Push> for Push {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PushDefaultCommits {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub added: Vec<String>,
@@ -14335,7 +14335,7 @@ impl From<&PushDefaultCommits> for PushDefaultCommits {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct PushDefaultCommitsAuthor {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date: Option<String>,
@@ -14349,7 +14349,7 @@ impl From<&PushDefaultCommitsAuthor> for PushDefaultCommitsAuthor {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum RegistryPackage {
     #[serde(rename = "published")]
@@ -14384,7 +14384,7 @@ impl From<&RegistryPackage> for RegistryPackage {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackagePublishedRegistryPackage {
     pub created_at: Option<String>,
     pub description: Option<String>,
@@ -14404,7 +14404,7 @@ impl From<&RegistryPackagePublishedRegistryPackage> for RegistryPackagePublished
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackagePublishedRegistryPackagePackageVersion {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub author: Option<DeploymentReviewApprovedApprover>,
@@ -14459,7 +14459,7 @@ impl From<&RegistryPackagePublishedRegistryPackagePackageVersion>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionBody {
     Variant0(Untyped),
@@ -14477,7 +14477,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionBody
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub author: Option<RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadataAuthor>,
@@ -14563,7 +14563,7 @@ impl From<&RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadataAuthor {
     Variant0(Untyped),
@@ -14583,7 +14583,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNpmM
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadataBugs {
     Variant0(Untyped),
@@ -14601,7 +14601,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNpmM
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadataDirectories {
     Variant0(Untyped),
@@ -14621,7 +14621,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNpmM
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadataDist {
     Variant0(Untyped),
@@ -14639,7 +14639,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNpmM
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNpmMetadataRepository {
     Variant0(Untyped),
@@ -14659,7 +14659,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNpmM
         Self::Variant0(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackagePublishedRegistryPackagePackageVersionNugetMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<RegistryPackagePublishedRegistryPackagePackageVersionNugetMetadataId>,
@@ -14675,7 +14675,7 @@ impl From<&RegistryPackagePublishedRegistryPackagePackageVersionNugetMetadata>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNugetMetadataId {
     Variant0(String),
@@ -14699,7 +14699,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNuge
         Self::Variant2(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum RegistryPackagePublishedRegistryPackagePackageVersionNugetMetadataValue {
     Variant0(bool),
@@ -14731,7 +14731,7 @@ impl From<Untyped> for RegistryPackagePublishedRegistryPackagePackageVersionNuge
         Self::Variant3(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackagePublishedRegistryPackagePackageVersionRelease {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub author: Option<DeploymentReviewApprovedApprover>,
@@ -14763,7 +14763,7 @@ impl From<&RegistryPackagePublishedRegistryPackagePackageVersionRelease>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackageUpdatedRegistryPackage {
     pub created_at: String,
     pub description: (),
@@ -14783,7 +14783,7 @@ impl From<&RegistryPackageUpdatedRegistryPackage> for RegistryPackageUpdatedRegi
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackageUpdatedRegistryPackagePackageVersion {
     pub author: DeploymentReviewApprovedApprover,
     pub body: String,
@@ -14824,7 +14824,7 @@ impl From<&RegistryPackageUpdatedRegistryPackagePackageVersion>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RegistryPackageUpdatedRegistryPackagePackageVersionRelease {
     pub author: DeploymentReviewApprovedApprover,
     pub created_at: String,
@@ -14845,7 +14845,7 @@ impl From<&RegistryPackageUpdatedRegistryPackagePackageVersionRelease>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Release {
     #[serde(rename = "created")]
@@ -14944,7 +14944,7 @@ impl From<&Release> for Release {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ReleaseCreatedRelease {
     pub assets: Vec<ReleaseCreatedReleaseAssets>,
     pub assets_url: String,
@@ -14974,7 +14974,7 @@ impl From<&ReleaseCreatedRelease> for ReleaseCreatedRelease {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ReleaseCreatedReleaseAssets {
     pub browser_download_url: String,
     pub content_type: String,
@@ -14996,7 +14996,7 @@ impl From<&ReleaseCreatedReleaseAssets> for ReleaseCreatedReleaseAssets {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ReleaseEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<DiscussionEditedChangesBody>,
@@ -15010,7 +15010,7 @@ impl From<&ReleaseEditedChanges> for ReleaseEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ReleaseEditedChangesMakeLatest {
     pub to: bool,
 }
@@ -15019,7 +15019,7 @@ impl From<&ReleaseEditedChangesMakeLatest> for ReleaseEditedChangesMakeLatest {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ReleasePrereleasedRelease {
     pub assets: Vec<Option<Untyped>>,
     pub assets_url: String,
@@ -15049,7 +15049,7 @@ impl From<&ReleasePrereleasedRelease> for ReleasePrereleasedRelease {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ReleasePublishedRelease {
     pub assets: Vec<Option<Untyped>>,
     pub assets_url: String,
@@ -15079,7 +15079,7 @@ impl From<&ReleasePublishedRelease> for ReleasePublishedRelease {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Repository {
     #[serde(rename = "archived")]
@@ -15190,7 +15190,7 @@ impl From<&Repository> for Repository {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum RepositoryAdvisory {
     #[serde(rename = "published")]
@@ -15225,7 +15225,7 @@ impl From<&RepositoryAdvisory> for RepositoryAdvisory {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisory {
     pub author: Option<DiscussionTransferredChangesNewRepositoryOrganization>,
     pub closed_at: Option<String>,
@@ -15264,7 +15264,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisory>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCollaboratingTeams {
     pub description: Option<String>,
     pub html_url: String,
@@ -15292,7 +15292,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCollaboratingTeams>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCollaboratingTeamsPermissions {
     pub admin: bool,
     pub maintain: bool,
@@ -15309,7 +15309,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCollaboratingTeamsPermis
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCredits {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub login: Option<String>,
@@ -15323,7 +15323,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCredits>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsDetailed {
     pub state: RepositoryAdvisoryPublishedRepositoryAdvisoryCreditsDetailedState,
     #[serde(rename = "type")]
@@ -15479,7 +15479,7 @@ impl std::convert::TryFrom<String> for RepositoryAdvisoryPublishedRepositoryAdvi
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCvss {
     pub score: Option<f64>,
     pub vector_string: Option<String>,
@@ -15491,7 +15491,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCvss>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCvssSeverities {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cvss_v3: Option<RepositoryAdvisoryPublishedRepositoryAdvisoryCvss>,
@@ -15505,7 +15505,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCvssSeverities>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryCwes {
     pub cwe_id: String,
     pub name: String,
@@ -15517,7 +15517,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryCwes>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryIdentifiers {
     #[serde(rename = "type")]
     pub type_: RepositoryAdvisoryPublishedRepositoryAdvisoryIdentifiersType,
@@ -15584,7 +15584,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryPrivateFork {
     pub archive_url: String,
     pub assignees_url: String,
@@ -15760,7 +15760,7 @@ impl std::convert::TryFrom<String> for RepositoryAdvisoryPublishedRepositoryAdvi
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisorySubmission {
     pub accepted: bool,
 }
@@ -15771,7 +15771,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisorySubmission>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilities {
     pub package: Option<RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilitiesPackage>,
     pub patched_versions: Option<String>,
@@ -15785,7 +15785,7 @@ impl From<&RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilities>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilitiesPackage {
     pub ecosystem: RepositoryAdvisoryPublishedRepositoryAdvisoryVulnerabilitiesPackageEcosystem,
     pub name: Option<String>,
@@ -15903,7 +15903,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryDispatch {
     pub action: String,
     pub branch: String,
@@ -15921,7 +15921,7 @@ impl From<&RepositoryDispatch> for RepositoryDispatch {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_branch: Option<DiscussionEditedChangesBody>,
@@ -15937,7 +15937,7 @@ impl From<&RepositoryEditedChanges> for RepositoryEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryEditedChangesDescription {
     pub from: Option<String>,
 }
@@ -15946,7 +15946,7 @@ impl From<&RepositoryEditedChangesDescription> for RepositoryEditedChangesDescri
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryEditedChangesTopics {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<Vec<String>>,
@@ -15956,7 +15956,7 @@ impl From<&RepositoryEditedChangesTopics> for RepositoryEditedChangesTopics {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRenamedChanges {
     pub repository: RepositoryRenamedChangesRepository,
 }
@@ -15965,7 +15965,7 @@ impl From<&RepositoryRenamedChanges> for RepositoryRenamedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRenamedChangesRepository {
     pub name: DiscussionEditedChangesBody,
 }
@@ -15974,7 +15974,7 @@ impl From<&RepositoryRenamedChangesRepository> for RepositoryRenamedChangesRepos
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum RepositoryRuleset {
     #[serde(rename = "created")]
@@ -16024,7 +16024,7 @@ impl From<&RepositoryRuleset> for RepositoryRuleset {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRuleset {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub bypass_actors: Vec<RepositoryRulesetCreatedRepositoryRulesetBypassActors>,
@@ -16059,7 +16059,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRuleset>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetBypassActors {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub actor_id: Option<i64>,
@@ -16308,7 +16308,7 @@ impl std::convert::TryFrom<String> for RepositoryRulesetCreatedRepositoryRuleset
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetLinks {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub html: Option<RepositoryRulesetCreatedRepositoryRulesetLinksSelf>,
@@ -16322,7 +16322,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetLinks>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetLinksSelf {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub href: Option<String>,
@@ -16334,7 +16334,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetLinksSelf>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRules {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub branch_name_pattern:
@@ -16397,7 +16397,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRules>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesBranchNamePattern {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16412,7 +16412,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesBranchNamePattern>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanning {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParameters>,
@@ -16426,7 +16426,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanning>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParameters {
     pub code_scanning_tools:
         Vec<RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningTools>,
@@ -16438,7 +16438,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParameters>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningTools { pub alerts_threshold : RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsAlertsThreshold , pub security_alerts_threshold : RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold , # [doc = "<p>The name of a code scanning tool</p>"] pub tool : String , }
 impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningTools>
     for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningTools
@@ -16487,7 +16487,7 @@ impl std :: str :: FromStr for RepositoryRulesetCreatedRepositoryRulesetRulesCod
 impl std :: convert :: TryFrom < & str > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { type Error = self :: error :: ConversionError ; fn try_from (value : & str) -> Result < Self , self :: error :: ConversionError > { value . parse () } }
 impl std :: convert :: TryFrom < & String > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { type Error = self :: error :: ConversionError ; fn try_from (value : & String) -> Result < Self , self :: error :: ConversionError > { value . parse () } }
 impl std :: convert :: TryFrom < String > for RepositoryRulesetCreatedRepositoryRulesetRulesCodeScanningParametersCodeScanningToolsSecurityAlertsThreshold { type Error = self :: error :: ConversionError ; fn try_from (value : String) -> Result < Self , self :: error :: ConversionError > { value . parse () } }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCommitAuthorEmailPattern {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16504,7 +16504,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCommitAuthorEmailPatter
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCommitMessagePattern {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16519,7 +16519,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCommitMessagePattern>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCommitMessagePatternParameters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -16608,7 +16608,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCommitterEmailPattern {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16623,7 +16623,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCommitterEmailPattern>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesCreation {
     #[serde(rename = "type")]
     pub type_: String,
@@ -16635,7 +16635,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesCreation>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesDeletion {
     #[serde(rename = "type")]
     pub type_: String,
@@ -16647,7 +16647,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesDeletion>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesFileExtensionRestriction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16664,7 +16664,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesFileExtensionRestrictio
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesFileExtensionRestrictionParameters {
     pub restricted_file_extensions: Vec<String>,
 }
@@ -16677,7 +16677,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesFileExtensionRestrictio
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesFilePathRestriction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16692,7 +16692,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesFilePathRestriction>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesFilePathRestrictionParameters {
     pub restricted_file_paths: Vec<String>,
 }
@@ -16705,7 +16705,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesFilePathRestrictionPara
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesMaxFilePathLength {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16720,7 +16720,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMaxFilePathLength>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesMaxFilePathLengthParameters {
     pub max_file_path_length: i64,
 }
@@ -16733,7 +16733,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMaxFilePathLengthParame
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesMaxFileSize {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<RepositoryRulesetCreatedRepositoryRulesetRulesMaxFileSizeParameters>,
@@ -16747,7 +16747,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMaxFileSize>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesMaxFileSizeParameters {
     pub max_file_size: i64,
 }
@@ -16758,7 +16758,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMaxFileSizeParameters>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueue {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueueParameters>,
@@ -16772,7 +16772,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueue>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesMergeQueueParameters {
     pub check_response_timeout_minutes: i64,
     pub grouping_strategy:
@@ -16918,7 +16918,7 @@ impl std::convert::TryFrom<String>
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesNonFastForward {
     #[serde(rename = "type")]
     pub type_: String,
@@ -16930,7 +16930,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesNonFastForward>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesPullRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<RepositoryRulesetCreatedRepositoryRulesetRulesPullRequestParameters>,
@@ -16944,7 +16944,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesPullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesPullRequestParameters {
     pub dismiss_stale_reviews_on_push: bool,
     pub require_code_owner_review: bool,
@@ -16959,7 +16959,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesPullRequestParameters>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredDeployments {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -16974,7 +16974,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredDeployments>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredDeploymentsParameters {
     pub required_deployment_environments: Vec<String>,
 }
@@ -16987,7 +16987,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredDeploymentsPara
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredLinearHistory {
     #[serde(rename = "type")]
     pub type_: String,
@@ -16999,7 +16999,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredLinearHistory>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredSignatures {
     #[serde(rename = "type")]
     pub type_: String,
@@ -17011,7 +17011,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredSignatures>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecks {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -17026,7 +17026,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecks>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParameters { # [doc = "<p>Allow repositories and branches to be created if a check would otherwise prohibit it.</p>"] # [serde (default , skip_serializing_if = "Option::is_none")] pub do_not_enforce_on_create : Option < bool > , # [doc = "<p>Status checks that are required.</p>"] pub required_status_checks : Vec < RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParametersRequiredStatusChecks > , # [doc = "<p>Whether pull requests targeting a matching branch must be tested with the latest code. This setting will not take effect unless at least one status check is enabled.</p>"] pub strict_required_status_checks_policy : bool , }
 impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParameters>
     for RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParameters
@@ -17037,7 +17037,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksPar
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParametersRequiredStatusChecks
 {
     pub context: String,
@@ -17045,7 +17045,7 @@ pub struct RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksPar
     pub integration_id: Option<i64>,
 }
 impl From < & RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParametersRequiredStatusChecks > for RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParametersRequiredStatusChecks { fn from (value : & RepositoryRulesetCreatedRepositoryRulesetRulesRequiredStatusChecksParametersRequiredStatusChecks) -> Self { value . clone () } }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesTagNamePattern {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters:
@@ -17060,7 +17060,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesTagNamePattern>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesUpdate {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<RepositoryRulesetCreatedRepositoryRulesetRulesUpdateParameters>,
@@ -17074,7 +17074,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesUpdate>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesUpdateParameters {
     pub update_allows_fetch_and_merge: bool,
 }
@@ -17085,7 +17085,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesUpdateParameters>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesWorkflows {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parameters: Option<RepositoryRulesetCreatedRepositoryRulesetRulesWorkflowsParameters>,
@@ -17099,7 +17099,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesWorkflows>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesWorkflowsParameters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub do_not_enforce_on_create: Option<bool>,
@@ -17112,7 +17112,7 @@ impl From<&RepositoryRulesetCreatedRepositoryRulesetRulesWorkflowsParameters>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetCreatedRepositoryRulesetRulesWorkflowsParametersWorkflows {
     pub path: String,
     #[serde(rename = "ref", default, skip_serializing_if = "Option::is_none")]
@@ -17232,7 +17232,7 @@ impl std::convert::TryFrom<String> for RepositoryRulesetCreatedRepositoryRuleset
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conditions: Option<RepositoryRulesetEditedChangesConditions>,
@@ -17248,7 +17248,7 @@ impl From<&RepositoryRulesetEditedChanges> for RepositoryRulesetEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesConditions {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub added: Vec<RepositoryRulesetEditedChangesConditionsAdded>,
@@ -17262,7 +17262,7 @@ impl From<&RepositoryRulesetEditedChangesConditions> for RepositoryRulesetEdited
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesConditionsAdded {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ref_name: Option<RepositoryRulesetEditedChangesConditionsAddedRefName>,
@@ -17274,7 +17274,7 @@ impl From<&RepositoryRulesetEditedChangesConditionsAdded>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesConditionsAddedRefName {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub exclude: Vec<String>,
@@ -17288,7 +17288,7 @@ impl From<&RepositoryRulesetEditedChangesConditionsAddedRefName>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesConditionsUpdated {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub changes: Option<RepositoryRulesetEditedChangesConditionsUpdatedChanges>,
@@ -17302,7 +17302,7 @@ impl From<&RepositoryRulesetEditedChangesConditionsUpdated>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesConditionsUpdatedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub condition_type: Option<DiscussionEditedChangesBody>,
@@ -17320,7 +17320,7 @@ impl From<&RepositoryRulesetEditedChangesConditionsUpdatedChanges>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesConditionsUpdatedChangesInclude {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub from: Vec<String>,
@@ -17332,7 +17332,7 @@ impl From<&RepositoryRulesetEditedChangesConditionsUpdatedChangesInclude>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesRules {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub added: Vec<RepositoryRulesetCreatedRepositoryRulesetRules>,
@@ -17346,7 +17346,7 @@ impl From<&RepositoryRulesetEditedChangesRules> for RepositoryRulesetEditedChang
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesRulesUpdated {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub changes: Option<RepositoryRulesetEditedChangesRulesUpdatedChanges>,
@@ -17360,7 +17360,7 @@ impl From<&RepositoryRulesetEditedChangesRulesUpdated>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryRulesetEditedChangesRulesUpdatedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub configuration: Option<DiscussionEditedChangesBody>,
@@ -17376,7 +17376,7 @@ impl From<&RepositoryRulesetEditedChangesRulesUpdatedChanges>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryTransferredChanges {
     pub owner: RepositoryTransferredChangesOwner,
 }
@@ -17385,7 +17385,7 @@ impl From<&RepositoryTransferredChanges> for RepositoryTransferredChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryTransferredChangesOwner {
     pub from: RepositoryTransferredChangesOwnerFrom,
 }
@@ -17394,7 +17394,7 @@ impl From<&RepositoryTransferredChangesOwner> for RepositoryTransferredChangesOw
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryTransferredChangesOwnerFrom {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub organization: Option<RepositoryTransferredChangesOwnerFromOrganization>,
@@ -17406,7 +17406,7 @@ impl From<&RepositoryTransferredChangesOwnerFrom> for RepositoryTransferredChang
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct RepositoryTransferredChangesOwnerFromOrganization {
     pub avatar_url: String,
     pub description: Option<String>,
@@ -17430,7 +17430,7 @@ impl From<&RepositoryTransferredChangesOwnerFromOrganization>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum SecretScanningAlert {
     #[serde(rename = "created")]
@@ -17504,7 +17504,7 @@ impl From<&SecretScanningAlert> for SecretScanningAlert {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecretScanningAlertLocation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub action: Option<String>,
@@ -17522,7 +17522,7 @@ impl From<&SecretScanningAlertLocation> for SecretScanningAlertLocation {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecretScanningAlertLocationCreatedAlert {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
@@ -17686,7 +17686,7 @@ impl std::convert::TryFrom<String> for SecretScanningAlertLocationCreatedAlertVa
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecretScanningAlertLocationCreatedLocation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub details: Option<Untyped>,
@@ -17794,7 +17794,7 @@ impl std::convert::TryFrom<String> for SecretScanningAlertLocationCreatedLocatio
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum SecurityAdvisory {
     #[serde(rename = "published")]
@@ -17845,7 +17845,7 @@ impl From<&SecurityAdvisory> for SecurityAdvisory {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAdvisoryPublishedSecurityAdvisory {
     pub cvss: DependabotAlertAutoDismissedAlertSecurityAdvisoryCvss,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -17869,7 +17869,7 @@ impl From<&SecurityAdvisoryPublishedSecurityAdvisory>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAdvisoryPublishedSecurityAdvisoryIdentifiers {
     #[serde(rename = "type")]
     pub type_: String,
@@ -17882,7 +17882,7 @@ impl From<&SecurityAdvisoryPublishedSecurityAdvisoryIdentifiers>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAdvisoryPublishedSecurityAdvisoryVulnerabilities {
     pub first_patched_version: Option<CheckRunRequestedActionRequestedAction>,
     pub package: DependabotAlertAutoDismissedAlertDependencyPackage,
@@ -17896,7 +17896,7 @@ impl From<&SecurityAdvisoryPublishedSecurityAdvisoryVulnerabilities>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAdvisoryWithdrawnSecurityAdvisory {
     pub cvss: DependabotAlertAutoDismissedAlertSecurityAdvisoryCvss,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -17920,7 +17920,7 @@ impl From<&SecurityAdvisoryWithdrawnSecurityAdvisory>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAndAnalysis {
     pub changes: SecurityAndAnalysisDefaultChanges,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -17938,7 +17938,7 @@ impl From<&SecurityAndAnalysis> for SecurityAndAnalysis {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAndAnalysisDefaultChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<SecurityAndAnalysisDefaultChangesFrom>,
@@ -17948,7 +17948,7 @@ impl From<&SecurityAndAnalysisDefaultChanges> for SecurityAndAnalysisDefaultChan
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SecurityAndAnalysisDefaultChangesFrom {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub security_and_analysis:
@@ -17959,7 +17959,7 @@ impl From<&SecurityAndAnalysisDefaultChangesFrom> for SecurityAndAnalysisDefault
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Star {
     #[serde(rename = "created")]
@@ -17992,7 +17992,7 @@ impl From<&Star> for Star {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Status {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
@@ -18021,7 +18021,7 @@ impl From<&Status> for Status {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultBranches {
     pub commit: StatusDefaultBranchesCommit,
     pub name: String,
@@ -18032,7 +18032,7 @@ impl From<&StatusDefaultBranches> for StatusDefaultBranches {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultBranchesCommit {
     pub sha: Option<String>,
     pub url: Option<String>,
@@ -18042,7 +18042,7 @@ impl From<&StatusDefaultBranchesCommit> for StatusDefaultBranchesCommit {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultCommit {
     pub author: Option<DeploymentReviewApprovedReviewersReviewer>,
     pub comments_url: String,
@@ -18059,7 +18059,7 @@ impl From<&StatusDefaultCommit> for StatusDefaultCommit {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultCommitCommit {
     pub author: PushDefaultCommitsAuthor,
     pub comment_count: i64,
@@ -18074,7 +18074,7 @@ impl From<&StatusDefaultCommitCommit> for StatusDefaultCommitCommit {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultCommitCommitTree {
     pub sha: String,
     pub url: String,
@@ -18084,7 +18084,7 @@ impl From<&StatusDefaultCommitCommitTree> for StatusDefaultCommitCommitTree {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultCommitCommitVerification {
     pub payload: Option<String>,
     pub reason: StatusDefaultCommitCommitVerificationReason,
@@ -18198,7 +18198,7 @@ impl std::convert::TryFrom<String> for StatusDefaultCommitCommitVerificationReas
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct StatusDefaultCommitParents {
     pub html_url: String,
     pub sha: String,
@@ -18265,7 +18265,7 @@ impl std::convert::TryFrom<String> for StatusDefaultState {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum SubIssues {
     #[serde(rename = "parent_issue_added")]
@@ -18338,7 +18338,7 @@ impl From<&SubIssues> for SubIssues {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SubIssuesParentIssueAddedParentIssue {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_lock_reason: Option<String>,
@@ -18393,7 +18393,7 @@ impl From<&SubIssuesParentIssueAddedParentIssue> for SubIssuesParentIssueAddedPa
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SubIssuesParentIssueAddedParentIssuePullRequest {
     pub diff_url: Option<String>,
     pub html_url: Option<String>,
@@ -18409,7 +18409,7 @@ impl From<&SubIssuesParentIssueAddedParentIssuePullRequest>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct SubIssuesParentIssueAddedParentIssueReactions {
     pub confused: i64,
     pub eyes: i64,
@@ -18485,7 +18485,7 @@ impl std::convert::TryFrom<String> for SubIssuesParentIssueAddedParentIssueState
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Team {
     #[serde(rename = "added_to_repository")]
@@ -18557,7 +18557,7 @@ impl From<&Team> for Team {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamAdd {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enterprise: Option<Untyped>,
@@ -18574,7 +18574,7 @@ impl From<&TeamAdd> for TeamAdd {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamAddDefaultTeam {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deleted: Option<bool>,
@@ -18608,7 +18608,7 @@ impl From<&TeamAddDefaultTeam> for TeamAddDefaultTeam {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamAddDefaultTeamParent {
     pub description: Option<String>,
     pub html_url: String,
@@ -18730,7 +18730,7 @@ impl std::convert::TryFrom<String> for TeamAddDefaultTeamParentPrivacy {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamEditedChanges {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<DiscussionEditedChangesBody>,
@@ -18748,7 +18748,7 @@ impl From<&TeamEditedChanges> for TeamEditedChanges {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamEditedChangesRepository {
     pub permissions: TeamEditedChangesRepositoryPermissions,
 }
@@ -18757,7 +18757,7 @@ impl From<&TeamEditedChangesRepository> for TeamEditedChangesRepository {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamEditedChangesRepositoryPermissions {
     pub from: TeamEditedChangesRepositoryPermissionsFrom,
 }
@@ -18766,7 +18766,7 @@ impl From<&TeamEditedChangesRepositoryPermissions> for TeamEditedChangesReposito
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct TeamEditedChangesRepositoryPermissionsFrom {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub admin: Option<bool>,
@@ -18782,7 +18782,7 @@ impl From<&TeamEditedChangesRepositoryPermissionsFrom>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Untyped(pub ::serde_json::Map<String, ::serde_json::Value>);
 impl ::std::ops::Deref for Untyped {
     type Target = ::serde_json::Map<String, ::serde_json::Value>;
@@ -18805,7 +18805,7 @@ impl From<::serde_json::Map<String, ::serde_json::Value>> for Untyped {
         Self(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum Watch {
     #[serde(rename = "started")]
@@ -18825,7 +18825,7 @@ impl From<&Watch> for Watch {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug,PartialEq)]
 pub enum WebhookBody {
     #[serde(rename = "team_add")]
     TeamAdd(TeamAdd),
@@ -19295,7 +19295,7 @@ impl From<CustomProperty> for WebhookBody {
         Self::CustomProperty(value)
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowDispatch {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enterprise: Option<Untyped>,
@@ -19315,7 +19315,7 @@ impl From<&WorkflowDispatch> for WorkflowDispatch {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum WorkflowJob {
     #[serde(rename = "completed")]
@@ -19380,7 +19380,7 @@ impl From<&WorkflowJob> for WorkflowJob {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobCompletedWorkflowJob {
     pub check_run_url: String,
     pub completed_at: Option<String>,
@@ -19537,7 +19537,7 @@ impl std::convert::TryFrom<String> for WorkflowJobCompletedWorkflowJobStatus {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobCompletedWorkflowJobSteps {
     pub completed_at: Option<String>,
     pub conclusion: Option<WorkflowJobCompletedWorkflowJobStepsConclusion>,
@@ -19663,7 +19663,7 @@ impl std::convert::TryFrom<String> for WorkflowJobCompletedWorkflowJobStepsStatu
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobInProgressWorkflowJob {
     pub check_run_url: String,
     pub completed_at: Option<String>,
@@ -19752,7 +19752,7 @@ impl std::convert::TryFrom<String> for WorkflowJobInProgressWorkflowJobConclusio
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobInProgressWorkflowJobSteps {
     pub completed_at: Option<String>,
     pub conclusion: Option<WorkflowJobCompletedWorkflowJobStepsConclusion>,
@@ -19766,7 +19766,7 @@ impl From<&WorkflowJobInProgressWorkflowJobSteps> for WorkflowJobInProgressWorkf
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobQueuedWorkflowJob {
     pub check_run_url: String,
     pub completed_at: Option<String>,
@@ -19797,7 +19797,7 @@ impl From<&WorkflowJobQueuedWorkflowJob> for WorkflowJobQueuedWorkflowJob {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobWaitingWorkflowJob {
     pub check_run_url: String,
     pub completed_at: Option<String>,
@@ -19828,7 +19828,7 @@ impl From<&WorkflowJobWaitingWorkflowJob> for WorkflowJobWaitingWorkflowJob {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowJobWaitingWorkflowJobSteps {
     pub completed_at: Option<String>,
     pub conclusion: Option<WorkflowJobCompletedWorkflowJobStepsConclusion>,
@@ -19842,7 +19842,7 @@ impl From<&WorkflowJobWaitingWorkflowJobSteps> for WorkflowJobWaitingWorkflowJob
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[serde(tag = "action")]
 pub enum WorkflowRun {
     #[serde(rename = "completed")]
@@ -19890,7 +19890,7 @@ impl From<&WorkflowRun> for WorkflowRun {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunCompletedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     pub artifacts_url: String,
@@ -20013,7 +20013,7 @@ impl std::convert::TryFrom<String> for WorkflowRunCompletedWorkflowRunConclusion
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunCompletedWorkflowRunHeadCommit {
     pub author: PushDefaultCommitsAuthor,
     pub committer: PushDefaultCommitsAuthor,
@@ -20029,7 +20029,7 @@ impl From<&WorkflowRunCompletedWorkflowRunHeadCommit>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunCompletedWorkflowRunHeadRepository {
     pub archive_url: String,
     pub assignees_url: String,
@@ -20085,7 +20085,7 @@ impl From<&WorkflowRunCompletedWorkflowRunHeadRepository>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunInProgressWorkflowRun {
     pub actor: Option<DeploymentReviewApprovedReviewersReviewer>,
     pub artifacts_url: String,
@@ -20128,7 +20128,7 @@ impl From<&WorkflowRunInProgressWorkflowRun> for WorkflowRunInProgressWorkflowRu
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunInProgressWorkflowRunHeadRepository {
     pub archive_url: String,
     pub assignees_url: String,
@@ -20184,7 +20184,7 @@ impl From<&WorkflowRunInProgressWorkflowRunHeadRepository>
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunInProgressWorkflowRunRepository {
     pub archive_url: String,
     pub assignees_url: String,
@@ -20300,7 +20300,7 @@ impl std::convert::TryFrom<String> for WorkflowRunInProgressWorkflowRunStatus {
         value.parse()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunRequestedWorkflowRun {
     pub actor: Option<DeploymentStatusCreatedDeploymentCreator>,
     pub artifacts_url: String,
@@ -20346,7 +20346,7 @@ impl From<&WorkflowRunRequestedWorkflowRun> for WorkflowRunRequestedWorkflowRun 
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct WorkflowRunRequestedWorkflowRunPullRequests {
     pub base: DeploymentStatusCreatedWorkflowRunPullRequestsBase,
     pub head: DeploymentStatusCreatedWorkflowRunPullRequestsBase,

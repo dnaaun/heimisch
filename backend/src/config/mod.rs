@@ -7,8 +7,6 @@ use github_auth::AppAuth;
 use jsonwebtoken::EncodingKey;
 use url::Url;
 
-pub use github_auth::WithAppAuth;
-
 #[derive(Debug, Clone, Default)]
 pub struct DatabaseConfig {
     pub url: String,
@@ -19,6 +17,8 @@ pub struct GithubApiConfig {
     pub app_auth: AppAuth,
     pub client_id: String,
     pub client_secret: String,
+    pub api_root: Url,
+    pub non_api_root: Url,
 }
 
 #[derive(Clone)]
@@ -26,6 +26,30 @@ pub struct Config {
     pub db: DatabaseConfig,
     pub github_api: GithubApiConfig,
     pub heimisch_domain_url: Url,
+}
+
+impl Config {
+    pub fn get_gh_api_conf_with_access_token(
+        &self,
+        bearer_access_token: impl Into<Option<String>>,
+    ) -> github_api::apis::configuration::Configuration {
+        github_api::apis::configuration::Configuration {
+            user_agent: Some("Heimisch".into()),
+            bearer_access_token: bearer_access_token.into(),
+            base_path: self.github_api.api_root.to_string(),
+            client: Default::default(),
+        }
+    }
+
+    pub fn get_gh_api_conf_with_app_auth(&self) -> github_api::apis::configuration::Configuration {
+        github_api::apis::configuration::Configuration {
+            user_agent: Some("Heimisch".into()),
+            bearer_access_token: Some(self.github_api.app_auth.generate_bearer_token().expect(
+            "When `Config` was initialized, we should have checked that `generate_bearer_token()` doesn't crash")),
+            base_path: self.github_api.api_root.to_string(),
+            client: Default::default(),
+        }
+    }
 }
 
 pub async fn init_config() -> Config {
@@ -47,7 +71,15 @@ pub async fn init_config() -> Config {
         },
         client_id: env::var("GITHUB_HEIMISCH_CLIENT_ID").expect(""),
         client_secret: env::var("GITHUB_HEIMISCH_CLIENT_SECRET").expect(""),
+        api_root: Url::parse("https://api.github.com").expect(""),
+        non_api_root: Url::parse("https://github.com").expect(""),
     };
+
+    // RTI: We depend upon this not crashing in the future and just do `.expect("")`.
+    github_api
+        .app_auth
+        .generate_bearer_token()
+        .expect("App Auth settings invalid");
 
     Config {
         db,

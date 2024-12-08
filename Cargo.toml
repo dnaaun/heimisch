@@ -14,6 +14,7 @@ members = [
     "macros_impl",
     "github_api",
     "typesafe_idb",
+    "reqwest_wiremock",
 ]
 
 [[workspace.metadata.leptos]]

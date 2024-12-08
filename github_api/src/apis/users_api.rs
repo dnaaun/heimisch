@@ -11,6 +11,7 @@
 use super::{configuration, Error};
 use crate::{apis::ResponseContent, models};
 use reqwest;
+use reqwest_wiremock::GetClientWithMock;
 use serde::{Deserialize, Serialize};
 
 // /// struct for typed errors of method [`users_slash_add_email_for_authenticated_user`]
@@ -1127,28 +1128,9 @@ pub enum UsersSlashGetAuthenticatedError {
 pub async fn users_slash_get_authenticated(
     configuration: &configuration::Configuration,
 ) -> Result<models::UsersGetAuthenticated200Response, Error<UsersSlashGetAuthenticatedError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/user", local_var_configuration.base_path);
-    let mut local_var_req_builder =
-        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-
-    if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-        local_var_req_builder = local_var_req_builder.header(
-            reqwest::header::AUTHORIZATION,
-            format!("Bearer {bearer_access_token}"),
-        );
-    }
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
+    let local_var_resp = users_slash_get_authenticated_request(configuration)
+        .send()
+        .await?;
 
     let local_var_status = local_var_resp.status();
     let local_var_content = local_var_resp.text().await?;
@@ -1166,6 +1148,32 @@ pub async fn users_slash_get_authenticated(
         Err(Error::ResponseError(local_var_error))
     }
 }
+
+pub fn users_slash_get_authenticated_request(
+    configuration: &configuration::Configuration,
+) -> reqwest_wiremock::Builder {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client.with_mock();
+
+    let local_var_uri_str = format!("{}/user", local_var_configuration.base_path);
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.parse().unwrap());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+
+    if let Some(ref bearer_access_token) = local_var_configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
+    }
+    local_var_req_builder
+}
+
 //
 // /// Provides publicly available information about someone with a GitHub account. This method takes their durable user `ID` instead of their `login`, which can change over time.  The `email` key in the following response is the publicly visible email address from your GitHub [profile page](https://github.com/settings/profile). When setting up your profile, you can select a primary email address to be “public” which provides an email entry for this endpoint. If you do not set a public email address for `email`, then it will have a value of `null`. You only see publicly visible email addresses when authenticated with GitHub. For more information, see [Authentication](https://docs.github.com/rest/guides/getting-started-with-the-rest-api#authentication).  The Emails API enables you to list all of your email addresses, and toggle a primary email to be visible publicly. For more information, see \"[Emails API](https://docs.github.com/rest/users/emails)\".
 // pub async fn users_slash_get_by_id(

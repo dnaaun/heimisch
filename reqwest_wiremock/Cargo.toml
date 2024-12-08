@@ -1,0 +1,9 @@
+[package]
+name = "reqwest_wiremock"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+reqwest = "0.12.9"
+wiremock = "0.6.2"
+http = "^1"

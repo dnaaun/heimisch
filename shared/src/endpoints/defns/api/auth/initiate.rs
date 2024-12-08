@@ -1,17 +1,8 @@
-use crate::endpoints::endpoint_client::MaybePageRedirect;
-
-use super::super::super::super::endpoint::{Endpoint, Method};
+use super::super::super::super::endpoint::Method;
 
 pub struct AuthInitiateEndpoint;
 
-/// Not really used right now except for the PATH
-impl Endpoint for AuthInitiateEndpoint {
-    type QueryParams = ();
-
-    const METHOD: Method = Method::Get;
-
-    const PATH: &'static str = "/api/auth/initiate";
-
-    type JsonPayload = ();
-    type JsonResponse = MaybePageRedirect<()>;
+impl AuthInitiateEndpoint {
+    pub const METHOD: Method = Method::Get;
+    pub const PATH: &'static str = "/api/auth/initiate";
 }

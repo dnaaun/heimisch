@@ -14,6 +14,7 @@ struct HttpParsingError(String);
 
 impl std::error::Error for HttpParsingError {}
 
+#[derive(Clone)]
 pub struct ParsedHttpRequest {
     pub method: Method,
     pub path: String,

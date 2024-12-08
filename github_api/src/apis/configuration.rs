@@ -26,10 +26,6 @@ pub struct ApiKey {
 }
 
 impl Configuration {
-    pub fn new() -> Configuration {
-        Configuration::default()
-    }
-
     pub fn with_bearer_access_token(self, bearer_access_token: Option<String>) -> Self {
         Self {
             bearer_access_token,
@@ -39,16 +35,5 @@ impl Configuration {
 
     pub fn with_user_agent(self, user_agent: Option<String>) -> Self {
         Self { user_agent, ..self }
-    }
-}
-
-impl Default for Configuration {
-    fn default() -> Self {
-        Configuration {
-            base_path: "https://api.github.com".to_owned(),
-            user_agent: Some("OpenAPI-Generator/1.1.4/rust".to_owned()),
-            client: reqwest::Client::new(),
-            bearer_access_token: None,
-        }
     }
 }

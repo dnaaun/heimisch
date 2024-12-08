@@ -302,9 +302,7 @@ dependencies = [
 
 [[package]]
 name = "axum-test"
-version = "16.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6ba5211f2e0b77d1cbe1e1c7c826edc20fb1f69720a7fdb1d2a25289c98978e"
+version = "16.4.0"
 dependencies = [
  "anyhow",
  "assert-json-diff",
@@ -379,8 +377,10 @@ dependencies = [
  "parking_lot",
  "rand",
  "reqwest",
+ "reqwest_wiremock",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "shared",
  "tokio",
  "tokio-tungstenite",
@@ -393,6 +393,7 @@ dependencies = [
  "utils",
  "uuid",
  "web",
+ "wiremock",
 ]
 
 [[package]]
@@ -748,6 +749,18 @@ checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 
 [[package]]
 name = "deadpool"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb84100978c1c7b37f09ed3ce3e5f843af02c2a2c431bae5b19230dad2c1b490"
+dependencies = [
+ "async-trait",
+ "deadpool-runtime",
+ "num_cpus",
+ "tokio",
+]
+
+[[package]]
+name = "deadpool"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6541a3916932fe57768d4be0b1ffb5ec7cbf74ca8c903fdfd5c0fe8aa958f0ed"
@@ -763,7 +776,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "590573e9e29c5190a5ff782136f871e6e652e35d598a349888e028693601adf1"
 dependencies = [
- "deadpool",
+ "deadpool 0.12.1",
  "deadpool-sync",
  "diesel",
 ]
@@ -906,7 +919,7 @@ name = "diesel_test"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "deadpool",
+ "deadpool 0.12.1",
  "deadpool-diesel",
  "diesel",
  "diesel_migrations",
@@ -1227,6 +1240,7 @@ version = "1.1.4"
 dependencies = [
  "jiff",
  "reqwest",
+ "reqwest_wiremock",
  "serde",
  "serde_json",
  "serde_repr",
@@ -3002,6 +3016,15 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "windows-registry",
+]
+
+[[package]]
+name = "reqwest_wiremock"
+version = "0.0.0"
+dependencies = [
+ "http 1.1.0",
+ "reqwest",
+ "wiremock",
 ]
 
 [[package]]
@@ -4906,6 +4929,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36c1fec1a2bb5866f07c25f68c26e565c4c200aebb96d7e55710c19d3e8ac49b"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "wiremock"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fff469918e7ca034884c7fd8f93fe27bacb7fcb599fd879df6c7b429a29b646"
+dependencies = [
+ "assert-json-diff",
+ "async-trait",
+ "base64 0.22.1",
+ "deadpool 0.10.0",
+ "futures",
+ "http 1.1.0",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "log",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
 ]
 
 [[package]]

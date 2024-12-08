@@ -45,8 +45,12 @@ axum-login = "0.16.0"
 anyhow = "1.0.94"
 tower = "0.5.1"
 dashmap = "6.1.0"
+reqwest_wiremock = { path = "../reqwest_wiremock" }
 
 [dev-dependencies]
-axum-test = { version = "16.3.0", features = ["ws"] }
+# axum-test = { version = "16.3.0", features = ["ws"] }
+axum-test = { path = "../../axum-test", features = ["ws"] }
 diesel_test = { path = "../diesel-test" }
 tokio-tungstenite = "0.24.0"
+wiremock = "0.6.2"
+serde_urlencoded = "0.7"

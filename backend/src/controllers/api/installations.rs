@@ -36,8 +36,12 @@ pub fn get_token(router: Router<AppState>) -> Router<AppState> {
                 .app_auth
                 .generate_bearer_token()
                 .expect("");
-            let token =
-                get_installation_access_token(installation_id, &signed_bearer_token).await?;
+            let token = get_installation_access_token(
+                &state.config.github_api.api_root,
+                installation_id,
+                &signed_bearer_token,
+            )
+            .await?;
 
             Ok::<_, Error>((StatusCode::OK, MaybePageRedirect::NoRedirect(token)))
         },

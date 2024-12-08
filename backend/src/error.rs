@@ -7,7 +7,7 @@ use http::header::LOCATION;
 use parking_lot::Mutex;
 use shared::{
     endpoints::{
-        defns::api::auth::initiate::AuthInitiateEndpoint, endpoint::Endpoint,
+        defns::api::auth::initiate::AuthInitiateEndpoint,
         endpoint_client::CUSTOM_REDIRECT_STATUS_CODE,
     },
     types::installation::InstallationId,
@@ -134,7 +134,7 @@ Backtrace:
             | &ErrorSource::AuthenticationFailed(_)
             | &ErrorSource::AuthorizationFailed
             | &ErrorSource::GithubUserDetailsNotFound => format!(
-                "YOOOOO {:?}
+                "{:?}
 {}",
                 self.source,
                 print_backtrace_nicely(&self.backtrace)
@@ -288,8 +288,8 @@ impl IntoResponse for Error {
 const ABSOLUTE_CUR_DIR: LazyCell<PathBuf> =
     LazyCell::new(|| std::fs::canonicalize(std::env::current_dir().expect("")).expect(""));
 
-const THIS_VERY_FILE: LazyCell<PathBuf> =
-    LazyCell::new(|| std::fs::canonicalize(PathBuf::from(file!())).expect(""));
+const THIS_VERY_FILE: LazyCell<Option<PathBuf>> =
+    LazyCell::new(|| std::fs::canonicalize(PathBuf::from(file!())).ok());
 
 /// Filters backtrace frames to those in our codebase.
 fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
@@ -308,7 +308,7 @@ fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
                             Err(_) => return false,
                         };
                         path_buf.starts_with(ABSOLUTE_CUR_DIR.deref())
-                            && &path_buf != THIS_VERY_FILE.deref()
+                            && &Some(path_buf) != THIS_VERY_FILE.deref()
                     })
                     .unwrap_or(true)
                 // .map(|filename| filename.contains("heimisch")) // TODO: change this to be more robust?

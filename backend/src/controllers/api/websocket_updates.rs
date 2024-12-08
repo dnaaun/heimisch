@@ -1,17 +1,23 @@
 use tokio::sync::mpsc;
 
-use axum::{extract::State, response::IntoResponse, routing::get, Json, Router};
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use axum_typed_websockets::{Message, WebSocket, WebSocketUpgrade};
 use futures::{SinkExt, StreamExt};
 use shared::{
     endpoints::defns::api::websocket_updates::{
-        ClientMsg, ServerMsg, WebsocketUpdatesPayload, WEBSOCKET_UPDATES_ENDPOINT,
+        ClientMsg, ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
     },
     types::user::UserId,
 };
 
 use crate::{
-    app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser, db::get_webhooks_for_user_since, error::LogErr, websocket_updates_bucket::CAPACITY
+    app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser,
+    db::get_webhooks_for_user_since, error::LogErr, websocket_updates_bucket::CAPACITY,
 };
 
 pub fn api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
@@ -22,19 +28,21 @@ async fn inner(
     auth_user: AuthenticatedUser<AuthBackend>,
     ws: WebSocketUpgrade<ServerMsg, ClientMsg>,
     State(app_state): State<AppState>,
-    Json(payload): Json<WebsocketUpdatesPayload>,
+    Query(query): Query<WebsocketUpdatesQueryParams>,
 ) -> impl IntoResponse {
+    println!("got request to create websocket connection");
     ws.on_upgrade(move |socket| {
-        handle_websocket_updates(app_state, auth_user.github_user_id, payload, socket)
+        handle_websocket_updates(app_state, auth_user.github_user_id, query, socket)
     })
 }
 
 async fn handle_websocket_updates(
     app_state: AppState,
     user_id: UserId,
-    WebsocketUpdatesPayload { updates_since }: WebsocketUpdatesPayload,
+    WebsocketUpdatesQueryParams { updates_since }: WebsocketUpdatesQueryParams,
     socket: WebSocket<ServerMsg, ClientMsg>,
 ) {
+    println!("handling websocket updates");
     let (tx, mut rx) = mpsc::channel(CAPACITY);
     tokio::spawn(async move {
         let (mut socket_writer, mut socket_reader) = socket.split();
@@ -96,6 +104,7 @@ async fn handle_websocket_updates(
     let mut subscription = app_state.websocket_updates_bucket.subscribe(user_id);
 
     loop {
+        println!("About to wait for updates to send on websocket.");
         let update = match subscription.recv().await.log_err() {
             Ok(u) => u,
             Err(_) => {
