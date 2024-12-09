@@ -5,5 +5,10 @@ edition = "2021"
 
 [dependencies]
 reqwest = "0.12.9"
-wiremock = "0.6.2"
+wiremock = { version = "0.6.2", optional = true }
 http = "^1"
+
+[features]
+mocking = [
+	"dep:wiremock"
+]

@@ -36,7 +36,7 @@ impl Config {
         github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
             bearer_access_token: bearer_access_token.into(),
-            base_path: self.github_api.api_root.to_string(),
+            base_path: self.github_api.api_root.clone(),
             client: Default::default(),
         }
     }
@@ -46,7 +46,7 @@ impl Config {
             user_agent: Some("Heimisch".into()),
             bearer_access_token: Some(self.github_api.app_auth.generate_bearer_token().expect(
             "When `Config` was initialized, we should have checked that `generate_bearer_token()` doesn't crash")),
-            base_path: self.github_api.api_root.to_string(),
+            base_path: self.github_api.api_root.clone(),
             client: Default::default(),
         }
     }

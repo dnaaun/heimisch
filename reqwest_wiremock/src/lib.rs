@@ -1,6 +1,8 @@
 use http::{HeaderName, HeaderValue, Method};
 use reqwest::Url;
 use std::fmt::Debug;
+
+#[cfg(feature = "mocking")]
 use wiremock::{
     matchers::{self, path, query_param},
     Mock, Respond,
@@ -8,36 +10,15 @@ use wiremock::{
 
 // TODO: Flag everything wiremock behind `cfg(test)`.
 
-enum BuilderInner {
-    Ok(reqwest::RequestBuilder, wiremock::MockBuilder),
-    Err(reqwest::Error),
-}
+struct Inner {
+    request: reqwest::RequestBuilder,
 
-impl BuilderInner {
-    fn map(
-        self,
-        func: impl FnOnce(
-            reqwest::RequestBuilder,
-            wiremock::MockBuilder,
-        )
-            -> Result<(reqwest::RequestBuilder, wiremock::MockBuilder), reqwest::Error>,
-    ) -> Self {
-        match self {
-            BuilderInner::Ok(request_builder, mock_builder) => {
-                match func(request_builder, mock_builder) {
-                    Ok((request_builder, mock_builder)) => {
-                        BuilderInner::Ok(request_builder, mock_builder)
-                    }
-                    Err(err) => BuilderInner::Err(err),
-                }
-            }
-            BuilderInner::Err(e) => BuilderInner::Err(e),
-        }
-    }
+    #[cfg(feature = "mocking")]
+    mock: wiremock::MockBuilder,
 }
 
 pub struct Builder {
-    inner: BuilderInner,
+    inner: Result<Inner, reqwest::Error>,
 }
 
 impl Builder {
@@ -50,38 +31,37 @@ impl Builder {
         K: Clone,
         V: Clone,
     {
-        let inner = self.inner.map(move |request, mock| {
-            Ok((
-                request.header(key.clone(), value.clone()),
-                mock.and(matchers::header(key, value)),
-            ))
-        });
+        let inner = self.inner.map(
+            |Inner {
+                 request,
+
+                 #[cfg(feature = "mocking")]
+                 mock,
+             }| Inner {
+                request: request.header(key.clone(), value.clone()),
+
+                #[cfg(feature = "mocking")]
+                mock: mock.and(matchers::header(key, value)),
+            },
+        );
 
         Self { inner }
     }
 
     pub fn build(self) -> reqwest::Result<reqwest::Request> {
-        match self.inner {
-            BuilderInner::Ok(request_builder, _) => request_builder.build(),
-            BuilderInner::Err(error) => Err(error),
-        }
+        self.inner?.request.build()
     }
 
     pub async fn send(self) -> reqwest::Result<reqwest::Response> {
-        match self.inner {
-            BuilderInner::Ok(request_builder, _) => request_builder.send().await,
-            BuilderInner::Err(error) => Err(error),
-        }
+        self.inner?.request.send().await
     }
 
+    #[cfg(feature = "mocking")]
     pub fn respond_with<R>(self, responder: R) -> Result<Mock, reqwest::Error>
     where
         R: Respond + 'static,
     {
-        match self.inner {
-            BuilderInner::Ok(_, mock_builder) => Ok(mock_builder.respond_with(responder)),
-            BuilderInner::Err(error) => Err(error),
-        }
+        Ok(self.inner?.mock.respond_with(responder))
     }
 }
 
@@ -92,15 +72,22 @@ pub struct ClientWithMock {
 impl ClientWithMock {
     pub fn request(&self, method: Method, url: Url) -> Builder {
         let request = self.client.request(method, url.clone());
-        let mock = Mock::given(path(url.path()));
-        let mock = url
-            .query_pairs()
-            .fold(mock, |acc, (query_key, query_value)| {
-                acc.and(query_param(query_key, query_value))
-            });
+
+        #[cfg(feature = "mocking")]
+        let mock = {
+            let mock = Mock::given(path(url.path()));
+            url.query_pairs()
+                .fold(mock, |acc, (query_key, query_value)| {
+                    acc.and(query_param(query_key, query_value))
+                })
+        };
 
         Builder {
-            inner: BuilderInner::Ok(request, mock),
+            inner: Ok(Inner {
+                #[cfg(feature = "mocking")]
+                mock,
+                request,
+            }),
         }
     }
 

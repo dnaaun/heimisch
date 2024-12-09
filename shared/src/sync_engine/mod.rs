@@ -141,7 +141,7 @@ impl SyncEngine {
             user_agent: Some("Heimisch".into()),
             client: self.endpoint_client.client.clone(),
             bearer_access_token,
-            base_path: "https://api.github.com".to_owned(),
+            base_path: "https://api.github.com".parse().expect(""),
         };
         Ok(conf)
     }

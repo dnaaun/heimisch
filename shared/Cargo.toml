@@ -26,10 +26,9 @@ diesel = { version = "2.2.4", optional = true }
 http = "1.1.0"
 
 [features]
-hydrate = ["jiff/js",
-# "dep:typesafe_idb", "dep:idb"
-]
+hydrate = [ "jiff/js" ]
 ssr = [
-"dep:diesel-derive-newtype",
-"dep:diesel"
+	"dep:diesel-derive-newtype",
+	"dep:diesel",
+	"github_api/ssr",
 ]

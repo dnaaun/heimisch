@@ -1425,14 +1425,15 @@ pub async fn issues_slash_list_comments_for_repo(
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!(
-        "{}/repos/{owner}/{repo}/issues/comments",
-        local_var_configuration.base_path,
-        owner = crate::apis::urlencode(owner),
-        repo = crate::apis::urlencode(repo)
-    );
-    let mut local_var_req_builder =
-        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+    let local_var_uri = local_var_configuration
+        .base_path
+        .join(&format!(
+            "/repos/{owner}/{repo}/issues/comments",
+            owner = crate::apis::urlencode(owner),
+            repo = crate::apis::urlencode(repo)
+        ))
+        .expect("");
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri);
 
     if let Some(ref local_var_str) = sort {
         local_var_req_builder =
@@ -1460,8 +1461,10 @@ pub async fn issues_slash_list_comments_for_repo(
     }
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-        local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1855,14 +1858,15 @@ pub async fn issues_slash_list_for_repo(
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!(
-        "{}/repos/{owner}/{repo}/issues",
-        local_var_configuration.base_path,
-        owner = crate::apis::urlencode(owner),
-        repo = crate::apis::urlencode(repo)
-    );
-    let mut local_var_req_builder =
-        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+    let local_var_uri = local_var_configuration
+        .base_path
+        .join(&format!(
+            "/repos/{owner}/{repo}/issues",
+            owner = crate::apis::urlencode(owner),
+            repo = crate::apis::urlencode(repo)
+        ))
+        .expect("");
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri);
 
     if let Some(ref local_var_str) = milestone {
         local_var_req_builder =
@@ -1914,8 +1918,10 @@ pub async fn issues_slash_list_for_repo(
     }
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-        local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
     }
 
     let local_var_req = local_var_req_builder.build()?;

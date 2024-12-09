@@ -47,8 +47,8 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
         post(
             |State(state): State<AppState>,
              extractors::Header(header): extractors::Header<GitHubWebhookHeaders>,
-             value: String| async move {
-                 println!("Inside handler for github webhooks");
+             Json(value): Json<Value>| async move {
+                println!("Inside handler for github webhooks");
                 let GitHubWebhookHeaders {
                     x_github_hook_id: webhook_id,
                     x_github_event,
@@ -62,8 +62,7 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
                 })?;
 
                 // The `Webhook` enum is structured in this way.
-                println!("THE VALUE IS: {value}");
-                let value: Value = serde_json::from_str(&value).unwrap();
+                println!("THE VALUE IS: {value:?}");
                 let value = Value::Object([(x_github_event.clone(), value)].into_iter().collect());
                 let body = serde_json::from_value::<WebhookBody>(value)
                     .map_err(ErrorSource::GithubWebhookBodyDeser)?;

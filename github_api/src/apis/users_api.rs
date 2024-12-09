@@ -1156,9 +1156,11 @@ pub fn users_slash_get_authenticated_request(
 
     let local_var_client = &local_var_configuration.client.with_mock();
 
-    let local_var_uri_str = format!("{}/user", local_var_configuration.base_path);
+    let local_var_uri = local_var_configuration.base_path.join("/user").expect("");
+
+    println!("local_var_uri_str {local_var_uri}");
     let mut local_var_req_builder =
-        local_var_client.request(reqwest::Method::GET, local_var_uri_str.parse().unwrap());
+        local_var_client.request(reqwest::Method::GET, local_var_uri);
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder =

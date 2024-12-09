@@ -780,8 +780,10 @@ pub async fn apps_slash_get_installation(
     }
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-        local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
     }
 
     let local_var_req = local_var_req_builder.build()?;
@@ -1623,12 +1625,12 @@ pub async fn apps_slash_list_repos_accessible_to_installation(
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!(
-        "{}/installation/repositories",
-        local_var_configuration.base_path
-    );
-    let mut local_var_req_builder =
-        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+    let local_var_uri = local_var_configuration
+        .base_path
+        .join("/installation/repositories")
+        .expect("");
+
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri);
 
     if let Some(ref local_var_str) = per_page {
         local_var_req_builder =
@@ -1644,8 +1646,10 @@ pub async fn apps_slash_list_repos_accessible_to_installation(
     }
 
     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-        local_var_req_builder =
-            local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
     }
 
     let local_var_req = local_var_req_builder.build()?;
