@@ -7,7 +7,7 @@ use super::{
 use crate::types::{
     installation::InstallationId,
     issue::{Issue, RepositoryIdIndex},
-    issue_initial_sync_status::{InitialSyncStatusEnum, IssueInitialSyncStatus},
+    issues_initial_sync_status::{InitialSyncStatusEnum, IssuesInitialSyncStatus},
     repository::{Repository, RepositoryId},
     user::User,
 };
@@ -22,11 +22,11 @@ impl SyncEngine {
         let txn = self
             .db
             .txn()
-            .with_store::<IssueInitialSyncStatus>()
+            .with_store::<IssuesInitialSyncStatus>()
             .with_store::<Issue>()
             .ro();
         let initial_sync_status = txn
-            .object_store::<IssueInitialSyncStatus>()?
+            .object_store::<IssuesInitialSyncStatus>()?
             .get(id)
             .await?;
         if let Some(initial_sync_status) = initial_sync_status {
@@ -103,11 +103,11 @@ impl SyncEngine {
             )??;
 
             let txn = Changes::txn(&self.db)
-                .with_store::<IssueInitialSyncStatus>()
+                .with_store::<IssuesInitialSyncStatus>()
                 .rw();
             self.merge_and_upsert_changes(&txn, changes).await?;
-            txn.object_store::<IssueInitialSyncStatus>()?
-                .put(&IssueInitialSyncStatus {
+            txn.object_store::<IssuesInitialSyncStatus>()?
+                .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
                 })
@@ -119,9 +119,9 @@ impl SyncEngine {
             }
         }
 
-        let txn = self.db.txn().with_store::<IssueInitialSyncStatus>().rw();
-        txn.object_store::<IssueInitialSyncStatus>()?
-            .put(&IssueInitialSyncStatus {
+        let txn = self.db.txn().with_store::<IssuesInitialSyncStatus>().rw();
+        txn.object_store::<IssuesInitialSyncStatus>()?
+            .put(&IssuesInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id: *id,
             })

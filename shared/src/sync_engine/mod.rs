@@ -39,21 +39,19 @@ mod isolate_db_store_markers_impl_type {
         types::{
             github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
             issue::Issue, issue_comment::IssueComment,
-            issue_comment_initial_sync_status::IssueCommentInitialSyncStatus,
-            issue_initial_sync_status::IssueInitialSyncStatus, license::License,
-            milestone::Milestone, repository::Repository,
-            repository_initial_sync_status::RepositoryInitialSyncStatus, user::User,
+            issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
+            issues_initial_sync_status::IssuesInitialSyncStatus, license::License,
+            milestone::Milestone, repository::Repository, user::User,
         },
     };
     use typesafe_idb::{StoreMarker, TypesafeDb};
 
     use super::{error::SyncResult, SyncEngine};
 
-    pub type DbStoreMarkers = impl StoreMarker<IssueCommentInitialSyncStatus>
+    pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
         + StoreMarker<IssueComment>
         + StoreMarker<InstallationAccessTokenRow>
-        + StoreMarker<RepositoryInitialSyncStatus>
-        + StoreMarker<IssueInitialSyncStatus>
+        + StoreMarker<IssuesInitialSyncStatus>
         + StoreMarker<License>
         + StoreMarker<Milestone>
         + StoreMarker<Repository>
@@ -70,11 +68,10 @@ mod isolate_db_store_markers_impl_type {
                 .with_store::<Repository>()
                 .with_store::<Milestone>()
                 .with_store::<License>()
-                .with_store::<IssueInitialSyncStatus>()
-                .with_store::<RepositoryInitialSyncStatus>()
+                .with_store::<IssuesInitialSyncStatus>()
                 .with_store::<InstallationAccessTokenRow>()
                 .with_store::<IssueComment>()
-                .with_store::<IssueCommentInitialSyncStatus>()
+                .with_store::<IssueCommentsInitialSyncStatus>()
                 .build()
                 .await?;
 

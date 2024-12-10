@@ -1,7 +1,4 @@
-use crate::types::{
-    installation::InstallationId, issue_initial_sync_status::InitialSyncStatusEnum,
-    repository_initial_sync_status::RepositoryInitialSyncStatus,
-};
+use crate::types::installation::InstallationId;
 
 use super::{
     changes::Changes, conversions::from_repository::from_repository, SyncEngine, SyncResult,
@@ -9,24 +6,10 @@ use super::{
 };
 
 impl SyncEngine {
-    pub async fn ensure_initial_sync_repositories(&self, id: &InstallationId) -> SyncResult<()> {
-        let txn = self
-            .db
-            .txn()
-            .with_store::<RepositoryInitialSyncStatus>()
-            .ro();
-
-        if let Some(RepositoryInitialSyncStatus {
-            status: InitialSyncStatusEnum::Full,
-            id: _,
-        }) = txn
-            .object_store::<RepositoryInitialSyncStatus>()?
-            .get(id)
-            .await?
-        {
-            return Ok(());
-        }
-
+    pub async fn fetch_repositorys_for_installation_id(
+        &self,
+        id: &InstallationId,
+    ) -> SyncResult<()> {
         let conf = self.get_api_conf(id).await?;
 
         let mut repos = vec![];
@@ -55,16 +38,9 @@ impl SyncEngine {
             .into_iter()
             .try_fold(Changes::default(), |acc, new| acc.with_added(new))?;
 
-        let txn = Changes::txn(&self.db)
-            .with_store::<RepositoryInitialSyncStatus>()
-            .rw();
+        let txn = Changes::txn(&self.db).rw();
         self.merge_and_upsert_changes(&txn, changes).await?;
-        txn.object_store::<RepositoryInitialSyncStatus>()?
-            .put(&RepositoryInitialSyncStatus {
-                status: InitialSyncStatusEnum::Full,
-                id: *id,
-            })
-            .await?;
+
         Ok(())
     }
 }

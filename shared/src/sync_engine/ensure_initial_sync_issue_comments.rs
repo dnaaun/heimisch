@@ -10,7 +10,8 @@ use crate::types::{
     installation::InstallationId,
     issue::{Issue, NumberIndex},
     issue_comment::{IssueComment, RepositoryIdIndex},
-    issue_comment_initial_sync_status::{InitialSyncStatusEnum, IssueCommentInitialSyncStatus},
+    issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
+    issues_initial_sync_status::InitialSyncStatusEnum,
     repository::{Repository, RepositoryId},
     user::User,
 };
@@ -27,11 +28,11 @@ impl SyncEngine {
         let txn = self
             .db
             .txn()
-            .with_store::<IssueCommentInitialSyncStatus>()
+            .with_store::<IssueCommentsInitialSyncStatus>()
             .with_store::<IssueComment>()
             .ro();
         let initial_sync_status = txn
-            .object_store::<IssueCommentInitialSyncStatus>()?
+            .object_store::<IssueCommentsInitialSyncStatus>()?
             .get(id)
             .await?;
         if let Some(initial_sync_status) = initial_sync_status {
@@ -126,11 +127,11 @@ impl SyncEngine {
                 Changes::try_from_iter(issue_comment_ids_and_changes.into_iter().map(|r| r.1))?;
 
             let txn = Changes::txn(&self.db)
-                .with_store::<IssueCommentInitialSyncStatus>()
+                .with_store::<IssueCommentsInitialSyncStatus>()
                 .rw();
             self.merge_and_upsert_changes(&txn, changes).await?;
-            txn.object_store::<IssueCommentInitialSyncStatus>()?
-                .put(&IssueCommentInitialSyncStatus {
+            txn.object_store::<IssueCommentsInitialSyncStatus>()?
+                .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
                 })
@@ -145,10 +146,10 @@ impl SyncEngine {
         let txn = self
             .db
             .txn()
-            .with_store::<IssueCommentInitialSyncStatus>()
+            .with_store::<IssueCommentsInitialSyncStatus>()
             .rw();
-        txn.object_store::<IssueCommentInitialSyncStatus>()?
-            .put(&IssueCommentInitialSyncStatus {
+        txn.object_store::<IssueCommentsInitialSyncStatus>()?
+            .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id: *id,
             })
