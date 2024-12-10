@@ -71,7 +71,6 @@ pub fn RepositoryPage() -> impl IntoView {
             .clone()
             .expect("RepositoryPage should be mounted only if these params are available")
     };
-    Effect::new(move || tracing::debug!("params: {:?}", params()));
     let params_untracked = || {
         use_params::<RepositoryPageParams>()
             .read_untracked()
@@ -86,18 +85,13 @@ pub fn RepositoryPage() -> impl IntoView {
             .and_then(|i| TabName::from_url_segment(i).ok())
             .unwrap_or(TabName::Issues)
     };
-    Effect::new(move || tracing::debug!("active_tab: {:?}", active_tab()));
     let active_tab_str = Memo::new(move |_| active_tab().to_url_segment());
     let (new_active_tab_str, set_new_active_tab_str) = signal(active_tab_str());
 
     Effect::new(move || {
         let params_untracked = params_untracked();
         let new_active_tab = new_active_tab_str.read().clone();
-        tracing::debug!(
-            "Navigating {} and {} are being compared",
-            active_tab_str.read_untracked(),
-            new_active_tab
-        );
+
         if active_tab_str.read_untracked() != new_active_tab {
             let navigate = use_navigate();
             navigate(

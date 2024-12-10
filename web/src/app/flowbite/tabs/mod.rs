@@ -20,9 +20,6 @@ where
 {
     let set_active_tab = Arc::new(set_active_tab);
 
-    // let active2 = move || active_tab.read().to_string();
-    // tracing::info!("{}", active2());
-
     let active_tab_content_el = move || {
         tabs.get()
             .iter()

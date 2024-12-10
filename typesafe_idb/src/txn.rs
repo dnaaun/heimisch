@@ -142,20 +142,10 @@ impl<'db, TxnTableMarkers, DbTableMarkers> TxnBuilder<'db, TxnTableMarkers, DbTa
         Txn {
             markers: self.txn_table_markers,
             actual_txn: Some(
-                match self
-                    .db
+                self.db
                     .inner
                     .transaction(&store_names, ReadWrite::actual_mode())
-                {
-                    Ok(txn) => txn,
-                    Err(err) => {
-                        tracing::info!("existing store names: {:?}, trying to create a transaction for store names: {:?}",
-                                self.db.inner.store_names(),
-                                store_names,
-                                );
-                        panic!("{:?}", err)
-                    }
-                },
+                    .expect(""),
             ),
             mode: PhantomData,
             reactivity_trackers: Some(Default::default()),
@@ -168,20 +158,10 @@ impl<'db, TxnTableMarkers, DbTableMarkers> TxnBuilder<'db, TxnTableMarkers, DbTa
         Txn {
             markers: self.txn_table_markers,
             actual_txn: Some(
-                match self
-                    .db
+                self.db
                     .inner
                     .transaction(&store_names, ReadWrite::actual_mode())
-                {
-                    Ok(txn) => txn,
-                    Err(err) => {
-                        tracing::info!("existing store names: {:?}, trying to create a transaction for store names: {:?}",
-                                self.db.inner.store_names(),
-                                store_names,
-                                );
-                        panic!("{:?}", err)
-                    }
-                },
+                    .expect(""),
             ),
             mode: PhantomData,
             reactivity_trackers: Some(Default::default()),
