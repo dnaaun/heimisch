@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use itertools::Itertools;
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
@@ -32,7 +30,7 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
 
     let issues = Signal::derive(move || {
         Ok::<_, FrontendError>(
-            (**issues.read())
+            (*issues.read())
                 .clone()
                 .transpose()?
                 .into_iter()
@@ -116,7 +114,7 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
             }
         },
     );
-    let comments_count = move || (**comments_count.read()).clone();
+    let comments_count = move || comments_count.read().clone();
 
     move || {
         let created_at = issue.created_at.clone();
@@ -124,7 +122,8 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
         let title = issue.title.clone();
         let number = issue.number;
 
-        let login = (**user.read())
+        let login = user
+            .read()
             .clone()
             .transpose()?
             .flatten()

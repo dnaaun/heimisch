@@ -1,6 +1,7 @@
 use futures::future::{join_all, OptionFuture};
 use itertools::Itertools;
 use leptos::prelude::*;
+use leptos_router::components::Outlet;
 use shared::types::{repository::Repository, user::User};
 
 use crate::{
@@ -15,11 +16,7 @@ use icondata;
 pub fn Home() -> impl IntoView {}
 
 #[component]
-pub fn Sidebar<T>(children: View<T>) -> impl IntoView
-where
-    T: Send + 'static,
-    View<T>: Render + RenderHtml,
-{
+pub fn Sidebar() -> impl IntoView {
     let sync_engine = use_sync_engine();
     let repositorys_by_owner = sync_engine.idb_signal(
         |db| {
@@ -65,9 +62,9 @@ where
                 .collect::<Vec<_>>())
         },
     );
-    let repositorys_by_owner = move || (**repositorys_by_owner.read()).clone().transpose();
+    let repositorys_by_owner = move || repositorys_by_owner.read().clone().transpose();
     Ok::<_, FrontendError>(Some(view! {
-        <div>
+        <div class="flex flex-nowrap">
             <button
                 data-drawer-target="sidebar-multi-level-sidebar"
                 data-drawer-toggle="sidebar-multi-level-sidebar"
@@ -92,7 +89,7 @@ where
             </button>
             <aside
                 id="sidebar-multi-level-sidebar"
-                class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+                class="top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 shadow"
                 aria-label="Sidebar"
             >
                 <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
@@ -161,7 +158,7 @@ where
                     }}
                 </div>
             </aside>
-            <main>{children}</main>
+            <main><Outlet /></main>
         </div>
     }))
 }

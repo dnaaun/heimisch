@@ -12,7 +12,7 @@ mod ensure_initial_sync_issue_comments;
 pub mod error;
 mod registry;
 
-use std::{cmp::Ordering, rc::Rc, sync::Arc};
+use std::{cmp::Ordering, sync::Arc};
 
 use crate::{
     endpoints::{
@@ -32,7 +32,7 @@ use jiff::{Timestamp, ToSpan};
 /// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
 /// "defining use."
 mod isolate_db_store_markers_impl_type {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     use crate::{
         endpoints::endpoint_client::EndpointClient,
@@ -76,7 +76,7 @@ mod isolate_db_store_markers_impl_type {
                 .await?;
 
             Ok(Self {
-                db: Rc::new(db),
+                db: Arc::new(db),
                 idb_notifiers: Default::default(),
                 endpoint_client,
             })
@@ -121,7 +121,7 @@ pub type IdbNotifier = Box<dyn Fn(IdbNotification)>;
 
 #[allow(unused)]
 pub struct SyncEngine {
-    pub db: Rc<TypesafeDb<DbStoreMarkers>>,
+    pub db: Arc<TypesafeDb<DbStoreMarkers>>,
     pub idb_notifiers: Arc<Mutex<Registry<IdbNotifier>>>,
     endpoint_client: EndpointClient,
 }

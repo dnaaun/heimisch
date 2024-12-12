@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use leptos::prelude::*;
 use leptos_router::{
@@ -103,11 +103,7 @@ pub fn RepositoryPage() -> impl IntoView {
             );
         }
     });
-    let RepositoryPageParams {
-        owner_name,
-        repo_name,
-        ..
-    } = params();
+
     let repository = use_sync_engine().idb_signal(
         |db| {
             db.txn()
@@ -116,8 +112,11 @@ pub fn RepositoryPage() -> impl IntoView {
                 .ro()
         },
         move |txn| {
-            let owner_name = owner_name.clone();
-            let repo_name = repo_name.clone();
+            let RepositoryPageParams {
+                owner_name,
+                repo_name,
+                ..
+            } = params();
             async move {
                 let user = txn
                     .object_store::<User>()?
@@ -144,8 +143,7 @@ pub fn RepositoryPage() -> impl IntoView {
     );
 
     move || {
-        let repository = repository.read();
-        let repository = match repository.deref().deref() {
+        let repository = match repository.read().as_ref() {
             Some(r) => r.as_ref().unwrap(),
             None => return view! { <div>Loading...</div> }.into_any(),
         }

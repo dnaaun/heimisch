@@ -1,5 +1,6 @@
-use std::{future::Future, rc::Rc};
+use std::{future::Future, sync::Arc};
 
+use send_wrapper::SendWrapper;
 use shared::sync_engine::{DbStoreMarkers, SyncEngine};
 use typesafe_idb::{Txn, TypesafeDb};
 
@@ -14,13 +15,13 @@ pub trait IdbSignalFromSyncEngine<DbStoreMarkers> {
     fn idb_signal<TxnStoreMarkers, Mode, Fut, T>(
         &self,
         make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
-        compute_val: impl Fn(Rc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
+        compute_val: impl Fn(Arc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>
     where
         TxnStoreMarkers: 'static,
         Mode: 'static,
         Fut: Future<Output = Result<T, FrontendError>>,
-        T: 'static;
+        T: 'static + Send + Sync;
 }
 
 impl IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine {
@@ -28,15 +29,15 @@ impl IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine {
     fn idb_signal<TxnStoreMarkers, Mode, Fut, T>(
         &self,
         make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
-        compute_val: impl Fn(Rc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
+        compute_val: impl Fn(Arc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>
     where
         TxnStoreMarkers: 'static,
         Fut: Future<Output = Result<T, FrontendError>>,
         Mode: 'static,
-        T: 'static,
+        T: 'static + Send + Sync,
     {
-        let db = self.db.clone();
+        let db = SendWrapper::new(self.db.clone());
         let make_txn = move || make_txn(db.as_ref());
         let idb_notifiers = self.idb_notifiers.clone();
         let register_notifier = move |thingy| {

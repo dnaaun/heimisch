@@ -6,7 +6,7 @@ use crate::{chain::Chain, Store, Txn, TxnBuilder};
 
 pub struct TypesafeDb<TableMarkers> {
     markers: PhantomData<TableMarkers>,
-    pub(crate) inner: idb::Database,
+    pub(crate) inner:  idb::Database,
 }
 
 pub struct TypesafeDbBuilder<TableMarkers> {

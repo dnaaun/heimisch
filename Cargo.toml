@@ -45,3 +45,9 @@ reload-port = 3211
 #
 # Optional. Env: LEPTOS_ASSETS_DIR.
 assets-dir = "assets/assets"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
