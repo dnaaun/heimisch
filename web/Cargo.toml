@@ -37,6 +37,8 @@ send_wrapper = "0.6.0"
 itertools = "0.13.0"
 jiff = { version = "0.1.14", default-features = false, features = ["serde", "alloc", "std"] }
 codee = "0.2.0"
+icondata = { version = "0.5.0", default-features = false, features = ["heroicons"] }
+icondata_core = "0.1.0"
 
 [features]
 default = []

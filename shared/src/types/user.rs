@@ -17,6 +17,8 @@ use crate::avail::Avail;
     Serialize,
     Deserialize,
     PartialEq,
+    PartialOrd,
+    Ord,
     Eq,
     Copy,
     Hash,

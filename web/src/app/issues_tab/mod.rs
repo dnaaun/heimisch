@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use itertools::Itertools;
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
@@ -10,7 +11,7 @@ use shared::types::{
 };
 
 use crate::{
-    app::sync_engine_provider::use_sync_engine,
+    app::sync_engine_provider::use_sync_engine, frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
@@ -21,25 +22,41 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
     let issues = sync_engine.idb_signal(
         |db| db.txn().with_store::<Issue>().ro(),
         move |txn| async move {
-            txn.object_store::<Issue>()
-                .unwrap()
-                .index::<RepositoryIdIndex>()
-                .unwrap()
+            Ok(txn
+                .object_store::<Issue>()?
+                .index::<RepositoryIdIndex>()?
                 .get_all(Some(&repository.id))
-                .await
-                .unwrap()
+                .await?)
         },
     );
-    let issues = move || issues.read().iter().flatten().cloned().collect::<Vec<_>>();
 
-    let counts = move || {
-        let issues = issues();
+    let issues = Signal::derive(move || {
+        Ok::<_, FrontendError>(
+            (**issues.read())
+                .clone()
+                .transpose()?
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>(),
+        )
+    });
+
+    let issues_len = Signal::derive(move || {
+        issues
+            .read()
+            .as_ref()
+            .map(|i| i.len())
+            .map_err(|i| i.clone())
+    });
+
+    let counts = Signal::derive(move || {
+        let issues = issues()?;
         let (open, closed): (Vec<Option<Timestamp>>, Vec<_>) = issues
             .iter()
             .filter_map(|i| i.closed_at.as_ref().to_option())
             .partition(|i| i.is_none());
-        Some((open.len(), closed.len()))
-    };
+        Ok::<_, FrontendError>((open.len(), closed.len()))
+    });
 
     move || {
         view! {
@@ -52,10 +69,11 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
                     <div>Author</div>
                 </div>
                 <For
-                    each=move || issues().into_iter().enumerate()
+                    each=move || issues.read().iter().flatten().cloned().enumerate().collect_vec()
                     key=move |(_, i)| i.id
                     children=move |(i, issue)| {
-                        view! { <IssueRow issue=issue is_last=i == issues().len() - 1 /> }
+                        let issues_len = (*issues_len.read()).clone()?;
+                        Ok::<_, FrontendError>(view! { <IssueRow issue=issue.clone() is_last=i == issues_len - 1 /> })
                     }
                 />
             </>
@@ -74,13 +92,9 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
             async move {
                 let user_id = match user_id.to_option().flatten() {
                     Some(u) => u,
-                    None => return None,
+                    None => return Ok(None),
                 };
-                txn.object_store::<User>()
-                    .unwrap()
-                    .get(&user_id)
-                    .await
-                    .unwrap()
+                Ok(txn.object_store::<User>()?.get(&user_id).await?)
             }
         },
     );
@@ -90,18 +104,16 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
         move |txn| {
             let issue_id = issue_id;
             async move {
-                txn.object_store::<IssueComment>()
-                    .unwrap()
-                    .index::<IssueIdIndex>()
-                    .unwrap()
+                Ok(txn
+                    .object_store::<IssueComment>()?
+                    .index::<IssueIdIndex>()?
                     .get_all(Some(&Some(issue_id)))
-                    .await
-                    .unwrap()
-                    .len()
+                    .await?
+                    .len())
             }
         },
     );
-    let comments_count = move || *comments_count.read().deref().deref();
+    let comments_count = move || (**comments_count.read()).clone();
 
     move || {
         let created_at = issue.created_at.clone();
@@ -109,10 +121,11 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
         let title = issue.title.clone();
         let number = issue.number;
 
-        let user = user.read();
-        let user = user.as_ref();
-        let user = user.flatten();
-        let login = user.map(|u| u.login.clone());
+        let login = (**user.read())
+            .clone()
+            .transpose()?
+            .flatten()
+            .map(|u| u.login.clone());
 
         let opened_or_closed_text = closed_at
             .as_ref()
@@ -125,7 +138,7 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                     .map(|i| format!("opened on {}", strtime::format("%b %d, %Y", i).expect("")))
             });
 
-        view! {
+        Ok::<_, FrontendError>(view! {
             <div
                 class="border-r border-l border-b p-3 flex justify-between items-center"
                 class=("rounded-b", is_last)
@@ -146,6 +159,6 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
                     </div>
                 </div>
             </div>
-        }
+        })
     }
 }

@@ -27,8 +27,8 @@ pub mod pg_session_store;
 
 #[cfg(test)]
 mod tests;
-mod websocket_updates_bucket;
 pub mod utils;
+mod websocket_updates_bucket;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
@@ -71,11 +71,10 @@ async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Route
     let leptos_routes = generate_route_list(web::App);
     let leptos_options = state.leptos_options.clone();
 
+    let server_dir = ServeDir::new(PathBuf::try_from(leptos_options.site_root.deref()).unwrap());
     Router::new()
-        .route_service(
-            "/pkg/*rest",
-            ServeDir::new(PathBuf::try_from(leptos_options.site_root.deref()).unwrap()),
-        )
+        .route_service("/pkg/*rest", server_dir.clone())
+        .route_service("/assets/*rest", server_dir)
         .leptos_routes(&state, leptos_routes, {
             move || web::shell(leptos_options.clone())
         })

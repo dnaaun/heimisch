@@ -3,7 +3,7 @@ use std::{future::Future, rc::Rc};
 use shared::sync_engine::{DbStoreMarkers, SyncEngine};
 use typesafe_idb::{Txn, TypesafeDb};
 
-use crate::idb_signal::IdbSignal;
+use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
 pub trait IdbSignalFromSyncEngine<DbStoreMarkers> {
     /// Will create a signal that will be recomputed every time an indexeddb change is committed by
@@ -15,11 +15,11 @@ pub trait IdbSignalFromSyncEngine<DbStoreMarkers> {
         &self,
         make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
         compute_val: impl Fn(Rc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
-    ) -> IdbSignal<T>
+    ) -> IdbSignal<Result<T, FrontendError>>
     where
         TxnStoreMarkers: 'static,
         Mode: 'static,
-        Fut: Future<Output = T>,
+        Fut: Future<Output = Result<T, FrontendError>>,
         T: 'static;
 }
 
@@ -29,10 +29,10 @@ impl IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine {
         &self,
         make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
         compute_val: impl Fn(Rc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
-    ) -> IdbSignal<T>
+    ) -> IdbSignal<Result<T, FrontendError>>
     where
         TxnStoreMarkers: 'static,
-        Fut: Future<Output = T>,
+        Fut: Future<Output = Result<T, FrontendError>>,
         Mode: 'static,
         T: 'static,
     {

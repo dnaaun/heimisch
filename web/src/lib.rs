@@ -8,6 +8,7 @@ mod local_storage;
 mod use_unwrapped_context;
 mod utils;
 mod websocket_updates;
+mod frontend_error;
 use hydration::{AutoReload, HydrationScripts};
 use leptos::prelude::*;
 use leptos::{config::LeptosOptions, *};

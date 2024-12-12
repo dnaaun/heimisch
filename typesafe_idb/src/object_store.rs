@@ -2,6 +2,7 @@ use std::{cell::RefCell, marker::PhantomData};
 
 use crate::{serde_abstraction, Index, IndexSpec, Present, ReactivityTrackers, Store, TxnMode};
 
+#[derive(Clone)]
 pub struct ObjectStore<'txn, Store, Mode> {
     pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
     pub(crate) actual_object_store: idb::ObjectStore,

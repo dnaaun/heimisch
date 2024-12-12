@@ -118,7 +118,7 @@ pub fn RepositoryPage() -> impl IntoView {
         move |txn| {
             let owner_name = owner_name.clone();
             let repo_name = repo_name.clone();
-            Box::pin(async move {
+            async move {
                 let user = txn
                     .object_store::<User>()?
                     .index::<user::LoginIndex>()?
@@ -135,11 +135,11 @@ pub fn RepositoryPage() -> impl IntoView {
                             .into_iter()
                             .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
 
-                        Ok::<_, typesafe_idb::Error>(repo)
+                        Ok(repo)
                     }
                     None => Ok(None),
                 }
-            })
+            }
         },
     );
 

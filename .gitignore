@@ -5,3 +5,5 @@ web/dist/
 
 node_modules/
 pkg/
+
+style/tailwind_output.css

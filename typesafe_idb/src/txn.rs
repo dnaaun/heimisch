@@ -7,8 +7,11 @@ use std::{
     marker::PhantomData,
 };
 
+#[derive(Clone)]
 pub struct Present;
+#[derive(Clone)]
 pub struct ReadWrite {}
+#[derive(Clone)]
 pub struct ReadOnly {}
 
 pub trait TxnMode {
