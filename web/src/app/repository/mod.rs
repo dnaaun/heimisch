@@ -177,9 +177,9 @@ pub fn RepositoryPage() -> impl IntoView {
                 repo_name=Box::new(move || params().repo_name)
             />
             <Tabs
-             tabs
-             active_tab={Signal::derive(active_tab)}
-             set_active_tab={move |t| set_new_active_tab_str(t.to_url_segment())}
+                tabs
+                active_tab=Signal::derive(active_tab)
+                set_active_tab=move |t| set_new_active_tab_str(t.to_url_segment())
             />
         }
         .into_any()

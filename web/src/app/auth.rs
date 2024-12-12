@@ -68,11 +68,7 @@ pub fn Auth() -> impl IntoView {
         Err(_) => view! { <div>Not sure how you got here, to be honest.</div> }.into_any(),
     };
 
-    view! {
-        <div class="flex justify-center items-center h-screen">
-            {body}
-        </div>
-    }
+    view! { <div class="flex justify-center items-center h-screen">{body}</div> }
 }
 
 #[component]
@@ -91,7 +87,7 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
         }
     };
 
-    let fallback = || view! { <Spinner  /> };
+    let fallback = || view! { <Spinner /> };
     view! { <Suspense fallback>{body}</Suspense> }
 }
 
@@ -153,48 +149,45 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
             });
             let show_copy_to_cli = show_copy_to_cli.is_some();
             (move || view! {
-            <Suspense fallback=LoggingIn>
-                {move || {
-                    user_access_token_rsrc
-                        .read()
-                        .as_ref()
-                        .map(move |result| {
-                            match result.deref() {
-                                Ok(AuthFinishResponse::Success(access_token)) => {
-                                    view! {
-                                        // I'm fairly certain show_copy_to_cli will
-                                        // have to depend on the `state` query param
-                                        // and not another query param because Github
-                                        // won't let me do it otherwise, but who cares
-                                        // for now, since I've abandoned the CLI?
-                                        <Success settings=if show_copy_to_cli {
-                                            SuccessSettings::ShowCopyToCli(access_token.clone())
-                                        } else {
-                                            SuccessSettings::NoCopyToCli
-                                        } />
+                <Suspense fallback=LoggingIn>
+                    {move || {
+                        user_access_token_rsrc
+                            .read()
+                            .as_ref()
+                            .map(move |result| {
+                                match result.deref() {
+                                    Ok(AuthFinishResponse::Success(access_token)) => {
+                                        view! {
+                                            // I'm fairly certain show_copy_to_cli will
+                                            // have to depend on the `state` query param
+                                            // and not another query param because Github
+                                            // won't let me do it otherwise, but who cares
+                                            // for now, since I've abandoned the CLI?
+                                            <Success settings=if show_copy_to_cli {
+                                                SuccessSettings::ShowCopyToCli(access_token.clone())
+                                            } else {
+                                                SuccessSettings::NoCopyToCli
+                                            } />
+                                        }
+                                            .into_any()
                                     }
-                                        .into_any()
+                                    _ => {
+                                        view! {
+                                            <div class="text-lg">
+                                                "Authenticating Heimisch failed. Please try again."
+                                            </div>
+                                        }
+                                            .into_any()
+                                    }
                                 }
-                                _ => {
-                                    view! {
-                                        <div class="text-lg">
-                                            "Authenticating Heimisch failed. Please try again."
-                                        </div>
-                                    }.into_any()
-                                }
-                            }
-                        })
-                }}
-            </Suspense>
-        })
+                            })
+                    }}
+                </Suspense>
+            })
                         .into_any()
         };
 
-    view! {
-        <div class="flex justify-center items-center h-screen">
-            {body}
-        </div>
-    }
+    view! { <div class="flex justify-center items-center h-screen">{body}</div> }
 }
 
 #[component]
@@ -233,13 +226,10 @@ fn Success(settings: SuccessSettings) -> impl IntoView {
                     <div>
                         Copy the below back into your CLI prompt to finish authenticating Heimisch CLI.
                     </div>
-                    <div
-                    class="bg-gray-100 p-2 rounded font-mono">
+                    <div class="bg-gray-100 p-2 rounded font-mono">
                         {github_access_token.deref().clone()}
                     </div>
-                    <button on:click=on_click>
-                        Copy to clipboard
-                    </button>
+                    <button on:click=on_click>Copy to clipboard</button>
                 </>
             }
         }

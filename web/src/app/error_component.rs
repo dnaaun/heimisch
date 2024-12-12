@@ -18,7 +18,7 @@ where
                 view! {
                     <div class="w-max h-max flex items-center justify-center">
                         <div>Some error happened!</div>
-                        </div>
+                    </div>
                 }
             }
             .into_any(),

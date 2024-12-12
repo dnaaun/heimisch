@@ -11,7 +11,7 @@ mod repository;
 mod sync_engine_provider;
 
 use auth::Auth;
-use home::Home;
+use home::{Home, Sidebar};
 use leptos_router::components::Routes;
 
 use leptos::prelude::*;
@@ -24,21 +24,19 @@ use sync_engine_provider::SyncEngineProvider;
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <main>
-            <Router>
-            {
+        <SyncEngineProvider>
+            <Sidebar children={
                 view! {
-                    <SyncEngineProvider>
+                    <Router>
                         <Routes fallback=NotFound>
-                            <Route path=path!("/") view=Home />
                             <Route path=path!("/auth") view=Auth />
                             <Route path=path!("/:owner_name/:repo_name") view=RepositoryPage />
                             <Route path=path!("/:owner_name/:repo_name/:tab") view=RepositoryPage />
+                            <Route path=path!("/") view=Home />
                         </Routes>
-                    </SyncEngineProvider>
+                    </Router>
                 }
-            }
-            </Router>
-        </main>
+            } />
+        </SyncEngineProvider>
     }
 }

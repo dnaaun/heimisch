@@ -73,7 +73,10 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
                     key=move |(_, i)| i.id
                     children=move |(i, issue)| {
                         let issues_len = (*issues_len.read()).clone()?;
-                        Ok::<_, FrontendError>(view! { <IssueRow issue=issue.clone() is_last=i == issues_len - 1 /> })
+                        Ok::<
+                            _,
+                            FrontendError,
+                        >(view! { <IssueRow issue=issue.clone() is_last=i == issues_len - 1 /> })
                     }
                 />
             </>
