@@ -21,20 +21,20 @@ use not_found::NotFound;
 use repository::RepositoryPage;
 use sync_engine_provider::SyncEngineProvider;
 
+pub use leptos_router;
+
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <SyncEngineProvider>
-            <Router>
-                <Routes fallback=NotFound>
-                    <Route path=path!("/auth") view=Auth />
-                    <ParentRoute path=path!("/") view=Sidebar >
-                        <Route path=path!("") view=Home />
-                        <Route path=path!(":owner_name/:repo_name") view=RepositoryPage />
-                        <Route path=path!(":owner_name/:repo_name/:tab") view=RepositoryPage />
-                    </ParentRoute>
-                </Routes>
-            </Router>
-        </SyncEngineProvider>
+        <Router>
+            <Routes fallback=NotFound>
+                <Route path=path!("/auth") view=Auth />
+                <ParentRoute path=path!("/") view=|| view! { <SyncEngineProvider><Sidebar /> </SyncEngineProvider> }>
+                    <Route path=path!("") view=|| view! {<SyncEngineProvider><Home /> </SyncEngineProvider> }/>
+                    <Route path=path!(":owner_name/:repo_name") view=|| view! { <SyncEngineProvider><RepositoryPage /></SyncEngineProvider> }/>
+                    <Route path=path!(":owner_name/:repo_name/:tab") view=|| view! { <SyncEngineProvider><RepositoryPage /></SyncEngineProvider> }/>
+                </ParentRoute>
+            </Routes>
+        </Router>
     }
 }

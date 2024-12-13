@@ -69,7 +69,6 @@ async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Route
     };
 
     let leptos_routes = generate_route_list(web::App);
-    tracing::info!("{:?}", leptos_routes);
 
     let leptos_options = state.leptos_options.clone();
 

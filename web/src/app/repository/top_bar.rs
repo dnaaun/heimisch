@@ -2,7 +2,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn AppHeaderContextItem(
-    text: Box<dyn Fn() -> String + Send + Sync>,
+    text: Signal<String>,
     on_click: Box<dyn Fn()>,
     #[prop(optional)] bold: bool,
 ) -> impl IntoView {
@@ -19,8 +19,8 @@ pub fn AppHeaderContextItem(
 
 #[component]
 pub fn TopBar(
-    owner_name: Box<dyn Fn() -> String + Send + Sync>,
-    repo_name: Box<dyn Fn() -> String + Send + Sync>,
+    #[prop(into)] owner_name: Signal<String>,
+    #[prop(into)] repo_name: Signal<String>,
 ) -> impl IntoView {
     view! {
         <div class="pl-4 pr-4 pt-4 pb-2 bg-gray-50 flex items-center flex-nowrap">

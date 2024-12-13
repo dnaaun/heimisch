@@ -171,8 +171,8 @@ pub fn RepositoryPage() -> impl IntoView {
 
         view! {
             <TopBar
-                owner_name=Box::new(move || params().owner_name)
-                repo_name=Box::new(move || params().repo_name)
+                owner_name=Memo::new(move |_| params().owner_name)
+                repo_name=Memo::new(move |_| params().repo_name)
             />
             <Tabs
                 tabs
