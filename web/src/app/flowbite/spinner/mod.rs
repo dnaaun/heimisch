@@ -3,6 +3,7 @@ use leptos::prelude::*;
 #[component]
 pub fn Spinner() -> impl IntoView {
     view! {
+        <div class="flex items-center justify-center w-full h-full m-auto">
         <div role="status">
             <svg
                 aria-hidden="true"
@@ -21,6 +22,7 @@ pub fn Spinner() -> impl IntoView {
                 />
             </svg>
             <span class="sr-only">Loading...</span>
+        </div>
         </div>
     }
 }

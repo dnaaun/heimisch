@@ -42,8 +42,8 @@ pub fn Sidebar() -> impl IntoView {
             Ok(repositorys
                 .into_iter()
                 .zip(users)
-                .sorted_by_key(|(_, u)| u.as_ref().map(|u| u.id.clone()))
-                .chunk_by(|(_, u)| u.as_ref().map(|u| u.id.clone()))
+                .sorted_by_key(|(_, u)| u.as_ref().map(|u| u.id))
+                .chunk_by(|(_, u)| u.as_ref().map(|u| u.id))
                 .into_iter()
                 .map(|(_, iter)| {
                     let mut iter = iter.peekable();
@@ -101,7 +101,7 @@ pub fn Sidebar() -> impl IntoView {
                                         each=move || {
                                             repositorys_by_owner.clone().into_iter().flatten()
                                         }
-                                        key=move |(u, _)| u.as_ref().map(|u| u.id.clone())
+                                        key=move |(u, _)| u.as_ref().map(|u| u.id)
                                         children=move |(user, repos)| {
                                             let user_is_none = user.is_none();
                                             let user_login = user.map(|u| u.login.clone());
@@ -128,7 +128,7 @@ pub fn Sidebar() -> impl IntoView {
                                                         <ul id="dropdown-example" class="py-2 space-y-2">
                                                             <For
                                                                 each=move || repos.clone()
-                                                                key=|r| r.id.clone()
+                                                                key=|r| r.id
                                                                 children=move |repo| {
                                                                     let href = match &user_login {
                                                                         Some(u) => Some(format!("/{}/{}", u, repo.name)),
@@ -158,7 +158,9 @@ pub fn Sidebar() -> impl IntoView {
                     }}
                 </div>
             </aside>
-            <main><Outlet /></main>
+            <main>
+                <Outlet />
+            </main>
         </div>
     }))
 }

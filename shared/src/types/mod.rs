@@ -14,3 +14,4 @@ pub mod repository;
 pub mod team;
 pub mod team_organization;
 pub mod user;
+pub mod repository_initial_sync_status;

@@ -14,15 +14,19 @@ use shared::{
 };
 use std::ops::Deref;
 
-use leptos::{prelude::*, task::spawn_local_scoped};
+use leptos::{
+    prelude::*,
+    task::{spawn_local, spawn_local_scoped},
+};
 use shared::endpoints::defns::api::auth::finish::{
     AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse,
 };
 use wasm_bindgen_futures::JsFuture;
 
 use crate::{
-    app::flowbite::Spinner, consts::ENDPOINT_CLIENT,
-    local_storage::add_installation_id_to_local_storage
+    app::{flowbite::Spinner, sync_engine_provider::use_sync_engine},
+    consts::ENDPOINT_CLIENT,
+    local_storage::add_installation_id_to_local_storage,
 };
 
 #[derive(PartialEq, Deserialize, Serialize, Clone)]
@@ -106,16 +110,22 @@ pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView 
         });
 
     let body = move || {
-        installation_rsrc.read().as_ref().map(|installation| {
-            match installation.deref() {
-                Ok(CreateAppInstallResponse::Success { installation_id }) => {
-                    add_installation_id_to_local_storage(*installation_id);
-                    view! { <div>Installed app!</div> }.into_any()
-                },
-                other => {
-                    tracing::error!("{:?}", other);
-                    view! { <div>Failed to install Heimisch to Github repo. Please try again.</div> }.into_any()
-                },
+        let sync_engine = use_sync_engine().clone();
+        let installation_rsrc = installation_rsrc.read().clone();
+        installation_rsrc.map(move |installation| match installation.deref().clone() {
+            Ok(CreateAppInstallResponse::Success { installation_id }) => {
+                add_installation_id_to_local_storage(installation_id);
+                spawn_local(async move {
+                    let _ = sync_engine
+                        .fetch_repositorys_for_installation_id(&installation_id)
+                        .await;
+                });
+                view! { <div>Installed app!</div> }.into_any()
+            }
+            other => {
+                tracing::error!("{:?}", other);
+                view! { <div>Failed to install Heimisch to Github repo. Please try again.</div> }
+                    .into_any()
             }
         })
     };

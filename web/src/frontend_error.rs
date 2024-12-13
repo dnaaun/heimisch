@@ -10,6 +10,12 @@ pub enum FrontendError {
 
 impl std::error::Error for FrontendError {}
 
+impl From<&FrontendError> for FrontendError {
+    fn from(value: &FrontendError) -> Self {
+        value.clone()
+    }
+}
+
 impl From<typesafe_idb::Error> for FrontendError {
     fn from(value: typesafe_idb::Error) -> Self {
         FrontendError::Idb(Arc::new(SendWrapper::new(value)))

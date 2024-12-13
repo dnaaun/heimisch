@@ -2,18 +2,16 @@ use std::{future::Future, ops::Deref, sync::Arc};
 
 use leptos::{prelude::*, task::spawn_local};
 use parking_lot::Mutex;
-use send_wrapper::SendWrapper;
 use shared::sync_engine::{IdbNotification, IdbNotifier};
 use typesafe_idb::Txn;
 
-type Inner<S> = AsyncDerived<S>;
+type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
 
 type DeregisterNotifierFunc = Arc<Mutex<Option<Box<dyn Fn() + Sync + Send>>>>;
 
 pub struct IdbSignalInner<S> {
     /// Is an Option because idb is async, and so on initial render, this will be None
-    inner: Inner<S>,
-
+    async_derived: DontKNowWhatToNameYou<S>,
     /// Is an Option because idb is async, and so on initial render, this will be None
     deregister_notifier: DeregisterNotifierFunc,
 }
@@ -41,8 +39,12 @@ impl<S> Clone for IdbSignal<S> {
 }
 
 impl<S: 'static + Send + Sync> IdbSignal<S> {
-    pub fn read(&self) -> <Inner<S> as Read>::Value {
-        self.inner.try_get_value().unwrap().inner.read()
+    pub fn inner(&self) -> DontKNowWhatToNameYou<S> {
+        self.inner.try_get_value().unwrap().async_derived
+    }
+
+    pub fn read(&self) -> <DontKNowWhatToNameYou<S> as Read>::Value {
+        self.inner.try_get_value().unwrap().async_derived.read()
     }
 }
 
@@ -62,16 +64,16 @@ where
         Mode: 'static,
         Deregister: Fn() + Send + Sync + 'static,
     {
-        let compute_val = SendWrapper::new(Arc::new(compute_val));
-        let make_txn = SendWrapper::new(Arc::new(move || Arc::new(make_txn())));
+        let compute_val = Arc::new(compute_val);
+        let make_txn = Arc::new(move || Arc::new(make_txn()));
 
         // Make sure to update the value when the dependencies of `compute_val` change.
         let compute_val2 = compute_val.clone();
         let make_txn2 = make_txn.clone();
-        let async_derived = AsyncDerived::new(move || {
+        let async_derived = AsyncDerived::new_unsync(move || {
             let make_txn = make_txn2.clone();
             let compute_val = compute_val2.clone();
-            async move { SendWrapper::new(compute_val(make_txn())).await }
+            async move { compute_val(make_txn()).await }
         });
 
         let deregister_notifier: DeregisterNotifierFunc = Arc::new(Mutex::new(None));
@@ -97,7 +99,7 @@ where
 
         Self {
             inner: ArenaItem::new_with_storage(Arc::new(IdbSignalInner {
-                inner: async_derived,
+                async_derived,
                 deregister_notifier,
             })),
         }
