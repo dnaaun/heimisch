@@ -13,9 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InstallationAccount {
-    /// The name of the enterprise.
+    /// Had to add an Option<> because I got an error from the
+    /// GET /app/installations/{id} endpioint where this wasn't prvodied.
     #[serde(rename = "name")]
-    pub name: String,
+    pub name: Option<String>,
     #[serde(
         rename = "email",
         default,
@@ -32,7 +33,6 @@ pub struct InstallationAccount {
     pub node_id: String,
     #[serde(rename = "avatar_url")]
     pub avatar_url: String,
-    #[serde(rename = "gravatar_id", deserialize_with = "Option::deserialize")]
     pub gravatar_id: Option<String>,
     #[serde(rename = "url")]
     pub url: String,
@@ -80,68 +80,13 @@ pub struct InstallationAccount {
         skip_serializing_if = "Option::is_none"
     )]
     pub website_url: Option<Option<String>>,
+
+    /// Had to add an Option<> because I got an error from the
+    /// GET /app/installations/{id} endpioint where this wasn't prvodied.
     /// The slug url identifier for the enterprise.
     #[serde(rename = "slug")]
-    pub slug: String,
-    #[serde(rename = "created_at", deserialize_with = "Option::deserialize")]
-    pub created_at: Option<String>,
-    #[serde(rename = "updated_at", deserialize_with = "Option::deserialize")]
-    pub updated_at: Option<String>,
-}
+    pub slug: Option<String>,
 
-impl InstallationAccount {
-    pub fn new(
-        name: String,
-        login: String,
-        id: i32,
-        node_id: String,
-        avatar_url: String,
-        gravatar_id: Option<String>,
-        url: String,
-        html_url: String,
-        followers_url: String,
-        following_url: String,
-        gists_url: String,
-        starred_url: String,
-        subscriptions_url: String,
-        organizations_url: String,
-        repos_url: String,
-        events_url: String,
-        received_events_url: String,
-        r#type: String,
-        site_admin: bool,
-        slug: String,
-        created_at: Option<String>,
-        updated_at: Option<String>,
-    ) -> InstallationAccount {
-        InstallationAccount {
-            name,
-            email: None,
-            login,
-            id,
-            node_id,
-            avatar_url,
-            gravatar_id,
-            url,
-            html_url,
-            followers_url,
-            following_url,
-            gists_url,
-            starred_url,
-            subscriptions_url,
-            organizations_url,
-            repos_url,
-            events_url,
-            received_events_url,
-            r#type,
-            site_admin,
-            starred_at: None,
-            user_view_type: None,
-            description: None,
-            website_url: None,
-            slug,
-            created_at,
-            updated_at,
-        }
-    }
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
 }

@@ -15,6 +15,7 @@ url = "2.5"
 reqwest = { version = "0.12", features = ["json", "multipart"] }
 jiff = { version = "0.1.14", default-features = false, features = ["serde"] }
 reqwest_wiremock = { path = "../reqwest_wiremock" }
+serde_path_to_error = "0.1.16"
 
 [features]
 ssr = ["reqwest_wiremock/mocking"]

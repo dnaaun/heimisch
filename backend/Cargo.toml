@@ -46,6 +46,7 @@ anyhow = "1.0.94"
 tower = "0.5.1"
 dashmap = "6.1.0"
 reqwest_wiremock = { path = "../reqwest_wiremock", features = ["mocking"] }
+serde_path_to_error = "0.1.16"
 
 [dev-dependencies]
 axum-test = { path = "../../axum-test", features = ["ws"] }

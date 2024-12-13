@@ -9,7 +9,7 @@
  */
 
 use super::{configuration, Error};
-use crate::{apis::ResponseContent, models};
+use crate::{apis::ResponseContent, models, simple_error::from_str_with_path_to_err};
 use reqwest;
 use serde::{Deserialize, Serialize};
 
@@ -757,7 +757,7 @@ pub enum AppsSlashListReposAccessibleToInstallationError {
 //     }
 // }
 //
-// /// Enables an authenticated GitHub App to find an installation's information using the installation id.  You must use a [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app) to access this endpoint.
+/// Enables an authenticated GitHub App to find an installation's information using the installation id.  You must use a [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app) to access this endpoint.
 pub async fn apps_slash_get_installation(
     configuration: &configuration::Configuration,
     installation_id: i32,
@@ -766,11 +766,10 @@ pub async fn apps_slash_get_installation(
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!(
-        "{}/app/installations/{installation_id}",
-        local_var_configuration.base_path,
-        installation_id = installation_id
-    );
+    let local_var_uri_str = local_var_configuration
+        .base_path
+        .join(&format!("/app/installations/{installation_id}",))
+        .expect("");
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
@@ -793,7 +792,8 @@ pub async fn apps_slash_get_installation(
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        let jd = &mut serde_json::Deserializer::from_str(&local_var_content);
+        serde_path_to_error::deserialize(jd).map_err(Error::from)
     } else {
         let local_var_entity: Option<AppsSlashGetInstallationError> =
             serde_json::from_str(&local_var_content).ok();
@@ -1659,7 +1659,7 @@ pub async fn apps_slash_list_repos_accessible_to_installation(
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        from_str_with_path_to_err(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<AppsSlashListReposAccessibleToInstallationError> =
             serde_json::from_str(&local_var_content).ok();

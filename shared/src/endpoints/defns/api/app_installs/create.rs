@@ -9,7 +9,7 @@ pub struct CreateAppInstallPayload {
     pub installation_id: InstallationId,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum CreateAppInstallResponse {
     Failure { message: String },
     Success { installation_id: InstallationId },

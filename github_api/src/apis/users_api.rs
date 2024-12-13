@@ -9,7 +9,7 @@
  */
 
 use super::{configuration, Error};
-use crate::{apis::ResponseContent, models};
+use crate::{apis::ResponseContent, models, simple_error::from_str_with_path_to_err};
 use reqwest;
 use reqwest_wiremock::GetClientWithMock;
 use serde::{Deserialize, Serialize};
@@ -1136,7 +1136,7 @@ pub async fn users_slash_get_authenticated(
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        from_str_with_path_to_err(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<UsersSlashGetAuthenticatedError> =
             serde_json::from_str(&local_var_content).ok();
@@ -1159,8 +1159,7 @@ pub fn users_slash_get_authenticated_request(
     let local_var_uri = local_var_configuration.base_path.join("/user").expect("");
 
     println!("local_var_uri_str {local_var_uri}");
-    let mut local_var_req_builder =
-        local_var_client.request(reqwest::Method::GET, local_var_uri);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri);
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder =

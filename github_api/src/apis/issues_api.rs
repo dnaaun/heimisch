@@ -9,7 +9,7 @@
  */
 
 use super::{configuration, Error};
-use crate::{apis::ResponseContent, models};
+use crate::{apis::ResponseContent, models, simple_error::from_str_with_path_to_err};
 use reqwest;
 use serde::{Deserialize, Serialize};
 
@@ -1474,7 +1474,7 @@ pub async fn issues_slash_list_comments_for_repo(
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        Ok(from_str_with_path_to_err(&local_var_content)?)
     } else {
         let local_var_entity: Option<IssuesSlashListCommentsForRepoError> =
             serde_json::from_str(&local_var_content).ok();
@@ -1931,7 +1931,7 @@ pub async fn issues_slash_list_for_repo(
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        from_str_with_path_to_err(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<IssuesSlashListForRepoError> =
             serde_json::from_str(&local_var_content).ok();

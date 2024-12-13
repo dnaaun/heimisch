@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 /// Only difference with the `Error` from `github_api::apis::Error` is that it's not
 /// generic over `T`. (and so doesn't contain a parsed value of `T`).
 ///
@@ -5,7 +7,7 @@
 #[derive(Debug)]
 pub enum SimpleError {
     Reqwest(reqwest::Error),
-    Serde(serde_json::Error),
+    Serde(serde_path_to_error::Error<serde_json::Error>),
     Io(std::io::Error),
     ResponseError(ResponseContent),
 }
@@ -30,4 +32,11 @@ impl<T> From<crate::apis::Error<T>> for SimpleError {
             }
         }
     }
+}
+
+pub fn from_str_with_path_to_err<'a, T: Deserialize<'a>>(
+    input: &'a str,
+) -> Result<T, serde_path_to_error::Error<serde_json::Error>> {
+    let ds = &mut serde_json::Deserializer::from_str(input);
+    serde_path_to_error::deserialize(ds)
 }
