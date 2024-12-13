@@ -184,18 +184,18 @@ async fn with_test_server<Fut: Future>(
 async fn with_user<Fut: Future>(
     func: impl FnOnce(TestSetup, db::UpsertLoginUser) -> Fut,
 ) -> TestResult<Fut::Output> {
-    Ok(with_test_server(|test_setup| async {
+    with_test_server(|test_setup| async {
         let login_user: db::UpsertLoginUser = Default::default();
         upsert_login_user(Box::new(test_setup.pool.clone()), login_user.clone()).await?;
         Ok::<Fut::Output, TestError>(func(test_setup, login_user).await)
     })
-    .await??)
+    .await?
 }
 
 async fn with_logged_in_user<Fut: Future>(
     func: impl FnOnce(TestSetup, db::LoginUser) -> Fut,
 ) -> TestResult<Fut::Output> {
-    Ok(with_test_server(|test_setup| async {
+    with_test_server(|test_setup| async {
         let TestSetup {
             pool: _,
             server,
@@ -233,7 +233,7 @@ async fn with_logged_in_user<Fut: Future>(
             access_token: access_token.clone(),
         }))
         .unwrap()
-        .mount(&github_non_api_mock_server)
+        .mount(github_non_api_mock_server)
         .await;
 
         let user_id = UserId::from(rand::random::<i64>());
@@ -248,11 +248,11 @@ async fn with_logged_in_user<Fut: Future>(
             UsersGetAuthenticated200Response::Private(Box::new(private_user)),
         ))
         .unwrap()
-        .mount(&github_api_mock_server)
+        .mount(github_api_mock_server)
         .await;
 
         let finish_response =
-            AuthFinishEndpoint::make_test_request(&server, &AuthFinishPayload { state, code }, ())
+            AuthFinishEndpoint::make_test_request(server, &AuthFinishPayload { state, code }, ())
                 .await;
 
         let user = get_login_user(&test_setup, &user_id)
@@ -266,7 +266,7 @@ async fn with_logged_in_user<Fut: Future>(
 
         func(test_setup, user).await
     })
-    .await?)
+    .await
 }
 
 async fn deliver_issue_comment_webhook_fixture(
@@ -284,14 +284,15 @@ async fn deliver_issue_comment_webhook_fixture(
         "./test_fixtures/issue_comment_webhook.request",
     ))
     .await?;
-        println!("About to deliver webhook");
+    println!("About to deliver webhook");
     let resp = req.clone().make(test_setup.as_ref()).await;
     println!("After the webhook is delivered.");
 
     if resp.status_code() != StatusCode::OK {
-        panic!("Webhook delivery had status code {} and text {}",
-resp.status_code(),
-        resp.text()
+        panic!(
+            "Webhook delivery had status code {} and text {}",
+            resp.status_code(),
+            resp.text()
         )
     }
 

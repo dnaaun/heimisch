@@ -19,14 +19,12 @@ pub fn get_api_router(state: AppState) -> Router<AppState> {
     let session_layer = SessionManagerLayer::new(pg_session_store);
     let auth_layer = AuthManagerLayerBuilder::new(auth_backend, session_layer).build();
 
-    let router = Router::new()
+    Router::new()
         .then(auth::initiate)
         .then(auth::finish)
         .then(app_installs::create)
         .then(github_hooks::github_hooks)
         .then(installations::get_token)
         .then(websocket_updates::api_websocket_updates)
-        .layer(auth_layer);
-
-    router
+        .layer(auth_layer)
 }

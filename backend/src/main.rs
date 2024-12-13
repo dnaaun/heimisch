@@ -72,7 +72,7 @@ async fn get_router(config: Config, leptos_conf_file: Option<ConfFile>) -> Route
 
     let leptos_options = state.leptos_options.clone();
 
-    let server_dir = ServeDir::new(PathBuf::try_from(leptos_options.site_root.deref()).unwrap());
+    let server_dir = ServeDir::new(PathBuf::from(leptos_options.site_root.deref()));
     Router::new()
         .route_service("/pkg/*rest", server_dir.clone())
         .route_service("/assets/*rest", server_dir)

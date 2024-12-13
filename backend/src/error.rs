@@ -1,4 +1,4 @@
-use std::{cell::LazyCell, ops::Deref, path::PathBuf};
+use std::path::PathBuf;
 
 use axum::{http::StatusCode, response::IntoResponse};
 use backtrace::Backtrace;
@@ -284,12 +284,10 @@ impl IntoResponse for Error {
     }
 }
 
-/// I know this is absolute cuz https://man7.org/linux/man-pages/man3/getcwd.3.html says so.
-const ABSOLUTE_CUR_DIR: LazyCell<PathBuf> =
-    LazyCell::new(|| std::fs::canonicalize(std::env::current_dir().expect("")).expect(""));
-
-const THIS_VERY_FILE: LazyCell<Option<PathBuf>> =
-    LazyCell::new(|| std::fs::canonicalize(PathBuf::from(file!())).ok());
+thread_local! {
+    static ABSOLUTE_CUR_DIR: PathBuf = std::fs::canonicalize(std::env::current_dir().expect("")).expect("");
+    static THIS_VERY_FILE: Option<PathBuf> = std::fs::canonicalize(PathBuf::from(file!())).ok();
+}
 
 /// Filters backtrace frames to those in our codebase.
 fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
@@ -307,8 +305,8 @@ fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
                             Ok(p) => p,
                             Err(_) => return false,
                         };
-                        path_buf.starts_with(ABSOLUTE_CUR_DIR.deref())
-                            && &Some(path_buf) != THIS_VERY_FILE.deref()
+                        path_buf.starts_with(ABSOLUTE_CUR_DIR.with(|p| p.clone()))
+                            && Some(path_buf) != THIS_VERY_FILE.with(|p| p.clone())
                     })
                     .unwrap_or(true)
                 // .map(|filename| filename.contains("heimisch")) // TODO: change this to be more robust?

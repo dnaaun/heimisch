@@ -12,7 +12,7 @@ pub struct WebsocketUpdatesBucket {
 pub const CAPACITY: usize = 1000; // :shrug:
 
 impl WebsocketUpdatesBucket {
-    fn unsubscribe(self: &Self, id: &UserId) {
+    fn unsubscribe(&self, id: &UserId) {
         let sender = match self.senders.get(id) {
             Some(sender) => sender,
             None => {

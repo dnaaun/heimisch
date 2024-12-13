@@ -1,5 +1,3 @@
-use std::cell::LazyCell;
-
 use shared::endpoints::endpoint_client::EndpointClient;
 use url::Url;
 
@@ -9,7 +7,9 @@ pub fn redirect_handler(path: Url) {
         .expect("");
 }
 
-pub const ENDPOINT_CLIENT: LazyCell<EndpointClient> = LazyCell::new(|| {
-    let domain_name = Url::parse(env!("HEIMISCH_DOMAIN_NAME")).expect("");
-    EndpointClient::new(redirect_handler, domain_name)
-});
+thread_local! {
+    pub static ENDPOINT_CLIENT: EndpointClient = {
+        let domain_name = Url::parse(env!("HEIMISCH_DOMAIN_NAME")).expect("");
+        EndpointClient::new(redirect_handler, domain_name)
+    };
+}

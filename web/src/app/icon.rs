@@ -31,14 +31,12 @@ pub fn Icon(
     move || {
         let icon = icon.get();
 
-        let style = match (style.clone(), icon.style) {
+        let style = match (style, icon.style) {
             (Some(a), Some(b)) => Some(ArcMemo::new(move |_| format!("{b} {}", a.get())).into()),
             (Some(a), None) => Some(a),
             (None, Some(b)) => Some(b.into()),
             (None, None) => None,
         };
-        let width = width.clone();
-        let height = height.clone();
         let on_click = on_click.clone();
         let on_click = move |ev| {
             if let Some(click) = on_click.as_ref() {
@@ -48,7 +46,7 @@ pub fn Icon(
 
         view! {
             <svg
-                class=class.clone()
+                class=class
                 style=move || if let Some(s) = style.as_ref() { s.get() } else { String::new() }
                 x=icon.x
                 y=icon.y

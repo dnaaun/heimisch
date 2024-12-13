@@ -96,6 +96,7 @@ pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView 
     let installation_rsrc: LocalResource<Result<CreateAppInstallResponse, OwnApiError>> =
         LocalResource::new(move || async move {
             ENDPOINT_CLIENT
+                .with(|e| e.clone())
                 .make_request(
                     CreateAppInstallEndpoint,
                     CreateAppInstallPayload { installation_id },
@@ -143,6 +144,7 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                 let state = state.clone();
                 async move {
                     ENDPOINT_CLIENT
+                        .with(|e| e.clone())
                         .make_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
                         .await
                 }

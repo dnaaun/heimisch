@@ -72,7 +72,7 @@ async fn handle_websocket_updates(
                         Some(s) => s,
                         None => break
                     };
-                    if let Err(_) = socket_writer.send(Message::Item(server_msg)).await.log_err() {
+                    if socket_writer.send(Message::Item(server_msg)).await.log_err().is_err() {
                         break;
                     }
                 }
@@ -90,15 +90,14 @@ async fn handle_websocket_updates(
         }
     };
 
-    if !initial_backlog.is_empty() {
-        if tx
+    if !initial_backlog.is_empty()
+        && tx
             .send(ServerMsg::InitialBacklog(initial_backlog))
             .await
             .log_err()
             .is_err()
-        {
-            return;
-        }
+    {
+        return;
     }
 
     let mut subscription = app_state.websocket_updates_bucket.subscribe(user_id);
@@ -112,7 +111,7 @@ async fn handle_websocket_updates(
             }
         };
 
-        if let Err(_) = tx.send(ServerMsg::One(update)).await.log_err() {
+        if tx.send(ServerMsg::One(update)).await.log_err().is_err() {
             return;
         }
     }
