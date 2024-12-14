@@ -1,4 +1,4 @@
-use std::{ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc, sync::Arc};
 
 use leptos::prelude::*;
 use send_wrapper::SendWrapper;
@@ -29,6 +29,21 @@ pub fn SyncEngineProvider(children: ChildrenFn) -> impl IntoView {
                     children()
                 })}
         </Suspense>
+    }
+}
+
+/// TODO: Refactor such that <SyncEngineProvider> is not a separate component since this function
+/// is it's only usgae.
+pub fn sync_engine_provided<V>(
+    children: impl Fn() -> V + Send + Sync + 'static,
+) -> impl leptos_router::ChooseView
+where
+    V: IntoView + 'static,
+{
+    let children = Arc::new(children);
+    move || {
+        let children = children.clone();
+        view! { <SyncEngineProvider>{children()}</SyncEngineProvider> }.into_any()
     }
 }
 

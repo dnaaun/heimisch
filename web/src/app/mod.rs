@@ -19,7 +19,7 @@ use leptos_router::components::{Route, Router};
 use leptos_router::path;
 use not_found::NotFound;
 use repository::RepositoryPage;
-use sync_engine_provider::SyncEngineProvider;
+use sync_engine_provider::sync_engine_provided;
 
 pub use leptos_router;
 
@@ -28,53 +28,16 @@ pub fn App() -> impl IntoView {
     view! {
         <Router>
             <Routes fallback=NotFound>
-                <Route path=path!("/auth") view=|| {
-                    view! {
-                        <SyncEngineProvider>
-                            <Auth />
-                        </SyncEngineProvider>
-                    }
-                }
-                />
-                <ParentRoute
-                    path=path!("/")
-                    view=|| {
-                        view! {
-                            <SyncEngineProvider>
-                                <Sidebar />
-                            </SyncEngineProvider>
-                        }
-                    }
-                >
-                    <Route
-                        path=path!("")
-                        view=|| {
-                            view! {
-                                <SyncEngineProvider>
-                                    <Home />
-                                </SyncEngineProvider>
-                            }
-                        }
-                    />
+                <Route path=path!("/auth") view=sync_engine_provided(Auth) />
+                <ParentRoute path=path!("/") view=sync_engine_provided(Sidebar)>
+                    <Route path=path!("") view=sync_engine_provided(Home) />
                     <Route
                         path=path!(":owner_name/:repo_name")
-                        view=|| {
-                            view! {
-                                <SyncEngineProvider>
-                                    <RepositoryPage />
-                                </SyncEngineProvider>
-                            }
-                        }
+                        view=sync_engine_provided(RepositoryPage)
                     />
                     <Route
                         path=path!(":owner_name/:repo_name/:tab")
-                        view=|| {
-                            view! {
-                                <SyncEngineProvider>
-                                    <RepositoryPage />
-                                </SyncEngineProvider>
-                            }
-                        }
+                        view=sync_engine_provided(RepositoryPage)
                     />
                 </ParentRoute>
             </Routes>
