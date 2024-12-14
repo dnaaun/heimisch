@@ -82,7 +82,7 @@ impl<Markers, Mode> Txn<Markers, Mode> {
     pub fn reactivity_trackers(&self) -> ReactivityTrackers {
         self.reactivity_trackers
             .as_ref()
-            .expect("Should only be None if ocmmitted, which means &self should be unbtainable")
+            .expect("Should only be None if committed, which means &self should be unbtainable")
             .borrow()
             .clone()
     }

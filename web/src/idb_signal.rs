@@ -48,11 +48,7 @@ impl<S: 'static + Send + Sync> IdbSignal<S> {
     }
 }
 
-impl<T> IdbSignal<T>
-where
-    // for RwSignal
-    T: 'static + Sync + Send,
-{
+impl<T: 'static> IdbSignal<T> {
     pub fn new<Markers, Mode, Fut, Deregister>(
         make_txn: impl Fn() -> Txn<Markers, Mode> + 'static,
         compute_val: impl Fn(Arc<Txn<Markers, Mode>>) -> Fut + 'static,
