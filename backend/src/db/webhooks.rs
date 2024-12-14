@@ -59,25 +59,25 @@ pub fn convert_system_time_to_jiff(system_time: SystemTime) -> jiff::Timestamp {
     .unwrap()
 }
 
-pub fn convert_jiff_to_system_time(timestamp: jiff::Timestamp) -> SystemTime {
-    // Convert jiff::Timestamp to a duration since the Unix epoch
-    let signed_duration = timestamp.as_jiff_duration();
-
-    // Convert the SignedDuration to nanos
-    let nanos_since_epoch = signed_duration.as_nanos().try_into().unwrap();
-
-    // Create a Duration from the nanos
-    let duration = std::time::Duration::from_nanos(nanos_since_epoch);
-
-    UNIX_EPOCH + duration
-}
+// pub fn convert_jiff_to_system_time(timestamp: jiff::Timestamp) -> SystemTime {
+//     // Convert jiff::Timestamp to a duration since the Unix epoch
+//     let signed_duration = timestamp.as_jiff_duration();
+//
+//     // Convert the SignedDuration to nanos
+//     let nanos_since_epoch = signed_duration.as_nanos().try_into().unwrap();
+//
+//     // Create a Duration from the nanos
+//     let duration = std::time::Duration::from_nanos(nanos_since_epoch);
+//
+//     UNIX_EPOCH + duration
+// }
 
 // As I do not have access to jiff crate documentation, you will need to replace the placeholder lines with the actual jiff conversion calls.
 
-pub async fn get_webhooks_for_user_since(
+pub async fn get_webhooks_for_user(
     pool: impl AsRef<Pool>,
     user_id: UserId,
-    since: Timestamp,
+    // since: Timestamp,
 ) -> Result<Vec<Webhook>> {
     let conn = pool.as_ref().get().await?;
     let result: Vec<(i64, SystemTime, serde_json::Value)> = conn
@@ -91,7 +91,8 @@ pub async fn get_webhooks_for_user_since(
                 )
                 .select((id, created_at, webhook_content))
                 .filter(login_users::github_user_id.eq_all(user_id))
-                .filter(created_at.ge(convert_jiff_to_system_time(since)));
+                // .filter(created_at.ge(convert_jiff_to_system_time(since))) 
+                ;
 
             query.load::<(i64, SystemTime, serde_json::Value)>(conn)
         })

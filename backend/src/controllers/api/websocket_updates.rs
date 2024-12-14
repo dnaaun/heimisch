@@ -9,15 +9,13 @@ use axum::{
 use axum_typed_websockets::{Message, WebSocket, WebSocketUpgrade};
 use futures::{SinkExt, StreamExt};
 use shared::{
-    endpoints::defns::api::websocket_updates::{
-        ClientMsg, ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
-    },
+    endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg, WEBSOCKET_UPDATES_ENDPOINT},
     types::user::UserId,
 };
 
 use crate::{
     app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser,
-    db::get_webhooks_for_user_since, error::LogErr, websocket_updates_bucket::CAPACITY,
+    db::get_webhooks_for_user, error::LogErr, websocket_updates_bucket::CAPACITY,
 };
 
 pub fn api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
@@ -28,18 +26,18 @@ async fn inner(
     auth_user: AuthenticatedUser<AuthBackend>,
     ws: WebSocketUpgrade<ServerMsg, ClientMsg>,
     State(app_state): State<AppState>,
-    Query(query): Query<WebsocketUpdatesQueryParams>,
+    // Query(query): Query<WebsocketUpdatesQueryParams>,
 ) -> impl IntoResponse {
     println!("got request to create websocket connection");
     ws.on_upgrade(move |socket| {
-        handle_websocket_updates(app_state, auth_user.github_user_id, query, socket)
+        handle_websocket_updates(app_state, auth_user.github_user_id, socket)
     })
 }
 
 async fn handle_websocket_updates(
     app_state: AppState,
     user_id: UserId,
-    WebsocketUpdatesQueryParams { updates_since }: WebsocketUpdatesQueryParams,
+    // WebsocketUpdatesQueryParams { updates_since }: WebsocketUpdatesQueryParams,
     socket: WebSocket<ServerMsg, ClientMsg>,
 ) {
     println!("handling websocket updates");
@@ -80,7 +78,7 @@ async fn handle_websocket_updates(
         }
     });
 
-    let initial_backlog = match get_webhooks_for_user_since(&app_state, user_id, updates_since)
+    let initial_backlog = match get_webhooks_for_user(&app_state, user_id)
         .await
         .log_err()
     {

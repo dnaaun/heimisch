@@ -34,7 +34,6 @@ use github_api::{
 };
 use github_webhook_body::WebhookBody;
 use http::StatusCode;
-use jiff::Timestamp;
 use parking_lot::Mutex;
 use parse_request::ParsedHttpRequest;
 use serde_json::Value;
@@ -45,9 +44,7 @@ use shared::{
                 finish::{AuthFinishEndpoint, AuthFinishPayload, GithubAccessToken},
                 initiate::AuthInitiateEndpoint,
             },
-            websocket_updates::{
-                ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
-            },
+            websocket_updates::{ServerMsg, WEBSOCKET_UPDATES_ENDPOINT},
         },
         endpoint_client::MaybePageRedirect,
     },
@@ -349,18 +346,9 @@ async fn test_simple_webhook_delivery() -> TestResult<()> {
 #[tokio::test]
 async fn test_websocket_updates() -> TestResult<()> {
     with_logged_in_user(|test_setup, user| async move {
-        let path_and_query = format!(
-            "{}?{}",
-            WEBSOCKET_UPDATES_ENDPOINT,
-            &serde_urlencoded::to_string(&WebsocketUpdatesQueryParams {
-                updates_since: Timestamp::now(),
-            })
-            .expect("")
-        );
-        println!("Just got there too");
         let mut ws_request = test_setup
             .server
-            .get_websocket(&path_and_query)
+            .get_websocket(&WEBSOCKET_UPDATES_ENDPOINT)
             .save_cookies()
             .await
             .into_websocket()

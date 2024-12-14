@@ -20,7 +20,7 @@ pub enum ServerMsg {
 pub enum ClientMsg {
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct WebsocketUpdatesQueryParams {
-    pub updates_since: Timestamp,
-}
+// #[derive(Serialize, Deserialize)]
+// pub struct WebsocketUpdatesQueryParams {
+//     pub updates_since: Timestamp,
+// }
