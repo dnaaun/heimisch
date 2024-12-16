@@ -353,7 +353,7 @@ impl GetInstallationIdFromWebhookBody for WebhookBody {
                 | PullRequest::Unassigned { installation, .. }
                 | PullRequest::Unlabeled { installation, .. }
                 | PullRequest::Unlocked { installation, .. } => installation.as_ref().map(|i| i.id),
-                PullRequest::Demilestoned(_) | PullRequest::Milestoned(_) => None,
+                PullRequest::Demilestoned { .. } | PullRequest::Milestoned { .. } => None,
             },
             WebhookBody::SecurityAdvisory(security_advisory) => match security_advisory {
                 SecurityAdvisory::Published { installation, .. }
@@ -401,7 +401,7 @@ impl GetInstallationIdFromWebhookBody for WebhookBody {
                 | Discussion::Unlabeled { installation, .. }
                 | Discussion::Unlocked { installation, .. }
                 | Discussion::Unpinned { installation, .. } => installation.as_ref().map(|i| i.id),
-                Discussion::Unanswered(_) => None,
+                Discussion::Unanswered { .. } => None,
             },
 
             WebhookBody::GithubAppAuthorization(_) => None,

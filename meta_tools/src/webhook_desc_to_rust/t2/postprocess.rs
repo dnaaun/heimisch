@@ -39,15 +39,16 @@ pub fn postprocess_t2_inner(
                 .clone()
                 .into_iter()
                 .map(|member| {
-                    if at_toplevel && member.key == "installation" {
+                    if at_toplevel && member.key == "installation" || member.key == "repository" {
                         match &member.value.inner {
                             TypeInner::Nullable(type_inner) => {
                                 if let TypeInner::ObjectRef(object_ref) = type_inner.as_ref() {
                                     if object_ref.r#type().members.is_empty() {
-                                        let Type { inner, meta } = installation_attribute_type(
-                                            member.value.meta,
-                                            object_store,
-                                        );
+                                        let Type { inner, meta } =
+                                            installation_or_repository_attribute_type(
+                                                member.value.meta,
+                                                object_store,
+                                            );
 
                                         return ObjectMember {
                                             key: member.key,
@@ -63,8 +64,8 @@ pub fn postprocess_t2_inner(
                                 if object_ref.r#type().members.is_empty() =>
                             {
                                 return ObjectMember {
-                                    key: member.key,
-                                    value: installation_attribute_type(
+                                    key: member.key.clone(),
+                                    value: installation_or_repository_attribute_type(
                                         member.value.meta,
                                         object_store,
                                     ),
@@ -99,7 +100,7 @@ pub fn postprocess_t2_inner(
     }
 }
 
-fn installation_attribute_type(
+fn installation_or_repository_attribute_type(
     meta: Meta,
     object_store: &mut HashMap<TypeRef<ObjectInner>, u32>,
 ) -> Type {
@@ -118,7 +119,7 @@ fn installation_attribute_type(
                     },
                 }],
             },
-            "InstallationAttribute".to_owned(),
+            "SomethingWithAnId".to_string(),
             object_store,
         )
         .into(),
