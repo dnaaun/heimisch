@@ -48,7 +48,6 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
             |State(state): State<AppState>,
              extractors::Header(header): extractors::Header<GitHubWebhookHeaders>,
              Json(value): Json<Value>| async move {
-                println!("Inside handler for github webhooks");
                 let GitHubWebhookHeaders {
                     x_github_hook_id: webhook_id,
                     x_github_event,
@@ -84,7 +83,6 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
 
                 let created_at = upsert_webhook(&state, webhook_id, installation_id, &body).await?;
 
-                println!("Yoo, about to call broadcast!");
                 state
                     .websocket_updates_bucket
                     .broadcast(&installation.github_user_id, ServerMsg { body, created_at });

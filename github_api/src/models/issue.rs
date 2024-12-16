@@ -12,7 +12,7 @@ use crate::models;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use super::{nullable_issue::StateReason, AuthorAssociation};
+use super::{milestone::OpenOrClosed, nullable_issue::StateReason, AuthorAssociation};
 
 /// Issue : The [issue](https://docs.github.com/rest/issues/issues#get-an-issue) itself.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
@@ -78,7 +78,7 @@ pub struct Issue {
     pub repository_url: String,
     /// State of the issue; either 'open' or 'closed'
     #[serde(rename = "state", skip_serializing_if = "Option::is_none")]
-    pub state: Option<State>,
+    pub state: Option<OpenOrClosed>,
 
     /// This was a String, but I think `StateReason` is a tighter bound on the values,
     /// and there was probably some mishap with the OpenAPI generator used that didnt' catch
@@ -121,20 +121,5 @@ pub enum ActiveLockReason {
 impl Default for ActiveLockReason {
     fn default() -> ActiveLockReason {
         Self::Resolved
-    }
-}
-
-/// State of the issue; either 'open' or 'closed'
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum State {
-    #[serde(rename = "open")]
-    Open,
-    #[serde(rename = "closed")]
-    Closed,
-}
-
-impl Default for State {
-    fn default() -> State {
-        Self::Open
     }
 }

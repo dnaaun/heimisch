@@ -6,6 +6,7 @@ use typesafe_idb::{Present, StoreMarker, Txn, TxnBuilder, TxnMode};
 
 use crate::avail::MergeError;
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
+use crate::types::label::{Label, LabelId};
 
 use super::WSClient;
 use super::{
@@ -30,10 +31,12 @@ pub struct Changes {
     repositorys: HashMap<RepositoryId, Repository>,
     licenses: HashMap<LicenseId, License>,
     milestones: HashMap<MilestoneId, Milestone>,
+    labels: HashMap<LabelId, Label>,
 }
 
 pub trait StoreMarkersForChanges:
     StoreMarker<Milestone>
+    + StoreMarker<Label>
     + StoreMarker<License>
     + StoreMarker<Repository>
     + StoreMarker<User>
@@ -46,6 +49,7 @@ pub trait StoreMarkersForChanges:
 impl<T> StoreMarkersForChanges for T where
     T: StoreMarker<Milestone>
         + StoreMarker<License>
+        + StoreMarker<Label>
         + StoreMarker<Repository>
         + StoreMarker<User>
         + StoreMarker<Issue>
@@ -70,6 +74,7 @@ impl Changes {
         Txn::builder(db)
             .with_store::<GithubApp>()
             .with_store::<Issue>()
+            .with_store::<Label>()
             .with_store::<IssueComment>()
             .with_store::<User>()
             .with_store::<Repository>()
@@ -219,6 +224,13 @@ impl AddChanges<Milestone> for Changes {
     }
 }
 
+impl AddChanges<Label> for Changes {
+    fn add(&mut self, change: Label) -> Result<&mut Self, MergeError> {
+        self.labels.insert(change.id, change);
+        Ok(self)
+    }
+}
+
 impl AddChanges<Changes> for Changes {
     fn add(&mut self, other: Changes) -> Result<&mut Self, MergeError> {
         let Changes {
@@ -229,6 +241,7 @@ impl AddChanges<Changes> for Changes {
             repositorys,
             licenses,
             milestones,
+            labels,
         } = other;
 
         for (_, github_app) in github_apps {
@@ -249,6 +262,10 @@ impl AddChanges<Changes> for Changes {
         }
         for (_, license) in licenses {
             self.add(license)?;
+        }
+
+        for (_, label) in labels {
+            self.add(label)?;
         }
         for (_, milestone) in milestones {
             self.add(milestone)?;
@@ -297,6 +314,7 @@ impl<W: WSClient> SyncEngine<W> {
             users,
             repositorys,
             licenses,
+            labels,
             milestones,
         } = changes;
         merge_and_upsert_issues::<W, Marker, Mode>(txn, issues).await?;
@@ -304,6 +322,7 @@ impl<W: WSClient> SyncEngine<W> {
         merge_and_upsert_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
         merge_and_upsert_users::<W, Marker, Mode>(txn, users).await?;
         merge_and_upsert_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
+        upsert_labels::<W, Marker, Mode>(txn, labels).await?;
 
         // TODO: Move this to it's own function like above.
         let milestone_store = txn.object_store::<Milestone>()?;
@@ -431,5 +450,20 @@ where
         repository_store.put(&merged).await?;
     }
 
+    Ok(())
+}
+
+async fn upsert_labels<W: WSClient, Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    labels: HashMap<LabelId, Label>,
+) -> SyncResult<(), W::Error>
+where
+    Marker: StoreMarker<Label>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let label_store = txn.object_store::<Label>()?;
+    for (_, label) in labels {
+        label_store.put(&label).await?;
+    }
     Ok(())
 }

@@ -1,4 +1,3 @@
-use kick_off::JsonSerdeToBinaryCodec;
 use parking_lot::Mutex;
 use registry::Registry;
 use std::{fmt::Debug, marker::PhantomData};
@@ -14,8 +13,8 @@ pub use typed_websocket_client::TypedWebsocketClient;
 pub mod changes;
 mod ensure_initial_sync_issue_comments;
 pub mod error;
-mod kick_off;
 mod registry;
+mod websocket_updates;
 
 use std::{cmp::Ordering, rc::Rc, sync::Arc};
 
@@ -37,6 +36,30 @@ use crate::{
 use error::SyncResult;
 use jiff::{Timestamp, ToSpan};
 
+/// Why? Because `JsonSerdeCodec` from `codee` encodes to / decodes from str, and I want to be able
+/// to be able to interpret web socket messages that are in "binary frames" (or whatever the
+/// correct terminology) to also be decoded as JSON.
+pub struct JsonSerdeToBinaryCodec;
+
+impl<T: serde::de::DeserializeOwned> codee::Decoder<T> for JsonSerdeToBinaryCodec {
+    type Error = serde_json::Error;
+
+    type Encoded = [u8];
+
+    fn decode(val: &Self::Encoded) -> Result<T, Self::Error> {
+        serde_json::from_slice(val)
+    }
+}
+
+impl<T: serde::Serialize> codee::Encoder<T> for JsonSerdeToBinaryCodec {
+    type Error = serde_json::Error;
+
+    type Encoded = Vec<u8>;
+
+    fn encode(val: &T) -> Result<Self::Encoded, Self::Error> {
+        serde_json::to_vec(val)
+    }
+}
 pub trait WSClient: TypedWebsocketClient<ClientMsg, ServerMsg, JsonSerdeToBinaryCodec> {}
 impl<W> WSClient for W
 where
@@ -51,6 +74,7 @@ mod isolate_db_store_markers_impl_type {
     use std::rc::Rc;
     use std::{fmt::Debug, marker::PhantomData};
 
+    use crate::types::label::Label;
     use crate::{
         endpoints::endpoint_client::EndpointClient,
         types::{
@@ -72,6 +96,7 @@ mod isolate_db_store_markers_impl_type {
         + StoreMarker<InstallationAccessTokenRow>
         + StoreMarker<IssuesInitialSyncStatus>
         + StoreMarker<License>
+        + StoreMarker<Label>
         + StoreMarker<Milestone>
         + StoreMarker<Repository>
         + StoreMarker<GithubApp>
@@ -90,6 +115,7 @@ mod isolate_db_store_markers_impl_type {
                 .with_store::<Repository>()
                 .with_store::<Milestone>()
                 .with_store::<License>()
+                .with_store::<Label>()
                 .with_store::<IssuesInitialSyncStatus>()
                 .with_store::<InstallationAccessTokenRow>()
                 .with_store::<IssueComment>()

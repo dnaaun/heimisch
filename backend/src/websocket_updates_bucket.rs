@@ -46,13 +46,10 @@ impl WebsocketUpdatesBucket {
     }
 
     pub fn broadcast(&self, id: &UserId, webhook: ServerMsg) {
-        println!("Just inside broadcast!");
         let sender = match self.senders.get(id) {
             Some(sender) => sender,
             None => return,
         };
-
-        println!("Got a sender bro!");
 
         // We don't let websocket errors affect HTTP return status codes, we just log them.
         let _ = sender.send(webhook).log_err();

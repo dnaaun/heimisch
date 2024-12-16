@@ -9,6 +9,7 @@
  */
 
 use crate::models;
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
@@ -23,7 +24,7 @@ pub struct WebhooksIssuePullRequest {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub merged_at: Option<Option<String>>,
+    pub merged_at: Option<Option<Timestamp>>,
     #[serde(rename = "patch_url", skip_serializing_if = "Option::is_none")]
     pub patch_url: Option<String>,
     #[serde(rename = "url", skip_serializing_if = "Option::is_none")]

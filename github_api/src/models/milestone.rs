@@ -41,7 +41,7 @@ pub struct Milestone {
     pub open_issues: i32,
     /// The state of the milestone.
     #[serde(rename = "state")]
-    pub state: State,
+    pub state: OpenOrClosed,
     /// The title of the milestone.
     #[serde(rename = "title")]
     pub title: String,
@@ -53,15 +53,15 @@ pub struct Milestone {
 
 /// The state of the milestone.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum State {
+pub enum OpenOrClosed {
     #[serde(rename = "open")]
     Open,
     #[serde(rename = "closed")]
     Closed,
 }
 
-impl Default for State {
-    fn default() -> State {
+impl Default for OpenOrClosed {
+    fn default() -> OpenOrClosed {
         Self::Open
     }
 }

@@ -1,6 +1,8 @@
 use crate::{avail::MergeError, endpoints::endpoint_client::OwnApiError};
 use std::fmt::Debug;
 
+use super::conversions::webhooks::ConversionError;
+
 #[derive(Debug)]
 pub enum SyncErrorSrc<WebsocketEError: std::fmt::Debug> {
     OwnApi(OwnApiError),
@@ -8,6 +10,7 @@ pub enum SyncErrorSrc<WebsocketEError: std::fmt::Debug> {
     Db(idb::Error),
     SerdeToObject(typesafe_idb::serde_abstraction::Error),
     SerdeToString(serde_json::Error),
+    Jiff(jiff::Error),
     Merge(MergeError),
     Ewebsock(ewebsock::Error),
     /// These are things like: the user that owns a repository in our db not existing in our db.
@@ -29,6 +32,17 @@ impl<W: Debug> From<SyncErrorSrc<W>> for SyncError<W> {
 pub struct SyncError<W: Debug> {
     source: SyncErrorSrc<W>,
     backtrace: std::backtrace::Backtrace,
+}
+
+impl<W: Debug> From<ConversionError> for SyncError<W> {
+    fn from(value: ConversionError) -> Self {
+        match value {
+            ConversionError::Merge(merge_error) => SyncErrorSrc::Merge(merge_error),
+            ConversionError::Json(error) => SyncErrorSrc::SerdeToString(error),
+            ConversionError::Jiff(err) => SyncErrorSrc::Jiff(err)
+        }
+        .into()
+    }
 }
 
 impl<W: Debug> SyncError<W> {

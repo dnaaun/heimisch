@@ -31,25 +31,3 @@ pub struct Label {
     #[serde(rename = "url")]
     pub url: String,
 }
-
-impl Label {
-    pub fn new(
-        color: String,
-        default: bool,
-        description: Option<String>,
-        id: i32,
-        name: String,
-        node_id: String,
-        url: String,
-    ) -> Label {
-        Label {
-            color,
-            default,
-            description,
-            id,
-            name,
-            node_id,
-            url,
-        }
-    }
-}

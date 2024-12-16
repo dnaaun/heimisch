@@ -281,9 +281,7 @@ async fn deliver_issue_comment_webhook_fixture(
         "./test_fixtures/issue_comment_webhook.request",
     ))
     .await?;
-    println!("About to deliver webhook");
     let resp = req.clone().make(test_setup.as_ref()).await;
-    println!("After the webhook is delivered.");
 
     if resp.status_code() != StatusCode::OK {
         panic!(
@@ -336,7 +334,6 @@ async fn test_simple_webhook_delivery() -> TestResult<()> {
         assert_eq!(expected_installation_id, actual_installation_id);
         assert_eq!(expected_webhook_id, actual_id);
 
-        println!("{}", resp.text());
         resp.assert_status_ok();
         Ok::<_, TestError>(())
     })
@@ -354,28 +351,23 @@ async fn test_websocket_updates() -> TestResult<()> {
             .into_websocket()
             .await;
 
-        println!("Just go there");
         ws_request.send_message(WsMessage::Ping(vec![])).await;
-        println!("About to receive message");
         match ws_request.receive_message().await {
             WsMessage::Pong(_) => (),
             a => panic!("Unexpecteed message: {a:?}"),
         };
 
         tokio::time::sleep(Duration::from_secs(2)).await;
-        println!("Just after the tokio sleep");
 
         let (_, parsed_webhook_request, _) =
             deliver_issue_comment_webhook_fixture(&test_setup, user.github_user_id).await?;
 
-        println!("Just before the timout thing");
         let server_msg = tokio::time::timeout(
             Duration::from_secs(2),
             ws_request.receive_json::<ServerMsg>(),
         )
         .await
         .expect("Expected too long to receive a message on the websocket.");
-        println!("The time out thing is over");
 
         let expected_webhook_body =
             serde_json::from_slice::<WebhookBody>(&parsed_webhook_request.body).expect("");
@@ -385,7 +377,6 @@ async fn test_websocket_updates() -> TestResult<()> {
         );
 
         ws_request.close().await;
-        println!("{user:?}");
         Ok(())
     })
     .await?

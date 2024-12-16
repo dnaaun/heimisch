@@ -6,8 +6,39 @@ use crate::{
 
 use super::{
     from_app10::from_app10, from_milestone1::from_milestone1, from_user::from_user,
-    from_user1::from_user1, from_user2::from_user2,
+    from_user1::from_user1, from_user2::from_user2, InfallibleToDbNoOtherChanges, ToDb,
 };
+
+impl ToDb for github_api::models::Label {
+    type OtherChanges = ();
+    type DbType = crate::types::label::Label;
+
+    type Error = std::convert::Infallible;
+
+    fn try_to_db_type_and_other_changes(self) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
+        let github_api::models::Label {
+            color,
+            default,
+            description,
+            id,
+            name,
+            node_id,
+            url,
+        } = self;
+        let id = crate::types::label::LabelId::from(i64::from(id));
+        let label = crate::types::label::Label {
+            color,
+            default,
+            description,
+            id,
+            name,
+            node_id,
+            url,
+        };
+
+        Ok((label, Default::default()))
+    }
+}
 
 pub fn from_issue(
     api_issue: github_api::models::Issue,
@@ -80,7 +111,13 @@ pub fn from_issue(
         events_url: events_url.into(),
         html_url: html_url.into(),
         id: id.into(),
-        labels: labels.unwrap_or_default().into(),
+        labels: Avail::Yes(
+            labels
+                .into_iter()
+                .flatten()
+                .map(|l| l.to_db_type())
+                .collect(),
+        ),
         labels_url: labels_url.into(),
         locked: Avail::from_option(locked),
         milestone_id: db_milestone_info.as_ref().map(|(m, _)| *m).into(),

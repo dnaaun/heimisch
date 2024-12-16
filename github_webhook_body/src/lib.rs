@@ -1,3 +1,6 @@
+#![allow(clippy::all)]
+#![allow(irrefutable_let_patterns)]
+
 #[doc = r" Error types."]
 pub mod error {
     #[doc = r" Error from a TryFrom or FromStr implementation."]

@@ -1,7 +1,8 @@
 use derive_more::derive::{AsRef, Deref, From, Into};
-use github_api::models::issue::{ActiveLockReason, State};
+use github_api::models::issue::ActiveLockReason;
+use github_api::models::milestone::OpenOrClosed;
 use github_api::models::nullable_issue::StateReason;
-use github_api::models::{AuthorAssociation, Label, Reactions, WebhooksIssuePullRequest};
+use github_api::models::{AuthorAssociation, Reactions, WebhooksIssuePullRequest};
 use jiff::Timestamp;
 use macros::AvailMerge;
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::avail::Avail;
 
 use super::github_app::GithubAppId;
+use super::label::Label;
 use super::milestone::MilestoneId;
 use super::repository::RepositoryId;
 use super::user::UserId;
@@ -93,7 +95,7 @@ pub struct Issue {
     pub repository_url: Avail<String>,
 
     #[doc = "State of the issue; either 'open' or 'closed'"]
-    pub state: Avail<State>,
+    pub state: Avail<OpenOrClosed>,
 
     #[doc = "The reason for the current state"]
     pub state_reason: Avail<Option<StateReason>>,

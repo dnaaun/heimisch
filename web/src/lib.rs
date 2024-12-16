@@ -9,7 +9,6 @@ mod idb_signal_from_sync_engine;
 mod local_storage;
 pub mod typed_websocket_client;
 mod use_unwrapped_context;
-mod websocket_updates;
 use hydration::{AutoReload, HydrationScripts};
 use leptos::prelude::*;
 use leptos::{config::LeptosOptions, *};

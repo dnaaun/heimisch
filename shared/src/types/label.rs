@@ -1,7 +1,7 @@
 use derive_more::derive::{AsRef, Deref, From, Into};
 use serde::{Deserialize, Serialize};
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
+#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Copy, Hash, PartialEq, Eq)]
 pub struct LabelId(i64);
 
 #[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]

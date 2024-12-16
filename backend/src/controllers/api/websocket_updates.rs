@@ -24,7 +24,6 @@ async fn inner(
     State(app_state): State<AppState>,
     // Query(query): Query<WebsocketUpdatesQueryParams>,
 ) -> impl IntoResponse {
-    println!("got request to create websocket connection");
     ws.on_upgrade(move |socket| {
         handle_websocket_updates(app_state, auth_user.github_user_id, socket)
     })
@@ -36,7 +35,6 @@ async fn handle_websocket_updates(
     // WebsocketUpdatesQueryParams { updates_since }: WebsocketUpdatesQueryParams,
     socket: WebSocket<ServerMsg, ClientMsg>,
 ) {
-    println!("handling websocket updates");
     let (tx, mut rx) = mpsc::channel(CAPACITY);
     tokio::spawn(async move {
         let (mut socket_writer, mut socket_reader) = socket.split();
@@ -77,7 +75,6 @@ async fn handle_websocket_updates(
     let mut subscription = app_state.websocket_updates_bucket.subscribe(user_id);
 
     loop {
-        println!("About to wait for updates to send on websocket.");
         let server_msg = match subscription.recv().await.log_err() {
             Ok(u) => u,
             Err(_) => {

@@ -42,7 +42,7 @@ pub struct Milestone {
     pub number: Avail<i64>,
     pub open_issues: Avail<i64>,
     #[doc = "The state of the milestone."]
-    pub state: Avail<milestone::State>,
+    pub state: Avail<milestone::OpenOrClosed>,
     #[doc = "The title of the milestone."]
     pub title: Avail<String>,
     pub updated_at: Avail<Timestamp>,

@@ -42,7 +42,7 @@ pub struct Milestone1 {
     pub open_issues: i32,
     /// The state of the milestone.
     #[serde(rename = "state")]
-    pub state: super::milestone::State,
+    pub state: super::milestone::OpenOrClosed,
     /// The title of the milestone.
     #[serde(rename = "title")]
     pub title: String,

@@ -14,23 +14,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Reactions {
     #[serde(rename = "+1")]
-    pub plus_1: i32,
+    pub plus_1: i64,
     #[serde(rename = "-1")]
-    pub _1: i32,
+    pub _1: i64,
     #[serde(rename = "confused")]
-    pub confused: i32,
+    pub confused: i64,
     #[serde(rename = "eyes")]
-    pub eyes: i32,
+    pub eyes: i64,
     #[serde(rename = "heart")]
-    pub heart: i32,
+    pub heart: i64,
     #[serde(rename = "hooray")]
-    pub hooray: i32,
+    pub hooray: i64,
     #[serde(rename = "laugh")]
-    pub laugh: i32,
+    pub laugh: i64,
     #[serde(rename = "rocket")]
-    pub rocket: i32,
+    pub rocket: i64,
     #[serde(rename = "total_count")]
-    pub total_count: i32,
+    pub total_count: i64,
     #[serde(rename = "url")]
     pub url: String,
 }
