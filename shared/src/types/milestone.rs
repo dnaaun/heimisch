@@ -9,11 +9,23 @@ use crate::avail::Avail;
 use super::user::UserId;
 
 #[derive(
-    From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Copy, Hash, PartialEq, Eq,
+    From,
+    Into,
+    Deref,
+    AsRef,
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    Default,
 )]
 pub struct MilestoneId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
 pub struct Milestone {
     pub closed_at: Avail<Option<Timestamp>>,
     pub closed_issues: Avail<i64>,

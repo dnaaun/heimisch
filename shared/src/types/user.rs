@@ -27,7 +27,7 @@ use crate::avail::Avail;
 )]
 pub struct UserId(i64);
 
-#[derive(macros::TypesafeIdb, Serialize, Deserialize, Clone, Debug, AvailMerge)]
+#[derive(macros::TypesafeIdb, Serialize, Deserialize, Clone, Debug, AvailMerge, Default)]
 pub struct User {
     pub avatar_url: Avail<String>,
     pub bio: Avail<Option<String>>,
