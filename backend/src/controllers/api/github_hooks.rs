@@ -3,7 +3,7 @@ use github_webhook_body::WebhookBody;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use shared::endpoints::{
-    defns::api::websocket_updates::Webhook, utils::GetInstallationIdFromWebhookBody,
+    defns::api::websocket_updates::ServerMsg, utils::GetInstallationIdFromWebhookBody,
 };
 
 use crate::{
@@ -62,7 +62,6 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
                 })?;
 
                 // The `Webhook` enum is structured in this way.
-                println!("THE VALUE IS: {value:?}");
                 let value = Value::Object([(x_github_event.clone(), value)].into_iter().collect());
                 let body = serde_json::from_value::<WebhookBody>(value)
                     .map_err(ErrorSource::GithubWebhookBodyDeser)?;
@@ -88,7 +87,7 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
                 println!("Yoo, about to call broadcast!");
                 state
                     .websocket_updates_bucket
-                    .broadcast(&installation.github_user_id, Webhook { body, created_at });
+                    .broadcast(&installation.github_user_id, ServerMsg { body, created_at });
 
                 Ok::<_, Error>(())
             },

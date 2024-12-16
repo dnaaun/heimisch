@@ -5,20 +5,13 @@ use serde::{Deserialize, Serialize};
 pub const WEBSOCKET_UPDATES_ENDPOINT: &str = "/api/websocket_updates";
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Webhook {
+pub struct ServerMsg {
     pub body: WebhookBody,
     pub created_at: Timestamp,
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum ServerMsg {
-    InitialBacklog(Vec<Webhook>),
-    One(Webhook),
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum ClientMsg {
-}
+pub enum ClientMsg {}
 
 // #[derive(Serialize, Deserialize)]
 // pub struct WebsocketUpdatesQueryParams {

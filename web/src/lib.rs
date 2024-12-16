@@ -1,13 +1,15 @@
 #![feature(type_alias_impl_trait)]
+#![feature(async_closure)]
 
 pub mod app;
 mod consts;
+mod frontend_error;
 mod idb_signal;
 mod idb_signal_from_sync_engine;
 mod local_storage;
+pub mod typed_websocket_client;
 mod use_unwrapped_context;
 mod websocket_updates;
-mod frontend_error;
 use hydration::{AutoReload, HydrationScripts};
 use leptos::prelude::*;
 use leptos::{config::LeptosOptions, *};
@@ -28,7 +30,6 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
             </body>
         </html>
     }
-
 }
 
 pub use app::App;

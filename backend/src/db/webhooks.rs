@@ -8,7 +8,7 @@ use super::schema::*;
 use deadpool_diesel::postgres::Pool;
 use github_webhook_body::WebhookBody;
 use shared::{
-    endpoints::defns::api::websocket_updates::Webhook,
+    endpoints::defns::api::websocket_updates::ServerMsg,
     types::{installation::InstallationId, user::UserId},
 };
 
@@ -74,11 +74,13 @@ pub fn convert_system_time_to_jiff(system_time: SystemTime) -> jiff::Timestamp {
 
 // As I do not have access to jiff crate documentation, you will need to replace the placeholder lines with the actual jiff conversion calls.
 
+/// Just in case I need it in the future.
+#[allow(unused)]
 pub async fn get_webhooks_for_user(
     pool: impl AsRef<Pool>,
     user_id: UserId,
     // since: Timestamp,
-) -> Result<Vec<Webhook>> {
+) -> Result<Vec<ServerMsg>> {
     let conn = pool.as_ref().get().await?;
     let result: Vec<(i64, SystemTime, serde_json::Value)> = conn
         .interact(move |conn| {
@@ -109,7 +111,7 @@ pub async fn get_webhooks_for_user(
                         error: err,
                     },
                 )?;
-            Ok(Webhook {
+            Ok(ServerMsg {
                 body,
                 created_at: convert_system_time_to_jiff(created_at_value),
             })

@@ -303,6 +303,8 @@ dependencies = [
 [[package]]
 name = "axum-test"
 version = "16.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "017cbca2776229a7100ebee44e065fcf5baccea6fc4cb9e5bea8328d83863a03"
 dependencies = [
  "anyhow",
  "assert-json-diff",
@@ -982,6 +984,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "document-features"
+version = "0.2.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb6969eaabd2421f8a2775cfd2471a2b634372b4a25d41e3bd647b79912850a0"
+dependencies = [
+ "litrs",
+]
+
+[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1072,6 +1083,21 @@ checksum = "0f214dc438f977e6d4e3500aaa277f5ad94ca83fbbd9b1a15713ce2344ccc5a1"
 dependencies = [
  "event-listener",
  "pin-project-lite",
+]
+
+[[package]]
+name = "ewebsock"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "679247b4a005c82218a5f13b713239b0b6d484ec25347a719f5b7066152a748a"
+dependencies = [
+ "document-features",
+ "js-sys",
+ "log",
+ "tungstenite",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -2156,6 +2182,12 @@ name = "litemap"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "643cb0b8d4fcc284004d5fd0d67ccf61dfffadb7f75e1e71bc420f4688a3a704"
+
+[[package]]
+name = "litrs"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
 
 [[package]]
 name = "lock_api"
@@ -3541,6 +3573,7 @@ dependencies = [
  "derive_more",
  "diesel",
  "diesel-derive-newtype",
+ "ewebsock",
  "futures",
  "github_api",
  "github_webhook_body",
@@ -3550,6 +3583,7 @@ dependencies = [
  "jiff",
  "macros",
  "parking_lot",
+ "pin-project",
  "reqwest",
  "send_wrapper",
  "serde",
@@ -4364,6 +4398,8 @@ dependencies = [
 [[package]]
 name = "typify"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4c644dda9862f0fef3a570d8ddb3c2cfb1d5ac824a1f2ddfa7bc8f071a5ad8a"
 dependencies = [
  "typify-impl",
  "typify-macro",
@@ -4372,6 +4408,8 @@ dependencies = [
 [[package]]
 name = "typify-impl"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d59ab345b6c0d8ae9500b9ff334a4c7c0d316c1c628dc55726b95887eb8dbd11"
 dependencies = [
  "heck",
  "log",
@@ -4390,6 +4428,8 @@ dependencies = [
 [[package]]
 name = "typify-macro"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "785e2cdcef0df8160fdd762ed548a637aaec1e83704fdbc14da0df66013ee8d0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4683,6 +4723,8 @@ dependencies = [
  "codee",
  "derive_more",
  "futures",
+ "gloo-net",
+ "gloo-utils",
  "heck",
  "icondata",
  "icondata_core",
@@ -4694,6 +4736,7 @@ dependencies = [
  "leptos_reactive",
  "leptos_router",
  "parking_lot",
+ "pin-project",
  "reqwest",
  "send_wrapper",
  "serde",

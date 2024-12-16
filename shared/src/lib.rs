@@ -5,3 +5,4 @@ pub mod avail;
 pub mod endpoints;
 pub mod sync_engine;
 pub mod types;
+pub mod utils;

@@ -11,7 +11,7 @@ pub mod pull_request;
 pub mod pull_request_initial_sync_status;
 pub mod pull_request_labels_item;
 pub mod repository;
+pub mod repository_initial_sync_status;
 pub mod team;
 pub mod team_organization;
 pub mod user;
-pub mod repository_initial_sync_status;

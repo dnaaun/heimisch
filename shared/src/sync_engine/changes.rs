@@ -7,6 +7,7 @@ use typesafe_idb::{Present, StoreMarker, Txn, TxnBuilder, TxnMode};
 use crate::avail::MergeError;
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 
+use super::WSClient;
 use super::{
     super::types::{
         github_app::{GithubApp, GithubAppId},
@@ -280,7 +281,7 @@ where
     }
 }
 
-impl SyncEngine {
+impl<W: WSClient> SyncEngine<W> {
     pub async fn merge_and_upsert_changes<
         Marker: StoreMarkersForChanges,
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -288,7 +289,7 @@ impl SyncEngine {
         &self,
         txn: &Txn<Marker, Mode>,
         changes: Changes,
-    ) -> SyncResult<()> {
+    ) -> SyncResult<(), W::Error> {
         let Changes {
             github_apps,
             issues,
@@ -298,11 +299,11 @@ impl SyncEngine {
             licenses,
             milestones,
         } = changes;
-        merge_and_upsert_issues(txn, issues).await?;
-        merge_and_upsert_issue_comments(txn, issue_comments).await?;
-        merge_and_upsert_github_apps(txn, github_apps).await?;
-        merge_and_upsert_users(txn, users).await?;
-        merge_and_upsert_repositorys(txn, repositorys).await?;
+        merge_and_upsert_issues::<W, Marker, Mode>(txn, issues).await?;
+        merge_and_upsert_issue_comments::<W, Marker, Mode>(txn, issue_comments).await?;
+        merge_and_upsert_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
+        merge_and_upsert_users::<W, Marker, Mode>(txn, users).await?;
+        merge_and_upsert_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
 
         // TODO: Move this to it's own function like above.
         let milestone_store = txn.object_store::<Milestone>()?;
@@ -330,10 +331,10 @@ impl SyncEngine {
     }
 }
 
-async fn merge_and_upsert_issues<Marker, Mode>(
+async fn merge_and_upsert_issues<W: WSClient, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     issues: HashMap<IssueId, Issue>,
-) -> SyncResult<()>
+) -> SyncResult<(), W::Error>
 where
     Marker: StoreMarker<Issue>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -351,10 +352,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_issue_comments<Marker, Mode>(
+async fn merge_and_upsert_issue_comments<W: WSClient, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     issue_comments: HashMap<IssueCommentId, IssueComment>,
-) -> SyncResult<()>
+) -> SyncResult<(), W::Error>
 where
     Marker: StoreMarker<IssueComment>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -371,10 +372,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_github_apps<Marker, Mode>(
+async fn merge_and_upsert_github_apps<W: WSClient, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     github_apps: HashMap<GithubAppId, GithubApp>,
-) -> SyncResult<()>
+) -> SyncResult<(), W::Error>
 where
     Marker: StoreMarker<GithubApp>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -391,10 +392,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_users<Marker, Mode>(
+async fn merge_and_upsert_users<W: WSClient, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     users: HashMap<UserId, User>,
-) -> SyncResult<()>
+) -> SyncResult<(), W::Error>
 where
     Marker: StoreMarker<User>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -412,10 +413,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_repositorys<Marker, Mode>(
+async fn merge_and_upsert_repositorys<W: WSClient, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     repositorys: HashMap<RepositoryId, Repository>,
-) -> SyncResult<()>
+) -> SyncResult<(), W::Error>
 where
     Marker: StoreMarker<Repository>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,

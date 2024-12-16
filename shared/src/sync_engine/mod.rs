@@ -1,22 +1,31 @@
+use kick_off::JsonSerdeToBinaryCodec;
 use parking_lot::Mutex;
 use registry::Registry;
+use std::{fmt::Debug, marker::PhantomData};
 use typesafe_idb::{ReactivityTrackers, TypesafeDb};
 mod conversions;
 mod ensure_initial_sync_issues;
 mod ensure_initial_sync_repository;
 mod fetch_repositorys_for_installation_id;
 
+mod typed_websocket_client;
+pub use typed_websocket_client::TypedWebsocketClient;
+
 pub mod changes;
 mod ensure_initial_sync_issue_comments;
 pub mod error;
+mod kick_off;
 mod registry;
 
 use std::{cmp::Ordering, rc::Rc, sync::Arc};
 
 use crate::{
     endpoints::{
-        defns::api::installations::{
-            GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
+        defns::api::{
+            installations::{
+                GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
+            },
+            websocket_updates::{ClientMsg, ServerMsg},
         },
         endpoint_client::EndpointClient,
     },
@@ -28,10 +37,19 @@ use crate::{
 use error::SyncResult;
 use jiff::{Timestamp, ToSpan};
 
+pub trait WSClient: TypedWebsocketClient<ClientMsg, ServerMsg, JsonSerdeToBinaryCodec> {}
+impl<W> WSClient for W
+where
+    W: TypedWebsocketClient<ClientMsg, ServerMsg, JsonSerdeToBinaryCodec>,
+    W::Error: Debug,
+{
+}
+
 /// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
 /// "defining use."
 mod isolate_db_store_markers_impl_type {
     use std::rc::Rc;
+    use std::{fmt::Debug, marker::PhantomData};
 
     use crate::{
         endpoints::endpoint_client::EndpointClient,
@@ -46,7 +64,7 @@ mod isolate_db_store_markers_impl_type {
     };
     use typesafe_idb::{StoreMarker, TypesafeDb};
 
-    use super::{error::SyncResult, SyncEngine};
+    use super::{error::SyncResult, SyncEngine, WSClient};
 
     pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
         + StoreMarker<RepositoryInitialSyncStatus>
@@ -60,8 +78,11 @@ mod isolate_db_store_markers_impl_type {
         + StoreMarker<User>
         + StoreMarker<Issue>;
 
-    impl SyncEngine {
-        pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self> {
+    impl<W: WSClient> SyncEngine<W> {
+        pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W::Error>
+        where
+            W::Error: Debug,
+        {
             let db = TypesafeDb::builder("heimisch".into())
                 .with_store::<Issue>()
                 .with_store::<User>()
@@ -81,6 +102,7 @@ mod isolate_db_store_markers_impl_type {
                 db: Rc::new(db),
                 idb_notifiers: Default::default(),
                 endpoint_client,
+                _ws_client: PhantomData,
             })
         }
     }
@@ -121,20 +143,20 @@ impl IdbNotification {
 
 pub type IdbNotifier = Box<dyn Fn(IdbNotification)>;
 
-#[allow(unused)]
-pub struct SyncEngine {
+pub struct SyncEngine<WSClient> {
     pub db: Rc<TypesafeDb<DbStoreMarkers>>,
     pub idb_notifiers: Arc<Mutex<Registry<IdbNotifier>>>,
     endpoint_client: EndpointClient,
+    _ws_client: PhantomData<WSClient>,
 }
 
 const MAX_PER_PAGE: i32 = 100;
 
-impl SyncEngine {
+impl<W: WSClient> SyncEngine<W> {
     async fn get_api_conf(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<github_api::apis::configuration::Configuration> {
+    ) -> SyncResult<github_api::apis::configuration::Configuration, W::Error> {
         let bearer_access_token = Some(self.get_valid_iac(id).await?.token);
         let conf = github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
@@ -145,7 +167,10 @@ impl SyncEngine {
         Ok(conf)
     }
 
-    async fn get_valid_iac(&self, id: &InstallationId) -> SyncResult<InstallationAccessToken> {
+    async fn get_valid_iac(
+        &self,
+        id: &InstallationId,
+    ) -> SyncResult<InstallationAccessToken, W::Error> {
         let txn = self
             .db
             .txn()

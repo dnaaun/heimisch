@@ -12,7 +12,8 @@ leptos = { version = "0.7", features = ["nightly", "tracing"] }
 leptos_reactive = { version = "*" } 
 leptos_router = { version = "0.7", features = ["nightly"] }
 wasm-bindgen = { version = "0.2.93", default-features = false }
-web-sys = { version = "*", default-features = false, features = ["Window", "Clipboard", "Navigator", "Storage"] }
+web-sys = { version = "*", default-features = false, features = ["Window", "Clipboard",
+"Navigator", "Storage", "WebSocket"] }
 tracing = "0.1.40"
 url = "2.5.2"
 
@@ -39,6 +40,9 @@ jiff = { version = "0.1.14", default-features = false, features = ["serde", "all
 codee = "0.2.0"
 icondata = { version = "0.5.0", default-features = false, features = ["heroicons"] }
 icondata_core = "0.1.0"
+pin-project = "1.1.7"
+gloo-net = { version = "0.6.0", default-features = false, features = ["websocket"] }
+gloo-utils = { version = "0.2.0", default-features = false }
 
 [features]
 default = []

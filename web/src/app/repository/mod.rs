@@ -10,11 +10,14 @@ use leptos_router::{
     hooks::{use_navigate, use_params},
     params::Params,
 };
-use shared::types::{
-    self,
-    repository::{Repository, RepositoryId},
-    repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
-    user::{self, User},
+use shared::{
+    types::{
+        self,
+        repository::{Repository, RepositoryId},
+        repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
+        user::{self, User},
+    },
+    utils::LogErr,
 };
 use top_bar::TopBar;
 mod top_bar;
@@ -225,7 +228,8 @@ pub fn RepositoryPage() -> impl IntoView {
             spawn_local(async move {
                 let _ = sync_engine
                     .ensure_initial_sync_repository(&repository, false)
-                    .await;
+                    .await
+                    .log_err();
             })
         };
     });
@@ -233,58 +237,73 @@ pub fn RepositoryPage() -> impl IntoView {
     let repo_initial_sync_is_done = use_repo_initial_sync_is_done(repository_id);
 
     view! {
-    <Suspense
-        fallback=|| {
-            view! { <div class="min-w-min h-screen"><Spinner/></div> }
-        }
-    >
-    {move || {
-        // The Option<> is to wait for the idb load.
-        let repository = match repository.read().as_ref() {
-            Some(r) => r.as_ref()?, // early return for idb error.
-            None => return Ok::<_, FrontendError>(None),
-        }
-        .clone();
+        <Suspense fallback=|| {
+            view! {
+                <div class="min-w-min h-screen">
+                    <Spinner />
+                </div>
+            }
+        }>
+            {move || {
+                let repository = match repository.read().as_ref() {
+                    Some(r) => r.as_ref()?,
+                    None => return Ok::<_, FrontendError>(None),
+                }
+                    .clone();
+                let repository = match repository {
+                    Some(r) => r,
+                    None => {
+                        return Ok(
+                            Some(
+                                // The Option<> is to wait for the idb load.
+                                // early return for idb error.
 
-        // The Option<> is to if repo is not found in idb.
-        let repository = match repository {
-            Some(r) => r,
-            None => return Ok(Some( view! { <NotFound /> }.into_any())),
-        };
+                                // The Option<> is to if repo is not found in idb.
+                                view! { <NotFound /> }
+                                    .into_any(),
+                            ),
+                        );
+                    }
+                };
+                if let Some(Ok(RepoSyncStatus::NoSync)) = repo_initial_sync_is_done.read().clone() {
+                    return Ok(None);
+                }
+                let tabs: Vec<Tab<_>> = vec![
+                    Tab {
+                        content_el: Arc::new(move || {
 
-        // Will trigger the fallback on the <Suspense> until repo initial sync is done.
-         if let Some(Ok(RepoSyncStatus::NoSync)) = repo_initial_sync_is_done.read().clone() {
-             return Ok(None);
-         }
+                            // Will trigger the fallback on the <Suspense> until repo initial sync is done.
 
-        let tabs: Vec<Tab<_>> = vec![
-            Tab {
-                content_el: Arc::new(move || {
-                    view! { <IssuesTab repository=repository.clone() /> }.into_any()
-                }),
-                key: TabName::Issues,
-            },
-            Tab {
-                content_el: Arc::new(move || {
-                    view! { <PullRequestsTab _repository_id=42.into() /> }.into_any()
-                }),
-                key: TabName::Pulls,
-            },
-        ];
+                            view! { <IssuesTab repository=repository.clone() /> }
+                                .into_any()
+                        }),
+                        key: TabName::Issues,
+                    },
+                    Tab {
+                        content_el: Arc::new(move || {
+                            view! { <PullRequestsTab _repository_id=42.into() /> }.into_any()
+                        }),
+                        key: TabName::Pulls,
+                    },
+                ];
+                Ok(
+                    Some(
 
-        Ok(Some(view! {
-            <TopBar
-                owner_name=Memo::new(move |_| params().owner_name)
-                repo_name=Memo::new(move |_| params().repo_name)
-            />
-            <Tabs
-                tabs
-                active_tab=Signal::derive(active_tab)
-                set_active_tab=move |t| set_new_active_tab_str(t.to_url_segment())
-            />
-        }
-        .into_any()))
-    }}
-    </Suspense>
+                        view! {
+                            <TopBar
+                                owner_name=Memo::new(move |_| params().owner_name)
+                                repo_name=Memo::new(move |_| params().repo_name)
+                            />
+                            <Tabs
+                                tabs
+                                active_tab=Signal::derive(active_tab)
+                                set_active_tab=move |t| set_new_active_tab_str(t.to_url_segment())
+                            />
+                        }
+                            .into_any(),
+                    ),
+                )
+            }}
+        </Suspense>
     }
 }

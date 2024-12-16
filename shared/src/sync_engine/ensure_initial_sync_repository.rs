@@ -3,16 +3,18 @@ use crate::types::{
     repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
 };
 
-use super::{error::SyncResult, SyncEngine};
+use super::{error::SyncResult, SyncEngine, WSClient};
 
-impl SyncEngine {
-    /// `force` means we ignore the RepositoryInitialSyncStatus.
+impl<W: WSClient> SyncEngine<W> {
+    /// `force_initial_sync` means we ignore the RepositoryInitialSyncStatus. This will come into
+    /// play when we implement the "if the last time we were in touch is less than 7 days, do a
+    /// full resync."
     pub async fn ensure_initial_sync_repository(
         &self,
         repo: &Repository,
-        force: bool,
-    ) -> SyncResult<()> {
-        if !force {
+        force_initial_sync: bool,
+    ) -> SyncResult<(), W::Error> {
+        if !force_initial_sync {
             let txn = self
                 .db
                 .txn()

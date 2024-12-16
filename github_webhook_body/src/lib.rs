@@ -18825,7 +18825,7 @@ impl From<&Watch> for Watch {
         value.clone()
     }
 }
-#[derive(Deserialize, Serialize, Clone, Debug,PartialEq)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub enum WebhookBody {
     #[serde(rename = "team_add")]
     TeamAdd(TeamAdd),

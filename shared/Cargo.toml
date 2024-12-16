@@ -24,6 +24,8 @@ codee = { version = "0.2.0", features = ["json_serde"] }
 diesel-derive-newtype = { version = "2.1.2", optional = true }
 diesel = { version = "2.2.4", optional = true }
 http = "1.1.0"
+ewebsock = "0.8.0"
+pin-project = "1.1.7"
 
 [features]
 hydrate = [ "jiff/js" ]

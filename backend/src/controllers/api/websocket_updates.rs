@@ -1,11 +1,7 @@
+use shared::utils::LogErr;
 use tokio::sync::mpsc;
 
-use axum::{
-    extract::{Query, State},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
+use axum::{extract::State, response::IntoResponse, routing::get, Router};
 use axum_typed_websockets::{Message, WebSocket, WebSocketUpgrade};
 use futures::{SinkExt, StreamExt};
 use shared::{
@@ -15,7 +11,7 @@ use shared::{
 
 use crate::{
     app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser,
-    db::get_webhooks_for_user, error::LogErr, websocket_updates_bucket::CAPACITY,
+    websocket_updates_bucket::CAPACITY,
 };
 
 pub fn api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
@@ -78,38 +74,18 @@ async fn handle_websocket_updates(
         }
     });
 
-    let initial_backlog = match get_webhooks_for_user(&app_state, user_id)
-        .await
-        .log_err()
-    {
-        Ok(initial_backlog) => initial_backlog,
-        Err(_) => {
-            return;
-        }
-    };
-
-    if !initial_backlog.is_empty()
-        && tx
-            .send(ServerMsg::InitialBacklog(initial_backlog))
-            .await
-            .log_err()
-            .is_err()
-    {
-        return;
-    }
-
     let mut subscription = app_state.websocket_updates_bucket.subscribe(user_id);
 
     loop {
         println!("About to wait for updates to send on websocket.");
-        let update = match subscription.recv().await.log_err() {
+        let server_msg = match subscription.recv().await.log_err() {
             Ok(u) => u,
             Err(_) => {
                 return;
             }
         };
 
-        if tx.send(ServerMsg::One(update)).await.log_err().is_err() {
+        if tx.send(server_msg).await.log_err().is_err() {
             return;
         }
     }

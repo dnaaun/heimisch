@@ -17,4 +17,4 @@ serde_json = "1.0.132"
 serde_path_to_error = "0.1.16"
 strum = { version = "0.26.3", features = ["derive"] }
 # typify = "0.2.0"
-typify = { path = "../../typify/typify" , version = "*" }
+typify = { version = "*" }

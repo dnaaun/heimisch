@@ -348,7 +348,7 @@ async fn test_websocket_updates() -> TestResult<()> {
     with_logged_in_user(|test_setup, user| async move {
         let mut ws_request = test_setup
             .server
-            .get_websocket(&WEBSOCKET_UPDATES_ENDPOINT)
+            .get_websocket(WEBSOCKET_UPDATES_ENDPOINT)
             .save_cookies()
             .await
             .into_websocket()
@@ -377,14 +377,9 @@ async fn test_websocket_updates() -> TestResult<()> {
         .expect("Expected too long to receive a message on the websocket.");
         println!("The time out thing is over");
 
-        match server_msg {
-            ServerMsg::InitialBacklog(_) => panic!("Unexpected initial backlog"),
-            ServerMsg::One(webhook) => {
-                let expected_webhook_body =
-                    serde_json::from_slice::<WebhookBody>(&parsed_webhook_request.body).expect("");
-                assert_eq!(webhook.body, expected_webhook_body);
-            }
-        }
+        let expected_webhook_body =
+            serde_json::from_slice::<WebhookBody>(&parsed_webhook_request.body).expect("");
+        assert_eq!(server_msg.body, expected_webhook_body);
 
         ws_request.close().await;
         println!("{user:?}");

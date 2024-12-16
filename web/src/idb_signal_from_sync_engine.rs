@@ -24,7 +24,7 @@ pub trait IdbSignalFromSyncEngine<DbStoreMarkers> {
         T: 'static + Send + Sync;
 }
 
-impl IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine {
+impl<WSClient> IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine<WSClient> {
     /// TODO: This doesn't react to dependencies changing in `compute_val()`
     fn idb_signal<TxnStoreMarkers, Mode, Fut, T>(
         &self,

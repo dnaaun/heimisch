@@ -1,12 +1,12 @@
+use shared::utils::LogErr;
 use std::sync::Arc;
 
-use crate::error::LogErr;
 use dashmap::DashMap;
-use shared::{endpoints::defns::api::websocket_updates::Webhook, types::user::UserId};
+use shared::{endpoints::defns::api::websocket_updates::ServerMsg, types::user::UserId};
 
 #[derive(Default)]
 pub struct WebsocketUpdatesBucket {
-    senders: DashMap<UserId, tokio::sync::broadcast::Sender<Webhook>>,
+    senders: DashMap<UserId, tokio::sync::broadcast::Sender<ServerMsg>>,
 }
 
 pub const CAPACITY: usize = 1000; // :shrug:
@@ -45,7 +45,7 @@ impl WebsocketUpdatesBucket {
         }
     }
 
-    pub fn broadcast(&self, id: &UserId, webhook: Webhook) {
+    pub fn broadcast(&self, id: &UserId, webhook: ServerMsg) {
         println!("Just inside broadcast!");
         let sender = match self.senders.get(id) {
             Some(sender) => sender,
@@ -61,14 +61,14 @@ impl WebsocketUpdatesBucket {
 
 pub struct Subscription {
     user_id: UserId,
-    receiver: tokio::sync::broadcast::Receiver<Webhook>,
+    receiver: tokio::sync::broadcast::Receiver<ServerMsg>,
     bucket: Arc<WebsocketUpdatesBucket>,
 }
 
 impl Subscription {
     pub async fn recv(
         &mut self,
-    ) -> std::result::Result<Webhook, tokio::sync::broadcast::error::RecvError> {
+    ) -> std::result::Result<ServerMsg, tokio::sync::broadcast::error::RecvError> {
         self.receiver.recv().await
     }
 }
