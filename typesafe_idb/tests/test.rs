@@ -1,6 +1,10 @@
+#![feature(type_alias_impl_trait)]
+
+use std::collections::{HashMap, HashSet};
+
 use macros::TypesafeIdb;
 use serde::{Deserialize, Serialize};
-use typesafe_idb::TypesafeDb;
+use typesafe_idb::{Store, StoreMarker, TypesafeDb};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
@@ -36,17 +40,95 @@ pub struct User {
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-#[wasm_bindgen_test]
-pub async fn various_tests() {
-    let db = TypesafeDb::builder("just test".into())
+type DbMarkers = impl StoreMarker<Repository> + StoreMarker<User>;
+
+async fn get_db() -> TypesafeDb<DbMarkers> {
+    TypesafeDb::builder("just test".into())
         .with_store::<User>()
         .with_store::<User>()
         .with_store::<Repository>()
         .build()
         .await
-        .unwrap();
+        .unwrap()
+}
 
-    let txn = db
+#[wasm_bindgen_test]
+pub async fn get_by_index_reactivity() {
+    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let _ = txn
+        .object_store::<Repository>()
+        .unwrap()
+        .index::<InstallationIdIndex>()
+        .unwrap()
+        .get(&InstallationId(4))
+        .await;
+    let trackers = txn.commit().await.unwrap();
+    assert_eq!(
+        trackers.stores_accessed_in_bulk,
+        HashSet::from_iter([Repository::NAME])
+    );
+    assert!(trackers.stores_accessed_by_id.is_empty())
+}
+
+#[wasm_bindgen_test]
+pub async fn get_all_by_index_reactivity() {
+    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let _ = txn
+        .object_store::<Repository>()
+        .unwrap()
+        .index::<InstallationIdIndex>()
+        .unwrap()
+        .get_all(Some(&InstallationId(4)))
+        .await;
+    let trackers = txn.commit().await.unwrap();
+
+    assert_eq!(
+        trackers.stores_accessed_in_bulk,
+        HashSet::from_iter([Repository::NAME])
+    );
+    assert!(trackers.stores_accessed_by_id.is_empty())
+}
+
+#[wasm_bindgen_test]
+pub async fn get_by_id_reactivity() {
+    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let _ = txn
+        .object_store::<Repository>()
+        .unwrap()
+        .get(&RepositoryId(4))
+        .await;
+    let trackers = txn.commit().await.unwrap();
+
+    assert!(trackers.stores_accessed_in_bulk.is_empty());
+
+    assert_eq!(
+        trackers.stores_accessed_by_id,
+        HashMap::from_iter([(Repository::NAME, HashSet::from_iter(["4".to_owned()]))])
+    );
+}
+
+#[wasm_bindgen_test]
+pub async fn get_all_reactivity() {
+    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let _ = txn
+        .object_store::<Repository>()
+        .unwrap()
+        .get_all()
+        .await;
+    let trackers = txn.commit().await.unwrap();
+
+    assert_eq!(
+        trackers.stores_accessed_in_bulk,
+        HashSet::from_iter([Repository::NAME])
+    );
+    assert!(trackers.stores_accessed_by_id.is_empty())
+
+}
+
+#[wasm_bindgen_test]
+pub async fn basic_read_and_write() {
+    let txn = get_db()
+        .await
         .txn()
         .with_store::<Repository>()
         // doubling causess no issues.
