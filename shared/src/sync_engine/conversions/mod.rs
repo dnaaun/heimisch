@@ -12,6 +12,7 @@ pub mod from_repository;
 pub mod from_user;
 pub mod from_user1;
 pub mod from_user2;
+pub mod conversion_error;
 
 pub trait ToDb: Sized {
     type DbType;

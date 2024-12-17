@@ -1,7 +1,8 @@
 use crate::{avail::MergeError, endpoints::endpoint_client::OwnApiError};
 use std::fmt::Debug;
 
-use super::conversions::webhooks::ConversionError;
+use super::conversions::conversion_error::ConversionError;
+
 
 #[derive(Debug)]
 pub enum SyncErrorSrc<WebsocketEError: std::fmt::Debug> {
