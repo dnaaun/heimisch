@@ -12,7 +12,7 @@ use crate::models;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use super::nullable_issue::StateReason;
+use super::{nullable_issue::StateReason, AuthorAssociation};
 
 /// Issue : The [issue](https://docs.github.com/rest/issues/issues#get-an-issue) itself.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
@@ -123,32 +123,7 @@ impl Default for ActiveLockReason {
         Self::Resolved
     }
 }
-/// How the author is associated with the repository.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum AuthorAssociation {
-    #[serde(rename = "COLLABORATOR")]
-    Collaborator,
-    #[serde(rename = "CONTRIBUTOR")]
-    Contributor,
-    #[serde(rename = "FIRST_TIMER")]
-    FirstTimer,
-    #[serde(rename = "FIRST_TIME_CONTRIBUTOR")]
-    FirstTimeContributor,
-    #[serde(rename = "MANNEQUIN")]
-    Mannequin,
-    #[serde(rename = "MEMBER")]
-    Member,
-    #[serde(rename = "NONE")]
-    None,
-    #[serde(rename = "OWNER")]
-    Owner,
-}
 
-impl Default for AuthorAssociation {
-    fn default() -> AuthorAssociation {
-        Self::Collaborator
-    }
-}
 /// State of the issue; either 'open' or 'closed'
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum State {

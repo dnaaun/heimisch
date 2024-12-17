@@ -1,7 +1,7 @@
 use derive_more::derive::{AsRef, Deref, From, Into};
-use github_api::models::issue::{ActiveLockReason, AuthorAssociation, State};
+use github_api::models::issue::{ActiveLockReason, State};
 use github_api::models::nullable_issue::StateReason;
-use github_api::models::{Label, Reactions, WebhooksIssuePullRequest};
+use github_api::models::{AuthorAssociation, Label, Reactions, WebhooksIssuePullRequest};
 use jiff::Timestamp;
 use macros::AvailMerge;
 use serde::{Deserialize, Serialize};

@@ -101,6 +101,9 @@ pub enum Type {
     User,
     #[serde(rename = "Organization")]
     Organization,
+
+    /// Added to accomodate `MilestoneClosedMilestoneCreatorType` from webhooks.
+    Mannequin,
 }
 
 impl Default for Type {

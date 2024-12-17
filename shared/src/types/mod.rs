@@ -9,7 +9,7 @@ pub mod license;
 pub mod milestone;
 pub mod pull_request;
 pub mod pull_request_initial_sync_status;
-pub mod pull_request_labels_item;
+pub mod label;
 pub mod repository;
 pub mod repository_initial_sync_status;
 pub mod team;

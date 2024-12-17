@@ -379,7 +379,10 @@ async fn test_websocket_updates() -> TestResult<()> {
 
         let expected_webhook_body =
             serde_json::from_slice::<WebhookBody>(&parsed_webhook_request.body).expect("");
-        assert_eq!(server_msg.body, expected_webhook_body);
+        assert_eq!(
+            serde_json::to_value(server_msg.body).unwrap(),
+            serde_json::to_value(expected_webhook_body).unwrap()
+        );
 
         ws_request.close().await;
         println!("{user:?}");

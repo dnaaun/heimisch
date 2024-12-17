@@ -1,10 +1,10 @@
 use derive_more::derive::{AsRef, Deref, From, Into};
-use github_api::models::issue::AuthorAssociation;
+use github_api::models::AuthorAssociation;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    milestone::MilestoneId, pull_request_labels_item::PullRequestLabelsItemId,
+    milestone::MilestoneId, label::LabelId,
     repository::RepositoryId, team::TeamId, user::UserId,
 };
 
@@ -68,7 +68,7 @@ pub struct PullRequest {
     #[idb(id)]
     pub id: PullRequestId,
     pub issue_url: String,
-    pub label_ids: Vec<PullRequestLabelsItemId>,
+    pub label_ids: Vec<LabelId>,
     #[serde(rename = "_links")]
     pub links: PullRequestLinks,
     pub locked: bool,
