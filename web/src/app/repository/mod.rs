@@ -1,9 +1,4 @@
-use std::{
-    future::{pending, Future},
-    ops::Deref,
-    rc::Rc,
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use leptos::{prelude::*, task::spawn_local};
 use leptos_router::{
@@ -13,8 +8,7 @@ use leptos_router::{
 use shared::{
     types::{
         self,
-        repository::{Repository, RepositoryId},
-        repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
+        repository::Repository,
         user::{self, User},
     },
     utils::LogErr,
@@ -74,71 +68,6 @@ impl std::fmt::Display for TabName {
     }
 }
 
-/// Essentailly implemnets Result::map or Option::map equivalent for AsyncDerived.
-fn map_unsync_async_derived<S, T1, Fut>(
-    async_derived: AsyncDerived<T1, S>,
-    func: impl Fn(T1) -> Fut + 'static,
-) -> AsyncDerived<Fut::Output, LocalStorage>
-where
-    Fut: Future,
-    Fut::Output: 'static,
-    S: Storage<ArcAsyncDerived<T1>>,
-    T1: Clone + 'static,
-{
-    let func = Rc::new(func);
-    AsyncDerived::new_unsync(move || {
-        let func = func.clone();
-        async move {
-            async_derived.ready().await;
-            let value = async_derived
-                .read()
-                .deref()
-                .clone()
-                .expect("The ready() should take care of him.");
-            func(value).await
-        }
-    })
-}
-
-/// Will return an AsyncDerived that resolves only when the RepositoryInitialSyncStatus
-/// corresponding to the repository is Full. It will also resolve to an error if an error is
-/// encountered.
-fn use_repo_initial_sync_is_done<S>(
-    id: AsyncDerived<Result<Option<RepositoryId>, FrontendError>, S>,
-) -> AsyncDerived<Result<RepoSyncStatus, FrontendError>>
-where
-    S: Storage<ArcAsyncDerived<Result<Option<RepositoryId>, FrontendError>>>,
-{
-    let sync_engine = use_sync_engine().clone();
-    let repo_initial_sync_is_done = AsyncDerived::new(pending);
-
-    sync_engine.idb_signal(
-        |db| db.txn().with_store::<RepositoryInitialSyncStatus>().ro(),
-        move |txn| async move {
-            let id = match id.read().clone() {
-                Some(id) => id,
-                None => return Ok(()),
-            }?;
-
-            let id = match id {
-                Some(id) => id,
-                None => return Ok(()),
-            };
-            let status = txn
-                .object_store::<RepositoryInitialSyncStatus>()?
-                .get(&id)
-                .await?
-                .map(|r| r.status);
-
-            if let Some(status) = status {
-                *repo_initial_sync_is_done.write() = Some(Ok(status));
-            };
-            Ok(())
-        },
-    );
-    repo_initial_sync_is_done
-}
-
 /// RTI: URL params of shape `RepositoryPageParams`.
 #[component]
 pub fn RepositoryPage() -> impl IntoView {
@@ -183,11 +112,11 @@ pub fn RepositoryPage() -> impl IntoView {
 
     let sync_engine = use_sync_engine();
     let repository = sync_engine.idb_signal(
-        |db| {
-            db.txn()
+        |builder| {
+            builder
                 .with_store::<User>()
                 .with_store::<Repository>()
-                .ro()
+                .build()
         },
         move |txn| {
             let RepositoryPageParams {
@@ -220,11 +149,9 @@ pub fn RepositoryPage() -> impl IntoView {
         },
     );
 
-    let repository_id =
-        map_unsync_async_derived(repository.inner(), |r| async { r.map(|r| r.map(|r| r.id)) });
     Effect::new(move || {
         let sync_engine = sync_engine.clone();
-        if let Some(Ok(Some(repository))) = repository.read().clone() {
+        if let Some(Ok(Some(repository))) = repository.read() {
             spawn_local(async move {
                 let _ = sync_engine
                     .ensure_initial_sync_repository(&repository, false)
@@ -233,8 +160,6 @@ pub fn RepositoryPage() -> impl IntoView {
             })
         };
     });
-
-    let repo_initial_sync_is_done = use_repo_initial_sync_is_done(repository_id);
 
     view! {
         <Suspense fallback=|| {
@@ -265,9 +190,7 @@ pub fn RepositoryPage() -> impl IntoView {
                         );
                     }
                 };
-                if let Some(Ok(RepoSyncStatus::NoSync)) = repo_initial_sync_is_done.read().clone() {
-                    return Ok(None);
-                }
+
                 let tabs: Vec<Tab<_>> = vec![
                     Tab {
                         content_el: Arc::new(move || {

@@ -1,17 +1,18 @@
 use std::{future::Future, ops::Deref, sync::Arc};
 
-use leptos::{prelude::*, task::spawn_local};
+use leptos::prelude::*;
 use parking_lot::Mutex;
-use shared::sync_engine::{IdbNotification, IdbNotifier};
+use shared::sync_engine::DbSubscription;
 use typesafe_idb::Txn;
 
-type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
+// type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
+type DontKNowWhatToNameYou<S> = LocalResource<S>;
 
-type DeregisterNotifierFunc = Arc<Mutex<Option<Box<dyn Fn() + Sync + Send>>>>;
+type DeregisterNotifierFunc = Arc<Mutex<Option<Arc<dyn Fn() + Sync + Send>>>>;
 
 pub struct IdbSignalInner<S> {
     /// Is an Option because idb is async, and so on initial render, this will be None
-    async_derived: DontKNowWhatToNameYou<S>,
+    local_resource: DontKNowWhatToNameYou<S>,
     /// Is an Option because idb is async, and so on initial render, this will be None
     deregister_notifier: DeregisterNotifierFunc,
 }
@@ -38,21 +39,31 @@ impl<S> Clone for IdbSignal<S> {
     }
 }
 
-impl<S: 'static + Send + Sync> IdbSignal<S> {
+impl<S: 'static + Send + Sync + Clone> IdbSignal<S> {
     pub fn inner(&self) -> DontKNowWhatToNameYou<S> {
-        self.inner.try_get_value().unwrap().async_derived
+        self.inner.try_get_value().unwrap().local_resource.clone()
     }
 
-    pub fn read(&self) -> <DontKNowWhatToNameYou<S> as Read>::Value {
-        self.inner.try_get_value().unwrap().async_derived.read()
+    pub fn read(&self) -> Option<S> {
+        self.inner
+            .try_get_value()
+            .unwrap()
+            .local_resource
+            .read()
+            .clone()
+            .map(|x| x.take())
     }
 }
 
-impl<T: 'static> IdbSignal<T> {
+impl<T> IdbSignal<T>
+where
+    T: std::fmt::Debug + 'static + Send + Sync,
+{
+    #[track_caller]
     pub fn new<Markers, Mode, Fut, Deregister>(
         make_txn: impl Fn() -> Txn<Markers, Mode> + 'static,
         compute_val: impl Fn(Arc<Txn<Markers, Mode>>) -> Fut + 'static,
-        register_notifier: impl FnOnce(IdbNotifier) -> Deregister + 'static,
+        register_notifier: impl Fn(DbSubscription) -> Deregister + 'static,
     ) -> Self
     where
         Fut: Future<Output = T>,
@@ -60,43 +71,45 @@ impl<T: 'static> IdbSignal<T> {
         Mode: 'static,
         Deregister: Fn() + Send + Sync + 'static,
     {
+        let register_notifier = Arc::new(register_notifier);
+
         let compute_val = Arc::new(compute_val);
+
         let make_txn = Arc::new(move || Arc::new(make_txn()));
 
-        // Make sure to update the value when the dependencies of `compute_val` change.
-        let compute_val2 = compute_val.clone();
-        let make_txn2 = make_txn.clone();
-        let async_derived = AsyncDerived::new_unsync(move || {
-            let make_txn = make_txn2.clone();
-            let compute_val = compute_val2.clone();
-            async move { compute_val(make_txn()).await }
-        });
-
         let deregister_notifier: DeregisterNotifierFunc = Arc::new(Mutex::new(None));
-        let deregister_notifier2 = deregister_notifier.clone();
+        let deregister_notifier_copy = deregister_notifier.clone();
 
-        spawn_local(async move {
-            let txn = (make_txn)();
-            let reactivity_trackers = txn.reactivity_trackers();
+        let trigger = Trigger::new();
 
-            let notifier = Box::new(move |notification: IdbNotification| {
-                let reactivity_trackers2 = reactivity_trackers.clone();
-                let compute_val2 = compute_val.clone();
-                let make_txn2 = make_txn.clone();
-                if notification.matches_triggered_trackers(&reactivity_trackers2) {
-                    spawn_local(async move {
-                        async_derived.set(Some(compute_val2(make_txn2()).await));
-                    });
+        let local_resource = LocalResource::new(move || {
+            let make_txn = make_txn.clone();
+            let compute_val = compute_val.clone();
+            let deregister_notifier = deregister_notifier.clone();
+            let register_notifier = register_notifier.clone();
+            async move {
+                trigger.track();
+                let txn = make_txn();
+                let val = compute_val(txn.clone()).await;
+                trigger.track();
+
+                let db_subscription = DbSubscription {
+                    original_reactivity_trackers: txn.reactivity_trackers(),
+                    func: Arc::new(move || {
+                        trigger.notify();
+                    }),
                 };
-            });
 
-            *deregister_notifier2.lock() = Some(Box::new(register_notifier(notifier)));
+                *deregister_notifier.lock() = Some(Arc::new(register_notifier(db_subscription)));
+
+                val
+            }
         });
 
         Self {
             inner: ArenaItem::new_with_storage(Arc::new(IdbSignalInner {
-                async_derived,
-                deregister_notifier,
+                local_resource,
+                deregister_notifier: deregister_notifier_copy,
             })),
         }
     }

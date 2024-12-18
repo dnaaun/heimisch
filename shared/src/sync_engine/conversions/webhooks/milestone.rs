@@ -12,6 +12,7 @@ use crate::{
 };
 
 impl ToDb for MilestoneClosedMilestoneCreator {
+    type Args = ();
     type OtherChanges = ();
     type DbType = types::user::User;
 
@@ -19,6 +20,8 @@ impl ToDb for MilestoneClosedMilestoneCreator {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         let MilestoneClosedMilestoneCreator {
             avatar_url,
@@ -86,7 +89,7 @@ impl ToDb for MilestoneClosedMilestoneCreator {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type())),
+                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 user_view_type: user_view_type.into(),
@@ -98,12 +101,16 @@ impl ToDb for MilestoneClosedMilestoneCreator {
 }
 
 impl ToDb for MilestoneClosedMilestone {
+    type Args = ();
     type OtherChanges = Changes;
     type DbType = types::milestone::Milestone;
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(self) -> Result<(Self::DbType, Changes), Self::Error> {
+    fn try_to_db_type_and_other_changes(
+        self,
+        _: Self::Args,
+    ) -> Result<(Self::DbType, Changes), Self::Error> {
         let MilestoneClosedMilestone {
             closed_at,
             closed_issues,
@@ -122,7 +129,7 @@ impl ToDb for MilestoneClosedMilestone {
             updated_at,
             url,
         } = self;
-        let creator = creator.map(|c| c.to_db_type());
+        let creator = creator.map(|c| c.to_db_type(()));
 
         let milestone = types::milestone::Milestone {
             closed_at: Avail::Yes(closed_at.map(|d| (d).parse()).transpose()?),
@@ -137,7 +144,7 @@ impl ToDb for MilestoneClosedMilestone {
             node_id: node_id.into(),
             number: number.into(),
             open_issues: open_issues.into(),
-            state: state.to_db_type().into(),
+            state: state.to_db_type(()).into(),
             title: title.into(),
             updated_at: Avail::Yes((updated_at).parse()?),
             url: url.into(),
@@ -151,12 +158,16 @@ impl ToDb for MilestoneClosedMilestone {
 }
 
 impl ToDb for MilestoneCreatedMilestone {
+    type Args = ();
     type OtherChanges = Changes;
     type DbType = types::milestone::Milestone;
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(self) -> Result<(Self::DbType, Changes), Self::Error> {
+    fn try_to_db_type_and_other_changes(
+        self,
+        _: Self::Args,
+    ) -> Result<(Self::DbType, Changes), Self::Error> {
         let MilestoneCreatedMilestone {
             closed_at,
             closed_issues,
@@ -175,7 +186,7 @@ impl ToDb for MilestoneCreatedMilestone {
             updated_at,
             url,
         } = self;
-        let creator = creator.map(|c| c.to_db_type());
+        let creator = creator.map(|c| c.to_db_type(()));
 
         let milestone = types::milestone::Milestone {
             closed_at: Avail::Yes(closed_at.map(|d| (d).parse()).transpose()?),
@@ -190,7 +201,7 @@ impl ToDb for MilestoneCreatedMilestone {
             node_id: node_id.into(),
             number: number.into(),
             open_issues: open_issues.into(),
-            state: state.to_db_type().into(),
+            state: state.to_db_type(()).into(),
             title: title.into(),
             updated_at: Avail::Yes((updated_at).parse()?),
             url: url.into(),
@@ -204,6 +215,7 @@ impl ToDb for MilestoneCreatedMilestone {
 }
 
 impl ToDb for MilestoneClosedMilestoneCreatorType {
+    type Args = ();
     type OtherChanges = ();
     type DbType = github_api::models::user::Type;
 
@@ -211,6 +223,7 @@ impl ToDb for MilestoneClosedMilestoneCreatorType {
 
     fn try_to_db_type_and_other_changes(
         self,
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         use github_api::models::user::Type::*;
         Ok((

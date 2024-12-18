@@ -54,7 +54,7 @@ async fn get_db() -> TypesafeDb<DbMarkers> {
 
 #[wasm_bindgen_test]
 pub async fn get_by_index_reactivity() {
-    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let txn = get_db().await.txn().with_store::<Repository>().build();
     let _ = txn
         .object_store::<Repository>()
         .unwrap()
@@ -72,7 +72,7 @@ pub async fn get_by_index_reactivity() {
 
 #[wasm_bindgen_test]
 pub async fn get_all_by_index_reactivity() {
-    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let txn = get_db().await.txn().with_store::<Repository>().build();
     let _ = txn
         .object_store::<Repository>()
         .unwrap()
@@ -91,7 +91,7 @@ pub async fn get_all_by_index_reactivity() {
 
 #[wasm_bindgen_test]
 pub async fn get_by_id_reactivity() {
-    let txn = get_db().await.txn().with_store::<Repository>().ro();
+    let txn = get_db().await.txn().with_store::<Repository>().build();
     let _ = txn
         .object_store::<Repository>()
         .unwrap()
@@ -109,12 +109,8 @@ pub async fn get_by_id_reactivity() {
 
 #[wasm_bindgen_test]
 pub async fn get_all_reactivity() {
-    let txn = get_db().await.txn().with_store::<Repository>().ro();
-    let _ = txn
-        .object_store::<Repository>()
-        .unwrap()
-        .get_all()
-        .await;
+    let txn = get_db().await.txn().with_store::<Repository>().build();
+    let _ = txn.object_store::<Repository>().unwrap().get_all().await;
     let trackers = txn.commit().await.unwrap();
 
     assert_eq!(
@@ -122,7 +118,6 @@ pub async fn get_all_reactivity() {
         HashSet::from_iter([Repository::NAME])
     );
     assert!(trackers.stores_accessed_by_id.is_empty())
-
 }
 
 #[wasm_bindgen_test]
@@ -134,7 +129,8 @@ pub async fn basic_read_and_write() {
         // doubling causess no issues.
         .with_store::<User>()
         .with_store::<User>()
-        .rw();
+        .read_write()
+        .build();
 
     let id = RepositoryId(4);
     let repository_object_store = txn.object_store::<Repository>().unwrap();

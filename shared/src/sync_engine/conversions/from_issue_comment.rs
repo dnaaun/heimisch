@@ -1,18 +1,21 @@
 use std::future::Future;
 
 use crate::{
-    avail::MergeError,
+    avail::Avail,
     sync_engine::changes::{AddChanges, Changes},
     types::{issue::IssueId, issue_comment::IssueCommentId, repository::RepositoryId},
 };
 
-use super::{from_integration::from_nullable_integration, from_user1::from_user1};
+use super::{
+    conversion_error::ConversionError, from_integration::from_nullable_integration,
+    from_user1::from_user1,
+};
 
 pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
     issue_id_from_number: impl FnOnce(i64) -> Fut,
     api_issue_comment: github_api::models::IssueComment,
     repository_id: &RepositoryId,
-) -> Result<(IssueCommentId, Changes), MergeError> {
+) -> Result<(IssueCommentId, Changes), ConversionError> {
     let github_api::models::IssueComment {
         author_association,
         body,
@@ -47,14 +50,14 @@ pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
     let db_issue_comment = crate::types::issue_comment::IssueComment {
         author_association: author_association.into(),
         body: body.into(),
-        created_at: created_at.into(),
+        created_at: Avail::Yes(created_at.parse()?),
         html_url: html_url.into(),
         id: id.into(),
         issue_url: issue_url.into(),
         node_id: node_id.into(),
         performed_via_github_app_id: db_github_app_id.into(),
         reactions: (*reactions).into(),
-        updated_at: updated_at.into(),
+        updated_at: Avail::Yes(updated_at.parse()?),
         url: url.into(),
         user_id: db_user.as_ref().map(|u| u.id).into(),
         issue_id,

@@ -1,6 +1,6 @@
-use parking_lot::Mutex;
 use registry::Registry;
-use std::{fmt::Debug, marker::PhantomData};
+use send_wrapper::SendWrapper;
+use std::{fmt::Debug, marker::PhantomData, sync::Arc};
 use typesafe_idb::{ReactivityTrackers, TypesafeDb};
 mod conversions;
 mod ensure_initial_sync_issues;
@@ -16,7 +16,7 @@ pub mod error;
 mod registry;
 mod websocket_updates;
 
-use std::{cmp::Ordering, rc::Rc, sync::Arc};
+use std::{cmp::Ordering, rc::Rc};
 
 use crate::{
     endpoints::{
@@ -68,6 +68,11 @@ where
 {
 }
 
+#[derive(Clone)]
+pub struct DbSubscription {
+    pub original_reactivity_trackers: ReactivityTrackers,
+    pub func: Arc<dyn Fn()>,
+}
 /// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
 /// "defining use."
 mod isolate_db_store_markers_impl_type {
@@ -86,8 +91,11 @@ mod isolate_db_store_markers_impl_type {
             repository_initial_sync_status::RepositoryInitialSyncStatus, user::User,
         },
     };
+    use send_wrapper::SendWrapper;
     use typesafe_idb::{StoreMarker, TypesafeDb};
 
+    use super::registry::Registry;
+    use super::DbSubscription;
     use super::{error::SyncResult, SyncEngine, WSClient};
 
     pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
@@ -120,13 +128,27 @@ mod isolate_db_store_markers_impl_type {
                 .with_store::<InstallationAccessTokenRow>()
                 .with_store::<IssueComment>()
                 .with_store::<IssueCommentsInitialSyncStatus>()
-                .with_store::<RepositoryInitialSyncStatus>()
+                .with_store::<RepositoryInitialSyncStatus>();
+
+            let db_change_notifiers: Rc<Registry<DbSubscription>> = Default::default();
+            let db_change_notifiers2 = db_change_notifiers.clone();
+            let db = db
+                .with_commit_listener(Rc::new(move |reactivity_trackers| {
+                    db_change_notifiers2
+                        .get()
+                        .iter()
+                        .filter(|sub| {
+                            sub.original_reactivity_trackers
+                                .overlaps(reactivity_trackers)
+                        })
+                        .for_each(|sub| (sub.func)());
+                }))
                 .build()
                 .await?;
 
             Ok(Self {
                 db: Rc::new(db),
-                idb_notifiers: Default::default(),
+                db_subscriptions: SendWrapper::new(db_change_notifiers),
                 endpoint_client,
                 _ws_client: PhantomData,
             })
@@ -136,42 +158,9 @@ mod isolate_db_store_markers_impl_type {
 
 pub use isolate_db_store_markers_impl_type::DbStoreMarkers;
 
-pub enum IdbNotification {
-    BulkStoreUpdate {
-        store_name: &'static str,
-    },
-    SingleRecoreUpdate {
-        store_name: &'static str,
-
-        /// Will be a serde_json-serialized value.
-        id: String,
-    },
-}
-
-impl IdbNotification {
-    pub fn matches_triggered_trackers(&self, reactivity_trackers: &ReactivityTrackers) -> bool {
-        let ReactivityTrackers {
-            stores_accessed_by_id,
-            stores_accessed_in_bulk,
-        } = reactivity_trackers;
-        match self {
-            IdbNotification::BulkStoreUpdate { store_name } => {
-                stores_accessed_by_id.contains_key(store_name)
-                    || stores_accessed_in_bulk.contains(store_name)
-            }
-            IdbNotification::SingleRecoreUpdate { store_name, id } => stores_accessed_by_id
-                .get(store_name)
-                .map(|ids| ids.contains(id))
-                .unwrap_or(false),
-        }
-    }
-}
-
-pub type IdbNotifier = Box<dyn Fn(IdbNotification)>;
-
 pub struct SyncEngine<WSClient> {
     pub db: Rc<TypesafeDb<DbStoreMarkers>>,
-    pub idb_notifiers: Arc<Mutex<Registry<IdbNotifier>>>,
+    pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     endpoint_client: EndpointClient,
     _ws_client: PhantomData<WSClient>,
 }
@@ -201,7 +190,7 @@ impl<W: WSClient> SyncEngine<W> {
             .db
             .txn()
             .with_store::<InstallationAccessTokenRow>()
-            .ro();
+            .build();
         let iac = txn
             .object_store::<InstallationAccessTokenRow>()?
             .get_all()
@@ -237,7 +226,8 @@ impl<W: WSClient> SyncEngine<W> {
                     .db
                     .txn()
                     .with_store::<InstallationAccessTokenRow>()
-                    .rw();
+                    .read_write()
+                    .build();
                 txn.object_store::<InstallationAccessTokenRow>()?
                     .put(&InstallationAccessTokenRow {
                         token: resp.clone(),

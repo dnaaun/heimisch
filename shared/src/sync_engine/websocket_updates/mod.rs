@@ -1,13 +1,13 @@
+pub mod applying_error;
+
+use applying_error::{ApplyingError, ApplyingResult};
 use futures::{pin_mut, StreamExt};
-use server_msg_to_changes::{ApplyingError, ApplyingResult};
-mod server_msg_to_changes;
 
 use crate::{
     endpoints::defns::api::websocket_updates::{ServerMsg, WEBSOCKET_UPDATES_ENDPOINT},
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::ToDb,
-        error::SyncError,
     },
 };
 
@@ -67,16 +67,22 @@ where
     async fn apply_update_to_db(&self, _server_msg: &ServerMsg) -> ApplyingResult<(), W::Error> {
         use github_webhook_body::*;
         let changes = match _server_msg.body.clone() {
-            WebhookBody::Issues(issues) => (move || -> Result<Changes, SyncError<W::Error>> {
-                let (issue, mut other_changes) = issues.try_to_db_type_and_other_changes()?;
+            WebhookBody::Issues(issues) => {
+                let (issue, mut other_changes) = issues.try_to_db_type_and_other_changes(())?;
                 other_changes.add(issue)?;
-                Ok(other_changes)
-            })()?,
+                other_changes
+            }
+            WebhookBody::IssueComment(issue_comment) => {
+                let (issue, mut other_changes) =
+                    issue_comment.try_to_db_type_and_other_changes(())?;
+                other_changes.add(issue)?;
+                other_changes
+            }
             _ => return Err(ApplyingError::NotImplemented),
         };
 
-        let txn = Changes::txn(&self.db).rw();
-        self.merge_and_upsert_changes(&txn, changes).await?;
+        let txn = Changes::txn(&self.db).read_write().build();
+        self.merge_and_upsert_changes(txn, changes).await?;
         Ok(())
     }
 }

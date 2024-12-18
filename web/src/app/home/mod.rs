@@ -6,7 +6,7 @@ use shared::types::{repository::Repository, user::User};
 
 use crate::{
     app::sync_engine_provider::use_sync_engine, frontend_error::FrontendError,
-    idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
+    idb_signal::IdbSignal, idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
 use super::icon::Icon;
@@ -18,12 +18,14 @@ pub fn Home() -> impl IntoView {}
 #[component]
 pub fn Sidebar() -> impl IntoView {
     let sync_engine = use_sync_engine();
-    let repositorys_by_owner = sync_engine.idb_signal(
-        |db| {
-            db.txn()
+    let repositorys_by_owner: IdbSignal<
+        Result<Vec<(Option<User>, Vec<Repository>)>, FrontendError>,
+    > = sync_engine.idb_signal(
+        |txn_builder| {
+            txn_builder
                 .with_store::<Repository>()
                 .with_store::<User>()
-                .ro()
+                .build()
         },
         |txn| async move {
             let repositorys = txn.object_store::<Repository>()?.get_all().await?;
@@ -62,7 +64,7 @@ pub fn Sidebar() -> impl IntoView {
                 .collect::<Vec<_>>())
         },
     );
-    let repositorys_by_owner = move || repositorys_by_owner.read().clone().transpose();
+    let repositorys_by_owner = move || repositorys_by_owner.read().transpose();
     Ok::<_, FrontendError>(Some(view! {
         <div class="flex flex-nowrap">
             <button

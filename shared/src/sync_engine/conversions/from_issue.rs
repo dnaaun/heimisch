@@ -10,12 +10,16 @@ use super::{
 };
 
 impl ToDb for github_api::models::Label {
+    type Args = ();
     type OtherChanges = ();
     type DbType = crate::types::label::Label;
 
     type Error = std::convert::Infallible;
 
-    fn try_to_db_type_and_other_changes(self) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
+    fn try_to_db_type_and_other_changes(
+        self,
+        _: Self::Args,
+    ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         let github_api::models::Label {
             color,
             default,
@@ -115,7 +119,7 @@ pub fn from_issue(
             labels
                 .into_iter()
                 .flatten()
-                .map(|l| l.to_db_type())
+                .map(|l| l.to_db_type(()))
                 .collect(),
         ),
         labels_url: labels_url.into(),

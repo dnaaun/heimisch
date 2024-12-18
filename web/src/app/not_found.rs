@@ -14,7 +14,8 @@ pub fn NotFound() -> impl IntoView {
                 get_installation_ids_from_local_storage()
                     .iter()
                     .map(|id| sync_engine.fetch_repositorys_for_installation_id(id)),
-            ).await;
+            )
+            .await;
         });
     };
     view! {

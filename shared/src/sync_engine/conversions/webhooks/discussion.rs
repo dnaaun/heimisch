@@ -5,6 +5,7 @@ use github_webhook_body::*;
 use crate::{sync_engine::conversions::ToDb, types};
 
 impl ToDb for DiscussionAnsweredAnswerReactions {
+    type Args = ();
     type OtherChanges = ();
     type DbType = github_api::models::Reactions;
 
@@ -12,6 +13,8 @@ impl ToDb for DiscussionAnsweredAnswerReactions {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         let DiscussionAnsweredAnswerReactions {
             confused,
@@ -44,6 +47,7 @@ impl ToDb for DiscussionAnsweredAnswerReactions {
 }
 
 impl ToDb for DiscussionLabeledLabel {
+    type Args = ();
     type OtherChanges = ();
     type DbType = types::label::Label;
 
@@ -51,12 +55,15 @@ impl ToDb for DiscussionLabeledLabel {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         todo!()
     }
 }
 
 impl ToDb for DiscussionAnsweredAnswerAuthorAssociation {
+    type Args = ();
     type OtherChanges = ();
     type DbType = github_api::models::AuthorAssociation;
 
@@ -64,6 +71,8 @@ impl ToDb for DiscussionAnsweredAnswerAuthorAssociation {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         use github_api::models::AuthorAssociation::*;
         Ok((

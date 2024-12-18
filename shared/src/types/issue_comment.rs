@@ -1,5 +1,6 @@
 use derive_more::derive::{AsRef, Deref, From, Into};
 use github_api::models::{AuthorAssociation, Reactions};
+use jiff::Timestamp;
 use macros::AvailMerge;
 use serde::{Deserialize, Serialize};
 
@@ -30,7 +31,7 @@ pub struct IssueCommentId(i64);
 pub struct IssueComment {
     pub author_association: Avail<AuthorAssociation>,
     pub body: Avail<String>,
-    pub created_at: Avail<String>,
+    pub created_at: Avail<Timestamp>,
     pub html_url: Avail<String>,
 
     #[idb(id)]
@@ -39,7 +40,7 @@ pub struct IssueComment {
     pub node_id: Avail<String>,
     pub performed_via_github_app_id: Avail<Option<GithubAppId>>,
     pub reactions: Avail<Reactions>,
-    pub updated_at: Avail<String>,
+    pub updated_at: Avail<Timestamp>,
     pub url: Avail<String>,
     pub user_id: Avail<Option<UserId>>,
 

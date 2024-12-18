@@ -2,6 +2,8 @@ use crate::object_store::ObjectStore;
 use crate::Store;
 use crate::{chain::Chain, StoreMarker, TypesafeDb};
 use std::cell::RefCell;
+use std::ops::Deref;
+use std::rc::Rc;
 use std::{
     collections::{HashMap, HashSet},
     marker::PhantomData,
@@ -45,6 +47,24 @@ pub struct ReactivityTrackers {
     /// It maybe good
     pub stores_accessed_in_bulk: HashSet<&'static str>,
 }
+impl ReactivityTrackers {
+    pub fn overlaps(&self, other: &ReactivityTrackers) -> bool {
+        self.stores_accessed_by_id
+            .iter()
+            .any(|(store_name_a, ids_a)| {
+                other.stores_accessed_in_bulk.contains(store_name_a)
+                    || other
+                        .stores_accessed_by_id
+                        .get(store_name_a)
+                        .map(|ids_b| ids_a.intersection(ids_b).count() > 0)
+                        .unwrap_or(false)
+            })
+            || self.stores_accessed_in_bulk.iter().any(|store_name_a| {
+                other.stores_accessed_in_bulk.contains(store_name_a)
+                    || other.stores_accessed_by_id.contains_key(store_name_a)
+            })
+    }
+}
 
 pub struct Txn<C, Mode> {
     #[allow(unused)]
@@ -54,7 +74,9 @@ pub struct Txn<C, Mode> {
     mode: PhantomData<Mode>,
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
-    reactivity_trackers: Option<RefCell<ReactivityTrackers>>,
+    reactivity_trackers: RefCell<ReactivityTrackers>,
+
+    commit_listener: Option<Rc<dyn Fn(&ReactivityTrackers)>>,
 }
 
 impl<Markers, Mode> Txn<Markers, Mode> {
@@ -67,24 +89,19 @@ impl<Markers, Mode> Txn<Markers, Mode> {
             .expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")?;
 
         Ok(ObjectStore {
-            reactivity_trackers: self.reactivity_trackers.as_ref().expect("Should only be None only if it's committed, which means a &self should be unobtainable"),
+            reactivity_trackers: &self.reactivity_trackers,
             actual_object_store,
             _markers: PhantomData,
         })
     }
 
     pub async fn commit(mut self) -> Result<ReactivityTrackers, idb::Error> {
-        self.actual_txn.take().expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")
-            .commit()?;
-        Ok(self.reactivity_trackers.take().expect("Should only be None only if it's committed, which means a &self should be unobtainable").into_inner())
+        commit_logic(self.actual_txn.take().expect("Should not be None if not committed/aborted before, which should ahve required a mut self"), &mut self.reactivity_trackers, &self.commit_listener)?;
+        Ok(self.reactivity_trackers.take())
     }
 
     pub fn reactivity_trackers(&self) -> ReactivityTrackers {
-        self.reactivity_trackers
-            .as_ref()
-            .expect("Should only be None if committed, which means &self should be unbtainable")
-            .borrow()
-            .clone()
+        self.reactivity_trackers.borrow().clone()
     }
 
     pub async fn abort(mut self) -> Result<(), idb::Error> {
@@ -94,36 +111,59 @@ impl<Markers, Mode> Txn<Markers, Mode> {
     }
 }
 
-pub struct TxnBuilder<'db, TxnTableMarkers, DbTableMarkers> {
+pub struct TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode> {
     db: &'db TypesafeDb<DbTableMarkers>,
     txn_table_markers: TxnTableMarkers,
     store_names: HashSet<&'static str>,
+    commit_listener: Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+    mode: PhantomData<Mode>,
 }
 
 impl Txn<(), ()> {
     pub fn builder<DbTableMarkers>(
         db: &TypesafeDb<DbTableMarkers>,
-    ) -> TxnBuilder<'_, Chain<(), ()>, DbTableMarkers> {
+    ) -> TxnBuilder<'_, DbTableMarkers, Chain<(), ()>, ReadOnly> {
         TxnBuilder {
             store_names: Default::default(),
             txn_table_markers: Chain::new(),
             db,
+            commit_listener: db.listener.clone(),
+            mode: PhantomData,
         }
     }
+}
+
+fn commit_logic(
+    actual_txn: idb::Transaction,
+    reactivity_trackers: &RefCell<ReactivityTrackers>,
+    commit_listener: &Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+) -> Result<(), idb::Error> {
+    let _ = actual_txn.commit()?;
+    if let Some(listener) = commit_listener {
+        listener(reactivity_trackers.borrow().deref());
+    };
+    Ok(())
 }
 
 impl<C, Mode> Drop for Txn<C, Mode> {
     fn drop(&mut self) {
+        // If it's still Some(), means one hasn't called .commit() or .abort()
         if let Some(actual_txn) = self.actual_txn.take() {
-            let _ = actual_txn.commit();
+            _ = commit_logic(
+                actual_txn,
+                &mut self.reactivity_trackers,
+                &self.commit_listener,
+            );
         }
     }
 }
 
-impl<'db, TxnTableMarkers, DbTableMarkers> TxnBuilder<'db, TxnTableMarkers, DbTableMarkers> {
+impl<'db, DbTableMarkers, TxnTableMarkers, Mode>
+    TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode>
+{
     pub fn with_store<H2>(
         self,
-    ) -> TxnBuilder<'db, Chain<H2::Marker, TxnTableMarkers>, DbTableMarkers>
+    ) -> TxnBuilder<'db, DbTableMarkers, Chain<H2::Marker, TxnTableMarkers>, Mode>
     where
         H2: Store,
         DbTableMarkers: StoreMarker<H2>,
@@ -136,38 +176,57 @@ impl<'db, TxnTableMarkers, DbTableMarkers> TxnBuilder<'db, TxnTableMarkers, DbTa
             txn_table_markers: new_markers,
             store_names: new_table_names,
             db: self.db,
+            commit_listener: self.commit_listener,
+            mode: self.mode,
         }
     }
 
-    /// Create a read write txn
-    pub fn rw(self) -> Txn<TxnTableMarkers, ReadWrite> {
+    pub fn read_write(self) -> TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, ReadWrite> {
+        TxnBuilder {
+            txn_table_markers: self.txn_table_markers,
+            store_names: self.store_names,
+            db: self.db,
+            commit_listener: self.commit_listener,
+            mode: PhantomData,
+        }
+    }
+
+    pub fn read_only(self) -> TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, ReadOnly> {
+        TxnBuilder {
+            txn_table_markers: self.txn_table_markers,
+            store_names: self.store_names,
+            db: self.db,
+            commit_listener: self.commit_listener,
+            mode: PhantomData,
+        }
+    }
+
+    pub fn with_no_commit_listener(self) -> Self {
+        Self {
+            commit_listener: None,
+            ..self
+        }
+    }
+}
+
+impl<'db, TxnTableMarkers, DbTableMarkers, Mode>
+    TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode>
+where
+    Mode: TxnMode,
+{
+    pub fn build(self) -> Txn<TxnTableMarkers, Mode> {
         let store_names = self.store_names.into_iter().collect::<Vec<_>>();
         Txn {
             markers: self.txn_table_markers,
             actual_txn: Some(
                 self.db
                     .inner
-                    .transaction(&store_names, ReadWrite::actual_mode())
+                    .transaction(&store_names, Mode::actual_mode())
                     .expect(""),
             ),
             mode: PhantomData,
-            reactivity_trackers: Some(Default::default()),
-        }
-    }
-
-    /// Create a read only txn
-    pub fn ro(self) -> Txn<TxnTableMarkers, ReadOnly> {
-        let store_names = self.store_names.into_iter().collect::<Vec<_>>();
-        Txn {
-            markers: self.txn_table_markers,
-            actual_txn: Some(
-                self.db
-                    .inner
-                    .transaction(&store_names, ReadWrite::actual_mode())
-                    .expect(""),
-            ),
-            mode: PhantomData,
-            reactivity_trackers: Some(Default::default()),
+            reactivity_trackers: Default::default(),
+            commit_listener: self.commit_listener,
         }
     }
 }

@@ -9,6 +9,7 @@ use crate::{
 };
 
 impl ToDb for DeploymentProtectionRuleRequestedPullRequestsState {
+    type Args = ();
     type OtherChanges = ();
     type DbType = github_api::models::milestone::OpenOrClosed;
 
@@ -16,6 +17,8 @@ impl ToDb for DeploymentProtectionRuleRequestedPullRequestsState {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         use github_api::models::milestone::OpenOrClosed::*;
         let state = match self {
@@ -27,6 +30,7 @@ impl ToDb for DeploymentProtectionRuleRequestedPullRequestsState {
 }
 
 impl ToDb for DeploymentStatusCreatedDeploymentCreatorType {
+    type Args = ();
     type OtherChanges = ();
     type DbType = github_api::models::user::Type;
 
@@ -34,6 +38,8 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreatorType {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         use github_api::models::user::Type::*;
         Ok((
@@ -48,6 +54,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreatorType {
 }
 
 impl ToDb for DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsActions {
+    type Args = ();
     type OtherChanges = ();
     type DbType = github_api::models::app_1_permissions::ReadOrWrite;
 
@@ -55,6 +62,8 @@ impl ToDb for DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsA
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         use github_api::models::app_1_permissions::ReadOrWrite::*;
         Ok((
@@ -71,6 +80,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsA
     }
 }
 impl ToDb for DeploymentStatusCreatedDeploymentCreator {
+    type Args = ();
     type OtherChanges = ();
     type DbType = types::user::User;
 
@@ -78,6 +88,8 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreator {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         let DeploymentStatusCreatedDeploymentCreator {
             avatar_url,
@@ -145,7 +157,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreator {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type())),
+                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 user_view_type: user_view_type.into(),
@@ -156,6 +168,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreator {
     }
 }
 impl ToDb for DeploymentReviewApprovedReviewersReviewer {
+    type Args = ();
     type OtherChanges = ();
     type DbType = types::user::User;
 
@@ -163,6 +176,8 @@ impl ToDb for DeploymentReviewApprovedReviewersReviewer {
 
     fn try_to_db_type_and_other_changes(
         self,
+
+        _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
         let DeploymentReviewApprovedReviewersReviewer {
             avatar_url,
@@ -229,7 +244,7 @@ impl ToDb for DeploymentReviewApprovedReviewersReviewer {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type())),
+                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 user_view_type: Avail::No,

@@ -24,7 +24,7 @@ impl<W: WSClient> SyncEngine<W> {
             .txn()
             .with_store::<IssuesInitialSyncStatus>()
             .with_store::<Issue>()
-            .ro();
+            .build();
         let initial_sync_status = txn
             .object_store::<IssuesInitialSyncStatus>()?
             .get(id)
@@ -53,7 +53,7 @@ impl<W: WSClient> SyncEngine<W> {
             .txn()
             .with_store::<Repository>()
             .with_store::<User>()
-            .ro();
+            .build();
         let repo = txn
             .object_store::<Repository>()?
             .get(id)
@@ -104,14 +104,15 @@ impl<W: WSClient> SyncEngine<W> {
 
             let txn = Changes::txn(&self.db)
                 .with_store::<IssuesInitialSyncStatus>()
-                .rw();
-            self.merge_and_upsert_changes(&txn, changes).await?;
+                .read_write()
+                .build();
             txn.object_store::<IssuesInitialSyncStatus>()?
                 .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
                 })
                 .await?;
+            self.merge_and_upsert_changes(txn, changes).await?;
 
             page += 1;
             if last_fetched_num < MAX_PER_PAGE as usize {
@@ -119,7 +120,12 @@ impl<W: WSClient> SyncEngine<W> {
             }
         }
 
-        let txn = self.db.txn().with_store::<IssuesInitialSyncStatus>().rw();
+        let txn = self
+            .db
+            .txn()
+            .with_store::<IssuesInitialSyncStatus>()
+            .read_write()
+            .build();
         txn.object_store::<IssuesInitialSyncStatus>()?
             .put(&IssuesInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,

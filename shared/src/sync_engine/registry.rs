@@ -3,17 +3,23 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use idalloc::Slab;
 use send_wrapper::SendWrapper;
 
-pub struct Registry<T> {
+struct Inner<T> {
     alloc: Slab<u32>,
-    map: SendWrapper<Rc<RefCell<HashMap<u32, T>>>>,
+    map: HashMap<u32, T>,
+}
+
+pub struct Registry<T> {
+    inner: SendWrapper<Rc<RefCell<Inner<T>>>>,
 }
 
 /// We want to avoid requiring `T: Default` here, so we can't derive this.
 impl<T> Default for Registry<T> {
     fn default() -> Self {
         Self {
-            alloc: Default::default(),
-            map: SendWrapper::new(Rc::new(Default::default())),
+            inner: SendWrapper::new(Rc::new(RefCell::new(Inner {
+                alloc: Default::default(),
+                map: Default::default(),
+            }))),
         }
     }
 }
@@ -24,14 +30,23 @@ impl<T> Registry<T> {
     }
 
     /// Will return the function that will remove it from the registry
-    pub fn add(&mut self, t: T) -> impl Fn() + Send + Sync {
-        let id = self.alloc.next();
-        self.map.borrow_mut().insert(id, t);
-
-        let map = self.map.clone();
+    pub fn add(&self, t: T) -> impl Fn() + Send + Sync {
+        let id = {
+            let mut inner = self.inner.borrow_mut();
+            let id = inner.alloc.next();
+            inner.map.insert(id, t);
+            id
+        };
+        let inner = self.inner.clone();
 
         move || {
-            map.borrow_mut().remove(&id);
+            inner.borrow_mut().map.remove(&id);
         }
+    }
+}
+
+impl<T: Clone> Registry<T> {
+    pub fn get(&self) -> Vec<T> {
+        self.inner.borrow().map.values().cloned().collect()
     }
 }

@@ -18,3 +18,4 @@ pub use index::{Index, IndexSpec};
 pub use store::Store;
 pub use txn::{Present, ReactivityTrackers, ReadOnly, ReadWrite, Txn, TxnBuilder, TxnMode};
 pub use txn_valid_for_store::StoreMarker;
+pub use chain::Chain;

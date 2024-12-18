@@ -38,8 +38,8 @@ impl<W: WSClient> SyncEngine<W> {
             .into_iter()
             .try_fold(Changes::default(), |acc, new| acc.with_added(new))?;
 
-        let txn = Changes::txn(&self.db).rw();
-        self.merge_and_upsert_changes(&txn, changes).await?;
+        let txn = Changes::txn(&self.db).read_write().build();
+        self.merge_and_upsert_changes(txn, changes).await?;
 
         Ok(())
     }

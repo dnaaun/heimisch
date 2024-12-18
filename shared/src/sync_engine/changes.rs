@@ -1,6 +1,6 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use typesafe_idb::TypesafeDb;
+use typesafe_idb::{ReadOnly, TypesafeDb};
 
 use typesafe_idb::{Present, StoreMarker, Txn, TxnBuilder, TxnMode};
 
@@ -32,6 +32,21 @@ pub struct Changes {
     licenses: HashMap<LicenseId, License>,
     milestones: HashMap<MilestoneId, Milestone>,
     labels: HashMap<LabelId, Label>,
+}
+
+pub trait IntoChanges {
+    fn into_changes(self: Self) -> Result<Changes, MergeError>;
+}
+
+impl<T> IntoChanges for T
+where
+    Changes: AddChanges<T>,
+{
+    fn into_changes(self: Self) -> Result<Changes, MergeError> {
+        let mut changes = Changes::default();
+        changes.add(self)?;
+        Ok(changes)
+    }
 }
 
 pub trait StoreMarkersForChanges:
@@ -67,7 +82,7 @@ impl Changes {
     /// A transaction builder that contains all the stores that `Changes` might interact with.
     pub fn txn<DbStoreMarkers>(
         db: &TypesafeDb<DbStoreMarkers>,
-    ) -> TxnBuilder<'_, impl StoreMarkersForChanges, DbStoreMarkers>
+    ) -> TxnBuilder<'_, DbStoreMarkers, impl StoreMarkersForChanges, ReadOnly>
     where
         DbStoreMarkers: StoreMarkersForChanges,
     {
@@ -304,8 +319,8 @@ impl<W: WSClient> SyncEngine<W> {
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
     >(
         &self,
-        txn: &Txn<Marker, Mode>,
-        changes: Changes,
+        txn: Txn<Marker, Mode>,
+        changes: impl IntoChanges,
     ) -> SyncResult<(), W::Error> {
         let Changes {
             github_apps,
@@ -316,36 +331,18 @@ impl<W: WSClient> SyncEngine<W> {
             licenses,
             labels,
             milestones,
-        } = changes;
-        merge_and_upsert_issues::<W, Marker, Mode>(txn, issues).await?;
-        merge_and_upsert_issue_comments::<W, Marker, Mode>(txn, issue_comments).await?;
-        merge_and_upsert_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
-        merge_and_upsert_users::<W, Marker, Mode>(txn, users).await?;
-        merge_and_upsert_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
-        upsert_labels::<W, Marker, Mode>(txn, labels).await?;
+        } = changes.into_changes()?;
+        merge_and_upsert_issues::<W, Marker, Mode>(&txn, issues).await?;
+        merge_and_upsert_issue_comments::<W, Marker, Mode>(&txn, issue_comments).await?;
+        merge_and_upsert_github_apps::<W, Marker, Mode>(&txn, github_apps).await?;
+        merge_and_upsert_users::<W, Marker, Mode>(&txn, users).await?;
+        merge_and_upsert_repositorys::<W, Marker, Mode>(&txn, repositorys).await?;
+        merge_and_upsert_milestones::<W, Marker, Mode>(&txn, milestones).await?;
+        merge_and_upsert_licenses::<W, Marker, Mode>(&txn, licenses).await?;
+        upsert_labels::<W, Marker, Mode>(&txn, labels).await?;
 
-        // TODO: Move this to it's own function like above.
-        let milestone_store = txn.object_store::<Milestone>()?;
-        for (_, milestone) in milestones {
-            let existing = milestone_store.get(&milestone.id).await?;
-            let merged = match existing {
-                Some(existing) => existing.with_merged(milestone)?,
-                None => milestone,
-            };
-            milestone_store.put(&merged).await?;
-        }
+        txn.commit().await?;
 
-        // TODO: Move this to it's own function like above.
-        let license_store = txn.object_store::<License>()?;
-        for (_, license) in licenses {
-            let existing = license_store.get(&license.key).await?;
-
-            let merged = match existing {
-                Some(existing) => existing.with_merged(license)?,
-                None => license,
-            };
-            license_store.put(&merged).await?;
-        }
         Ok(())
     }
 }
@@ -427,6 +424,48 @@ where
             None => user,
         };
         user_store.put(&merged).await?;
+    }
+
+    Ok(())
+}
+
+async fn merge_and_upsert_licenses<W: WSClient, Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    licenses: HashMap<LicenseId, License>,
+) -> SyncResult<(), W::Error>
+where
+    Marker: StoreMarker<License>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let license_store = txn.object_store::<License>()?;
+    for (_, license) in licenses {
+        let existing = license_store.get(&license.key).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(license)?,
+            None => license,
+        };
+        license_store.put(&merged).await?;
+    }
+
+    Ok(())
+}
+
+async fn merge_and_upsert_milestones<W: WSClient, Marker, Mode>(
+    txn: &Txn<Marker, Mode>,
+    milestones: HashMap<MilestoneId, Milestone>,
+) -> SyncResult<(), W::Error>
+where
+    Marker: StoreMarker<Milestone>,
+    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+{
+    let milestone_store = txn.object_store::<Milestone>()?;
+    for (_, milestone) in milestones {
+        let existing = milestone_store.get(&milestone.id).await?;
+        let merged = match existing {
+            Some(existing) => existing.with_merged(milestone)?,
+            None => milestone,
+        };
+        milestone_store.put(&merged).await?;
     }
 
     Ok(())

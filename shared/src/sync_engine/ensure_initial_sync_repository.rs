@@ -19,7 +19,7 @@ impl<W: WSClient> SyncEngine<W> {
                 .db
                 .txn()
                 .with_store::<RepositoryInitialSyncStatus>()
-                .ro();
+                .build();
             let store = txn.object_store::<RepositoryInitialSyncStatus>()?;
             if let Some(RepoSyncStatus::Full) = store.get(&repo.id).await?.map(|r| r.status) {
                 return Ok(());
@@ -33,7 +33,8 @@ impl<W: WSClient> SyncEngine<W> {
             .db
             .txn()
             .with_store::<RepositoryInitialSyncStatus>()
-            .rw();
+            .read_write()
+            .build();
         txn.object_store::<RepositoryInitialSyncStatus>()?
             .put(&RepositoryInitialSyncStatus {
                 status: RepoSyncStatus::Full,

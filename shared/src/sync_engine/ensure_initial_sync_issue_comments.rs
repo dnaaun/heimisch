@@ -30,7 +30,7 @@ impl<W: WSClient> SyncEngine<W> {
             .txn()
             .with_store::<IssueCommentsInitialSyncStatus>()
             .with_store::<IssueComment>()
-            .ro();
+            .build();
         let initial_sync_status = txn
             .object_store::<IssueCommentsInitialSyncStatus>()?
             .get(id)
@@ -59,7 +59,7 @@ impl<W: WSClient> SyncEngine<W> {
             .txn()
             .with_store::<Repository>()
             .with_store::<User>()
-            .ro();
+            .build();
         let repo = txn
             .object_store::<Repository>()?
             .get(id)
@@ -101,7 +101,7 @@ impl<W: WSClient> SyncEngine<W> {
             let db = self.db.clone();
             let issue_id_from_number = |number| {
                 let id = *id;
-                let txn = db.txn().with_store::<Issue>().ro();
+                let txn = db.txn().with_store::<Issue>().build();
                 async move {
                     txn.object_store::<Issue>()
                         .unwrap()
@@ -128,14 +128,15 @@ impl<W: WSClient> SyncEngine<W> {
 
             let txn = Changes::txn(&self.db)
                 .with_store::<IssueCommentsInitialSyncStatus>()
-                .rw();
-            self.merge_and_upsert_changes(&txn, changes).await?;
+                .read_write()
+                .build();
             txn.object_store::<IssueCommentsInitialSyncStatus>()?
                 .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
                 })
                 .await?;
+            self.merge_and_upsert_changes(txn, changes).await?;
 
             page += 1;
             if last_fetched_num < MAX_PER_PAGE as usize {
@@ -147,7 +148,8 @@ impl<W: WSClient> SyncEngine<W> {
             .db
             .txn()
             .with_store::<IssueCommentsInitialSyncStatus>()
-            .rw();
+            .read_write()
+            .build();
         txn.object_store::<IssueCommentsInitialSyncStatus>()?
             .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,

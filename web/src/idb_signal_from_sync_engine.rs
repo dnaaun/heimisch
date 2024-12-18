@@ -2,7 +2,7 @@ use std::{future::Future, sync::Arc};
 
 use send_wrapper::SendWrapper;
 use shared::sync_engine::{DbStoreMarkers, SyncEngine};
-use typesafe_idb::{Txn, TypesafeDb};
+use typesafe_idb::{Chain, ReadOnly, Txn, TxnBuilder, TxnMode};
 
 use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
@@ -14,36 +14,41 @@ pub trait IdbSignalFromSyncEngine<DbStoreMarkers> {
     /// of signals from leptos/solid/whatever).
     fn idb_signal<TxnStoreMarkers, Mode, Fut, T>(
         &self,
-        make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
+        make_txn: impl for<'a> Fn(
+                TxnBuilder<'a, DbStoreMarkers, Chain<(), ()>, ReadOnly>,
+            ) -> Txn<TxnStoreMarkers, Mode>
+            + 'static,
         compute_val: impl Fn(Arc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>
     where
         TxnStoreMarkers: 'static,
-        Mode: 'static,
+        Mode: TxnMode + 'static,
         Fut: Future<Output = Result<T, FrontendError>>,
-        T: 'static + Send + Sync;
+        T: 'static + Send + Sync + std::fmt::Debug;
 }
 
 impl<WSClient> IdbSignalFromSyncEngine<DbStoreMarkers> for SyncEngine<WSClient> {
-    /// TODO: This doesn't react to dependencies changing in `compute_val()`
+    #[track_caller]
     fn idb_signal<TxnStoreMarkers, Mode, Fut, T>(
         &self,
-        make_txn: impl Fn(&TypesafeDb<DbStoreMarkers>) -> Txn<TxnStoreMarkers, Mode> + 'static,
+        make_txn: impl for<'a> Fn(
+                TxnBuilder<'a, DbStoreMarkers, Chain<(), ()>, ReadOnly>,
+            ) -> Txn<TxnStoreMarkers, Mode>
+            + 'static,
         compute_val: impl Fn(Arc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>
     where
         TxnStoreMarkers: 'static,
         Fut: Future<Output = Result<T, FrontendError>>,
-        Mode: 'static,
-        T: 'static + Send + Sync,
+        Mode: TxnMode + 'static,
+        T: 'static + Send + Sync + std::fmt::Debug,
     {
         let db = SendWrapper::new(self.db.clone());
-        let make_txn = move || make_txn(db.as_ref());
-        let idb_notifiers = self.idb_notifiers.clone();
-        let register_notifier = move |thingy| {
-            let mut idb_notifiers = idb_notifiers.lock();
-            Box::new(idb_notifiers.add(thingy))
-        };
-        IdbSignal::new(make_txn, compute_val, register_notifier)
+        let make_txn = move || make_txn(db.txn().with_no_commit_listener());
+        let db_subscriptions = self.db_subscriptions.clone();
+
+        IdbSignal::new(make_txn, compute_val, move |db_subscription| {
+            db_subscriptions.add(db_subscription)
+        })
     }
 }

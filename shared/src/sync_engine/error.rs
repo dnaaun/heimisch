@@ -3,7 +3,6 @@ use std::fmt::Debug;
 
 use super::conversions::conversion_error::ConversionError;
 
-
 #[derive(Debug)]
 pub enum SyncErrorSrc<WebsocketEError: std::fmt::Debug> {
     OwnApi(OwnApiError),
@@ -40,7 +39,7 @@ impl<W: Debug> From<ConversionError> for SyncError<W> {
         match value {
             ConversionError::Merge(merge_error) => SyncErrorSrc::Merge(merge_error),
             ConversionError::Json(error) => SyncErrorSrc::SerdeToString(error),
-            ConversionError::Jiff(err) => SyncErrorSrc::Jiff(err)
+            ConversionError::Jiff(err) => SyncErrorSrc::Jiff(err),
         }
         .into()
     }

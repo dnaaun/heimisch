@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use crate::sync_engine::error::SyncError;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum ApplyingError<W: Debug> {
@@ -12,8 +12,8 @@ pub enum ApplyingError<W: Debug> {
 
 pub type ApplyingResult<T, W> = Result<T, ApplyingError<W>>;
 
-impl<W: Debug> From<SyncError<W>> for ApplyingError<W> {
-    fn from(value: SyncError<W>) -> Self {
-        ApplyingError::Sync(value)
+impl<W: Debug, T: Into<SyncError<W>>> From<T> for ApplyingError<W> {
+    fn from(value: T) -> Self {
+        Self::Sync(value.into())
     }
 }

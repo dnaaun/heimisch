@@ -4,8 +4,7 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    milestone::MilestoneId, label::LabelId,
-    repository::RepositoryId, team::TeamId, user::UserId,
+    label::LabelId, milestone::MilestoneId, repository::RepositoryId, team::TeamId, user::UserId,
 };
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
