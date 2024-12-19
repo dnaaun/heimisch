@@ -38,14 +38,20 @@ impl TxnMode for ReadWrite {
     }
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+pub struct StoreName(pub &'static str);
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+pub struct SerializedId(pub String);
+
 #[derive(Debug, Clone, Default)]
 pub struct ReactivityTrackers {
     /// The value of the hasmap is the serde serialized value of the id.
-    pub stores_accessed_by_id: HashMap<&'static str, HashSet<String>>,
+    pub stores_accessed_by_id: HashMap<StoreName, HashSet<SerializedId>>,
 
     /// This will include get_all() accesses and also index accesses.
     /// It maybe good
-    pub stores_accessed_in_bulk: HashSet<&'static str>,
+    pub stores_accessed_in_bulk: HashSet<StoreName>,
 }
 impl ReactivityTrackers {
     pub fn overlaps(&self, other: &ReactivityTrackers) -> bool {
@@ -63,6 +69,17 @@ impl ReactivityTrackers {
                 other.stores_accessed_in_bulk.contains(store_name_a)
                     || other.stores_accessed_by_id.contains_key(store_name_a)
             })
+    }
+
+    pub fn add_by_id_access(&mut self, store_name: StoreName, serialized_id: SerializedId) {
+        self.stores_accessed_by_id
+            .entry(store_name)
+            .or_default()
+            .insert(serialized_id);
+    }
+
+    pub fn add_bulk_access(&mut self, store_name: StoreName) {
+        self.stores_accessed_in_bulk.insert(store_name);
     }
 }
 
@@ -140,7 +157,10 @@ fn commit_logic(
 ) -> Result<(), idb::Error> {
     let _ = actual_txn.commit()?;
     if let Some(listener) = commit_listener {
+        // tracing::trace!("Invoking listener for txn commit");
         listener(reactivity_trackers.borrow().deref());
+    } else {
+        // tracing::trace!("No listener to invoke for txn commit.");
     };
     Ok(())
 }

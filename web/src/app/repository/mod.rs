@@ -150,6 +150,9 @@ pub fn RepositoryPage() -> impl IntoView {
         },
     );
 
+    // Memo is necessary to make sure effect runs once for each repo
+    let repository_id = Memo::new(move |_| repository_id.get());
+
     Effect::new(move || {
         let sync_engine = sync_engine.clone();
         if let Some(Ok(Some(repository_id))) = repository_id.get() {

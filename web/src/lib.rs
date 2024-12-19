@@ -13,6 +13,9 @@ use hydration::{AutoReload, HydrationScripts};
 use leptos::prelude::*;
 use leptos::{config::LeptosOptions, *};
 
+#[cfg(test)]
+pub mod tests;
+
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>

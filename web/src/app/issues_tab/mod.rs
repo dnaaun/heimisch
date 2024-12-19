@@ -6,7 +6,7 @@ use leptos::prelude::*;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
-    repository::{Repository, RepositoryId},
+    repository::RepositoryId,
     user::User,
 };
 

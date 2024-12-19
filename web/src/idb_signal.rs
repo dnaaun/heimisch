@@ -1,4 +1,9 @@
-use std::{future::Future, ops::Deref, panic::Location, sync::Arc};
+use std::{
+    future::{Future, IntoFuture},
+    ops::Deref,
+    panic::Location,
+    sync::Arc,
+};
 
 use leptos::prelude::*;
 use parking_lot::Mutex;
@@ -14,6 +19,8 @@ pub struct IdbSignalInner<S> {
     local_resource: DontKNowWhatToNameYou<S>,
     /// Is an Option because idb is async, and so on initial render, this will be None
     deregister_notifier: DeregisterNotifierFunc,
+
+    #[allow(unused)]
     defined_at: &'static Location<'static>,
 }
 
@@ -55,6 +62,23 @@ impl<S: 'static + Send + Sync + Clone> IdbSignal<S> {
     }
 }
 
+impl<T> IntoFuture for IdbSignal<T>
+where
+    AsyncDerived<T, LocalStorage>: std::future::IntoFuture,
+    T: 'static,
+{
+    type Output = <AsyncDerived<T, LocalStorage> as IntoFuture>::Output;
+    type IntoFuture = <AsyncDerived<T, LocalStorage> as IntoFuture>::IntoFuture;
+
+    fn into_future(self) -> Self::IntoFuture {
+        self.inner
+            .try_get_value()
+            .unwrap()
+            .local_resource
+            .into_future()
+    }
+}
+
 impl<T> IdbSignal<T>
 where
     T: std::fmt::Debug + 'static + Send + Sync,
@@ -90,15 +114,15 @@ where
             let deregister_notifier = deregister_notifier.clone();
             let register_notifier = register_notifier.clone();
             async move {
+                // tracing::trace!("In async block in async derived.");
                 trigger.track();
                 let txn = make_txn();
                 let val = compute_val(txn.clone()).await;
-                trigger.track();
 
                 let db_subscription = DbSubscription {
                     original_reactivity_trackers: txn.reactivity_trackers(),
                     func: Arc::new(move || {
-                        tracing::debug!("IndexedDB notification change received for idb_signal defined at: {defined_at}");
+                        // tracing::trace!("IndexedDB notification change received for idb_signal defined at: {defined_at}");
                         trigger.notify();
                     }),
                 };

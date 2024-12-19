@@ -8,12 +8,16 @@ pub enum FrontendError {
     Idb(Arc<SendWrapper<typesafe_idb::Error>>),
 }
 
+/// I only implement this so that I can hash Result<_, FrontendError>, so don't do things like
+/// creating a HashSet<FrontendError>.
 impl Hash for FrontendError {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {}
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        format!("{self:?}").hash(state)
+    }
 }
 
 impl PartialEq for FrontendError {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         false
     }
 }

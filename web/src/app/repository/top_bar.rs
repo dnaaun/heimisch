@@ -1,7 +1,6 @@
 use leptos::prelude::*;
 use shared::types::{
-    repository::{Repository, RepositoryId},
-    repository_initial_sync_status::RepositoryInitialSyncStatus,
+    repository::RepositoryId, repository_initial_sync_status::RepositoryInitialSyncStatus,
 };
 
 use crate::{
@@ -50,6 +49,7 @@ pub fn TopBar(
             )
         },
     );
+    let initial_sync_done = Memo::new(move |_| initial_sync_done.get());
 
     let status_el = move || match initial_sync_done.get() {
         Some(result) => match result {

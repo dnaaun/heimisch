@@ -1,6 +1,9 @@
 use std::{cell::RefCell, marker::PhantomData};
 
-use crate::{serde_abstraction, Index, IndexSpec, Present, ReactivityTrackers, Store, TxnMode};
+use crate::{
+    serde_abstraction, Index, IndexSpec, Present, ReactivityTrackers, SerializedId, Store,
+    StoreName, TxnMode,
+};
 
 #[derive(Clone)]
 pub struct ObjectStore<'txn, Store, Mode> {
@@ -18,10 +21,7 @@ where
     pub async fn get(&self, id: &S::Id) -> Result<Option<S>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .stores_accessed_by_id
-            .entry(S::NAME)
-            .or_default()
-            .insert(serde_json::to_string(id)?);
+            .add_by_id_access(StoreName(S::NAME), SerializedId(serde_json::to_string(id)?));
 
         Ok(self
             .actual_object_store
@@ -34,8 +34,7 @@ where
     pub async fn get_all(&self) -> Result<Vec<S>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .stores_accessed_in_bulk
-            .insert(S::NAME);
+            .add_bulk_access(StoreName(S::NAME));
         Ok(self
             .actual_object_store
             .get_all(None, None)?
@@ -61,6 +60,10 @@ where
 {
     /// Only mut for consistency with the read-only methods.
     pub async fn delete(&self, id: &S::Id) -> Result<(), crate::Error> {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_by_id_access(StoreName(S::NAME), SerializedId(serde_json::to_string(id)?));
+
         Ok(self
             .actual_object_store
             .delete(idb::Query::Key(serde_abstraction::to_value(&id)?))?
@@ -69,6 +72,10 @@ where
 
     /// Only mut for consistency with the read-only methods.
     pub async fn put(&self, item: &S) -> Result<(), crate::Error> {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_by_id_access(StoreName(S::NAME), SerializedId(serde_json::to_string(item.id())?));
+
         self.actual_object_store
             .put(&serde_abstraction::to_value(item)?, None)?
             .await?;

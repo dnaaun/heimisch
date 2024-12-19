@@ -24,7 +24,7 @@ where
             ) -> Txn<TxnStoreMarkers, Mode>
             + 'static,
         compute_val: impl Fn(Arc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
-    ) -> Memo<Option<Result<T, FrontendError>>>;
+    ) -> IdbSignal<Result<T, FrontendError>>;
 }
 
 impl<WSClient, TxnStoreMarkers, Mode, Fut, T>
@@ -43,14 +43,13 @@ where
             ) -> Txn<TxnStoreMarkers, Mode>
             + 'static,
         compute_val: impl Fn(Arc<Txn<TxnStoreMarkers, Mode>>) -> Fut + 'static,
-    ) -> Memo<Option<Result<T, FrontendError>>> {
+    ) -> IdbSignal<Result<T, FrontendError>> {
         let db = SendWrapper::new(self.db.clone());
         let make_txn = move || make_txn(db.txn().with_no_commit_listener());
         let db_subscriptions = self.db_subscriptions.clone();
 
-        let idb_signal = IdbSignal::new(make_txn, compute_val, move |db_subscription| {
+        IdbSignal::new(make_txn, compute_val, move |db_subscription| {
             db_subscriptions.add(db_subscription)
-        });
-        Memo::new(move |_| idb_signal.get())
+        })
     }
 }

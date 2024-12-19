@@ -62,7 +62,13 @@ pub fn Sidebar() -> impl IntoView {
                 .collect::<Vec<_>>())
         },
     );
-    let repositorys_by_owner = Memo::new(move |_| repositorys_by_owner.get().transpose());
+    let repositorys_by_owner = Memo::new_with_compare(
+        move |_| repositorys_by_owner.get().transpose(),
+        |a, b| match (a, b) {
+            (Some(Ok(Some(a))), Some(Ok(Some(b)))) => a != b,
+            _ => true,
+        },
+    );
     Ok::<_, FrontendError>(Some(view! {
         <div class="flex flex-nowrap w-screen">
             <button

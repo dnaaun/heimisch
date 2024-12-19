@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::{
     serde_abstraction::{from_value, to_value},
-    ReactivityTrackers, Store,
+    ReactivityTrackers, Store, StoreName,
 };
 
 pub trait IndexSpec {
@@ -24,8 +24,7 @@ impl<IS: IndexSpec> Index<'_, IS> {
     pub async fn get(&self, value: &IS::Type) -> Result<Option<IS::Store>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .stores_accessed_in_bulk
-            .insert(IS::Store::NAME);
+            .add_bulk_access(StoreName(IS::Store::NAME));
 
         Ok(self
             .actual_index
@@ -38,8 +37,7 @@ impl<IS: IndexSpec> Index<'_, IS> {
     pub async fn get_all(&self, value: Option<&IS::Type>) -> Result<Vec<IS::Store>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .stores_accessed_in_bulk
-            .insert(IS::Store::NAME);
+            .add_bulk_access(StoreName(IS::Store::NAME));
 
         Ok(self
             .actual_index
