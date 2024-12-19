@@ -12,7 +12,7 @@ use crate::models;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize, Hash)]
 pub struct WebhooksIssuePullRequest {
     #[serde(rename = "diff_url", skip_serializing_if = "Option::is_none")]
     pub diff_url: Option<String>,

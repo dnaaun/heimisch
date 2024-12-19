@@ -32,7 +32,7 @@ use super::user::UserId;
 )]
 pub struct IssueId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Hash)]
 pub struct Issue {
     pub active_lock_reason: Avail<Option<ActiveLockReason>>,
     pub assignee_id: Avail<Option<UserId>>,

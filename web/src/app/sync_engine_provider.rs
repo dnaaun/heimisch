@@ -1,4 +1,4 @@
-use std::{ops::Deref, rc::Rc, sync::Arc};
+use std::{rc::Rc, sync::Arc};
 
 use crate::typed_websocket_client::TypedWebsocketClient;
 use leptos::prelude::*;
@@ -13,7 +13,7 @@ fn SyncEngineProvider(
     sync_engine: LocalResource<Rc<SyncEngine>>,
 ) -> impl IntoView {
     view! {
-        <Suspense>
+        <Transition>
             {move || {
                 sync_engine
                     .read()
@@ -23,7 +23,7 @@ fn SyncEngineProvider(
                         children()
                     })
             }}
-        </Suspense>
+        </Transition>
     }
 }
 
@@ -44,6 +44,6 @@ where
     }
 }
 
-pub fn use_sync_engine() -> impl Deref<Target = Rc<SyncEngine>> {
-    use_context::<SyncEngineContext>().expect("").clone()
+pub fn use_sync_engine() -> Rc<SyncEngine> {
+    use_context::<SyncEngineContext>().expect("").take()
 }

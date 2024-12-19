@@ -1,12 +1,11 @@
-use std::{future::Future, ops::Deref, sync::Arc};
+use std::{future::Future, ops::Deref, panic::Location, sync::Arc};
 
 use leptos::prelude::*;
 use parking_lot::Mutex;
 use shared::sync_engine::DbSubscription;
 use typesafe_idb::Txn;
 
-// type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
-type DontKNowWhatToNameYou<S> = LocalResource<S>;
+type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
 
 type DeregisterNotifierFunc = Arc<Mutex<Option<Arc<dyn Fn() + Sync + Send>>>>;
 
@@ -15,6 +14,7 @@ pub struct IdbSignalInner<S> {
     local_resource: DontKNowWhatToNameYou<S>,
     /// Is an Option because idb is async, and so on initial render, this will be None
     deregister_notifier: DeregisterNotifierFunc,
+    defined_at: &'static Location<'static>,
 }
 
 /// NOTE: I'm actually not sure if this is ever called due to not understanding totally the life
@@ -39,19 +39,19 @@ impl<S> Clone for IdbSignal<S> {
     }
 }
 
+#[allow(unused)]
 impl<S: 'static + Send + Sync + Clone> IdbSignal<S> {
-    pub fn inner(&self) -> DontKNowWhatToNameYou<S> {
-        self.inner.try_get_value().unwrap().local_resource.clone()
+    pub fn get(&self) -> Option<S> {
+        self.inner.try_get_value().unwrap().local_resource.get()
     }
 
-    pub fn read(&self) -> Option<S> {
+    pub fn get_untracked(&self) -> Option<S> {
         self.inner
             .try_get_value()
             .unwrap()
             .local_resource
-            .read()
+            .read_untracked()
             .clone()
-            .map(|x| x.take())
     }
 }
 
@@ -82,7 +82,9 @@ where
 
         let trigger = Trigger::new();
 
-        let local_resource = LocalResource::new(move || {
+        let defined_at = Location::caller();
+
+        let async_derived = AsyncDerived::new_unsync(move || {
             let make_txn = make_txn.clone();
             let compute_val = compute_val.clone();
             let deregister_notifier = deregister_notifier.clone();
@@ -96,6 +98,7 @@ where
                 let db_subscription = DbSubscription {
                     original_reactivity_trackers: txn.reactivity_trackers(),
                     func: Arc::new(move || {
+                        tracing::debug!("IndexedDB notification change received for idb_signal defined at: {defined_at}");
                         trigger.notify();
                     }),
                 };
@@ -108,8 +111,9 @@ where
 
         Self {
             inner: ArenaItem::new_with_storage(Arc::new(IdbSignalInner {
-                local_resource,
+                local_resource: async_derived,
                 deregister_notifier: deregister_notifier_copy,
+                defined_at,
             })),
         }
     }

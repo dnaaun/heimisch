@@ -21,7 +21,9 @@ pub fn NotFound() -> impl IntoView {
     view! {
         <div class="h-screen w-screen flex justify-center items-center">
             <div class="font-bold text-9xl">404</div>
-            <button on:click=fetch_repos>REMOVE WHEN DONE WITH TESTING(BUT FETCH REPOS FOR NOW)</button>
+            <button on:click=fetch_repos>
+                REMOVE WHEN DONE WITH TESTING(BUT FETCH REPOS FOR NOW)
+            </button>
         </div>
     }
 }

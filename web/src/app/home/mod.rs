@@ -6,7 +6,7 @@ use shared::types::{repository::Repository, user::User};
 
 use crate::{
     app::sync_engine_provider::use_sync_engine, frontend_error::FrontendError,
-    idb_signal::IdbSignal, idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
+    idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
 use super::icon::Icon;
@@ -18,9 +18,7 @@ pub fn Home() -> impl IntoView {}
 #[component]
 pub fn Sidebar() -> impl IntoView {
     let sync_engine = use_sync_engine();
-    let repositorys_by_owner: IdbSignal<
-        Result<Vec<(Option<User>, Vec<Repository>)>, FrontendError>,
-    > = sync_engine.idb_signal(
+    let repositorys_by_owner = sync_engine.idb_signal(
         |txn_builder| {
             txn_builder
                 .with_store::<Repository>()
@@ -56,15 +54,15 @@ pub fn Sidebar() -> impl IntoView {
                         .clone();
                     let repos = iter
                         .sorted_by_key(|(r, _)| r.name.to_lowercase())
-                        .map(|(repo, _)| repo)
+                        .map(|(repo, _)| (repo.id, repo.name))
                         .collect::<Vec<_>>();
-                    (user, repos)
+                    (user.map(|u| u.login), repos)
                 })
-                .sorted_by_key(|(u, _)| u.as_ref().map(|u| u.login.to_lowercase()))
+                .sorted_by_key(|(u, _)| u.clone())
                 .collect::<Vec<_>>())
         },
     );
-    let repositorys_by_owner = move || repositorys_by_owner.read().transpose();
+    let repositorys_by_owner = Memo::new(move |_| repositorys_by_owner.get().transpose());
     Ok::<_, FrontendError>(Some(view! {
         <div class="flex flex-nowrap w-screen">
             <button
@@ -103,10 +101,9 @@ pub fn Sidebar() -> impl IntoView {
                                         each=move || {
                                             repositorys_by_owner.clone().into_iter().flatten()
                                         }
-                                        key=move |(u, _)| u.as_ref().map(|u| u.id)
-                                        children=move |(user, repos)| {
-                                            let user_is_none = user.is_none();
-                                            let user_login = user.map(|u| u.login.clone());
+                                        key=move |(u, _)| u.clone()
+                                        children=move |(user_login, repos)| {
+                                            let user_is_none = user_login.is_none();
                                             view! {
                                                 <ul class="space-y-2 font-medium">
                                                     <li>
@@ -130,10 +127,10 @@ pub fn Sidebar() -> impl IntoView {
                                                         <ul id="dropdown-example" class="py-2 space-y-2">
                                                             <For
                                                                 each=move || repos.clone()
-                                                                key=|r| r.id
-                                                                children=move |repo| {
+                                                                key=|(id, _)| *id
+                                                                children=move |(_, name)| {
                                                                     let href = match &user_login {
-                                                                        Some(u) => Some(format!("/{}/{}", u, repo.name)),
+                                                                        Some(u) => Some(format!("/{}/{}", u, name)),
                                                                         None => todo!(),
                                                                     };
 
@@ -143,7 +140,7 @@ pub fn Sidebar() -> impl IntoView {
                                                                                 href=href
                                                                                 class="flex items-center w-full m-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                                                                             >
-                                                                                {repo.name}
+                                                                                {name}
                                                                             </a>
                                                                         </li>
                                                                     }

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct LabelId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, PartialEq, Hash)]
 pub struct Label {
     pub color: String,
     pub default: bool,

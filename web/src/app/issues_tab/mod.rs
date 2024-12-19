@@ -1,10 +1,12 @@
+use std::ops::Deref;
+
 use itertools::Itertools;
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
-    repository::Repository,
+    repository::{Repository, RepositoryId},
     user::User,
 };
 
@@ -14,7 +16,7 @@ use crate::{
 };
 
 #[component]
-pub fn IssuesTab(repository: Repository) -> impl IntoView {
+pub fn IssuesTab(#[prop(into)] repository_id: Signal<RepositoryId>) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
     let issues = sync_engine.idb_signal(
@@ -23,7 +25,7 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
             Ok(txn
                 .object_store::<Issue>()?
                 .index::<RepositoryIdIndex>()?
-                .get_all(Some(&repository.id))
+                .get_all(Some(repository_id.read().deref()))
                 .await?)
         },
     );
@@ -31,7 +33,7 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
     let issues = Signal::derive(move || {
         Ok::<_, FrontendError>(
             issues
-                .read()
+                .get()
                 .transpose()?
                 .into_iter()
                 .flatten()
@@ -39,7 +41,7 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
         )
     });
 
-    let issues_len = Signal::derive(move || {
+    let issues_len = Memo::new(move |_| {
         issues
             .read()
             .as_ref()
@@ -47,7 +49,7 @@ pub fn IssuesTab(repository: Repository) -> impl IntoView {
             .map_err(|i| i.clone())
     });
 
-    let counts = Signal::derive(move || {
+    let counts = Memo::new(move |_| {
         let issues = issues()?;
         let (open, closed): (Vec<Option<Timestamp>>, Vec<_>) = issues
             .iter()
@@ -112,14 +114,14 @@ pub fn IssueRow(issue: Issue, #[prop(optional)] is_last: bool) -> impl IntoView 
             }
         },
     );
-    let comments_count = move || comments_count.read();
+    let comments_count = Memo::new(move |_| comments_count.get());
 
     let created_at = issue.created_at.clone();
     let closed_at = issue.closed_at.clone();
     let title = issue.title.clone();
     let number = issue.number;
 
-    let login = user.read().transpose()?.flatten().map(|u| u.login.clone());
+    let login = user.get().transpose()?.flatten().map(|u| u.login.clone());
 
     let opened_or_closed_text = closed_at
         .as_ref()

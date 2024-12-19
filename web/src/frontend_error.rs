@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 use send_wrapper::SendWrapper;
 
@@ -7,6 +7,18 @@ pub enum FrontendError {
     #[display("Indexeddb Error: {_0:?}")]
     Idb(Arc<SendWrapper<typesafe_idb::Error>>),
 }
+
+impl Hash for FrontendError {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {}
+}
+
+impl PartialEq for FrontendError {
+    fn eq(&self, other: &Self) -> bool {
+        false
+    }
+}
+
+impl Eq for FrontendError {}
 
 impl std::error::Error for FrontendError {}
 

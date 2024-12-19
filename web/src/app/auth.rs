@@ -92,7 +92,7 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
     };
 
     let fallback = || view! { <Spinner /> };
-    view! { <Suspense fallback>{body}</Suspense> }
+    view! { <Transition fallback>{body}</Transition> }
 }
 
 #[component]
@@ -137,7 +137,7 @@ pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView 
             </div>
         }
     };
-    view! { <Suspense fallback>{body}</Suspense> }
+    view! { <Transition fallback>{body}</Transition> }
 }
 
 #[component]
@@ -161,7 +161,7 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
             });
             let show_copy_to_cli = show_copy_to_cli.is_some();
             (move || view! {
-                <Suspense fallback=LoggingIn>
+                <Transition fallback=LoggingIn>
                     {move || {
                         user_access_token_rsrc
                             .read()
@@ -194,7 +194,7 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                                 }
                             })
                     }}
-                </Suspense>
+                </Transition>
             })
                         .into_any()
         };

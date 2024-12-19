@@ -134,8 +134,14 @@ mod isolate_db_store_markers_impl_type {
             let db_change_notifiers2 = db_change_notifiers.clone();
             let db = db
                 .with_commit_listener(Rc::new(move |reactivity_trackers| {
-                    db_change_notifiers2
-                        .get()
+                    let orig_trackers = db_change_notifiers2.get();
+                    let orig_with_initial = orig_trackers.iter().filter(|sub| sub.original_reactivity_trackers.stores_accessed_by_id.keys().any(|k| k.contains("initial") )
+                        || sub.original_reactivity_trackers.stores_accessed_in_bulk.iter().any(|k| k.contains("initial") )
+                    )
+                        .map(|sub| &sub.original_reactivity_trackers)
+                        .collect::<Vec<_>>();
+                    tracing::debug!("Found cur reactivity_trackers: {:?}, orig reactivity trackers with `initial` are {:?}", reactivity_trackers, orig_with_initial);
+                    orig_trackers
                         .iter()
                         .filter(|sub| {
                             sub.original_reactivity_trackers

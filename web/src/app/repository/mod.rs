@@ -111,7 +111,8 @@ pub fn RepositoryPage() -> impl IntoView {
     });
 
     let sync_engine = use_sync_engine();
-    let repository = sync_engine.idb_signal(
+
+    let repository_id = sync_engine.idb_signal(
         |builder| {
             builder
                 .with_store::<User>()
@@ -141,7 +142,7 @@ pub fn RepositoryPage() -> impl IntoView {
                             .into_iter()
                             .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
 
-                        Ok(repo)
+                        Ok(repo.map(|r| r.id))
                     }
                     None => Ok(None),
                 }
@@ -151,10 +152,10 @@ pub fn RepositoryPage() -> impl IntoView {
 
     Effect::new(move || {
         let sync_engine = sync_engine.clone();
-        if let Some(Ok(Some(repository))) = repository.read() {
+        if let Some(Ok(Some(repository_id))) = repository_id.get() {
             spawn_local(async move {
                 let _ = sync_engine
-                    .ensure_initial_sync_repository(&repository, false)
+                    .ensure_initial_sync_repository(&repository_id, false)
                     .await
                     .log_err();
             })
@@ -162,7 +163,7 @@ pub fn RepositoryPage() -> impl IntoView {
     });
 
     view! {
-        <Suspense fallback=|| {
+        <Transition fallback=|| {
             view! {
                 <div class="min-w-min h-screen">
                     <Spinner />
@@ -170,41 +171,27 @@ pub fn RepositoryPage() -> impl IntoView {
             }
         }>
             {move || {
-                let repository = match repository.read().as_ref() {
-                    Some(r) => r.as_ref()?,
+                let repository_id = match repository_id.get() {
+                    Some(r) => r?,
                     None => return Ok::<_, FrontendError>(None),
                 }
                     .clone();
-                let repository = match repository {
+                let repository_id = match repository_id {
                     Some(r) => r,
                     None => {
-                        return Ok(
-                            Some(
-                                // The Option<> is to wait for the idb load.
-                                // early return for idb error.
-
-                                // The Option<> is to if repo is not found in idb.
-                                view! { <NotFound /> }
-                                    .into_any(),
-                            ),
-                        );
+                        return Ok(Some(view! { <NotFound /> }.into_any()));
                     }
                 };
-
                 let tabs: Vec<Tab<_>> = vec![
                     Tab {
                         content_el: Arc::new(move || {
-
-                            // Will trigger the fallback on the <Suspense> until repo initial sync is done.
-
-                            view! { <IssuesTab repository=repository.clone() /> }
-                                .into_any()
+                            view! { <IssuesTab repository_id /> }.into_any()
                         }),
                         key: TabName::Issues,
                     },
                     Tab {
                         content_el: Arc::new(move || {
-                            view! { <PullRequestsTab _repository_id=42.into() /> }.into_any()
+                            view! { <PullRequestsTab repository_id /> }.into_any()
                         }),
                         key: TabName::Pulls,
                     },
@@ -214,6 +201,7 @@ pub fn RepositoryPage() -> impl IntoView {
 
                         view! {
                             <TopBar
+                                repository_id
                                 owner_name=Memo::new(move |_| params().owner_name)
                                 repo_name=Memo::new(move |_| params().repo_name)
                             />
@@ -227,6 +215,6 @@ pub fn RepositoryPage() -> impl IntoView {
                     ),
                 )
             }}
-        </Suspense>
+        </Transition>
     }
 }
