@@ -66,7 +66,7 @@ pub fn Sidebar() -> impl IntoView {
     );
     let repositorys_by_owner = move || repositorys_by_owner.read().transpose();
     Ok::<_, FrontendError>(Some(view! {
-        <div class="flex flex-nowrap">
+        <div class="flex flex-nowrap w-screen">
             <button
                 data-drawer-target="sidebar-multi-level-sidebar"
                 data-drawer-toggle="sidebar-multi-level-sidebar"
@@ -160,7 +160,7 @@ pub fn Sidebar() -> impl IntoView {
                     }}
                 </div>
             </aside>
-            <main>
+            <main class="flex-grow">
                 <Outlet />
             </main>
         </div>

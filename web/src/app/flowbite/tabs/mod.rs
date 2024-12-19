@@ -60,8 +60,8 @@ where
                     />
                 </ul>
             </div>
-            <div class="flex items-center justify-center w-screen">
-                <div class="m-5 max-w-screen-xl w-screen">{active_tab_content_el}</div>
+            <div class="flex items-center justify-center">
+                <div class="m-5 max-w-screen-xl w-full">{active_tab_content_el}</div>
             </div>
         </div>
     }
