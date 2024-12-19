@@ -11,9 +11,10 @@ pub struct IssuesInitialSyncStatus {
     pub id: RepositoryId,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub enum InitialSyncStatusEnum {
     Full,
     Partial,
+    #[default]
     NoSync,
 }
