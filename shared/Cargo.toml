@@ -26,6 +26,7 @@ diesel = { version = "2.2.4", optional = true }
 http = "1.1.0"
 ewebsock = "0.8.0"
 pin-project = "1.1.7"
+serde_urlencoded = "0.7.1"
 
 [features]
 hydrate = [ "jiff/js" ]

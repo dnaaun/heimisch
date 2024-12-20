@@ -11,6 +11,7 @@ use futures::{
 use gloo_net::websocket::{self, futures::WebSocket, Message};
 use gloo_utils::errors::JsError;
 use pin_project::pin_project;
+use url::Url;
 
 trait BinaryEncoder<T>: Encoder<T, Encoded = Vec<u8>> {
     // type Error;
@@ -166,8 +167,8 @@ where
     type Sender = Sender<Codec, ClientType, ServerType>;
     type Receiver = Receiver<Codec, ClientType, ServerType>;
 
-    async fn establish(url: &str) -> Result<(Self::Sender, Self::Receiver), Self::Error> {
-        let (sink, stream) = gloo_net::websocket::futures::WebSocket::open(url)?.split();
+    async fn establish(url: &Url) -> Result<(Self::Sender, Self::Receiver), Self::Error> {
+        let (sink, stream) = gloo_net::websocket::futures::WebSocket::open(url.as_str())?.split();
         Ok((
             Sender {
                 sink,

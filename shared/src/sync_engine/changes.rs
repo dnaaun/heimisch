@@ -319,7 +319,7 @@ impl<W: WSClient> SyncEngine<W> {
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
     >(
         &self,
-        txn: Txn<Marker, Mode>,
+        txn: &Txn<Marker, Mode>,
         changes: impl IntoChanges,
     ) -> SyncResult<(), W::Error> {
         let Changes {
@@ -340,8 +340,6 @@ impl<W: WSClient> SyncEngine<W> {
         merge_and_upsert_milestones::<W, Marker, Mode>(&txn, milestones).await?;
         merge_and_upsert_licenses::<W, Marker, Mode>(&txn, licenses).await?;
         upsert_labels::<W, Marker, Mode>(&txn, labels).await?;
-
-        txn.commit().await?;
 
         Ok(())
     }

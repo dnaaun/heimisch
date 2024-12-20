@@ -13,7 +13,7 @@ pub struct ServerMsg {
 #[derive(Serialize, Deserialize)]
 pub enum ClientMsg {}
 
-// #[derive(Serialize, Deserialize)]
-// pub struct WebsocketUpdatesQueryParams {
-//     pub updates_since: Timestamp,
-// }
+#[derive(Serialize, Deserialize)]
+pub struct WebsocketUpdatesQueryParams {
+    pub return_backlog_after: Option<Timestamp>,
+}

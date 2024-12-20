@@ -15,3 +15,4 @@ pub mod repository_initial_sync_status;
 pub mod team;
 pub mod team_organization;
 pub mod user;
+pub mod last_webhook_update_at;

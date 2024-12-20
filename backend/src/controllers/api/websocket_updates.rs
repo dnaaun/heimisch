@@ -1,7 +1,14 @@
-use shared::utils::LogErr;
+use shared::{
+    endpoints::defns::api::websocket_updates::WebsocketUpdatesQueryParams, utils::LogErr,
+};
 use tokio::sync::mpsc;
 
-use axum::{extract::State, response::IntoResponse, routing::get, Router};
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use axum_typed_websockets::{Message, WebSocket, WebSocketUpgrade};
 use futures::{SinkExt, StreamExt};
 use shared::{
@@ -11,7 +18,7 @@ use shared::{
 
 use crate::{
     app_state::AppState, auth_backend::AuthBackend, axum_helpers::extractors::AuthenticatedUser,
-    websocket_updates_bucket::CAPACITY,
+    db::get_webhooks_for_user_asc, websocket_updates_bucket::DEFAULT_CAPACITY,
 };
 
 pub fn api_websocket_updates(router: Router<AppState>) -> Router<AppState> {
@@ -22,20 +29,43 @@ async fn inner(
     auth_user: AuthenticatedUser<AuthBackend>,
     ws: WebSocketUpgrade<ServerMsg, ClientMsg>,
     State(app_state): State<AppState>,
-    // Query(query): Query<WebsocketUpdatesQueryParams>,
+    Query(query): Query<WebsocketUpdatesQueryParams>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| {
-        handle_websocket_updates(app_state, auth_user.github_user_id, socket)
+        handle_websocket_updates(app_state, auth_user.github_user_id, query, socket)
     })
 }
 
 async fn handle_websocket_updates(
     app_state: AppState,
     user_id: UserId,
-    // WebsocketUpdatesQueryParams { updates_since }: WebsocketUpdatesQueryParams,
+    WebsocketUpdatesQueryParams {
+        return_backlog_after,
+    }: WebsocketUpdatesQueryParams,
     socket: WebSocket<ServerMsg, ClientMsg>,
 ) {
-    let (tx, mut rx) = mpsc::channel(CAPACITY);
+    let backlog = match return_backlog_after {
+        Some(return_backlog_after) => {
+            match get_webhooks_for_user_asc(&app_state, user_id, return_backlog_after)
+                .await
+                .log_err()
+            {
+                Ok(b) => b,
+                Err(_) => return,
+            }
+        }
+        None => vec![],
+    };
+    // Note that the backlog should be at most that of a week, so I hope this is ok.
+    let capacity = DEFAULT_CAPACITY.max(backlog.len());
+    let (tx, mut rx) = mpsc::channel(capacity);
+    for server_msg in backlog {
+        if tx.send(server_msg).await.log_err().is_err() {
+            let _ = socket.close().await.log_err();
+            return;
+        }
+    }
+
     tokio::spawn(async move {
         let (mut socket_writer, mut socket_reader) = socket.split();
         loop {

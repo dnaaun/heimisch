@@ -106,13 +106,13 @@ impl<W: WSClient> SyncEngine<W> {
                 .with_store::<IssuesInitialSyncStatus>()
                 .read_write()
                 .build();
+            self.merge_and_upsert_changes(&txn, changes).await?;
             txn.object_store::<IssuesInitialSyncStatus>()?
                 .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
                 })
                 .await?;
-            self.merge_and_upsert_changes(txn, changes).await?;
 
             page += 1;
             if last_fetched_num < MAX_PER_PAGE as usize {

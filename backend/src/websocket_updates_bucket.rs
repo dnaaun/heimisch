@@ -9,7 +9,7 @@ pub struct WebsocketUpdatesBucket {
     senders: DashMap<UserId, tokio::sync::broadcast::Sender<ServerMsg>>,
 }
 
-pub const CAPACITY: usize = 1000; // :shrug:
+pub const DEFAULT_CAPACITY: usize = 1000; // :shrug:
 
 impl WebsocketUpdatesBucket {
     fn unsubscribe(&self, id: &UserId) {
@@ -32,7 +32,7 @@ impl WebsocketUpdatesBucket {
             .senders
             .entry(id)
             .or_insert_with(|| {
-                let (sender, _) = tokio::sync::broadcast::channel(CAPACITY);
+                let (sender, _) = tokio::sync::broadcast::channel(DEFAULT_CAPACITY);
                 sender
             })
             .value()

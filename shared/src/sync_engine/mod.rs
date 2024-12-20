@@ -80,6 +80,7 @@ mod isolate_db_store_markers_impl_type {
     use std::{fmt::Debug, marker::PhantomData};
 
     use crate::types::label::Label;
+    use crate::types::last_webhook_update_at::LastWebhookUpdateAt;
     use crate::{
         endpoints::endpoint_client::EndpointClient,
         types::{
@@ -109,7 +110,8 @@ mod isolate_db_store_markers_impl_type {
         + StoreMarker<Repository>
         + StoreMarker<GithubApp>
         + StoreMarker<User>
-        + StoreMarker<Issue>;
+        + StoreMarker<Issue>
+        + StoreMarker<LastWebhookUpdateAt>;
 
     impl<W: WSClient> SyncEngine<W> {
         pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W::Error>
@@ -127,6 +129,7 @@ mod isolate_db_store_markers_impl_type {
                 .with_store::<IssuesInitialSyncStatus>()
                 .with_store::<InstallationAccessTokenRow>()
                 .with_store::<IssueComment>()
+                .with_store::<LastWebhookUpdateAt>()
                 .with_store::<IssueCommentsInitialSyncStatus>()
                 .with_store::<RepositoryInitialSyncStatus>();
 
