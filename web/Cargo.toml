@@ -11,7 +11,7 @@ edition = "2021"
 leptos = { version = "0.7", features = ["nightly", "tracing"] }
 leptos_reactive = { version = "*" } 
 leptos_router = { version = "0.7", features = ["nightly"] }
-wasm-bindgen = { version = "0.2.93", default-features = false }
+wasm-bindgen = { version = "0.2.99", default-features = false }
 web-sys = { version = "*", default-features = false, features = ["Window", "Clipboard",
 "Navigator", "Storage", "WebSocket"] }
 tracing = "0.1.40"

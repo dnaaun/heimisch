@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 web = { path = "../web", version = "*", features = ["hydrate"] }
 leptos = { version = "0.7", features = ["hydrate", "nightly"] }
-wasm-bindgen = { version = "0.2.93", default-features = false }
+wasm-bindgen = { version = "0.2.99", default-features = false }
 console_error_panic_hook = "0.1.7"
 tracing-wasm = "0.2.1"
 tracing = { version = "0.1.41", default-features = false }
