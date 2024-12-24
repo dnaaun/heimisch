@@ -79,7 +79,9 @@ pub fn TopBar(
                     </li>
                 </ul>
             </nav>
-            <div class="pl-2 flex flex-nowrap justify-center items-center gap-1 text-gray-300 text-xs">{status_el}</div>
+            <div class="pl-2 flex flex-nowrap justify-center items-center gap-1 text-gray-300 text-xs">
+                {status_el}
+            </div>
         </div>
     }
 }

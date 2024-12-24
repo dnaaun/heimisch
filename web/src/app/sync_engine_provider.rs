@@ -6,8 +6,6 @@ use send_wrapper::SendWrapper;
 type SyncEngine = shared::sync_engine::SyncEngine<TypedWebsocketClient>;
 pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
 
-/// TODO: Refactor such that <SyncEngineProvider> is not a separate component since this function
-/// is it's only usgae.
 pub fn sync_engine_provided<V>(
     children: impl Fn() -> V + Send + Clone + 'static,
     sync_engine: LocalResource<Rc<SyncEngine>>,
@@ -25,7 +23,7 @@ where
                         .get()
                         .map(|sync_engine| {
                             provide_context::<SyncEngineContext>(sync_engine);
-                            children
+                            children()
                         })
                 }}
             </Transition>
