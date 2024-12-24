@@ -13,13 +13,16 @@ use shared::types::{
 };
 
 use crate::{
-    app::sync_engine_provider::use_sync_engine, frontend_error::FrontendError,
+    app::{repository::RepositoryPageParentRouteContext, sync_engine_provider::use_sync_engine},
+    frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
+    use_unwrapped_context::use_unwrapped_context,
 };
 
 #[component]
-pub fn IssuesTab(#[prop(into)] repository_id: Signal<RepositoryId>) -> impl IntoView {
+pub fn IssuesTab() -> impl IntoView {
     let sync_engine = use_sync_engine();
+    let RepositoryPageParentRouteContext(repository_id) = use_unwrapped_context();
 
     let issues = sync_engine.idb_signal(
         |builder| builder.with_store::<Issue>().build(),
