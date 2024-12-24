@@ -7,7 +7,7 @@ use super::sync_engine_provider::use_sync_engine;
 #[component]
 pub fn NotFound() -> impl IntoView {
     let sync_engine = use_sync_engine();
-    let fetch_repos = move |_| {
+    let on_click = move |_| {
         let sync_engine = sync_engine.clone();
         spawn_local(async move {
             futures::future::join_all(
@@ -19,9 +19,9 @@ pub fn NotFound() -> impl IntoView {
         });
     };
     view! {
-        <div class="h-screen w-screen flex justify-center items-center">
+        <div class="h-screen w-screen flex flex-col gap-4 justify-center items-center">
             <div class="font-bold text-9xl">404</div>
-            <button on:click=fetch_repos>
+            <button on:click=on_click class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                 REMOVE WHEN DONE WITH TESTING(BUT FETCH REPOS FOR NOW)
             </button>
         </div>

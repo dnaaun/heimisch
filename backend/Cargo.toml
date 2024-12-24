@@ -24,9 +24,6 @@ url = { version = "2.5.2", features = ["serde"] }
 reqwest = { version = "0.12.8", features = ["json"] }
 github_webhook_body = { path = "../github_webhook_body" }
 
-leptos = { version = "0.7", features = ["nightly", "ssr", "tracing"] }
-leptos_axum = { version = "0.7" }
-web = { path = "../web", version = "*", features = ["ssr"] }
 dotenvy = "0.15.7"
 backtrace = "0.3.74"
 jsonwebtoken = "9.3.0"

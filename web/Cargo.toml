@@ -8,7 +8,7 @@ edition = "2021"
 # This specific combination of versions for leptos and thaw was selected simply because it's the one
 # that compiles :).
 # https://discord.com/channels/1031524867910148188/1290135091179294730/1290404436321112084
-leptos = { version = "0.7", features = ["nightly", "tracing"] }
+leptos = { version = "0.7", features = ["nightly", "tracing", "csr"] }
 leptos_reactive = { version = "*" } 
 leptos_router = { version = "0.7", features = ["nightly"] }
 wasm-bindgen = { version = "0.2.99", default-features = false }
@@ -35,7 +35,7 @@ leptos-use = { version = "0.14", default-features = false, features = ["use_webs
 strum = "0.26.3"
 send_wrapper = "0.6.0"
 itertools = "0.13.0"
-jiff = { git = "https://github.com/BurntSushi/jiff", default-features = false, features = ["serde", "alloc", "std"] }
+jiff = { git = "https://github.com/BurntSushi/jiff", default-features = false, features = ["serde", "alloc", "std", "js"] }
 codee = "0.2.0"
 icondata = { version = "0.5.0", default-features = false, features = ["heroicons"] }
 icondata_core = "0.1.0"
@@ -43,6 +43,8 @@ pin-project = "1.1.7"
 gloo-net = { version = "0.6.0", default-features = false, features = ["websocket"] }
 gloo-utils = { version = "0.2.0", default-features = false }
 wasm-bindgen-test = "0.3.45"
+tracing-wasm = "0.2.1"
+console_error_panic_hook = "0.1.7"
 
 [dev-dependencies]
 tracing-subscriber = "0.3.19"
@@ -52,8 +54,6 @@ wasm-bindgen-test = "0.3.45"
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "jiff/js"]
-ssr = ["leptos/ssr", "leptos_router/ssr", "shared/ssr"]
 tracing = []
 
 [lints.rust]

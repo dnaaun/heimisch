@@ -1,6 +1,6 @@
 mod github_auth;
 
-use std::env;
+use std::{env, net::Ipv4Addr};
 
 use dotenvy::dotenv;
 use github_auth::AppAuth;
@@ -23,6 +23,8 @@ pub struct GithubApiConfig {
 
 #[derive(Clone)]
 pub struct Config {
+    pub port: u16,
+    pub host: Ipv4Addr,
     pub db: DatabaseConfig,
     pub github_api: GithubApiConfig,
     pub heimisch_domain_url: Url,
@@ -55,6 +57,9 @@ impl Config {
 pub async fn init_config() -> Config {
     dotenv().expect("");
 
+    let host = env::var("HOST").unwrap().parse().unwrap();
+    let port = env::var("PORT").unwrap().parse().unwrap();
+
     let db = DatabaseConfig {
         url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
     };
@@ -82,6 +87,8 @@ pub async fn init_config() -> Config {
         .expect("App Auth settings invalid");
 
     Config {
+        port,
+        host,
         db,
         github_api,
         heimisch_domain_url: Url::parse(&env::var("HEIMISCH_DOMAIN_NAME").expect("")).expect(""),

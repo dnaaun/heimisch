@@ -11,8 +11,7 @@ mod sync_engine_provider;
 use std::rc::Rc;
 
 use auth::Auth;
-use home::{Home, Sidebar};
-use leptos_router::components::{Outlet, ParentRoute, Routes};
+use leptos_router::components::{ParentRoute, Routes};
 
 use leptos::prelude::*;
 use leptos_router::components::{Route, Router};
@@ -52,24 +51,22 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Router>
-            <Routes fallback=NotFound>
+            <Routes fallback=sync_engine_provided(NotFound, sync_engine)>
                 <Route path=path!("/auth") view=sync_engine_provided(Auth, sync_engine) />
-                <ParentRoute path=path!("/") view=sync_engine_provided(Sidebar, sync_engine)>
-                    <ParentRoute
-                        path=path!(":owner_name/:repo_name")
-                        view=sync_engine_provided(RepositoryPage, sync_engine)
-                    >
-                        <Route
-                            path=path!("/issues")
-                            view=sync_engine_provided(IssuesTab, sync_engine)
-                        />
-                        <Route
-                            path=path!("/pulls")
-                            view=sync_engine_provided(PullRequestsTab, sync_engine)
-                        />
-                    </ParentRoute>
-                </ParentRoute>
+                <ParentRoute
+                    path=path!("/:owner_name/:repo_name")
+                    view=sync_engine_provided(RepositoryPage, sync_engine)
+                >
+                    <Route
+                        path=path!("/issues")
+                        view=sync_engine_provided(IssuesTab, sync_engine)
+                    />
+                    <Route
+                        path=path!("/pulls")
+                        view=sync_engine_provided(PullRequestsTab, sync_engine)
+                    />
+            </ParentRoute>
             </Routes>
         </Router>
-    }
+    }.into_any()
 }

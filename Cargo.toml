@@ -5,7 +5,6 @@ members = [
     "backend",
     "cli",
     "web",
-    "web_hydrate",
     "utils",
     "diesel-test",
     "meta_tools",

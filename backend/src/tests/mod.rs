@@ -162,7 +162,7 @@ async fn with_test_server<Fut: Future>(
 
             let server = TestServer::builder()
                 .http_transport() // For websocket testing, this is necessary.
-                .build(get_router(config.clone(), None).await)
+                .build(get_router(config.clone()).await)
                 .map_err(TestError::new_test_server)?;
 
             let test_setup = TestSetup {

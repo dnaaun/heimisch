@@ -10,6 +10,7 @@ pub fn redirect_handler(path: Url) {
 thread_local! {
     pub static ENDPOINT_CLIENT: EndpointClient = {
         let domain_name = Url::parse(env!("HEIMISCH_DOMAIN_NAME")).expect("");
+        tracing::info!("YOOO: {domain_name}");
         EndpointClient::new(redirect_handler, domain_name)
     };
 }
