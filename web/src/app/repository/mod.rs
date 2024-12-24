@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use leptos::{prelude::*, task::spawn_local};
 use leptos_router::{
+    components::Outlet,
     hooks::{use_location, use_navigate, use_params},
     params::Params,
 };
@@ -187,7 +188,7 @@ pub fn RepositoryPage() -> impl IntoView {
                     }
                 };
                 provide_context(RepositoryPageParentRouteContext(repository_id.into()));
-                let tabs = vec![ TabName::Issues, TabName::Pulls ];
+                let tabs = vec![TabName::Issues, TabName::Pulls];
                 Ok(
                     Some(
 
@@ -204,10 +205,9 @@ pub fn RepositoryPage() -> impl IntoView {
                                     set_active_tab=move |t| *new_active_tab.write() = t
                                 />
                                 <div class="flex items-center justify-center">
-                                    <div class="m-5 max-w-screen-xl w-full">{ ||
-                                        ()
-                                        // view! { <Outlet /> }
-                                    }</div>
+                                    <div class="m-5 max-w-screen-xl w-full">
+                                        <Outlet />
+                                    </div>
                                 </div>
                             </div>
                         }

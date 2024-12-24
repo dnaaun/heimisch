@@ -8,7 +8,6 @@ use leptos::prelude::*;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
-    repository::RepositoryId,
     user::User,
 };
 
@@ -16,13 +15,15 @@ use crate::{
     app::{repository::RepositoryPageParentRouteContext, sync_engine_provider::use_sync_engine},
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
-    use_unwrapped_context::use_unwrapped_context,
 };
 
 #[component]
 pub fn IssuesTab() -> impl IntoView {
     let sync_engine = use_sync_engine();
-    let RepositoryPageParentRouteContext(repository_id) = use_unwrapped_context();
+    let repository_id = match use_context() {
+        Some(RepositoryPageParentRouteContext(repository_id)) => repository_id,
+        None => return ().into_any(),
+    };
 
     let issues = sync_engine.idb_signal(
         |builder| builder.with_store::<Issue>().build(),
@@ -85,6 +86,7 @@ pub fn IssuesTab() -> impl IntoView {
             />
         </>
     }
+    .into_any()
 }
 
 #[component]
