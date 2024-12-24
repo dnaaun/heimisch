@@ -4,9 +4,7 @@ pub mod error_component;
 mod flowbite;
 mod home;
 mod icon;
-mod issues_tab;
 mod not_found;
-mod pull_requests_tab;
 mod repository;
 mod sync_engine_provider;
 

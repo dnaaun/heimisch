@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
+use issues_tab::IssuesTab;
 use leptos::{prelude::*, task::spawn_local};
 use leptos_router::{
     hooks::{use_navigate, use_params},
     params::Params,
 };
+use pull_requests_tab::PullRequestsTab;
 use shared::{
     types::{
         self,
@@ -15,6 +17,8 @@ use shared::{
 };
 use top_bar::TopBar;
 mod top_bar;
+pub mod issues_tab;
+pub mod pull_requests_tab;
 
 use crate::{
     app::not_found::NotFound, frontend_error::FrontendError,
@@ -23,8 +27,6 @@ use crate::{
 
 use super::{
     flowbite::{Spinner, Tab, Tabs},
-    issues_tab::IssuesTab,
-    pull_requests_tab::PullRequestsTab,
     sync_engine_provider::use_sync_engine,
 };
 
@@ -68,7 +70,6 @@ impl std::fmt::Display for TabName {
     }
 }
 
-/// RTI: URL params of shape `RepositoryPageParams`.
 #[component]
 pub fn RepositoryPage() -> impl IntoView {
     let params = || {
