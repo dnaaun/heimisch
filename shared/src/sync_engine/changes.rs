@@ -8,7 +8,7 @@ use crate::avail::MergeError;
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
-use super::WSClient;
+use super::TypedTransportTrait;
 use super::{
     super::types::{
         github_app::{GithubApp, GithubAppId},
@@ -313,7 +313,7 @@ where
     }
 }
 
-impl<W: WSClient> SyncEngine<W> {
+impl<W: TypedTransportTrait> SyncEngine<W> {
     pub async fn merge_and_upsert_changes<
         Marker: StoreMarkersForChanges,
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -321,7 +321,7 @@ impl<W: WSClient> SyncEngine<W> {
         &self,
         txn: &Txn<Marker, Mode>,
         changes: impl IntoChanges,
-    ) -> SyncResult<(), W::Error> {
+    ) -> SyncResult<(), W> {
         let Changes {
             github_apps,
             issues,
@@ -345,10 +345,10 @@ impl<W: WSClient> SyncEngine<W> {
     }
 }
 
-async fn merge_and_upsert_issues<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_issues<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     issues: HashMap<IssueId, Issue>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Issue>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -366,10 +366,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_issue_comments<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_issue_comments<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     issue_comments: HashMap<IssueCommentId, IssueComment>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<IssueComment>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -386,10 +386,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_github_apps<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_github_apps<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     github_apps: HashMap<GithubAppId, GithubApp>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<GithubApp>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -406,10 +406,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_users<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_users<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     users: HashMap<UserId, User>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<User>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -427,10 +427,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_licenses<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_licenses<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     licenses: HashMap<LicenseId, License>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<License>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -448,10 +448,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_milestones<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_milestones<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     milestones: HashMap<MilestoneId, Milestone>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Milestone>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -469,10 +469,10 @@ where
     Ok(())
 }
 
-async fn merge_and_upsert_repositorys<W: WSClient, Marker, Mode>(
+async fn merge_and_upsert_repositorys<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     repositorys: HashMap<RepositoryId, Repository>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Repository>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -490,10 +490,10 @@ where
     Ok(())
 }
 
-async fn upsert_labels<W: WSClient, Marker, Mode>(
+async fn upsert_labels<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
     labels: HashMap<LabelId, Label>,
-) -> SyncResult<(), W::Error>
+) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Label>,
     Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,

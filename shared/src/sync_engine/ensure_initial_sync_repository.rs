@@ -3,9 +3,9 @@ use crate::types::{
     repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
 };
 
-use super::{error::SyncResult, SyncEngine, WSClient};
+use super::{error::SyncResult, typed_transport, SyncEngine};
 
-impl<W: WSClient> SyncEngine<W> {
+impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
     /// `force_initial_sync` means we ignore the RepositoryInitialSyncStatus. This will come into
     /// play when we implement the "if the last time we were in touch is less than 7 days, do a
     /// full resync."
@@ -13,7 +13,7 @@ impl<W: WSClient> SyncEngine<W> {
         &self,
         id: &RepositoryId,
         force_initial_sync: bool,
-    ) -> SyncResult<(), W::Error> {
+    ) -> SyncResult<(), T> {
         if !force_initial_sync {
             let txn = self
                 .db

@@ -1,14 +1,14 @@
 use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
+use typed_transport::TypedTransportTrait;
 use typesafe_idb::{ReactivityTrackers, TypesafeDb};
 mod conversions;
 mod ensure_initial_sync_issues;
 mod ensure_initial_sync_repository;
 mod fetch_repositorys_for_installation_id;
 
-mod typed_websocket_client;
-pub use typed_websocket_client::*;
+pub mod typed_transport;
 
 pub mod changes;
 mod ensure_initial_sync_issue_comments;
@@ -20,11 +20,8 @@ use std::{cmp::Ordering, rc::Rc};
 
 use crate::{
     endpoints::{
-        defns::api::{
-            installations::{
-                GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
-            },
-            websocket_updates::{ClientMsg, ServerMsg},
+        defns::api::installations::{
+            GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
         },
         endpoint_client::EndpointClient,
     },
@@ -60,13 +57,6 @@ impl<T: serde::Serialize> codee::Encoder<T> for JsonSerdeToBinaryCodec {
         serde_json::to_vec(val)
     }
 }
-pub trait WSClient: TypedWebsocketClient<ClientMsg, ServerMsg, JsonSerdeToBinaryCodec> {}
-impl<W> WSClient for W
-where
-    W: TypedWebsocketClient<ClientMsg, ServerMsg, JsonSerdeToBinaryCodec>,
-    W::Error: Debug,
-{
-}
 
 #[derive(Clone)]
 pub struct DbSubscription {
@@ -96,8 +86,9 @@ mod isolate_db_store_markers_impl_type {
     use typesafe_idb::{StoreMarker, TypesafeDb};
 
     use super::registry::Registry;
+    use super::typed_transport::TypedTransportTrait;
     use super::DbSubscription;
-    use super::{error::SyncResult, SyncEngine, WSClient};
+    use super::{error::SyncResult, SyncEngine};
 
     pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
         + StoreMarker<RepositoryInitialSyncStatus>
@@ -113,11 +104,8 @@ mod isolate_db_store_markers_impl_type {
         + StoreMarker<Issue>
         + StoreMarker<LastWebhookUpdateAt>;
 
-    impl<W: WSClient> SyncEngine<W> {
-        pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W::Error>
-        where
-            W::Error: Debug,
-        {
+    impl<W: TypedTransportTrait> SyncEngine<W> {
+        pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W> {
             let db = TypesafeDb::builder("heimisch".into())
                 .with_store::<Issue>()
                 .with_store::<User>()
@@ -153,7 +141,7 @@ mod isolate_db_store_markers_impl_type {
                 db: Rc::new(db),
                 db_subscriptions: SendWrapper::new(db_change_notifiers),
                 endpoint_client,
-                _ws_client: PhantomData,
+                _transport: PhantomData,
             })
         }
     }
@@ -161,20 +149,20 @@ mod isolate_db_store_markers_impl_type {
 
 pub use isolate_db_store_markers_impl_type::DbStoreMarkers;
 
-pub struct SyncEngine<WSClient> {
+pub struct SyncEngine<Transport> {
     pub db: Rc<TypesafeDb<DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     endpoint_client: EndpointClient,
-    _ws_client: PhantomData<WSClient>,
+    _transport: PhantomData<Transport>,
 }
 
 const MAX_PER_PAGE: i32 = 100;
 
-impl<W: WSClient> SyncEngine<W> {
+impl<W: TypedTransportTrait> SyncEngine<W> {
     async fn get_api_conf(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<github_api::apis::configuration::Configuration, W::Error> {
+    ) -> SyncResult<github_api::apis::configuration::Configuration, W> {
         let bearer_access_token = Some(self.get_valid_iac(id).await?.token);
         let conf = github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
@@ -188,7 +176,7 @@ impl<W: WSClient> SyncEngine<W> {
     async fn get_valid_iac(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<InstallationAccessToken, W::Error> {
+    ) -> SyncResult<InstallationAccessToken, W> {
         let txn = self
             .db
             .txn()

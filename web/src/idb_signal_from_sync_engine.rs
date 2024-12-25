@@ -27,8 +27,8 @@ where
     ) -> IdbSignal<Result<T, FrontendError>>;
 }
 
-impl<WSClient, TxnStoreMarkers, Mode, Fut, T>
-    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T> for SyncEngine<WSClient>
+impl<TT, TxnStoreMarkers, Mode, Fut, T>
+    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T> for SyncEngine<TT>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,

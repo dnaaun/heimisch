@@ -1,15 +1,15 @@
 use crate::types::installation::InstallationId;
 
 use super::{
-    changes::Changes, conversions::from_repository::from_repository, SyncEngine, SyncResult,
-    WSClient, MAX_PER_PAGE,
+    changes::Changes, conversions::from_repository::from_repository,
+    typed_transport::TypedTransportTrait, SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
-impl<W: WSClient> SyncEngine<W> {
+impl<W: TypedTransportTrait> SyncEngine<W> {
     pub async fn fetch_repositorys_for_installation_id(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<(), W::Error> {
+    ) -> SyncResult<(), W> {
         let conf = self.get_api_conf(id).await?;
 
         let mut repos = vec![];

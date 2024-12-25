@@ -11,17 +11,18 @@ use crate::{
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::ToDb,
+        typed_transport::{establish, TypedTransportError},
     },
     types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtId},
 };
 
-use super::{error::SyncErrorSrc, SyncEngine, SyncResult, WSClient};
+use super::{error::SyncErrorSrc, typed_transport::TypedTransportTrait, SyncEngine, SyncResult};
 
 impl<W> SyncEngine<W>
 where
-    W: WSClient,
+    W: TypedTransportTrait,
 {
-    pub async fn recv_websocket_updates(&self) -> SyncResult<(), W::Error> {
+    pub async fn recv_websocket_updates(&self) -> SyncResult<(), W> {
         let mut url = self
             .endpoint_client
             .domain
@@ -42,12 +43,12 @@ where
             })
             .expect(""),
         ));
-        let (_, recver) = try_n_times(async || W::establish(&url).await, 3)
+        let websocket_conn = try_n_times(async || establish::<W>(&url).await, 3)
             .await
-            .map_err(SyncErrorSrc::WebSocket)?;
-        pin_mut!(recver);
+            .map_err(|e| SyncErrorSrc::WebSocket(e))?;
+        pin_mut!(websocket_conn);
         loop {
-            let fut = recver.next();
+            let fut = websocket_conn.next();
             pin_mut!(fut);
             match fut.await {
                 Some(value) => match value {
@@ -86,7 +87,7 @@ where
         }
     }
 
-    async fn apply_update_to_db(&self, _server_msg: &ServerMsg) -> ApplyingResult<(), W::Error> {
+    async fn apply_update_to_db(&self, _server_msg: &ServerMsg) -> ApplyingResult<(), W> {
         use github_webhook_body::*;
         let changes = match _server_msg.body.clone() {
             WebhookBody::Issues(issues) => {

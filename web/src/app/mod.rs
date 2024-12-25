@@ -5,8 +5,8 @@ mod home;
 mod icon;
 mod not_found;
 mod repository;
-mod sync_engine_provider;
 pub mod sidebar;
+mod sync_engine_provider;
 
 use std::rc::Rc;
 
@@ -27,13 +27,13 @@ pub use leptos_router;
 use wasm_bindgen_futures::spawn_local;
 
 use crate::consts::ENDPOINT_CLIENT;
-use crate::typed_websocket_client::TypedWebsocketClient;
+use crate::typed_transport::MyWebSocket;
 
 #[component]
 pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         Rc::new(
-            shared::sync_engine::SyncEngine::<TypedWebsocketClient>::new(
+            shared::sync_engine::SyncEngine::<MyWebSocket>::new(
                 ENDPOINT_CLIENT.with(|e| e.clone()),
             )
             .await
@@ -68,5 +68,6 @@ pub fn App() -> impl IntoView {
             </ParentRoute>
             </Routes>
         </Router>
-    }.into_any()
+    }
+    .into_any()
 }

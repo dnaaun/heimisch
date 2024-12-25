@@ -6,7 +6,7 @@ mod frontend_error;
 mod idb_signal;
 mod idb_signal_from_sync_engine;
 mod local_storage;
-pub mod typed_websocket_client;
+pub mod typed_transport;
 mod use_unwrapped_context;
 
 use app::App;

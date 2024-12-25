@@ -4,7 +4,8 @@ use super::{
     changes::Changes,
     conversions::from_issue_comment::from_issue_comment,
     error::{SyncErrorSrc, SyncResult},
-    SyncEngine, WSClient, MAX_PER_PAGE,
+    typed_transport::TypedTransportTrait,
+    SyncEngine, MAX_PER_PAGE,
 };
 use crate::types::{
     installation::InstallationId,
@@ -16,14 +17,14 @@ use crate::types::{
     user::User,
 };
 
-impl<W: WSClient> SyncEngine<W> {
+impl<W: TypedTransportTrait> SyncEngine<W> {
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.
     pub async fn ensure_initial_sync_issue_comments(
         &self,
         id: &RepositoryId,
         installation_id: &InstallationId,
-    ) -> SyncResult<(), W::Error> {
+    ) -> SyncResult<(), W> {
         let mut page = 1;
         let txn = self
             .db
