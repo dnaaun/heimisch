@@ -45,7 +45,7 @@ pub fn create(router: Router<AppState>) -> Router<AppState> {
             insert_installation_if_not_exists(
                 &state,
                 crate::db::Installation {
-                    id: *installation_id,
+                    id: installation_id,
                     github_user_id,
                     created_at: SystemTime::now(),
                 },

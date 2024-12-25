@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     endpoints::endpoint_client::MaybePageRedirect,
-    types::{installation::InstallationId, installation_access_token_row::InstallationAccessToken},
+    types::{installation::{Installation, InstallationId}, installation_access_token_row::InstallationAccessToken},
 };
 
 use super::super::super::endpoint::{Endpoint, Method};
@@ -24,4 +24,23 @@ impl Endpoint for GetInstallationAccessTokenEndpoint {
     type JsonPayload = GetInstallationAccessTokenPayload;
 
     type JsonResponse = MaybePageRedirect<InstallationAccessToken>;
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetInstallationsResponse {
+    pub installations: Vec<Installation>
+}
+
+pub struct GetInstallationsEndpoint;
+
+impl Endpoint for GetInstallationsEndpoint {
+    type QueryParams = ();
+
+    const METHOD: Method = Method::Get;
+
+    const PATH: &'static str = "/api/installations/";
+
+    type JsonPayload = ();
+
+    type JsonResponse = MaybePageRedirect<GetInstallationsResponse>;
 }

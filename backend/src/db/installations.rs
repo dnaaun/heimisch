@@ -6,12 +6,12 @@ use diesel::prelude::*;
 
 use shared::types::{installation::InstallationId, user::UserId};
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 #[derive(Insertable, Queryable, Clone)]
 #[diesel(table_name = installations)]
 pub struct Installation {
-    pub id: i64,
+    pub id: InstallationId,
     pub created_at: SystemTime,
     pub github_user_id: UserId,
 }
@@ -46,6 +46,21 @@ pub async fn get_installation(
                 .load(conn)?
                 .into_iter()
                 .next())
+        })
+        .await??)
+}
+
+pub async fn get_installations(
+    pool: impl AsRef<Pool>,
+    user_id_arg: UserId,
+) -> Result<Vec<Installation>> {
+    let conn = pool.as_ref().get().await?;
+    Ok(conn
+        .interact(move |conn| {
+            Ok::<_, Error>(table
+                .select(all_columns)
+                .filter(github_user_id.eq(user_id_arg))
+                .load(conn)?)
         })
         .await??)
 }

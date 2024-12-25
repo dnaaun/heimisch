@@ -7,6 +7,7 @@ use crate::db::{get_login_user, LoginUser};
 pub struct AuthBackend {
     pool: Pool,
 }
+opaque_debug::implement!(AuthBackend);
 
 impl AuthBackend {
     pub fn new(pool: impl AsRef<Pool>) -> Self {

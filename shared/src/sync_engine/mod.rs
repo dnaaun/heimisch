@@ -8,7 +8,7 @@ mod ensure_initial_sync_repository;
 mod fetch_repositorys_for_installation_id;
 
 mod typed_websocket_client;
-pub use typed_websocket_client::TypedWebsocketClient;
+pub use typed_websocket_client::*;
 
 pub mod changes;
 mod ensure_initial_sync_issue_comments;

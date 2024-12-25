@@ -1,12 +1,12 @@
 mod auth;
 mod authenticated_home_page;
-pub mod error_component;
 mod flowbite;
 mod home;
 mod icon;
 mod not_found;
 mod repository;
 mod sync_engine_provider;
+pub mod sidebar;
 
 use std::rc::Rc;
 

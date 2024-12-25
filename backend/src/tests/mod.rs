@@ -272,7 +272,7 @@ async fn deliver_issue_comment_webhook_fixture(
 ) -> TestResult<(InstallationId, ParsedHttpRequest, TestResponse)> {
     let expected_installation_id = InstallationId::from(56385187); // Must match the installation id in the fixture.
     let installation = db::Installation {
-        id: *expected_installation_id.as_ref(),
+        id: expected_installation_id,
         created_at: SystemTime::now(),
         github_user_id,
     };

@@ -11,28 +11,15 @@ use futures::{
 use gloo_net::websocket::{self, futures::WebSocket, Message};
 use gloo_utils::errors::JsError;
 use pin_project::pin_project;
+use shared::sync_engine::TWSError;
 use url::Url;
 
-trait BinaryEncoder<T>: Encoder<T, Encoded = Vec<u8>> {
-    // type Error;
-}
-impl<Codec, T> BinaryEncoder<T> for Codec
-where
-    Codec: Encoder<T, Encoded = Vec<u8>>,
-{
-    // type Error = Codec::Error;
-}
+trait BinaryEncoder<T>: Encoder<T, Encoded = Vec<u8>> {}
+impl<Codec, T> BinaryEncoder<T> for Codec where Codec: Encoder<T, Encoded = Vec<u8>> {}
 
-trait BinaryDecoder<T>: Decoder<T, Encoded = [u8]> {
-    // type Error;
-}
+trait BinaryDecoder<T>: Decoder<T, Encoded = [u8]> {}
 
-impl<Codec, T> BinaryDecoder<T> for Codec
-where
-    Codec: Decoder<T, Encoded = [u8]>,
-{
-    // type Error = Codec::Error;
-}
+impl<Codec, T> BinaryDecoder<T> for Codec where Codec: Decoder<T, Encoded = [u8]> {}
 
 pub struct TypedWebsocketClient;
 
@@ -93,15 +80,22 @@ impl<Codec, ClientType, ServerType> futures::Sink<ClientType>
 where
     Codec: BinaryDecoder<ServerType> + BinaryEncoder<ClientType>,
 {
-    type Error =
-        Error<<Codec as Encoder<ClientType>>::Error, <Codec as Decoder<ServerType>>::Error>;
+    type Error = TWSError<
+        Error<<Codec as Encoder<ClientType>>::Error, <Codec as Decoder<ServerType>>::Error>,
+    >;
 
     fn poll_ready(
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
         let this = self.project();
-        Poll::Ready(Ok(ready!(this.sink.poll_ready(cx))?))
+        Poll::Ready(match ready!(this.sink.poll_ready(cx)) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(match err {
+                websocket::WebSocketError::ConnectionClose(_) => TWSError::Closed,
+                err => TWSError::Actual(err.into()),
+            }),
+        })
     }
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: ClientType) -> Result<(), Self::Error> {
@@ -141,7 +135,9 @@ where
 {
     type Item = Result<
         ServerType,
-        Error<<Codec as Encoder<ClientType>>::Error, <Codec as Decoder<ServerType>>::Error>,
+        TWSError<
+            Error<<Codec as Encoder<ClientType>>::Error, <Codec as Decoder<ServerType>>::Error>,
+        >,
     >;
 
     fn poll_next(

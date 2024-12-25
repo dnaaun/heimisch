@@ -7,6 +7,7 @@ use crate::{
     endpoints::defns::api::websocket_updates::{
         ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
     },
+    retry::try_n_times,
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::ToDb,
@@ -21,66 +22,66 @@ where
     W: WSClient,
 {
     pub async fn recv_websocket_updates(&self) -> SyncResult<(), W::Error> {
+        let mut url = self
+            .endpoint_client
+            .domain
+            .join(WEBSOCKET_UPDATES_ENDPOINT)
+            .expect("");
+
+        let last_webhook_update_at = self
+            .db
+            .txn()
+            .with_store::<LastWebhookUpdateAt>()
+            .build()
+            .object_store::<LastWebhookUpdateAt>()?
+            .get(&LastWebhookUpdateAtId::Singleton)
+            .await?;
+        url.set_query(Some(
+            &serde_urlencoded::to_string(&WebsocketUpdatesQueryParams {
+                return_backlog_after: last_webhook_update_at.map(|l| l.at),
+            })
+            .expect(""),
+        ));
+        let (_, recver) = try_n_times(async || W::establish(&url).await, 3)
+            .await
+            .map_err(SyncErrorSrc::WebSocket)?;
+        pin_mut!(recver);
         loop {
-            let mut url = self
-                .endpoint_client
-                .domain
-                .join(WEBSOCKET_UPDATES_ENDPOINT)
-                .expect("");
+            let fut = recver.next();
+            pin_mut!(fut);
+            match fut.await {
+                Some(value) => match value {
+                    Ok(server_msg) => match self.apply_update_to_db(&server_msg).await {
+                        Ok(_) => {
+                            tracing::info!("Successfully applied webhook update: {server_msg:?}")
+                        }
+                        Err(err) => {
+                            let serialized = match serde_json::to_string_pretty(&server_msg) {
+                                Ok(s) => s,
+                                Err(e) => format!("error serializing update to json {e:?}"),
+                            };
 
-            let last_webhook_update_at = self
-                .db
-                .txn()
-                .with_store::<LastWebhookUpdateAt>()
-                .build()
-                .object_store::<LastWebhookUpdateAt>()?
-                .get(&LastWebhookUpdateAtId::Singleton)
-                .await?;
-            url.set_query(Some(
-                &serde_urlencoded::to_string(&WebsocketUpdatesQueryParams {
-                    return_backlog_after: last_webhook_update_at.map(|l| l.at),
-                })
-                .expect(""),
-            ));
-            let (_, recver) = W::establish(&url).await.map_err(SyncErrorSrc::WebSocket)?;
-            pin_mut!(recver);
-            loop {
-                let fut = recver.next();
-                pin_mut!(fut);
-                match fut.await {
-                    Some(value) => match value {
-                        Ok(server_msg) => match self.apply_update_to_db(&server_msg).await {
-                            Ok(_) => tracing::info!(
-                                "Successfully applied webhook update: {server_msg:?}"
-                            ),
-                            Err(err) => {
-                                let serialized = match serde_json::to_string_pretty(&server_msg) {
-                                    Ok(s) => s,
-                                    Err(e) => format!("error serializing update to json {e:?}"),
-                                };
-
-                                match err {
-                                    ApplyingError::NotImplemented => tracing::info!(
+                            match err {
+                                ApplyingError::NotImplemented => tracing::info!(
                                     "LOCAL DB UPDATES FOR WEBHOOK NOT IMPLEMENTED: {serialized}"
                                 ),
-                                    ApplyingError::Sync(sync_error) => {
-                                        tracing::error!(
-                                            "Error applying update:
+                                ApplyingError::Sync(sync_error) => {
+                                    tracing::error!(
+                                        "Error applying update:
 {}
 {:?}",
-                                            serialized,
-                                            sync_error
-                                        )
-                                    }
+                                        serialized,
+                                        sync_error
+                                    )
                                 }
                             }
-                        },
-                        Err(err) => {
-                            tracing::error!("{:?}", err)
                         }
                     },
-                    None => break,
-                }
+                    Err(err) => {
+                        tracing::error!("{:?}", err)
+                    }
+                },
+                None => return Ok(()),
             }
         }
     }

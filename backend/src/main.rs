@@ -1,3 +1,4 @@
+#![feature(async_closure)]
 #![feature(str_lines_remainder)]
 
 use app_state::AppState;

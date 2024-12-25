@@ -8,7 +8,7 @@ use crate::error::Error;
 #[derive(Debug)]
 pub struct AuthenticationFailedError;
 
-#[derive(Deref)]
+#[derive(Deref, Debug)]
 pub struct AuthenticatedUser<Backend: AuthnBackend>(Backend::User);
 
 #[async_trait::async_trait]
