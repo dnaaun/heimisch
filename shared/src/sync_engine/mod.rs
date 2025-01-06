@@ -1,6 +1,6 @@
 use registry::Registry;
 use send_wrapper::SendWrapper;
-use std::{fmt::Debug, marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, sync::Arc};
 use typed_transport::TypedTransportTrait;
 use typesafe_idb::{ReactivityTrackers, TypesafeDb};
 mod conversions;
@@ -21,7 +21,7 @@ use std::{cmp::Ordering, rc::Rc};
 use crate::{
     endpoints::{
         defns::api::installations::{
-            GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
+            GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenQueryParams,
         },
         endpoint_client::EndpointClient,
     },
@@ -66,8 +66,8 @@ pub struct DbSubscription {
 /// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
 /// "defining use."
 mod isolate_db_store_markers_impl_type {
+    use std::marker::PhantomData;
     use std::rc::Rc;
-    use std::{fmt::Debug, marker::PhantomData};
 
     use crate::types::label::Label;
     use crate::types::last_webhook_update_at::LastWebhookUpdateAt;
@@ -173,10 +173,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
         Ok(conf)
     }
 
-    async fn get_valid_iac(
-        &self,
-        id: &InstallationId,
-    ) -> SyncResult<InstallationAccessToken, W> {
+    async fn get_valid_iac(&self, id: &InstallationId) -> SyncResult<InstallationAccessToken, W> {
         let txn = self
             .db
             .txn()
@@ -205,12 +202,12 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
         match iac {
             Some(iac) => Ok(iac),
             None => {
-                let payload = GetInstallationAccessTokenPayload {
+                let query_params = GetInstallationAccessTokenQueryParams {
                     installation_id: *id,
                 };
                 let resp = self
                     .endpoint_client
-                    .make_request(GetInstallationAccessTokenEndpoint, payload, ())
+                    .make_get_request(GetInstallationAccessTokenEndpoint, query_params)
                     .await?;
 
                 let txn = self

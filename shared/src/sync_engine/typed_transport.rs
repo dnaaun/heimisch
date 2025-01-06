@@ -63,12 +63,6 @@ where
     Ok(TypedTransport { inner })
 }
 
-trait BinaryEncoder<T>: Encoder<T, Encoded = Vec<u8>> {}
-impl<Codec, T> BinaryEncoder<T> for Codec where Codec: Encoder<T, Encoded = Vec<u8>> {}
-
-trait BinaryDecoder<T>: Decoder<T, Encoded = [u8]> {}
-impl<Codec, T> BinaryDecoder<T> for Codec where Codec: Decoder<T, Encoded = [u8]> {}
-
 #[pin_project]
 pub struct TypedTransport<I> {
     #[pin]
@@ -86,16 +80,16 @@ where
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Result<(), Self::Error>> {
         let this = self.project();
-        Poll::Ready(ready!(this.inner.poll_ready(cx)).map_err(|err| TypedTransportError::Conn(err)))
+        Poll::Ready(ready!(this.inner.poll_ready(cx)).map_err(TypedTransportError::Conn))
     }
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: ClientMsg) -> Result<(), Self::Error> {
         let this = self.project();
         let encoded =
-            JsonSerdeToBinaryCodec::encode(&item).map_err(|e| TypedTransportError::Encode(e))?;
+            JsonSerdeToBinaryCodec::encode(&item).map_err(TypedTransportError::Encode)?;
         this.inner
             .start_send(encoded)
-            .map_err(|e| TypedTransportError::Conn(e))
+            .map_err(TypedTransportError::Conn)
     }
 
     fn poll_flush(

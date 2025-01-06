@@ -3,11 +3,13 @@ mod authenticated_home_page;
 mod flowbite;
 mod home;
 mod icon;
+mod installation_id_sync;
 mod not_found;
 mod repository;
 pub mod sidebar;
 mod sync_engine_provider;
 
+use crate::app::sync_engine_provider::sync_engine_provided;
 use std::rc::Rc;
 
 use auth::Auth;
@@ -20,11 +22,8 @@ use not_found::NotFound;
 use repository::issues_tab::IssuesTab;
 use repository::pull_requests_tab::PullRequestsTab;
 use repository::RepositoryPage;
-use shared::utils::LogErr;
-use sync_engine_provider::sync_engine_provided;
 
 pub use leptos_router;
-use wasm_bindgen_futures::spawn_local;
 
 use crate::consts::ENDPOINT_CLIENT;
 use crate::typed_transport::MyWebSocket;
@@ -39,14 +38,6 @@ pub fn App() -> impl IntoView {
             .await
             .unwrap(),
         )
-    });
-
-    Effect::new(move || {
-        if let Some(sync_engine) = sync_engine.get() {
-            spawn_local(async move {
-                let _ = sync_engine.recv_websocket_updates().await.log_err();
-            })
-        }
     });
 
     view! {

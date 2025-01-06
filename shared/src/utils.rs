@@ -5,7 +5,8 @@ pub trait LogErr {
 impl<T, E: std::fmt::Debug> LogErr for Result<T, E> {
     fn log_err(self) -> Self {
         if let Err(err) = &self {
-            tracing::error!("{err:?}");
+            panic!("{err:?}");
+            // tracing::error!("{err:?}");
         }
         self
     }

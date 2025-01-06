@@ -27,7 +27,6 @@ pub struct Config {
     pub host: Ipv4Addr,
     pub db: DatabaseConfig,
     pub github_api: GithubApiConfig,
-    pub heimisch_domain_url: Url,
 }
 
 impl Config {
@@ -91,6 +90,5 @@ pub async fn init_config() -> Config {
         host,
         db,
         github_api,
-        heimisch_domain_url: Url::parse(&env::var("HEIMISCH_DOMAIN_NAME").expect("")).expect(""),
     }
 }

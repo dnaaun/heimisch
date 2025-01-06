@@ -12,7 +12,7 @@ use shared::{
     },
     types::installation::InstallationId,
 };
-use std::ops::Deref;
+use std::{collections::HashSet, ops::Deref};
 
 use leptos::{
     prelude::*,
@@ -25,8 +25,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::{
     app::{flowbite::Spinner, sync_engine_provider::use_sync_engine},
-    consts::ENDPOINT_CLIENT,
-    local_storage::add_installation_id_to_local_storage,
+    consts::ENDPOINT_CLIENT, local_storage::add_installation_ids_to_local_storage,
 };
 
 #[derive(PartialEq, Deserialize, Serialize, Clone)]
@@ -101,7 +100,7 @@ pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView 
         LocalResource::new(move || async move {
             ENDPOINT_CLIENT
                 .with(|e| e.clone())
-                .make_request(
+                .make_post_request(
                     CreateAppInstallEndpoint,
                     CreateAppInstallPayload { installation_id },
                     (),
@@ -114,7 +113,7 @@ pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView 
         let installation_rsrc = installation_rsrc.read().clone();
         installation_rsrc.map(move |installation| match installation.deref().clone() {
             Ok(CreateAppInstallResponse::Success { installation_id }) => {
-                add_installation_id_to_local_storage(installation_id);
+                add_installation_ids_to_local_storage(&HashSet::from_iter([installation_id]));
                 spawn_local(async move {
                     let _ = sync_engine
                         .fetch_repositorys_for_installation_id(&installation_id)
@@ -155,7 +154,7 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                 async move {
                     ENDPOINT_CLIENT
                         .with(|e| e.clone())
-                        .make_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
+                        .make_post_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
                         .await
                 }
             });

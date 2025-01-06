@@ -22,7 +22,18 @@ pub enum SyncErrorSrc<T: TypedTransportTrait> {
 
 impl<T: TypedTransportTrait> Debug for SyncErrorSrc<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match self {
+            SyncErrorSrc::OwnApi(err) => write!(f, "SyncErrorSrc::OwnApi({:?})", err),
+            SyncErrorSrc::Github(err) => write!(f, "SyncErrorSrc::Github({:?})", err),
+            SyncErrorSrc::Db(err) => write!(f, "SyncErrorSrc::Db({:?})", err),
+            SyncErrorSrc::SerdeToObject(err) => write!(f, "SyncErrorSrc::SerdeToObject({:?})", err),
+            SyncErrorSrc::SerdeToString(err) => write!(f, "SyncErrorSrc::SerdeToString({:?})", err),
+            SyncErrorSrc::Jiff(err) => write!(f, "SyncErrorSrc::Jiff({:?})", err),
+            SyncErrorSrc::Merge(err) => write!(f, "SyncErrorSrc::Merge({:?})", err),
+            SyncErrorSrc::Ewebsock(err) => write!(f, "SyncErrorSrc::Ewebsock({:?})", err),
+            SyncErrorSrc::DataModel(msg) => write!(f, "SyncErrorSrc::DataModel({})", msg),
+            SyncErrorSrc::WebSocket(err) => write!(f, "SyncErrorSrc::WebSocket({:?})", err),
+        }
     }
 }
 
@@ -43,7 +54,10 @@ pub struct SyncError<T: TypedTransportTrait> {
 
 impl<T: TypedTransportTrait> Debug for SyncError<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        f.debug_struct("SyncError")
+            .field("source", &self.source)
+            .field("backtrace", &self.backtrace)
+            .finish()
     }
 }
 

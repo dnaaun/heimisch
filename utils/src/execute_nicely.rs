@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::{Debug, Display}, str::FromStr};
 
 pub trait DisplayDebug: std::fmt::Display + std::fmt::Debug {}
 impl<T: std::fmt::Display + std::fmt::Debug> DisplayDebug for T {}
@@ -12,7 +12,16 @@ pub struct ReqwestSendError {
     pub request_error: reqwest::Error,
 }
 
-#[async_trait::async_trait]
+/// NOTE: Maybe this should be better?
+impl Display for ReqwestSendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(self, f)
+    }
+}
+
+impl std::error::Error for ReqwestSendError {}
+
+#[cfg_attr(feature = "ssr", async_trait::async_trait)]
 pub trait ExecuteNicely {
     async fn execute_nicely(
         &self,
@@ -20,7 +29,7 @@ pub trait ExecuteNicely {
     ) -> std::result::Result<reqwest::Response, ReqwestSendError>;
 }
 
-#[async_trait::async_trait]
+#[cfg_attr(feature = "ssr", async_trait::async_trait)]
 impl ExecuteNicely for reqwest::Client {
     /// Has a nicer error (at the cost of more clones).
     async fn execute_nicely(
@@ -38,7 +47,7 @@ impl ExecuteNicely for reqwest::Client {
                         Ok(value) => Box::new(value) as Box<dyn DisplayDebug + Send + Sync>,
                         Err(_) => Box::new(string_payload),
                     },
-                    Err(_) => Box::new("PAYLOADD IS SOME BINARY/NON-TEXTUAL VALUE"),
+                    Err(_) => Box::new("PAYLOAD IS SOME BINARY/NON-TEXTUAL VALUE"),
                 },
             );
 

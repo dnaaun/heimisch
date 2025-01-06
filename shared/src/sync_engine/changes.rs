@@ -35,14 +35,14 @@ pub struct Changes {
 }
 
 pub trait IntoChanges {
-    fn into_changes(self: Self) -> Result<Changes, MergeError>;
+    fn into_changes(self) -> Result<Changes, MergeError>;
 }
 
 impl<T> IntoChanges for T
 where
     Changes: AddChanges<T>,
 {
-    fn into_changes(self: Self) -> Result<Changes, MergeError> {
+    fn into_changes(self) -> Result<Changes, MergeError> {
         let mut changes = Changes::default();
         changes.add(self)?;
         Ok(changes)
@@ -332,14 +332,14 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             labels,
             milestones,
         } = changes.into_changes()?;
-        merge_and_upsert_issues::<W, Marker, Mode>(&txn, issues).await?;
-        merge_and_upsert_issue_comments::<W, Marker, Mode>(&txn, issue_comments).await?;
-        merge_and_upsert_github_apps::<W, Marker, Mode>(&txn, github_apps).await?;
-        merge_and_upsert_users::<W, Marker, Mode>(&txn, users).await?;
-        merge_and_upsert_repositorys::<W, Marker, Mode>(&txn, repositorys).await?;
-        merge_and_upsert_milestones::<W, Marker, Mode>(&txn, milestones).await?;
-        merge_and_upsert_licenses::<W, Marker, Mode>(&txn, licenses).await?;
-        upsert_labels::<W, Marker, Mode>(&txn, labels).await?;
+        merge_and_upsert_issues::<W, Marker, Mode>(txn, issues).await?;
+        merge_and_upsert_issue_comments::<W, Marker, Mode>(txn, issue_comments).await?;
+        merge_and_upsert_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
+        merge_and_upsert_users::<W, Marker, Mode>(txn, users).await?;
+        merge_and_upsert_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
+        merge_and_upsert_milestones::<W, Marker, Mode>(txn, milestones).await?;
+        merge_and_upsert_licenses::<W, Marker, Mode>(txn, licenses).await?;
+        upsert_labels::<W, Marker, Mode>(txn, labels).await?;
 
         Ok(())
     }

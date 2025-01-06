@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 shared =  { path = "../shared", version = "*", features = ["ssr"] }
-utils =  { path = "../utils" }
+utils =  { path = "../utils", features = ["ssr"] }
 deadpool-diesel = { version = "0.6.1", features = ["postgres"] }
 diesel = { version = "2.2.4", features = ["postgres", "serde_json", "time", "uuid"] }
 diesel-derive-newtype = { version = "2.1.2" }
@@ -13,7 +13,7 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["rt-multi-thread"] }
-tower-http = { version = "0.5", features = ["fs", "trace"] }
+tower-http = { version = "0.5", features = ["cors", "fs", "trace"] }
 tracing = "0.1"
 diesel_migrations = { version = "2.2.0", features = ["postgres"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "smallvec", "tracing-log"], default-features = false }

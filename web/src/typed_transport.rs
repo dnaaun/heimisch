@@ -1,7 +1,6 @@
 use std::task::{ready, Poll};
 
 use futures::{Sink, Stream};
-use gloo_net::websocket::futures::WebSocket;
 use gloo_utils::errors::JsError;
 use pin_project::pin_project;
 use shared::sync_engine::{self, typed_transport::ConnOrClosedError};
@@ -24,7 +23,7 @@ impl sync_engine::typed_transport::TypedTransportTrait for MyWebSocket {
     async fn establish_conn(url: &Url) -> Result<Self, Self::ConnError> {
         Ok(MyWebSocket(
             gloo_net::websocket::futures::WebSocket::open(url.as_str())
-                .map_err(|e| ConnError::GlooJs(e))?,
+                .map_err(ConnError::GlooJs)?,
         ))
     }
 }

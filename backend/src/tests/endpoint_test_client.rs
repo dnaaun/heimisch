@@ -1,27 +1,37 @@
 use axum_test::TestServer;
-use http::Method;
-use shared::endpoints::endpoint::{Endpoint, QueryParams};
+use shared::endpoints::endpoint::{GetEndpoint, PostEndpoint};
 
-pub trait EndpointTestClient: Endpoint {
+pub trait PostEndpointTestClient: PostEndpoint {
     async fn make_test_request(
         test_server: &TestServer,
         payload: &Self::JsonPayload,
         query_params: Self::QueryParams,
-    ) -> <Self as Endpoint>::JsonResponse {
+    ) -> <Self as PostEndpoint>::JsonResponse {
         let req = test_server
-            .method(
-                match Self::METHOD {
-                    shared::endpoints::endpoint::Method::Post => Method::POST,
-                    shared::endpoints::endpoint::Method::Get => Method::GET,
-                },
-                Self::PATH,
-            )
+            .post(Self::PATH)
             .save_cookies()
             .json(payload)
-            .add_query_params(query_params.get_pairs().collect::<Vec<_>>());
+            .add_query_params(query_params);
 
         req.await.json::<Self::JsonResponse>()
     }
 }
 
-impl<E: Endpoint> EndpointTestClient for E {}
+impl<E: PostEndpoint> PostEndpointTestClient for E {}
+
+#[allow(dead_code)]
+pub trait GetEndpointTestClient: GetEndpoint {
+    async fn make_test_request(
+        test_server: &TestServer,
+        query_params: Self::QueryParams,
+    ) -> <Self as GetEndpoint>::JsonResponse {
+        let req = test_server
+            .post(Self::PATH)
+            .save_cookies()
+            .add_query_params(query_params);
+
+        req.await.json::<Self::JsonResponse>()
+    }
+}
+
+impl<E: GetEndpoint> GetEndpointTestClient for E {}

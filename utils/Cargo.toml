@@ -9,3 +9,6 @@ reqwest = "0.12.8"
 serde = "1.0.210"
 serde_json = "1.0.132"
 url = "2.5.2"
+
+[features]
+ssr = []

@@ -15,9 +15,11 @@ pub fn local_storage() -> Storage {
 
 const INSTALLATION_IDS_KEY: &str = "installation_ids";
 
-pub fn add_installation_id_to_local_storage(id: InstallationId) {
+pub fn add_installation_ids_to_local_storage(new_ids: &HashSet<InstallationId>) {
     let mut ids = get_installation_ids_from_local_storage();
-    ids.insert(id);
+    for id in new_ids {
+        ids.insert(*id);
+    };
 
     local_storage()
         .set_item(

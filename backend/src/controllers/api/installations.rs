@@ -1,20 +1,15 @@
-use std::future::Future;
-
 use crate::{
     custom_github_api::get_installation_access_token,
     db::{self, get_installation},
     error::{Error, ErrorSource},
-    hookup_endpoint::hookup_authenticated,
+    hookup_endpoint::hookup_get_authenticated,
 };
 use axum::Router;
 use http::StatusCode;
 use shared::{
-    endpoints::{
-        defns::api::installations::{
-            GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenPayload,
-            GetInstallationsEndpoint, GetInstallationsResponse,
-        },
-        endpoint_client::MaybePageRedirect,
+    endpoints::defns::api::installations::{
+        GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenQueryParams,
+        GetInstallationsEndpoint, GetInstallationsResponse,
     },
     types::installation::Installation,
 };
@@ -22,11 +17,11 @@ use shared::{
 use crate::app_state::AppState;
 
 pub fn get_token(router: Router<AppState>) -> Router<AppState> {
-    hookup_authenticated(
+    hookup_get_authenticated(
         GetInstallationAccessTokenEndpoint,
         router,
-        |auth_user, state, payload| async move {
-            let GetInstallationAccessTokenPayload { installation_id } = payload;
+        |auth_user, state, query_params| async move {
+            let GetInstallationAccessTokenQueryParams { installation_id } = query_params;
             let installation =
                 get_installation(&state, installation_id)
                     .await?
@@ -49,16 +44,16 @@ pub fn get_token(router: Router<AppState>) -> Router<AppState> {
             )
             .await?;
 
-            Ok::<_, Error>((StatusCode::OK, MaybePageRedirect::NoRedirect(token)))
+            Ok::<_, Error>((StatusCode::OK, token))
         },
     )
 }
 
 pub fn get_installations(router: Router<AppState>) -> Router<AppState> {
-    hookup_authenticated(
+    hookup_get_authenticated(
         GetInstallationsEndpoint,
         router,
-        |auth_user, state, _payload| async move {
+        |auth_user, state, _| async move {
             let resp = GetInstallationsResponse {
                 installations: db::get_installations(&state, auth_user.github_user_id)
                     .await
@@ -72,13 +67,10 @@ pub fn get_installations(router: Router<AppState>) -> Router<AppState> {
                             .collect()
                     })?,
             };
-            Ok::<
-                (
-                    http::StatusCode,
-                    MaybePageRedirect<GetInstallationsResponse>,
-                ),
-                crate::error::Error,
-            >((StatusCode::OK, MaybePageRedirect::NoRedirect(resp)))
+            Ok::<(http::StatusCode, GetInstallationsResponse), crate::error::Error>((
+                StatusCode::OK,
+                resp,
+            ))
         },
     )
 }

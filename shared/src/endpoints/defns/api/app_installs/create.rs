@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{endpoints::endpoint_client::MaybePageRedirect, types::installation::InstallationId};
-
-use super::super::super::super::endpoint::{Endpoint, Method};
+use crate::{endpoints::endpoint::PostEndpoint, types::installation::InstallationId};
 
 #[derive(Deserialize, Serialize)]
 pub struct CreateAppInstallPayload {
@@ -17,14 +15,12 @@ pub enum CreateAppInstallResponse {
 
 pub struct CreateAppInstallEndpoint;
 
-impl Endpoint for CreateAppInstallEndpoint {
+impl PostEndpoint for CreateAppInstallEndpoint {
     type QueryParams = ();
-
-    const METHOD: Method = Method::Post;
 
     const PATH: &'static str = "/api/app_installs/";
 
     type JsonPayload = CreateAppInstallPayload;
 
-    type JsonResponse = MaybePageRedirect<CreateAppInstallResponse>;
+    type JsonResponse = CreateAppInstallResponse;
 }

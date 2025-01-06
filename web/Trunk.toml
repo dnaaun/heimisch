@@ -28,7 +28,10 @@ inject_scripts = true
 
 [watch]
 # Paths to watch. The `build.target`'s parent folder is watched by default.
-watch = []
+watch = [
+    "../shared/src",
+    "./src"
+]
 # Paths to ignore.
 ignore = []
 

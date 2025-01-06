@@ -25,6 +25,7 @@ pub fn get_api_router(state: AppState) -> Router<AppState> {
         .then(app_installs::create)
         .then(github_hooks::github_hooks)
         .then(installations::get_token)
+        .then(installations::get_installations)
         .then(websocket_updates::api_websocket_updates)
         .layer(auth_layer)
 }

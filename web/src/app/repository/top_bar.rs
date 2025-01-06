@@ -34,19 +34,15 @@ pub fn TopBar(
     let initial_sync_done = use_sync_engine().idb_signal(
         move |builder| builder.with_store::<RepositoryInitialSyncStatus>().build(),
         move |txn| async move {
-            Ok(
-                match txn
-                    .object_store::<RepositoryInitialSyncStatus>()?
+            Ok(matches!(
+                txn.object_store::<RepositoryInitialSyncStatus>()?
                     .get(&repository_id.get())
-                    .await?
-                {
-                    Some(RepositoryInitialSyncStatus {
-                        status: shared::types::repository_initial_sync_status::RepoSyncStatus::Full,
-                        ..
-                    }) => true,
-                    _ => false,
-                },
-            )
+                    .await?,
+                Some(RepositoryInitialSyncStatus {
+                    status: shared::types::repository_initial_sync_status::RepoSyncStatus::Full,
+                    ..
+                })
+            ))
         },
     );
     let initial_sync_done = Memo::new(move |_| initial_sync_done.get());

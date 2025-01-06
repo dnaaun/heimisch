@@ -5,8 +5,10 @@ use app_state::AppState;
 use config::{init_config, Config};
 use controllers::api::get_api_router;
 use deadpool_diesel::postgres::Manager;
+use http::{header, HeaderValue, Method};
+use shared::endpoints::endpoint_client::CUSTOM_REDIRECT_HEADER_NAME;
 use std::sync::Arc;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use axum::Router;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -69,6 +71,19 @@ async fn get_router(config: Config) -> Router<()> {
         .with_state(state)
 }
 
+const HEADERS_TO_ALLOW_FOR_CORS: [http::HeaderName; 10] = [
+    header::CONTENT_TYPE,
+    header::CONTENT_ENCODING,
+    header::AUTHORIZATION,
+    CUSTOM_REDIRECT_HEADER_NAME,
+    header::ACCEPT,
+    header::ACCEPT_LANGUAGE,
+    header::ACCEPT_ENCODING,
+    header::USER_AGENT,
+    header::SET_COOKIE,
+    header::COOKIE,
+];
+
 #[tokio::main]
 async fn main() {
     // setup tracing
@@ -81,10 +96,19 @@ async fn main() {
 
     // run it with hyper
     tracing::info!("listening on {}:{}", config.host, config.port);
-    let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port))
+    let listener = tokio::net::TcpListener::bind((config.host, config.port))
         .await
         .unwrap();
-    axum::serve(listener, get_router(config).await)
-        .await
-        .unwrap();
+
+    let router = get_router(config).await;
+
+    // TODO: Hide this behind a dev/prod distinction (probably via feature flags).
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().expect(""))
+        .allow_methods([Method::GET, Method::PUT, Method::POST])
+        .allow_headers(HEADERS_TO_ALLOW_FOR_CORS)
+        .expose_headers(HEADERS_TO_ALLOW_FOR_CORS)
+        .allow_credentials(true);
+    let router = router.layer(cors);
+    axum::serve(listener, router).await.unwrap();
 }

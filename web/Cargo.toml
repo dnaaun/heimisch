@@ -31,7 +31,6 @@ js-sys = "0.3.72"
 heck = "0.5.0"
 strum_macros = "0.26.4"
 derive_more = { version = "1.0.0", features = ["display", "from_str"] }
-leptos-use = { version = "0.14", default-features = false, features = ["use_websocket"] }
 strum = "0.26.3"
 send_wrapper = "0.6.0"
 itertools = "0.13.0"

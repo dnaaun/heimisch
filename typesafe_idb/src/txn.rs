@@ -1,9 +1,9 @@
+use crate::db::CommitListener;
 use crate::object_store::ObjectStore;
 use crate::Store;
 use crate::{chain::Chain, StoreMarker, TypesafeDb};
 use std::cell::RefCell;
 use std::ops::Deref;
-use std::rc::Rc;
 use std::{
     collections::{HashMap, HashSet},
     marker::PhantomData,
@@ -93,7 +93,7 @@ pub struct Txn<C, Mode> {
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
     reactivity_trackers: RefCell<ReactivityTrackers>,
 
-    commit_listener: Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+    commit_listener: Option<CommitListener>
 }
 
 impl<Markers, Mode> Txn<Markers, Mode> {
@@ -113,7 +113,7 @@ impl<Markers, Mode> Txn<Markers, Mode> {
     }
 
     pub async fn commit(mut self) -> Result<ReactivityTrackers, idb::Error> {
-        commit_logic(self.actual_txn.take().expect("Should not be None if not committed/aborted before, which should ahve required a mut self"), &mut self.reactivity_trackers, &self.commit_listener)?;
+        commit_logic(self.actual_txn.take().expect("Should not be None if not committed/aborted before, which should ahve required a mut self"), &self.reactivity_trackers, &self.commit_listener)?;
         Ok(self.reactivity_trackers.take())
     }
 
@@ -132,7 +132,7 @@ pub struct TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode> {
     db: &'db TypesafeDb<DbTableMarkers>,
     txn_table_markers: TxnTableMarkers,
     store_names: HashSet<&'static str>,
-    commit_listener: Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+    commit_listener: Option<CommitListener>,
     mode: PhantomData<Mode>,
 }
 
@@ -153,7 +153,7 @@ impl Txn<(), ()> {
 fn commit_logic(
     actual_txn: idb::Transaction,
     reactivity_trackers: &RefCell<ReactivityTrackers>,
-    commit_listener: &Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+    commit_listener: &Option<CommitListener>,
 ) -> Result<(), idb::Error> {
     let _ = actual_txn.commit()?;
     if let Some(listener) = commit_listener {
@@ -169,11 +169,7 @@ impl<C, Mode> Drop for Txn<C, Mode> {
     fn drop(&mut self) {
         // If it's still Some(), means one hasn't called .commit() or .abort()
         if let Some(actual_txn) = self.actual_txn.take() {
-            _ = commit_logic(
-                actual_txn,
-                &mut self.reactivity_trackers,
-                &self.commit_listener,
-            );
+            _ = commit_logic(actual_txn, &self.reactivity_trackers, &self.commit_listener);
         }
     }
 }
@@ -229,8 +225,7 @@ impl<'db, DbTableMarkers, TxnTableMarkers, Mode>
     }
 }
 
-impl<'db, TxnTableMarkers, DbTableMarkers, Mode>
-    TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode>
+impl<TxnTableMarkers, DbTableMarkers, Mode> TxnBuilder<'_, DbTableMarkers, TxnTableMarkers, Mode>
 where
     Mode: TxnMode,
 {

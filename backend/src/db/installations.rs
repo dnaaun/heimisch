@@ -55,12 +55,12 @@ pub async fn get_installations(
     user_id_arg: UserId,
 ) -> Result<Vec<Installation>> {
     let conn = pool.as_ref().get().await?;
-    Ok(conn
+    conn
         .interact(move |conn| {
             Ok::<_, Error>(table
                 .select(all_columns)
                 .filter(github_user_id.eq(user_id_arg))
                 .load(conn)?)
         })
-        .await??)
+        .await?
 }

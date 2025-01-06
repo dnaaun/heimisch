@@ -1,6 +1,5 @@
-use crate::endpoints::endpoint_client::MaybePageRedirect;
+use crate::endpoints::endpoint::PostEndpoint;
 
-use super::super::super::super::endpoint::{Endpoint, Method};
 use derive_more::derive::{AsRef, Deref, Display, From, Into};
 use serde::{Deserialize, Serialize};
 
@@ -24,14 +23,9 @@ pub enum AuthFinishResponse {
 
 pub struct AuthFinishEndpoint;
 
-impl Endpoint for AuthFinishEndpoint {
+impl PostEndpoint for AuthFinishEndpoint {
     type QueryParams = ();
-
-    const METHOD: Method = Method::Post;
-
     const PATH: &'static str = "/api/auth/finish";
-
     type JsonPayload = AuthFinishPayload;
-
-    type JsonResponse = MaybePageRedirect<AuthFinishResponse>;
+    type JsonResponse = AuthFinishResponse;
 }

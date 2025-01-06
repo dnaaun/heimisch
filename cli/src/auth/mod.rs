@@ -3,9 +3,7 @@ use std::io::{stdin, stdout, Write};
 use deadpool_diesel::sqlite::Pool;
 
 use crate::{
-    consts::HEIMISCH_DOMAIN_URL,
-    db::{delete_access_token_if_exists, set_access_token},
-    error::Result,
+    consts::HEIMISCH_API_DOMAIN, db::{delete_access_token_if_exists, set_access_token}, error::Result
 };
 
 pub async fn login(pool: &Pool) -> Result<()> {
@@ -17,7 +15,7 @@ pub async fn login(pool: &Pool) -> Result<()> {
 pub async fn login_logic(pool: &Pool) -> Result<String> {
     // TODO: Polish.
     println!("Follow the URL below to authenticate Heimisch CLI with Github.");
-    let url = HEIMISCH_DOMAIN_URL.with(|i| i.join("/api/auth/initiate").expect(""));
+    let url = HEIMISCH_API_DOMAIN.with(|i| i.join("/api/auth/initiate").expect(""));
     println!("{}", url.as_str());
     print!("You should eventually be asked to copy back an access token. Please paste that here: ");
     stdout().flush().expect("");

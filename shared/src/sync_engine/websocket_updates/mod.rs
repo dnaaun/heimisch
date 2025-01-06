@@ -79,7 +79,18 @@ where
                         }
                     },
                     Err(err) => {
-                        tracing::error!("{:?}", err)
+                        match err {
+                            TypedTransportError::Closed => (),
+                            TypedTransportError::Conn(err) => {
+                                tracing::error!("{:?}", err)
+                            }
+                            TypedTransportError::Encode(err) => {
+                                tracing::error!("{:?}", err)
+                            }
+                            TypedTransportError::Decode(err) => {
+                                tracing::error!("{:?}", err)
+                            }
+                        };
                     }
                 },
                 None => return Ok(()),

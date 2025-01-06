@@ -1,7 +1,7 @@
 use crate::app_state::AppState;
 use crate::db::{self, insert_installation_if_not_exists};
 use crate::error::Error;
-use crate::hookup_endpoint::hookup_authenticated;
+use crate::hookup_endpoint::hookup_post_authenticated;
 use axum::Router;
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
@@ -14,7 +14,7 @@ use shared::types::user::UserId;
 use std::time::SystemTime;
 
 pub fn create(router: Router<AppState>) -> Router<AppState> {
-    hookup_authenticated(
+    hookup_post_authenticated(
         CreateAppInstallEndpoint,
         router,
         |auth_user, state, payload| async move {

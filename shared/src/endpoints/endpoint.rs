@@ -26,15 +26,20 @@ impl<T: QueryParams> QueryParams for Option<T> {
     }
 }
 
-pub enum Method {
-    Post,
+pub enum Method<P = ()> {
+    Post { payload: P },
     Get,
 }
 
-pub trait Endpoint {
-    type QueryParams: QueryParams;
-    const METHOD: Method;
+pub trait PostEndpoint {
+    type QueryParams: Serialize + DeserializeOwned + Send + 'static;
     const PATH: &'static str;
+    type JsonResponse: Serialize + DeserializeOwned;
     type JsonPayload: Serialize + DeserializeOwned;
+}
+
+pub trait GetEndpoint {
+    type QueryParams: Serialize + DeserializeOwned + Send + 'static;
+    const PATH: &'static str;
     type JsonResponse: Serialize + DeserializeOwned;
 }

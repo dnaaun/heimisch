@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use axum::{http::StatusCode, response::IntoResponse};
 use backtrace::Backtrace;
 use github_webhook_body::WebhookBody;
-use http::header::LOCATION;
 use parking_lot::Mutex;
 use shared::{
+    consts::HEIMISCH_API_DOMAIN,
     endpoints::{
         defns::api::auth::initiate::AuthInitiateEndpoint,
-        endpoint_client::CUSTOM_REDIRECT_STATUS_CODE,
+        endpoint_client::{CUSTOM_REDIRECT_HEADER_NAME, CUSTOM_REDIRECT_STATUS_CODE},
     },
     types::installation::InstallationId,
 };
@@ -252,7 +252,13 @@ impl IntoResponse for Error {
             ErrorSource::AuthenticationFailed(_) => {
                 return (
                     CUSTOM_REDIRECT_STATUS_CODE.with(|i| *i),
-                    [(LOCATION, AuthInitiateEndpoint::PATH)],
+                    [(
+                        CUSTOM_REDIRECT_HEADER_NAME,
+                        HEIMISCH_API_DOMAIN
+                            .with(|h| h.join(AuthInitiateEndpoint::PATH))
+                            .expect("")
+                            .to_string(),
+                    )],
                 )
                     .into_response()
             }

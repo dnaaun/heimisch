@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use leptos::{prelude::*, task::spawn_local};
 use leptos_router::{
     components::Outlet,
@@ -20,7 +18,11 @@ pub mod pull_requests_tab;
 mod top_bar;
 
 use crate::{
-    app::not_found::NotFound, frontend_error::FrontendError,
+    app::{
+        installation_id_sync::use_sync_installation_ids_and_recv_websocket_updates,
+        not_found::NotFound,
+    },
+    frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
@@ -113,6 +115,8 @@ pub fn RepositoryPage() -> impl IntoView {
         }
     });
 
+    use_sync_installation_ids_and_recv_websocket_updates();
+
     let sync_engine = use_sync_engine();
 
     let repository_id = sync_engine.idb_signal(
@@ -179,8 +183,7 @@ pub fn RepositoryPage() -> impl IntoView {
                 let repository_id = match repository_id.get() {
                     Some(r) => r?,
                     None => return Ok::<_, FrontendError>(None),
-                }
-                    .clone();
+                };
                 let repository_id = match repository_id {
                     Some(r) => r,
                     None => {

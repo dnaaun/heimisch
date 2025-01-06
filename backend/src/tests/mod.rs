@@ -2,7 +2,6 @@ use crate::{
     config::Config,
     custom_github_api::{get_user_access_token_request, ATResp},
     db::get_login_user,
-    tests::endpoint_test_client::EndpointTestClient,
     utils::gen_rand_string,
 };
 pub mod endpoint_test_client;
@@ -28,6 +27,7 @@ use diesel_test::{
     postgres::{ParsingDbUrlError, PostgresDbUrlFactory},
     DieselTestConfig,
 };
+use endpoint_test_client::PostEndpointTestClient;
 use github_api::{
     apis::users_api::users_slash_get_authenticated_request,
     models::{PrivateUser, UsersGetAuthenticated200Response},
@@ -248,7 +248,7 @@ async fn with_logged_in_user<Fut: Future>(
         .mount(github_api_mock_server)
         .await;
 
-        let finish_response =
+        let _finish_response =
             AuthFinishEndpoint::make_test_request(server, &AuthFinishPayload { state, code }, ())
                 .await;
 
@@ -256,11 +256,7 @@ async fn with_logged_in_user<Fut: Future>(
             .await
             .expect("Running db query in test db failed")
             .expect("Test setup failed. User not found in db.");
-
-        if let MaybePageRedirect::PageRedirectTo(_) = finish_response {
-            panic!("Didnt' expect redirect")
-        };
-
+        
         func(test_setup, user).await
     })
     .await

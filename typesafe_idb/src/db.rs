@@ -4,9 +4,11 @@ use idb::builder::ObjectStoreBuilder;
 
 use crate::{chain::Chain, ReactivityTrackers, ReadOnly, Store, Txn, TxnBuilder};
 
+pub type CommitListener = Rc<dyn Fn(&ReactivityTrackers)>;
+
 pub struct TypesafeDb<TableMarkers> {
     markers: PhantomData<TableMarkers>,
-    pub(crate) listener: Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+    pub(crate) listener: Option<CommitListener>,
     pub(crate) inner: idb::Database,
 }
 
@@ -14,7 +16,7 @@ pub struct TypesafeDbBuilder<TableMarkers> {
     name: String,
     markers: PhantomData<TableMarkers>,
     object_store_builders: HashMap<TypeId, ObjectStoreBuilder>,
-    commit_listener: Option<Rc<dyn Fn(&ReactivityTrackers)>>,
+    commit_listener: Option<CommitListener>,
 }
 
 impl TypesafeDb<()> {

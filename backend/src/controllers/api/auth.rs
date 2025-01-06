@@ -7,24 +7,23 @@ use crate::{
         LoginUser,
     },
     error::Error,
-    hookup_endpoint::hookup,
+    hookup_endpoint::hookup_post,
     utils::gen_rand_string,
 };
 use axum::{extract::State, response::Redirect, routing::get, Router};
 use github_api::apis::users_api::users_slash_get_authenticated;
 use http::StatusCode;
 use shared::{
-    endpoints::defns::api::auth::{
+    consts::HEIMISCH_FRONTEND_DOMAIN, endpoints::defns::api::auth::{
         finish::{AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse},
         initiate::AuthInitiateEndpoint,
-    },
-    types::user::UserId,
+    }, types::user::UserId
 };
 
 use crate::app_state::AppState;
 
 pub fn finish(router: Router<AppState>) -> Router<AppState> {
-    hookup(
+    hookup_post(
         AuthFinishEndpoint,
         router,
         |mut auth_session, state, payload| async move {
@@ -107,7 +106,7 @@ pub fn initiate(router: Router<AppState>) -> Router<AppState> {
 
             store_csrf_token(&state, csrf_token.clone()).await?;
 
-            let mut redirect_uri = state.config.heimisch_domain_url.clone();
+            let mut redirect_uri = HEIMISCH_FRONTEND_DOMAIN.with(Clone::clone);
             redirect_uri.set_path("/auth");
 
             let mut github_oauth_url = state
