@@ -24,19 +24,17 @@ use repository::pull_requests_tab::PullRequestsTab;
 use repository::RepositoryPage;
 
 pub use leptos_router;
+use sync_engine_provider::SyncEngine;
 
 use crate::consts::ENDPOINT_CLIENT;
-use crate::typed_transport::MyWebSocket;
 
 #[component]
 pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         Rc::new(
-            shared::sync_engine::SyncEngine::<MyWebSocket>::new(
-                ENDPOINT_CLIENT.with(|e| e.clone()),
-            )
-            .await
-            .unwrap(),
+            SyncEngine::new(ENDPOINT_CLIENT.with(|e| e.clone()))
+                .await
+                .unwrap(),
         )
     });
 

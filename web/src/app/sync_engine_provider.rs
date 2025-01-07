@@ -4,7 +4,7 @@ use leptos::prelude::*;
 use send_wrapper::SendWrapper;
 
 use crate::typed_transport::MyWebSocket;
-type SyncEngine = shared::sync_engine::SyncEngine<MyWebSocket>;
+pub type SyncEngine = shared::sync_engine::SyncEngine<MyWebSocket>;
 pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
 
 pub fn sync_engine_provided<V>(
