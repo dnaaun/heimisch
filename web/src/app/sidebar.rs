@@ -4,7 +4,11 @@ use leptos::prelude::*;
 use shared::types::{repository::Repository, user::User};
 
 use crate::{
-    app::icon::Icon, frontend_error::FrontendError,
+    app::{
+        icon::Icon,
+        routing::{self, TopLevelEmptyOwnerName},
+    },
+    frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
@@ -12,7 +16,7 @@ use super::sync_engine_provider::use_sync_engine;
 
 #[component]
 pub fn Sidebar(
-    #[prop(into)] child_component: Signal<Box<dyn Fn() -> AnyView + Send + Sync>>,
+    #[prop(into)] child_component: Signal<Box<dyn Fn(()) -> AnyView + Send + Sync>>,
 ) -> impl IntoView {
     let sync_engine = use_sync_engine();
     let repositorys_by_owner = sync_engine.idb_signal(
@@ -129,7 +133,20 @@ pub fn Sidebar(
                                                                 key=|(id, _)| *id
                                                                 children=move |(_, name)| {
                                                                     let href = match &user_login {
-                                                                        Some(u) => Some(format!("/{}/{}", u, name)),
+                                                                        Some(u) => {
+                                                                            Some(
+                                                                                routing::TopLevel::Empty(
+                                                                                        routing::TopLevelEmpty::OwnerName(routing::TopLevelEmptyOwnerName {
+                                                                                            captured: u.clone(),
+                                                                                            child: routing::TopLevelEmptyOwnerNameRepoName {
+                                                                                                captured: name.clone(),
+                                                                                                child: routing::TopLevelEmptyOwnerNameRepoNameChild::Issues,
+                                                                                            },
+                                                                                        }),
+                                                                                    )
+                                                                                    .to_string(),
+                                                                            )
+                                                                        }
                                                                         None => todo!(),
                                                                     };
 
@@ -156,9 +173,7 @@ pub fn Sidebar(
                     }}
                 </div>
             </aside>
-            <main class="flex-grow">
-                { child_component.read()() }
-            </main>
+            <main class="flex-grow">{child_component.read()(())}</main>
         </div>
     }))
 }

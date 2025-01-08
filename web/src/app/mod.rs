@@ -15,7 +15,6 @@ use std::rc::Rc;
 
 use leptos::prelude::*;
 
-use leptos_router::components::Router;
 use routing::Routed;
 use sync_engine_provider::SyncEngine;
 
@@ -32,10 +31,5 @@ pub fn App() -> impl IntoView {
     });
 
     let Routed = sync_engine_provided(Routed, sync_engine);
-
-    view! {
-        <Router>
-            <Routed />
-        </Router>
-    }
+    Routed()
 }
