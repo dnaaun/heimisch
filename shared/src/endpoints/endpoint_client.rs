@@ -143,7 +143,7 @@ impl EndpointClient {
         url.set_path(E::PATH.to_string().as_str());
         url.set_query(Some(&serde_urlencoded::to_string(query_params)?));
 
-        let mut request = self.client.get(url.clone());
+        let mut request = self.client.post(url.clone());
         request = request.json(&payload);
         #[cfg(target_arch = "wasm32")]
         {

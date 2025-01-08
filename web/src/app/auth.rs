@@ -182,7 +182,8 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                                         }
                                             .into_any()
                                     }
-                                    _ => {
+                                    err => {
+                                        tracing::error!("{err:?}");
                                         view! {
                                             <div class="text-lg">
                                                 "Authenticating Heimisch failed. Please try again."

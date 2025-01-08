@@ -1,29 +1,23 @@
 pub mod list;
 
-use std::ops::Deref;
-
 use itertools::Itertools;
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
+    repository::RepositoryId,
     user::User,
 };
 
 use crate::{
-    app::{repository::RepositoryPageParentRouteContext, sync_engine_provider::use_sync_engine},
-    frontend_error::FrontendError,
+    app::sync_engine_provider::use_sync_engine, frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
 #[component]
-pub fn IssuesTab() -> impl IntoView {
+pub fn IssuesTab(#[prop(into)] repository_id: Signal<RepositoryId>) -> impl IntoView {
     let sync_engine = use_sync_engine();
-    let repository_id = match use_context() {
-        Some(RepositoryPageParentRouteContext(repository_id)) => repository_id,
-        None => return ().into_any(),
-    };
 
     let issues = sync_engine.idb_signal(
         |builder| builder.with_store::<Issue>().build(),
@@ -31,7 +25,7 @@ pub fn IssuesTab() -> impl IntoView {
             Ok(txn
                 .object_store::<Issue>()?
                 .index::<RepositoryIdIndex>()?
-                .get_all(Some(repository_id.read().deref()))
+                .get_all(Some(&repository_id.read()))
                 .await?)
         },
     );

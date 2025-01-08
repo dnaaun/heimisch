@@ -1,9 +1,5 @@
 use leptos::{prelude::*, task::spawn_local};
-use leptos_router::{
-    components::Outlet,
-    hooks::{use_location, use_navigate, use_params},
-    params::Params,
-};
+use leptos_router::{hooks::use_navigate, params::Params};
 use shared::{
     types::{
         self,
@@ -20,7 +16,7 @@ mod top_bar;
 use crate::{
     app::{
         installation_id_sync::use_sync_installation_ids_and_recv_websocket_updates,
-        not_found::NotFound,
+        not_found::NotFound, routing,
     },
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
@@ -37,79 +33,30 @@ struct RepositoryPageParams {
     repo_name: String,
 }
 
-#[derive(PartialEq, Clone, Eq, Hash, Debug)]
-enum TabName {
-    Issues,
-    Pulls,
-}
-
-impl TabName {
-    fn to_url_segment(&self) -> String {
-        match self {
-            TabName::Issues => "issues",
-            TabName::Pulls => "pulls",
-        }
-        .into()
-    }
-
-    fn from_url_segment(segment: &str) -> Result<Self, ()> {
-        match segment.to_lowercase().as_str() {
-            "issues" => Ok(TabName::Issues),
-            "pulls" => Ok(TabName::Pulls),
-            _ => Err(()),
-        }
-    }
-}
-
-impl std::fmt::Display for TabName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            TabName::Issues => "Issues",
-            TabName::Pulls => "Pull Requests",
-        })
-    }
-}
-
-#[derive(Clone)]
-pub struct RepositoryPageParentRouteContext(Signal<RepositoryId>);
-
 #[component]
-pub fn RepositoryPage() -> impl IntoView {
-    let params = Signal::derive(|| {
-        use_params::<RepositoryPageParams>()
-            .read()
-            .clone()
-            .expect("RepositoryPage should be mounted only if these params are available")
-    });
-
-    let active_tab = Signal::derive(|| {
-        use_location()
-            .pathname
-            .get()
-            .split("/")
-            .last()
-            .map(TabName::from_url_segment)
-            .transpose()
-            .ok()
-            .flatten()
-            .unwrap_or(TabName::Issues)
-    });
+pub fn RepositoryPage(
+    #[prop(into)] owner_name: Signal<String>,
+    #[prop(into)] repo_name: Signal<String>,
+    #[prop(into)] active_tab: Signal<routing::TopLevelOwnerNameRepoNameChild>,
+    #[prop(into)] child_component: Signal<Box<dyn Fn(RepositoryId) -> AnyView + Send + Sync>>,
+) -> impl IntoView {
     let new_active_tab = RwSignal::new(active_tab.get_untracked());
     let navigate = use_navigate();
 
     Effect::new(move || {
-        let params_untracked = params.get_untracked();
         let active_tab = active_tab.get_untracked();
 
         let new_active_tab = new_active_tab.get();
         if active_tab != new_active_tab {
             navigate(
-                &format!(
-                    "/{}/{}/{}",
-                    params_untracked.owner_name,
-                    params_untracked.repo_name,
-                    new_active_tab.to_url_segment()
-                ),
+                &routing::TopLevel::OwnerName(routing::TopLevelOwnerName {
+                    captured: owner_name.get_untracked(),
+                    child: routing::TopLevelOwnerNameRepoName {
+                        captured: repo_name.get_untracked(),
+                        child: new_active_tab,
+                    },
+                })
+                .to_string(),
                 Default::default(),
             )
         }
@@ -126,32 +73,26 @@ pub fn RepositoryPage() -> impl IntoView {
                 .with_store::<Repository>()
                 .build()
         },
-        move |txn| {
-            let RepositoryPageParams {
-                owner_name,
-                repo_name,
-            } = params.get();
-            async move {
-                let user = txn
-                    .object_store::<User>()?
-                    .index::<user::LoginIndex>()?
-                    .get(&owner_name)
-                    .await?;
-                match user {
-                    Some(user) => {
-                        let user_id = user.id;
-                        let repo = txn
-                            .object_store::<Repository>()?
-                            .index::<types::repository::NameIndex>()?
-                            .get_all(Some(&repo_name))
-                            .await?
-                            .into_iter()
-                            .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
+        move |txn| async move {
+            let user = txn
+                .object_store::<User>()?
+                .index::<user::LoginIndex>()?
+                .get(&owner_name.read())
+                .await?;
+            match user {
+                Some(user) => {
+                    let user_id = user.id;
+                    let repo = txn
+                        .object_store::<Repository>()?
+                        .index::<types::repository::NameIndex>()?
+                        .get_all(Some(&repo_name.read()))
+                        .await?
+                        .into_iter()
+                        .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
 
-                        Ok(repo.map(|r| r.id))
-                    }
-                    None => Ok(None),
+                    Ok(repo.map(|r| r.id))
                 }
+                None => Ok(None),
             }
         },
     );
@@ -190,17 +131,15 @@ pub fn RepositoryPage() -> impl IntoView {
                         return Ok(Some(view! { <NotFound /> }.into_any()));
                     }
                 };
-                provide_context(RepositoryPageParentRouteContext(repository_id.into()));
-                let tabs = vec![TabName::Issues, TabName::Pulls];
+                let tabs = vec![
+                    routing::TopLevelOwnerNameRepoNameChild::Issues,
+                    routing::TopLevelOwnerNameRepoNameChild::Pulls,
+                ];
                 Ok(
                     Some(
 
                         view! {
-                            <TopBar
-                                repository_id
-                                owner_name=Memo::new(move |_| params().owner_name)
-                                repo_name=Memo::new(move |_| params().repo_name)
-                            />
+                            <TopBar repository_id owner_name repo_name />
                             <div>
                                 <Tabs
                                     tabs
@@ -209,7 +148,7 @@ pub fn RepositoryPage() -> impl IntoView {
                                 />
                                 <div class="flex items-center justify-center">
                                     <div class="m-5 max-w-screen-xl w-full">
-                                        <Outlet />
+                                        { child_component.read()(repository_id) }
                                     </div>
                                 </div>
                             </div>

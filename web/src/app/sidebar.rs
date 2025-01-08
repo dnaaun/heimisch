@@ -1,15 +1,19 @@
 use futures::future::{join_all, OptionFuture};
 use itertools::Itertools;
 use leptos::prelude::*;
-use leptos_router::components::Outlet;
 use shared::types::{repository::Repository, user::User};
 
-use crate::{app::icon::Icon, frontend_error::FrontendError, idb_signal_from_sync_engine::IdbSignalFromSyncEngine};
+use crate::{
+    app::icon::Icon, frontend_error::FrontendError,
+    idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
+};
 
 use super::sync_engine_provider::use_sync_engine;
 
 #[component]
-pub fn Sidebar() -> impl IntoView {
+pub fn Sidebar(
+    #[prop(into)] child_component: Signal<Box<dyn Fn() -> AnyView + Send + Sync>>,
+) -> impl IntoView {
     let sync_engine = use_sync_engine();
     let repositorys_by_owner = sync_engine.idb_signal(
         |txn_builder| {
@@ -40,11 +44,7 @@ pub fn Sidebar() -> impl IntoView {
                 .into_iter()
                 .map(|(_, iter)| {
                     let mut iter = iter.peekable();
-                    let user = iter
-                        .peek()
-                        .expect("")
-                        .1
-                        .clone();
+                    let user = iter.peek().expect("").1.clone();
                     let repos = iter
                         .sorted_by_key(|(r, _)| r.name.to_lowercase())
                         .map(|(repo, _)| (repo.id, repo.name))
@@ -157,7 +157,7 @@ pub fn Sidebar() -> impl IntoView {
                 </div>
             </aside>
             <main class="flex-grow">
-                <Outlet />
+                { child_component.read()() }
             </main>
         </div>
     }))

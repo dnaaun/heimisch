@@ -6,24 +6,17 @@ mod icon;
 mod installation_id_sync;
 mod not_found;
 mod repository;
+pub mod routing;
 pub mod sidebar;
 mod sync_engine_provider;
 
 use crate::app::sync_engine_provider::sync_engine_provided;
 use std::rc::Rc;
 
-use auth::Auth;
-use leptos_router::components::{ParentRoute, Routes};
-
 use leptos::prelude::*;
-use leptos_router::components::{Route, Router};
-use leptos_router::path;
-use not_found::NotFound;
-use repository::issues_tab::IssuesTab;
-use repository::pull_requests_tab::PullRequestsTab;
-use repository::RepositoryPage;
 
-pub use leptos_router;
+use leptos_router::components::Router;
+use routing::Routed;
 use sync_engine_provider::SyncEngine;
 
 use crate::consts::ENDPOINT_CLIENT;
@@ -38,25 +31,11 @@ pub fn App() -> impl IntoView {
         )
     });
 
+    let Routed = sync_engine_provided(Routed, sync_engine);
+
     view! {
         <Router>
-            <Routes fallback=sync_engine_provided(NotFound, sync_engine)>
-                <Route path=path!("/auth") view=sync_engine_provided(Auth, sync_engine) />
-                <ParentRoute
-                    path=path!("/:owner_name/:repo_name")
-                    view=sync_engine_provided(RepositoryPage, sync_engine)
-                >
-                    <Route
-                        path=path!("/issues")
-                        view=sync_engine_provided(IssuesTab, sync_engine)
-                    />
-                    <Route
-                        path=path!("/pulls")
-                        view=sync_engine_provided(PullRequestsTab, sync_engine)
-                    />
-            </ParentRoute>
-            </Routes>
+            <Routed />
         </Router>
     }
-    .into_any()
 }
