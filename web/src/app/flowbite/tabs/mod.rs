@@ -7,12 +7,14 @@ use leptos::prelude::*;
 pub fn Tabs<Key>(
     #[prop(into)] tabs: Signal<Vec<Key>>,
     #[prop(into)] active_tab: Signal<Key>,
+    get_tab_label: impl Fn(&Key) -> String + Send + Sync + 'static,
     set_active_tab: impl Fn(Key) + Send + Sync + 'static,
 ) -> impl IntoView
 where
-    Key: ToString + Send + Sync + 'static + Clone + Eq + Hash + Clone,
+    Key: 'static + Clone + Eq + Hash + Clone + Send + Sync,
 {
     let set_active_tab = Arc::new(set_active_tab);
+    let get_tab_label = StoredValue::new(get_tab_label);
 
     let for_children = move |key: Key| {
         let set_active_tab = set_active_tab.clone();
@@ -31,7 +33,7 @@ where
                     }
                     aria-current="page"
                 >
-                    {key.to_string()}
+                    { get_tab_label.read_value()(&key)}
                 </a>
             </li>
         }

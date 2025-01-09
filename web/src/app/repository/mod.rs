@@ -1,4 +1,3 @@
-
 use leptos::{prelude::*, task::spawn_local};
 use leptos_router::params::Params;
 use shared::{
@@ -136,9 +135,14 @@ pub fn RepositoryPage(
                     routing::TopLevelEmptyOwnerNameRepoNameChild::Issues,
                     routing::TopLevelEmptyOwnerNameRepoNameChild::Pulls,
                 ];
+                let get_tab_label = |key: &routing::TopLevelEmptyOwnerNameRepoNameChild| {
+                    match key {
+                        routing::TopLevelEmptyOwnerNameRepoNameChild::Issues => "Issues",
+                        routing::TopLevelEmptyOwnerNameRepoNameChild::Pulls => "Pulls",
+                    }.to_owned()
+                    };
                 Ok(
                     Some(
-
                         view! {
                             <TopBar repository_id owner_name repo_name />
                             <div>
@@ -146,6 +150,7 @@ pub fn RepositoryPage(
                                     tabs
                                     active_tab=Signal::derive(active_tab)
                                     set_active_tab=move |t| *new_active_tab.write() = t
+                                    get_tab_label
                                 />
                                 <div class="flex items-center justify-center">
                                     <div class="m-5 max-w-screen-xl w-full">
