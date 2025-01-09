@@ -89,7 +89,7 @@ pub fn RepositoryPage(
 
                     let repo = repos
                         .into_iter()
-                        .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
+                        .find(|r| r.owner_id.map_ref(|o| o == &user_id).assume(false));
 
                     Ok(repo.map(|r| r.id))
                 }

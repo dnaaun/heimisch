@@ -47,7 +47,7 @@ impl<S> Clone for IdbSignal<S> {
 }
 
 #[allow(unused)]
-impl<S: 'static + Send + Sync + Clone> IdbSignal<S> {
+impl<S: 'static + Clone> IdbSignal<S> {
     pub fn get(&self) -> Option<S> {
         self.inner.try_get_value().unwrap().local_resource.get()
     }
@@ -81,7 +81,7 @@ where
 
 impl<T> IdbSignal<T>
 where
-    T: std::fmt::Debug + 'static + Send + Sync,
+    T: std::fmt::Debug + 'static,
 {
     #[track_caller]
     pub fn new<Markers, Mode, Fut, Deregister>(

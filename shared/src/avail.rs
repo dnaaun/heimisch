@@ -23,7 +23,9 @@ impl<T> Avail<T> {
         }
     }
 
-    pub fn unwrap_or(self, t: T) -> T {
+    /// I like `assume` rather than `unwrap_or` because the semantics is that the value is not
+    /// present and we are _assuming_ that it is whatever we pass here.
+    pub fn assume(self, t: T) -> T {
         match self {
             Avail::Yes(i) => i,
             Avail::No => t,

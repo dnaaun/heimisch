@@ -12,14 +12,17 @@ use crate::{
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
-use super::sync_engine_provider::use_sync_engine;
+use super::{flowbite::checkbox::Checkbox, sync_engine_provider::use_sync_engine};
 
 #[component]
 pub fn Sidebar(
     #[prop(into)] child_component: Signal<Box<dyn Fn(()) -> AnyView + Send + Sync>>,
 ) -> impl IntoView {
     let sync_engine = use_sync_engine();
-    let repositorys_by_owner = sync_engine.idb_signal(
+
+    let show_forks = RwSignal::new(true);
+
+    let repositorys_and_owners = sync_engine.idb_signal(
         |txn_builder| {
             txn_builder
                 .with_store::<Repository>()
@@ -38,27 +41,50 @@ pub fn Sidebar(
             .await
             .into_iter()
             .map(|item| item.transpose().map(|inner_item| inner_item.flatten()))
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter();
 
-            Ok(repositorys
-                .into_iter()
-                .zip(users)
-                .sorted_by_key(|(_, u)| u.as_ref().map(|u| u.id))
-                .chunk_by(|(_, u)| u.as_ref().map(|u| u.id))
-                .into_iter()
-                .map(|(_, iter)| {
-                    let mut iter = iter.peekable();
-                    let user = iter.peek().expect("").1.clone();
-                    let repos = iter
-                        .sorted_by_key(|(r, _)| r.name.to_lowercase())
-                        .map(|(repo, _)| (repo.id, repo.name))
-                        .collect::<Vec<_>>();
-                    (user.map(|u| u.login), repos)
-                })
-                .sorted_by_key(|(u, _)| u.clone())
-                .collect::<Vec<_>>())
+            Ok(repositorys.into_iter().zip(users).collect::<Vec<_>>())
         },
     );
+
+    let repositorys_and_owners = Memo::new(move |_| {
+        let show_forks = *show_forks.read();
+        if show_forks {
+            return repositorys_and_owners.get();
+        }
+        let repositorys_and_owners = match repositorys_and_owners.get()? {
+            Ok(v) => v,
+            Err(e) => return Some(Err(e)),
+        };
+        Some(Ok(repositorys_and_owners
+            .into_iter()
+            .filter(|(r, _)| !r.fork.as_ref().assume(&false))
+            .collect()))
+    });
+
+    let repositorys_by_owner = Memo::new(move |_| {
+        let repositorys_and_owners = match repositorys_and_owners.get()? {
+            Ok(v) => v,
+            Err(e) => return Some(Err(e)),
+        };
+        Some(Ok(repositorys_and_owners
+            .into_iter()
+            .sorted_by_key(|(_, u)| u.as_ref().map(|u| u.id))
+            .chunk_by(|(_, u)| u.as_ref().map(|u| u.id))
+            .into_iter()
+            .map(|(_, iter)| {
+                let mut iter = iter.peekable();
+                let user = iter.peek().expect("").1.clone();
+                let repos = iter
+                    .sorted_by_key(|(r, _)| r.name.to_lowercase())
+                    .map(|(repo, _)| (repo.id, repo.name))
+                    .collect::<Vec<_>>();
+                (user.map(|u| u.login), repos)
+            })
+            .sorted_by_key(|(u, _)| u.clone())
+            .collect::<Vec<_>>()))
+    });
     let repositorys_by_owner = Memo::new_with_compare(
         move |_| repositorys_by_owner.get().transpose(),
         |a, b| match (a, b) {
@@ -96,6 +122,9 @@ pub fn Sidebar(
                 aria-label="Sidebar"
             >
                 <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+                    <div class="p-2 pl-4">
+                        <Checkbox checked=show_forks label="Show forks" />
+                    </div>
                     {move || {
                         repositorys_by_owner()
                             .map(|repositorys_by_owner| {

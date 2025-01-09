@@ -1,5 +1,4 @@
 use leptos::prelude::*;
-use std::hash::Hash;
 use std::{future::Future, sync::Arc};
 
 use send_wrapper::SendWrapper;
@@ -10,7 +9,7 @@ use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
 pub trait IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T>
 where
-    T: Sync + Send + 'static,
+    T: 'static,
 {
     /// Will create a signal that will be recomputed every time an indexeddb change is committed by
     /// the sync engine.
@@ -33,7 +32,7 @@ where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
     Mode: TxnMode + 'static,
-    T: 'static + Send + Sync + std::fmt::Debug + Clone + PartialEq + Hash,
+    T: 'static + std::fmt::Debug,
 {
     #[track_caller]
     fn idb_signal(
