@@ -1,23 +1,15 @@
-use leptos::{prelude::*, tachys::html::class::IntoClass};
-use shared::types::repository::RepositoryId;
-use std::{fmt::Display, ops::Deref, str::FromStr};
-use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
-
 use crate::app::{repository::RepositoryPage, sidebar::Sidebar};
 
-use super::{
+use super::super::{
     auth::Auth,
     repository::{issues_tab::IssuesTab, pull_requests_tab::PullRequestsTab},
 };
 
-trait RouteComponent<PassedFromParent> {
-    type ToPassToChild;
-    fn render(
-        &self,
-        passed_from_parent: PassedFromParent,
-        child_component: Box<dyn Fn(Self::ToPassToChild) -> AnyView + Send + Sync>,
-    ) -> AnyView;
-}
+use leptos::prelude::*;
+use shared::types::repository::RepositoryId;
+use std::{fmt::Display, str::FromStr};
+
+use super::RouteComponent;
 
 /// Will error out if first char is not a slash.
 /// split_to_two_at_non_initial_slash("/hi/hello/asdf") == Ok(("/hi", "/hello/asdf")).
@@ -213,7 +205,7 @@ impl Display for TopLevelEmptyOwnerNameRepoName {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum TopLevelEmptyOwnerNameRepoNameChild {
-    Issues,
+    Issues(TopLevelEmptyOwnerNameRepoNameChildIssues),
     Pulls,
 }
 
@@ -221,8 +213,9 @@ impl FromStr for TopLevelEmptyOwnerNameRepoNameChild {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "/issues" => Self::Issues,
+        let (head, tail) = split_path_at_slash(s)?;
+        Ok(match head {
+            "/issues" => Self::Issues(tail.parse()?),
             "/pulls" => Self::Pulls,
             _ => return Err("expected one of issues or pulls".to_owned()),
         })
@@ -232,7 +225,7 @@ impl FromStr for TopLevelEmptyOwnerNameRepoNameChild {
 impl Display for TopLevelEmptyOwnerNameRepoNameChild {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         f.write_str(&match self {
-            TopLevelEmptyOwnerNameRepoNameChild::Issues => "/issues".to_owned(),
+            TopLevelEmptyOwnerNameRepoNameChild::Issues(c) => format!("/issues{}", c),
             TopLevelEmptyOwnerNameRepoNameChild::Pulls => "/pulls".to_owned(),
         })
     }
@@ -247,7 +240,7 @@ impl RouteComponent<RepositoryId> for TopLevelEmptyOwnerNameRepoNameChild {
         _child_component: Box<dyn Fn(Self::ToPassToChild) -> AnyView + Send + Sync>,
     ) -> AnyView {
         match self {
-            TopLevelEmptyOwnerNameRepoNameChild::Issues => {
+            TopLevelEmptyOwnerNameRepoNameChild::Issues(_) => {
                 view! { <IssuesTab repository_id /> }.into_any()
             }
             TopLevelEmptyOwnerNameRepoNameChild::Pulls => {
@@ -257,85 +250,53 @@ impl RouteComponent<RepositoryId> for TopLevelEmptyOwnerNameRepoNameChild {
     }
 }
 
-struct PathnameManager {
-    /// We're making this ArcMemo and not ArcRwSignal because sometimes, popstate gets emitted when
-    /// set_pathname() is used, and sometimes it isn't. And I want to avoid doing double rerenders.
-    pathname: ArcMemo<String>,
-    set_pathname: ArcWriteSignal<String>,
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub enum TopLevelEmptyOwnerNameRepoNameChildIssues {
+    Empty,
+    IssueId(TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId),
 }
 
-impl PathnameManager {
-    fn new() -> Self {
-        let location = window().location();
-        let (pathname, set_pathname) = ArcRwSignal::new(location.pathname().expect("")).split();
+impl FromStr for TopLevelEmptyOwnerNameRepoNameChildIssues {
+    type Err = String;
 
-        let set_pathname2 = set_pathname.clone();
-        let cb = move || {
-            let new_pathname = window().location().pathname().expect("");
-            set_pathname2(new_pathname);
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let (_head, tail) = split_path_at_slash(s)?;
+
+        if tail.len() <= 1 {
+            return Ok(TopLevelEmptyOwnerNameRepoNameChildIssues::Empty);
         };
-        let closure = Closure::wrap(Box::new(cb) as Box<dyn Fn()>).into_js_value();
 
-        window()
-            .add_event_listener_with_callback("popstate", closure.as_ref().dyn_ref().expect(""))
-            .expect("");
-
-        Self {
-            pathname: ArcMemo::new(move |_| pathname.get()),
-            set_pathname,
-        }
+        Ok(Self::IssueId(tail.parse()?))
     }
 }
 
-thread_local! {
-    pub static PATHNAME_MANAGER: PathnameManager = PathnameManager::new();
-}
-
-pub fn use_pathname() -> Signal<String> {
-    PATHNAME_MANAGER.with(|i| i.pathname.clone()).into()
-}
-
-pub fn set_pathname(path: impl ToString) {
-    window()
-        .history()
-        .expect("")
-        .push_state_with_url(&JsValue::NULL, "Some crazy title", Some(&path.to_string()))
-        .expect("");
-    PATHNAME_MANAGER.with(|i| (i.set_pathname)(window().location().pathname().expect("")));
-}
-
-#[component]
-pub fn Routed() -> impl IntoView {
-    let pathname = use_pathname();
-    let top_level = Memo::new(move |_| pathname.read().parse::<TopLevel>());
-    move || {
-        view! {
-            {match top_level.read().deref() {
-                Ok(top_level) => top_level.render((), Box::new(|_| ().into_any())),
-                Err(_) => todo!(),
-            }}
-        }
+impl Display for TopLevelEmptyOwnerNameRepoNameChildIssues {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
     }
 }
 
-#[component]
-pub fn A(
-    #[prop(into)] href: Option<String>,
-    class: impl IntoClass,
-    children: Children,
-) -> impl IntoView {
-    view! {
-        <a
-            class=class
-            href=href.clone()
-            on:click=move |ev| {
-                if let Some(href) = href.clone() {
-                    set_pathname(href);
-                }
-                ev.prevent_default();
-            }
-        >
-            {children()}
-        </a>
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+struct TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId {
+    issue_id: String,
+}
+
+impl FromStr for TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        if s.len() <= 1 {
+            return Err(format!("issue_id is empty or of len 1: {s}"));
+        }
+
+        Ok(Self {
+            issue_id: s.chars().skip(1).collect(),
+        })
+    }
+}
+
+impl Display for TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("/{}", self.issue_id))
     }
 }
