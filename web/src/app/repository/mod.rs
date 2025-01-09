@@ -39,8 +39,8 @@ pub fn RepositoryPage(
     #[prop(into)] child_component: Signal<Box<dyn Fn(RepositoryId) -> AnyView + Send + Sync>>,
     #[prop(into)] path_so_far: Signal<routing::TopLevelEmptyOwnerName>,
 ) -> impl IntoView {
-    let owner_name = Memo::new(move |_| path_so_far.get().captured.clone());
-    let repo_name = Memo::new(move |_| path_so_far.get().child.captured.clone());
+    let owner_name = Memo::new(move |_| path_so_far.get().owner_name.clone());
+    let repo_name = Memo::new(move |_| path_so_far.get().child.repo_name.clone());
     let active_tab = Memo::new(move |_| path_so_far.get().child.child);
     let new_active_tab = RwSignal::new(active_tab.get_untracked());
 
@@ -50,9 +50,9 @@ pub fn RepositoryPage(
         if active_tab != new_active_tab {
             set_pathname(routing::TopLevel::Empty(routing::TopLevelEmpty::OwnerName(
                 routing::TopLevelEmptyOwnerName {
-                    captured: owner_name.get_untracked(),
+                    owner_name: owner_name.get_untracked(),
                     child: routing::TopLevelEmptyOwnerNameRepoName {
-                        captured: repo_name.get_untracked(),
+                        repo_name: repo_name.get_untracked(),
                         child: new_active_tab,
                     },
                 },
@@ -139,8 +139,9 @@ pub fn RepositoryPage(
                     match key {
                         routing::TopLevelEmptyOwnerNameRepoNameChild::Issues => "Issues",
                         routing::TopLevelEmptyOwnerNameRepoNameChild::Pulls => "Pulls",
-                    }.to_owned()
-                    };
+                    }
+                        .to_owned()
+                };
                 Ok(
                     Some(
                         view! {

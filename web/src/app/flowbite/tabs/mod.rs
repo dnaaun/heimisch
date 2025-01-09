@@ -1,5 +1,4 @@
 use std::hash::Hash;
-use std::sync::Arc;
 
 use leptos::prelude::*;
 
@@ -13,19 +12,21 @@ pub fn Tabs<Key>(
 where
     Key: 'static + Clone + Eq + Hash + Clone + Send + Sync,
 {
-    let set_active_tab = Arc::new(set_active_tab);
+    let set_active_tab = StoredValue::new(set_active_tab);
     let get_tab_label = StoredValue::new(get_tab_label);
 
     let for_children = move |key: Key| {
-        let set_active_tab = set_active_tab.clone();
-        let key2 = key.clone();
+        let key = StoredValue::new(key);
         view! {
             <li class="me-2">
                 <a
                     href="#"
-                    on:click=move |_| set_active_tab(key2.clone())
+                    on:click=move |ev| {
+                        set_active_tab.read_value()(key.get_value());
+                        ev.prevent_default();
+                    }
                     class=move || {
-                        if key.clone() == active_tab.get() {
+                        if key.get_value() == active_tab.get() {
                             "inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
                         } else {
                             "inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
@@ -33,7 +34,7 @@ where
                     }
                     aria-current="page"
                 >
-                    { get_tab_label.read_value()(&key)}
+                    {get_tab_label.read_value()(&key.read_value())}
                 </a>
             </li>
         }

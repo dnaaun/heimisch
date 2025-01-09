@@ -166,9 +166,9 @@ pub fn Sidebar(
                                                                             Some(
                                                                                 routing::TopLevel::Empty(
                                                                                         routing::TopLevelEmpty::OwnerName(routing::TopLevelEmptyOwnerName {
-                                                                                            captured: u.clone(),
+                                                                                            owner_name: u.clone(),
                                                                                             child: routing::TopLevelEmptyOwnerNameRepoName {
-                                                                                                captured: name.clone(),
+                                                                                                repo_name: name.clone(),
                                                                                                 child: routing::TopLevelEmptyOwnerNameRepoNameChild::Issues,
                                                                                             },
                                                                                         }),

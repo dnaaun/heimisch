@@ -127,9 +127,9 @@ impl FromStr for TopLevelEmpty {
         match head {
             "/" => Ok(Self::Empty),
             _ => {
-                let captured = head.chars().skip(1).collect();
+                let owner_name = head.chars().skip(1).collect();
                 Ok(Self::OwnerName(TopLevelEmptyOwnerName {
-                    captured,
+                    owner_name,
                     child: tail.parse()?,
                 }))
             }
@@ -141,8 +141,8 @@ impl Display for TopLevelEmpty {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&match self {
             TopLevelEmpty::Empty => "/".to_owned(),
-            TopLevelEmpty::OwnerName(TopLevelEmptyOwnerName { captured, child }) => {
-                format!("/{}{}", captured, child)
+            TopLevelEmpty::OwnerName(TopLevelEmptyOwnerName { owner_name, child }) => {
+                format!("/{}{}", owner_name, child)
             }
         })
     }
@@ -150,13 +150,13 @@ impl Display for TopLevelEmpty {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TopLevelEmptyOwnerName {
-    pub captured: String,
+    pub owner_name: String,
     pub child: TopLevelEmptyOwnerNameRepoName,
 }
 
 impl Display for TopLevelEmptyOwnerName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_str(&format!("/{}{}", self.captured, self.child))
+        f.write_str(&format!("/{}{}", self.owner_name, self.child))
     }
 }
 
@@ -167,7 +167,7 @@ impl FromStr for TopLevelEmptyOwnerName {
         let (head, tail) = split_path_at_slash(s)?;
 
         Ok(Self {
-            captured: head.chars().skip(1).collect(),
+            owner_name: head.chars().skip(1).collect(),
             child: tail.parse()?,
         })
     }
@@ -187,7 +187,7 @@ impl RouteComponent<()> for TopLevelEmptyOwnerName {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TopLevelEmptyOwnerNameRepoName {
-    pub captured: String,
+    pub repo_name: String,
     pub child: TopLevelEmptyOwnerNameRepoNameChild,
 }
 
@@ -197,9 +197,9 @@ impl FromStr for TopLevelEmptyOwnerNameRepoName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (head, tail) = split_path_at_slash(s)?;
 
-        let captured = head.chars().skip(1).collect();
+        let repo_name = head.chars().skip(1).collect();
         Ok(Self {
-            captured,
+            repo_name,
             child: tail.parse()?,
         })
     }
@@ -207,7 +207,7 @@ impl FromStr for TopLevelEmptyOwnerNameRepoName {
 
 impl Display for TopLevelEmptyOwnerNameRepoName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_str(&format!("/{}{}", self.captured, self.child))
+        f.write_str(&format!("/{}{}", self.repo_name, self.child))
     }
 }
 
@@ -258,26 +258,32 @@ impl RouteComponent<RepositoryId> for TopLevelEmptyOwnerNameRepoNameChild {
 }
 
 struct PathnameManager {
-    pathname: ArcRwSignal<String>,
+    /// We're making this ArcMemo and not ArcRwSignal because sometimes, popstate gets emitted when
+    /// set_pathname() is used, and sometimes it isn't. And I want to avoid doing double rerenders.
+    pathname: ArcMemo<String>,
+    set_pathname: ArcWriteSignal<String>,
 }
 
 impl PathnameManager {
     fn new() -> Self {
         let location = window().location();
-        let pathname = ArcRwSignal::new(location.pathname().expect(""));
+        let (pathname, set_pathname) = ArcRwSignal::new(location.pathname().expect("")).split();
 
-        let pathname2 = pathname.clone();
+        let set_pathname2 = set_pathname.clone();
         let cb = move || {
             let new_pathname = window().location().pathname().expect("");
-            pathname2.set(new_pathname);
+            set_pathname2(new_pathname);
         };
-        let closure = Closure::wrap(Box::new(cb) as Box<dyn Fn()>);
+        let closure = Closure::wrap(Box::new(cb) as Box<dyn Fn()>).into_js_value();
 
         window()
             .add_event_listener_with_callback("popstate", closure.as_ref().dyn_ref().expect(""))
             .expect("");
 
-        Self { pathname }
+        Self {
+            pathname: ArcMemo::new(move |_| pathname.get()),
+            set_pathname,
+        }
     }
 }
 
@@ -295,7 +301,7 @@ pub fn set_pathname(path: impl ToString) {
         .expect("")
         .push_state_with_url(&JsValue::NULL, "Some crazy title", Some(&path.to_string()))
         .expect("");
-    PATHNAME_MANAGER.with(|i| i.pathname.set(window().location().pathname().expect("")));
+    PATHNAME_MANAGER.with(|i| (i.set_pathname)(window().location().pathname().expect("")));
 }
 
 #[component]
