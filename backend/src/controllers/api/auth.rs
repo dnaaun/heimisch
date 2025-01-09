@@ -14,10 +14,12 @@ use axum::{extract::State, response::Redirect, routing::get, Router};
 use github_api::apis::users_api::users_slash_get_authenticated;
 use http::StatusCode;
 use shared::{
-    consts::HEIMISCH_FRONTEND_DOMAIN, endpoints::defns::api::auth::{
+    consts::HEIMISCH_FRONTEND_DOMAIN,
+    endpoints::defns::api::auth::{
         finish::{AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse},
         initiate::AuthInitiateEndpoint,
-    }, types::user::UserId
+    },
+    types::user::UserId,
 };
 
 use crate::app_state::AppState;
@@ -37,8 +39,7 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
                     StatusCode::UNAUTHORIZED,
                     AuthFinishResponse::Failure {
                         message: "state/csrf token not found".to_string(),
-                    }
-                    .into(),
+                    },
                 ));
             }
 
@@ -92,7 +93,7 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
 
             Ok::<_, Error>((
                 StatusCode::OK,
-                AuthFinishResponse::Success(access_token).into(),
+                AuthFinishResponse::Success(access_token),
             ))
         },
     )

@@ -1,3 +1,5 @@
+#![feature(async_closure)]
+
 use leptos::mount::mount_to_body;
 use tracing_wasm::WASMLayerConfigBuilder;
 pub mod app;

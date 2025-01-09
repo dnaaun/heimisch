@@ -1,7 +1,6 @@
-use std::ops::Deref;
 
 use leptos::{prelude::*, task::spawn_local};
-use leptos_router::{hooks::use_navigate, params::Params};
+use leptos_router::params::Params;
 use shared::{
     types::{
         self,
@@ -18,7 +17,8 @@ mod top_bar;
 use crate::{
     app::{
         installation_id_sync::use_sync_installation_ids_and_recv_websocket_updates,
-        not_found::NotFound, routing,
+        not_found::NotFound,
+        routing::{self, set_pathname},
     },
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
@@ -44,25 +44,20 @@ pub fn RepositoryPage(
     let repo_name = Memo::new(move |_| path_so_far.get().child.captured.clone());
     let active_tab = Memo::new(move |_| path_so_far.get().child.child);
     let new_active_tab = RwSignal::new(active_tab.get_untracked());
-    let navigate = use_navigate();
 
     Effect::new(move || {
         let active_tab = active_tab.get_untracked();
         let new_active_tab = new_active_tab.get();
         if active_tab != new_active_tab {
-            navigate(
-                &routing::TopLevel::Empty(routing::TopLevelEmpty::OwnerName(
-                    routing::TopLevelEmptyOwnerName {
-                        captured: owner_name.get_untracked(),
-                        child: routing::TopLevelEmptyOwnerNameRepoName {
-                            captured: repo_name.get_untracked(),
-                            child: new_active_tab,
-                        },
+            set_pathname(routing::TopLevel::Empty(routing::TopLevelEmpty::OwnerName(
+                routing::TopLevelEmptyOwnerName {
+                    captured: owner_name.get_untracked(),
+                    child: routing::TopLevelEmptyOwnerNameRepoName {
+                        captured: repo_name.get_untracked(),
+                        child: new_active_tab,
                     },
-                ))
-                .to_string(),
-                Default::default(),
-            )
+                },
+            )))
         }
     });
 
@@ -92,8 +87,6 @@ pub fn RepositoryPage(
                         .get_all(Some(&repo_name.read()))
                         .await?;
 
-                    tracing::info!("{:?}, repo_name: {}", repos, repo_name.read().deref());
-
                     let repo = repos
                         .into_iter()
                         .find(|r| r.owner_id.map_ref(|o| o == &user_id).unwrap_or(false));
@@ -107,7 +100,6 @@ pub fn RepositoryPage(
 
     // Memo is necessary to make sure effect runs once for each repo
     let repository_id = Memo::new(move |_| repository_id.get());
-    Effect::new(move || tracing::info!("{:?}", repository_id.get()));
 
     Effect::new(move || {
         let sync_engine = sync_engine.clone();

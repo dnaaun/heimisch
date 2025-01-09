@@ -54,7 +54,7 @@ pub fn create(router: Router<AppState>) -> Router<AppState> {
 
             Ok::<_, Error>((
                 StatusCode::OK,
-                CreateAppInstallResponse::Success { installation_id }.into(),
+                CreateAppInstallResponse::Success { installation_id },
             ))
         },
     )

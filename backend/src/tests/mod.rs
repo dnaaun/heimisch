@@ -38,16 +38,13 @@ use parking_lot::Mutex;
 use parse_request::ParsedHttpRequest;
 use serde_json::Value;
 use shared::{
-    endpoints::{
-        defns::api::{
+    endpoints::defns::api::{
             auth::{
                 finish::{AuthFinishEndpoint, AuthFinishPayload, GithubAccessToken},
                 initiate::AuthInitiateEndpoint,
             },
             websocket_updates::{ServerMsg, WEBSOCKET_UPDATES_ENDPOINT},
         },
-        endpoint_client::MaybePageRedirect,
-    },
     types::{installation::InstallationId, user::UserId},
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};

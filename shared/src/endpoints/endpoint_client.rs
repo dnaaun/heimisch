@@ -75,7 +75,6 @@ impl EndpointClient {
             redirect_handler: Arc::new(redirect_handler),
             client: ClientBuilder::new()
                 .build()
-                .map_err(|e| tracing::info!("the thing is {e:?}"))
                 .expect(""),
             domain,
         }

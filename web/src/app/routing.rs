@@ -1,7 +1,7 @@
-use leptos::prelude::*;
-use leptos_router::{components::Router, hooks::use_location};
+use leptos::{prelude::*, tachys::html::class::IntoClass};
 use shared::types::repository::RepositoryId;
 use std::{fmt::Display, ops::Deref, str::FromStr};
+use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
 use crate::app::{repository::RepositoryPage, sidebar::Sidebar};
 
@@ -257,19 +257,79 @@ impl RouteComponent<RepositoryId> for TopLevelEmptyOwnerNameRepoNameChild {
     }
 }
 
+struct PathnameManager {
+    pathname: ArcRwSignal<String>,
+}
+
+impl PathnameManager {
+    fn new() -> Self {
+        let location = window().location();
+        let pathname = ArcRwSignal::new(location.pathname().expect(""));
+
+        let pathname2 = pathname.clone();
+        let cb = move || {
+            let new_pathname = window().location().pathname().expect("");
+            pathname2.set(new_pathname);
+        };
+        let closure = Closure::wrap(Box::new(cb) as Box<dyn Fn()>);
+
+        window()
+            .add_event_listener_with_callback("popstate", closure.as_ref().dyn_ref().expect(""))
+            .expect("");
+
+        Self { pathname }
+    }
+}
+
+thread_local! {
+    pub static PATHNAME_MANAGER: PathnameManager = PathnameManager::new();
+}
+
+pub fn use_pathname() -> Signal<String> {
+    PATHNAME_MANAGER.with(|i| i.pathname.clone()).into()
+}
+
+pub fn set_pathname(path: impl ToString) {
+    window()
+        .history()
+        .expect("")
+        .push_state_with_url(&JsValue::NULL, "Some crazy title", Some(&path.to_string()))
+        .expect("");
+    PATHNAME_MANAGER.with(|i| i.pathname.set(window().location().pathname().expect("")));
+}
+
 #[component]
 pub fn Routed() -> impl IntoView {
-    view! {
-        <Router>
-            {{
-                let pathname = use_location().pathname;
-                let top_level = Memo::new(move |_| pathname.read().parse::<TopLevel>());
-                Effect::new(move || tracing::info!("{:?}", top_level.get()));
-                match top_level.read().deref() {
-                    Ok(top_level) => top_level.render((), Box::new(|_| ().into_any())),
-                    Err(_) => todo!(),
-                }
+    let pathname = use_pathname();
+    let top_level = Memo::new(move |_| pathname.read().parse::<TopLevel>());
+    move || {
+        view! {
+            {match top_level.read().deref() {
+                Ok(top_level) => top_level.render((), Box::new(|_| ().into_any())),
+                Err(_) => todo!(),
             }}
-        </Router>
+        }
+    }
+}
+
+#[component]
+pub fn A(
+    #[prop(into)] href: Option<String>,
+    class: impl IntoClass,
+    children: Children,
+) -> impl IntoView {
+    view! {
+        <a
+            class=class
+            href=href.clone()
+            on:click=move |ev| {
+                if let Some(href) = href.clone() {
+                    set_pathname(href);
+                }
+                ev.prevent_default();
+            }
+        >
+            {children()}
+        </a>
     }
 }
