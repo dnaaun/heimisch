@@ -16,7 +16,7 @@ pub struct Configuration {
     pub user_agent: Option<String>,
     pub client: reqwest::Client,
     pub bearer_access_token: Option<String>,
-    // TODO: take an oauth2 token source, similar to the go one
+    // NOTE: take an oauth2 token source, similar to the go one
 }
 
 pub type BasicAuth = (String, Option<String>);

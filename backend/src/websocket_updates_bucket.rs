@@ -76,4 +76,4 @@ impl Drop for Subscription {
     }
 }
 
-// TODO: Write tests.
+// NOTE: Write tests.

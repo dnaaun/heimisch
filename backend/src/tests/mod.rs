@@ -136,7 +136,7 @@ async fn with_test_server<Fut: Future>(
         .with(filter)
         .init();
 
-    // TODO: Improve test setup so that environment variables are not required.
+    // NOTE: Improve test setup so that environment variables are not required.
     let mut config = init_config().await;
 
     let github_api_mock_server = MockServer::start().await;

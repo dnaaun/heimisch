@@ -194,7 +194,7 @@ impl ToDb for IssueCommentCreatedIssue {
             active_lock_reason,
             assignee,
 
-            // TODO: THIS IS A MASSIVE TODO!! The updating of `assignees` is important for actual
+            // TODO: THIS IS A MASSIVE todo!! The updating of `assignees` is important for actual
             // usefulness of the app. But currently, this is untyped (most likely) because the
             // messed up JSON that we reverse engineer the types from (instead of using
             // `x-webhooks` in the OpenAPI Spec (Hey! I didn't know that existed at first! Don't

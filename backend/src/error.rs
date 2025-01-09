@@ -315,7 +315,7 @@ fn print_backtrace_nicely(backtrace: &Backtrace) -> String {
                             && Some(path_buf) != THIS_VERY_FILE.with(|p| p.clone())
                     })
                     .unwrap_or(true)
-                // .map(|filename| filename.contains("heimisch")) // TODO: change this to be more robust?
+                // .map(|filename| filename.contains("heimisch")) // NOTE: change this to be more robust?
                 // .unwrap_or(false)
             })
         })

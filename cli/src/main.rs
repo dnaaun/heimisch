@@ -33,7 +33,7 @@ enum AuthOperation {
         web: bool,
     },
     Logout,
-    // TODO: A command that should not be commited to prod (or whatever)
+    // NOTE: A command that should not be commited to prod (or whatever)
     // Playground,
 }
 

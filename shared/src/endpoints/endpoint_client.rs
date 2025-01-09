@@ -80,7 +80,7 @@ impl EndpointClient {
         }
     }
 
-    // TODO: Abstract away common functionality into a common function between make_get_request and
+    // NOTE: Abstract away common functionality into a common function between make_get_request and
     // make_post_request.
 
     pub async fn make_get_request<T, E>(

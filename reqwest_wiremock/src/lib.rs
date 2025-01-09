@@ -8,7 +8,7 @@ use wiremock::{
     Mock, Respond,
 };
 
-// TODO: Flag everything wiremock behind `cfg(test)`.
+// NOTE: Flag everything wiremock behind `cfg(test)`.
 
 struct Inner {
     request: reqwest::RequestBuilder,

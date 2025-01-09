@@ -13,7 +13,7 @@ pub async fn login(pool: &Pool) -> Result<()> {
 
 /// Returns the access token.
 pub async fn login_logic(pool: &Pool) -> Result<String> {
-    // TODO: Polish.
+    // NOTE: Polish.
     println!("Follow the URL below to authenticate Heimisch CLI with Github.");
     let url = HEIMISCH_API_DOMAIN.with(|i| i.join("/api/auth/initiate").expect(""));
     println!("{}", url.as_str());

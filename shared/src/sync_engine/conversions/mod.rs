@@ -1,5 +1,5 @@
 pub mod conversion_error;
-/// TODO: Refactor all of the below to use ToDbType
+/// NOTE: Refactor all of the below to use ToDbType
 pub mod from_app10;
 pub mod from_integration;
 pub mod from_issue;

@@ -22,7 +22,7 @@ impl From<serde_json::Error> for HeaderError {
     }
 }
 
-/// TODO: THis has issues when non-string members of T are there. Write your own macro.
+/// NOTE: THis has issues when non-string members of T are there. Write your own macro.
 pub struct Header<T: DeserializeOwned>(pub T);
 
 #[async_trait::async_trait]
