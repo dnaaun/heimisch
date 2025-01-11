@@ -12,12 +12,10 @@ use crate::{
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
-use super::{flowbite::checkbox::Checkbox, sync_engine_provider::use_sync_engine};
+use super::{flowbite::checkbox::Checkbox, routing::*, sync_engine_provider::use_sync_engine};
 
-#[component]
-pub fn Sidebar(
-    #[prop(into)] child_component: Signal<Box<dyn Fn(()) -> AnyView + Send + Sync>>,
-) -> impl IntoView {
+#[allow(non_snake_case)]
+fn Sidebar(child_component: impl Fn(()) -> AnyView + Send + Sync) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
     let show_forks = RwSignal::new(true);
@@ -164,15 +162,13 @@ pub fn Sidebar(
                                                                     let href = match &user_login {
                                                                         Some(u) => {
                                                                             Some(
-                                                                                routing::TopLevel::Empty(
-                                                                                        routing::TopLevelEmpty::OwnerName(routing::TopLevelEmptyOwnerName {
-                                                                                            owner_name: u.clone(),
-                                                                                            child: routing::TopLevelEmptyOwnerNameRepoName {
-                                                                                                repo_name: name.clone(),
-                                                                                                child: routing::TopLevelEmptyOwnerNameRepoNameChild::Issues,
-                                                                                            },
-                                                                                        }),
-                                                                                    )
+                                                                                Part1::OwnerName {
+                                                                                    owner_name: u.clone(),
+                                                                                    child_parts: Part1OwnerNamePart2::RepoName {
+                                                                                        repo_name: name.clone(),
+                                                                                        child_parts: Part1OwnerNamePart2RepoNamePart3::Empty,
+                                                                                    },
+                                                                                }
                                                                                     .to_string(),
                                                                             )
                                                                         }
@@ -202,7 +198,26 @@ pub fn Sidebar(
                     }}
                 </div>
             </aside>
-            <main class="flex-grow">{child_component.read()(())}</main>
+            <main class="flex-grow">{child_component(())}</main>
         </div>
     }))
+}
+
+#[allow(unused_variables)]
+#[allow(non_snake_case)]
+pub fn SidebarEmpty(
+    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
+    #[allow(unused_variables)] captures: Memo<Part1EmptyCaptures>,
+    #[allow(unused_variables)] arg_from_parent: (),
+) -> impl IntoView {
+    Sidebar(child_component)
+}
+
+#[allow(non_snake_case)]
+pub fn SidebarOwnerName(
+    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
+    #[allow(unused_variables)] captures: Memo<Part1OwnerNameCaptures>,
+    #[allow(unused_variables)] arg_from_parent: (),
+) -> impl IntoView {
+    Sidebar(child_component)
 }

@@ -25,8 +25,11 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::{
     app::{flowbite::Spinner, sync_engine_provider::use_sync_engine},
-    consts::ENDPOINT_CLIENT, local_storage::add_installation_ids_to_local_storage,
+    consts::ENDPOINT_CLIENT,
+    local_storage::add_installation_ids_to_local_storage,
 };
+
+use super::routing::Part1AuthCaptures;
 
 #[derive(PartialEq, Deserialize, Serialize, Clone)]
 #[serde(untagged)]
@@ -61,8 +64,12 @@ fn use_serde_query_string<T: DeserializeOwned>() -> Result<T, serde::de::value::
     serde_urlencoded::from_str(query_string)
 }
 
-#[component]
-pub fn Auth() -> impl IntoView {
+#[allow(non_snake_case)]
+pub fn Auth(
+    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
+    #[allow(unused_variables)] captures: Memo<Part1AuthCaptures>,
+    #[allow(unused_variables)] arg_from_parent: (),
+) -> impl IntoView {
     let body = match use_serde_query_string() {
         Ok(AuthQParams::UserAuthQParams(params)) => view! { <UserAuth params /> }.into_any(),
         Ok(AuthQParams::AppInstallationQParams(params)) => {
@@ -146,20 +153,20 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
         state,
         show_copy_to_cli,
     } = params;
-    let body =
-        {
-            let user_access_token_rsrc = LocalResource::new(move || {
-                let code = code.clone();
-                let state = state.clone();
-                async move {
-                    ENDPOINT_CLIENT
-                        .with(|e| e.clone())
-                        .make_post_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
-                        .await
-                }
-            });
-            let show_copy_to_cli = show_copy_to_cli.is_some();
-            (move || view! {
+    let body = {
+        let user_access_token_rsrc = LocalResource::new(move || {
+            let code = code.clone();
+            let state = state.clone();
+            async move {
+                ENDPOINT_CLIENT
+                    .with(|e| e.clone())
+                    .make_post_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
+                    .await
+            }
+        });
+        let show_copy_to_cli = show_copy_to_cli.is_some();
+        (move || {
+            view! {
                 <Transition fallback=LoggingIn>
                     {move || {
                         user_access_token_rsrc
@@ -195,9 +202,10 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
                             })
                     }}
                 </Transition>
-            })
-                        .into_any()
-        };
+            }
+        })
+        .into_any()
+    };
 
     view! { <div class="flex justify-center items-center h-screen">{body}</div> }
 }

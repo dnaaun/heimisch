@@ -1,302 +1,540 @@
-use crate::app::{repository::RepositoryPage, sidebar::Sidebar};
-
-use super::super::{
-    auth::Auth,
-    repository::{issues_tab::IssuesTab, pull_requests_tab::PullRequestsTab},
+use crate::app::{
+    not_found::NotFound,
+    repository::RepositoryPage,
+    sidebar::{SidebarEmpty, SidebarOwnerName},
 };
 
+use super::{
+    super::{
+        auth::Auth,
+        repository::{issues_tab::IssuesTab, pull_requests_tab::PullRequestsTab},
+    },
+    use_pathname,
+};
+
+use super::slashed_and_segmented::{split_slashed, Slashed};
 use leptos::prelude::*;
 use shared::types::repository::RepositoryId;
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
 
-use super::RouteComponent;
+#[derive(Debug, PartialEq, Eq, Clone)]
+struct NoPart;
 
-/// Will error out if first char is not a slash.
-/// split_to_two_at_non_initial_slash("/hi/hello/asdf") == Ok(("/hi", "/hello/asdf")).
-/// split_to_two_at_non_initial_slash("hi/hello/asdf") == Err(()).
-/// split_to_two_at_non_initial_slash("/hi") == ("/hi", "/").
-/// split_to_two_at_non_initial_slash("hi") == Err(())).
-/// split_to_two_at_non_initial_slash("/") == ("/", "/")
-fn split_path_at_slash(path: &str) -> Result<(&str, &str), String> {
-    if !path.starts_with('/') {
-        return Err("path doesn't start with /".to_owned());
+impl<'a> TryFrom<Slashed<'a>> for NoPart {
+    type Error = String;
+
+    fn try_from(value: Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        if value.non_slash_len() == 0 {
+            return Ok(Self);
+        } else {
+            return Err(format!("non slash length is not 0 in '{value}'"));
+        }
     }
-    let slash_idx = match path[1..].find('/') {
-        Some(i) => i + 1,
-        None => return Ok((path, "/")),
-    };
+}
 
-    Ok((&path[..slash_idx], &path[slash_idx..]))
+// Ensure `NoPart` has a `Display` implementation if it is a custom type
+impl std::fmt::Display for NoPart {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Implement according to its actual structure and desired string representation.
+        write!(f, "")
+    }
+}
+
+fn empty_component<I>(_i: I) -> AnyView {
+    ().into_any()
+}
+
+fn passthrough_component<C, A>(
+    child_component: impl Fn(()) -> AnyView + Send + Sync,
+    _captures: C,
+    _arg_from_parent: A,
+) -> AnyView {
+    child_component(())
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TopLevel {
+pub enum Part1 {
     Auth,
-    Empty(TopLevelEmpty),
-}
-
-impl RouteComponent<()> for TopLevel {
-    type ToPassToChild = ();
-
-    fn render(
-        &self,
-        _passed_from_parent: (),
-        _child_component: Box<dyn Fn(Self::ToPassToChild) -> AnyView + Send + Sync>,
-    ) -> AnyView {
-        match self {
-            TopLevel::Auth => view! { <Auth /> }.into_any(),
-            TopLevel::Empty(top_level_empty) => top_level_empty
-                .render((), Box::new(|_| ().into_any()))
-                .into_any(),
-        }
-    }
-}
-
-impl Display for TopLevel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&match self {
-            TopLevel::Auth => "/auth".to_owned(),
-            TopLevel::Empty(child) => child.to_string(),
-        })
-    }
-}
-
-impl FromStr for TopLevel {
-    type Err = String;
-
-    /// Assumption: `s` starts with a slash.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        #[allow(unused_variables)]
-        let (head, tail) = split_path_at_slash(s)?;
-
-        match head {
-            "/auth" => Ok(Self::Auth),
-            _ => Ok(Self::Empty(s.parse()?)),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TopLevelEmpty {
     Empty,
-    OwnerName(TopLevelEmptyOwnerName),
+    OwnerName {
+        owner_name: String,
+        child_parts: Part1OwnerNamePart2,
+    },
 }
 
-impl RouteComponent<()> for TopLevelEmpty {
-    type ToPassToChild = ();
-
-    fn render(
-        &self,
-        _passed_from_parent: (),
-        _child_component: Box<dyn Fn(Self::ToPassToChild) -> AnyView + Send + Sync>,
-    ) -> AnyView {
-        let this = self.clone();
-        let child_component = Box::new(move |_| match this.clone() {
-            TopLevelEmpty::Empty => ().into_any(),
-            TopLevelEmpty::OwnerName(top_level_empty_owner_name) => {
-                let top_level_empty_owner_name_repo_name_child =
-                    top_level_empty_owner_name.child.child.clone();
-                let child_component = Box::new(move |r_id| {
-                    top_level_empty_owner_name_repo_name_child
-                        .render(r_id, Box::new(|_| ().into_any()))
-                        .into_any()
-                });
-                top_level_empty_owner_name
-                    .render((), child_component)
-                    .into_any()
-            }
-        }) as Box<dyn Fn(()) -> AnyView + Send + Sync>;
-
-        view! { <Sidebar child_component /> }.into_any()
-    }
-}
-
-impl FromStr for TopLevelEmpty {
-    type Err = String;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let (head, tail) = split_path_at_slash(s)?;
-        match head {
-            "/" => Ok(Self::Empty),
-            _ => {
-                let owner_name = head.chars().skip(1).collect();
-                Ok(Self::OwnerName(TopLevelEmptyOwnerName {
-                    owner_name,
-                    child: tail.parse()?,
-                }))
+impl Display for Part1 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Part1::Auth => write!(f, "/auth"),
+            Part1::Empty => write!(f, "/"),
+            Part1::OwnerName {
+                owner_name,
+                child_parts,
+            } => {
+                write!(f, "/{}{}", owner_name, child_parts)
             }
         }
     }
 }
 
-impl Display for TopLevelEmpty {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&match self {
-            TopLevelEmpty::Empty => "/".to_owned(),
-            TopLevelEmpty::OwnerName(TopLevelEmptyOwnerName { owner_name, child }) => {
-                format!("/{}{}", owner_name, child)
+impl<'a> TryFrom<Slashed<'a>> for Part1 {
+    type Error = String;
+
+    fn try_from(value: Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = split_slashed(value);
+
+        Ok(match head.non_slash() {
+            "auth" => {
+                NoPart::try_from(tail)?;
+                Self::Auth
             }
+            "" => {
+                NoPart::try_from(tail)?;
+                Self::Empty
+            }
+            owner_name @ _ => Self::OwnerName {
+                owner_name: owner_name.to_owned(),
+                child_parts: tail.try_into()?,
+            },
         })
     }
 }
 
+impl Part1 {
+    pub fn get_only(&self) -> Part1Only {
+        match self {
+            Part1::Auth => Part1Only::Auth,
+            Part1::Empty => Part1Only::Empty,
+            Part1::OwnerName { .. } => Part1Only::OwnerName,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct TopLevelEmptyOwnerName {
+pub enum Part1Only {
+    Auth,
+    Empty,
+    OwnerName,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1AuthCaptures {
+    pub prev_captures: Memo<()>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1EmptyCaptures {
+    pub prev_captures: Memo<()>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1OwnerNameCaptures {
+    pub prev_captures: Memo<()>,
     pub owner_name: String,
-    pub child: TopLevelEmptyOwnerNameRepoName,
 }
 
-impl Display for TopLevelEmptyOwnerName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_str(&format!("/{}{}", self.owner_name, self.child))
-    }
+trait RouteToComponent {
+    type PrevCaptures: Sync + Send + 'static;
+    type ArgFromParent;
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_captures: Memo<Self::PrevCaptures>,
+    ) -> AnyView;
 }
 
-impl FromStr for TopLevelEmptyOwnerName {
-    type Err = String;
+impl RouteToComponent for Memo<Result<Part1, String>> {
+    type PrevCaptures = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (head, tail) = split_path_at_slash(s)?;
-
-        Ok(Self {
-            owner_name: head.chars().skip(1).collect(),
-            child: tail.parse()?,
-        })
-    }
-}
-
-impl RouteComponent<()> for TopLevelEmptyOwnerName {
-    type ToPassToChild = RepositoryId;
+    type ArgFromParent = ();
 
     fn render(
-        &self,
-        _passed_from_parent: (),
-        child_component: Box<dyn Fn(RepositoryId) -> AnyView + Send + Sync>,
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_captures: Memo<Self::PrevCaptures>,
     ) -> AnyView {
-        view! { <RepositoryPage path_so_far=self.clone() child_component /> }.into_any()
+        let ok_memo = Memo::new(move |_| self.get().ok());
+        (move || match self.get() {
+            Ok(_) => {
+                Memo::new(move |_| ok_memo.get().unwrap()).render(arg_from_parent, prev_captures)
+            }
+            Err(_) => view! { <NotFound /> }.into_any(),
+        })
+        .into_any()
+    }
+}
+
+impl RouteToComponent for Memo<Part1> {
+    type PrevCaptures = ();
+    type ArgFromParent = ();
+
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_captures: Memo<Self::PrevCaptures>,
+    ) -> AnyView {
+        let part1_auth_captures = Memo::new(move |_| match self.get() {
+            Part1::Auth => {
+                let captures = Part1AuthCaptures { prev_captures };
+                Some(captures)
+            }
+            _ => None,
+        });
+        let part1_empty_captures = Memo::new(move |_| match self.get() {
+            Part1::Empty => {
+                let captures = Part1EmptyCaptures { prev_captures };
+                Some(captures)
+            }
+            _ => None,
+        });
+        let part1_owner_name_captures = Memo::new(move |_| match self.get() {
+            Part1::OwnerName {
+                owner_name,
+                child_parts,
+            } => {
+                let captures = Part1OwnerNameCaptures {
+                    prev_captures,
+                    owner_name,
+                };
+                Some(captures)
+            }
+            _ => None,
+        });
+        let part1_owner_name_child_parts = Memo::new(move |_| match self.get() {
+            Part1::OwnerName {
+                owner_name,
+                child_parts,
+            } => Some(child_parts),
+            _ => None,
+        });
+
+        let this_part_only = Memo::new(move |_| self.get().get_only());
+
+        (move || {
+            this_part_only.track();
+            match self.get_untracked() {
+                Part1::Auth => {
+                    let captures = Memo::new(move |_| part1_auth_captures.get().expect(""));
+                    Auth(empty_component, captures, arg_from_parent).into_any()
+                }
+                Part1::Empty => {
+                    let captures = Memo::new(move |_| part1_empty_captures.get().expect(""));
+                    SidebarEmpty(empty_component, captures, arg_from_parent).into_any()
+                }
+                Part1::OwnerName {
+                    owner_name,
+                    child_parts,
+                } => {
+                    let captures = Memo::new(move |_| part1_owner_name_captures.get().expect(""));
+                    let child_parts_memo =
+                        Memo::new(move |_| part1_owner_name_child_parts.get().expect(""));
+                    let child_component =
+                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, captures);
+                    SidebarOwnerName(child_component, captures, arg_from_parent).into_any()
+                }
+            }
+        })
+        .into_any()
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct TopLevelEmptyOwnerNameRepoName {
+pub enum Part1OwnerNamePart2 {
+    RepoName {
+        repo_name: String,
+        child_parts: Part1OwnerNamePart2RepoNamePart3,
+    },
+}
+
+impl Display for Part1OwnerNamePart2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Part1OwnerNamePart2::RepoName {
+                repo_name,
+                child_parts,
+            } => {
+                write!(f, "/{}{}", repo_name, child_parts)
+            }
+        }
+    }
+}
+
+impl<'a> TryFrom<Slashed<'a>> for Part1OwnerNamePart2 {
+    type Error = String;
+
+    fn try_from(value: Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = split_slashed(value);
+
+        Ok(match head.non_slash() {
+            repo_name @ _ => Self::RepoName {
+                repo_name: repo_name.to_owned(),
+                child_parts: tail.try_into()?,
+            },
+        })
+    }
+}
+
+impl Part1OwnerNamePart2 {
+    pub fn get_only(&self) -> Part1OwnerNamePart2Only {
+        match self {
+            Part1OwnerNamePart2::RepoName { .. } => Part1OwnerNamePart2Only::RepoName,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum Part1OwnerNamePart2Only {
+    RepoName,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1OwnerNamePart2RepoNameCaptures {
+    pub prev_captures: Memo<Part1OwnerNameCaptures>,
     pub repo_name: String,
-    pub child: TopLevelEmptyOwnerNameRepoNameChild,
 }
 
-impl FromStr for TopLevelEmptyOwnerNameRepoName {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (head, tail) = split_path_at_slash(s)?;
-
-        let repo_name = head.chars().skip(1).collect();
-        Ok(Self {
-            repo_name,
-            child: tail.parse()?,
-        })
-    }
-}
-
-impl Display for TopLevelEmptyOwnerNameRepoName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_str(&format!("/{}{}", self.repo_name, self.child))
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub enum TopLevelEmptyOwnerNameRepoNameChild {
-    Issues(TopLevelEmptyOwnerNameRepoNameChildIssues),
-    Pulls,
-}
-
-impl FromStr for TopLevelEmptyOwnerNameRepoNameChild {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (head, tail) = split_path_at_slash(s)?;
-        Ok(match head {
-            "/issues" => Self::Issues(tail.parse()?),
-            "/pulls" => Self::Pulls,
-            _ => return Err("expected one of issues or pulls".to_owned()),
-        })
-    }
-}
-
-impl Display for TopLevelEmptyOwnerNameRepoNameChild {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_str(&match self {
-            TopLevelEmptyOwnerNameRepoNameChild::Issues(c) => format!("/issues{}", c),
-            TopLevelEmptyOwnerNameRepoNameChild::Pulls => "/pulls".to_owned(),
-        })
-    }
-}
-
-impl RouteComponent<RepositoryId> for TopLevelEmptyOwnerNameRepoNameChild {
-    type ToPassToChild = ();
+impl RouteToComponent for Memo<Part1OwnerNamePart2> {
+    type PrevCaptures = Part1OwnerNameCaptures;
+    type ArgFromParent = ();
 
     fn render(
-        &self,
-        repository_id: RepositoryId,
-        _child_component: Box<dyn Fn(Self::ToPassToChild) -> AnyView + Send + Sync>,
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_captures: Memo<Self::PrevCaptures>,
     ) -> AnyView {
-        match self {
-            TopLevelEmptyOwnerNameRepoNameChild::Issues(_) => {
-                view! { <IssuesTab repository_id /> }.into_any()
+        let part1_owner_name_part2_repo_name_captures = Memo::new(move |_| match self.get() {
+            Part1OwnerNamePart2::RepoName {
+                repo_name,
+                child_parts,
+            } => {
+                let captures = Part1OwnerNamePart2RepoNameCaptures {
+                    prev_captures,
+                    repo_name,
+                };
+                Some(captures)
             }
-            TopLevelEmptyOwnerNameRepoNameChild::Pulls => {
-                view! { <PullRequestsTab repository_id /> }.into_any()
+        });
+        let part1_owner_name_part2_repo_child_parts = Memo::new(move |_| match self.get() {
+            Part1OwnerNamePart2::RepoName {
+                repo_name,
+                child_parts,
+            } => Some(child_parts),
+        });
+
+        let this_part_only = Memo::new(move |_| self.get().get_only());
+
+        (move || {
+            this_part_only.track();
+            match self.get_untracked() {
+                Part1OwnerNamePart2::RepoName {
+                    repo_name,
+                    child_parts,
+                } => {
+                    let captures = Memo::new(move |_| {
+                        part1_owner_name_part2_repo_name_captures.get().expect("")
+                    });
+                    let child_parts_memo = Memo::new(move |_| {
+                        part1_owner_name_part2_repo_child_parts.get().expect("")
+                    });
+                    let child_component =
+                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, captures);
+                    RepositoryPage(child_component, captures, arg_from_parent, child_parts_memo)
+                }
             }
-        }
+        })
+        .into_any()
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub enum TopLevelEmptyOwnerNameRepoNameChildIssues {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Part1OwnerNamePart2RepoNamePart3 {
     Empty,
-    IssueId(TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId),
+    Pulls,
+    Issues(Part1OwnerNamePart2RepoNamePart3Issues),
 }
 
-impl FromStr for TopLevelEmptyOwnerNameRepoNameChildIssues {
-    type Err = String;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let (_head, tail) = split_path_at_slash(s)?;
-
-        if tail.len() <= 1 {
-            return Ok(TopLevelEmptyOwnerNameRepoNameChildIssues::Empty);
-        };
-
-        Ok(Self::IssueId(tail.parse()?))
-    }
-}
-
-impl Display for TopLevelEmptyOwnerNameRepoNameChildIssues {
+impl Display for Part1OwnerNamePart2RepoNamePart3 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match self {
+            Part1OwnerNamePart2RepoNamePart3::Empty => write!(f, "/"),
+            Part1OwnerNamePart2RepoNamePart3::Pulls => write!(f, "/pulls"),
+            Part1OwnerNamePart2RepoNamePart3::Issues(issues_part) => {
+                write!(f, "/issues{}", issues_part)
+            }
+        }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
-struct TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId {
-    issue_id: String,
+impl<'a> TryFrom<Slashed<'a>> for Part1OwnerNamePart2RepoNamePart3 {
+    type Error = String;
+
+    fn try_from(value: Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = split_slashed(value);
+
+        match head.non_slash() {
+            "" => Ok(Self::Empty),
+            "pulls" => Ok(Self::Pulls),
+            "issues" => Ok(Self::Issues(tail.try_into()?)),
+            other => Err(format!("Unrecognized path segment: '{}'", other)),
+        }
+    }
 }
 
-impl FromStr for TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId {
-    type Err = String;
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Part1OwnerNamePart2RepoNamePart3Only {
+    Empty,
+    Pulls,
+    Issues,
+}
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        if s.len() <= 1 {
-            return Err(format!("issue_id is empty or of len 1: {s}"));
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Part1OwnerNamePart2RepoNamePart3Issues {
+    Empty,
+    IssueId {
+        issue_id: String,
+        child_parts: NoPart,
+    },
+}
+
+impl std::fmt::Display for Part1OwnerNamePart2RepoNamePart3Issues {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Part1OwnerNamePart2RepoNamePart3Issues::Empty => write!(f, ""),
+            Part1OwnerNamePart2RepoNamePart3Issues::IssueId {
+                issue_id,
+                child_parts,
+            } => {
+                write!(f, "/{}{}", issue_id, child_parts)
+            }
         }
+    }
+}
 
-        Ok(Self {
-            issue_id: s.chars().skip(1).collect(),
+impl<'a> TryFrom<Slashed<'a>> for Part1OwnerNamePart2RepoNamePart3Issues {
+    type Error = String;
+
+    fn try_from(value: Slashed) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = split_slashed(value);
+        Ok(match head.non_slash() {
+            "" => Self::Empty,
+            issue_id @ _ => Self::IssueId {
+                issue_id: issue_id.to_owned(),
+                child_parts: tail.try_into()?,
+            },
         })
     }
 }
 
-impl Display for TopLevelEmptyOwnerNameRepoNameChildIssuesIssueId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("/{}", self.issue_id))
+impl Part1OwnerNamePart2RepoNamePart3 {
+    pub fn get_only(&self) -> Part1OwnerNamePart2RepoNamePart3Only {
+        match self {
+            Part1OwnerNamePart2RepoNamePart3::Empty => Part1OwnerNamePart2RepoNamePart3Only::Empty,
+            Part1OwnerNamePart2RepoNamePart3::Pulls => Part1OwnerNamePart2RepoNamePart3Only::Pulls,
+            Part1OwnerNamePart2RepoNamePart3::Issues(..) => {
+                Part1OwnerNamePart2RepoNamePart3Only::Issues
+            }
+        }
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1OwnerNamePart2RepoNamePart3EmptyCaptures {
+    pub prev_captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1OwnerNamePart2RepoNamePart3PullsCaptures {
+    pub prev_captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Part1OwnerNamePart2RepoNamePart3IssuesCaptures {
+    pub prev_captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
+}
+
+impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
+    type PrevCaptures = Part1OwnerNamePart2RepoNameCaptures;
+
+    type ArgFromParent = Signal<RepositoryId>;
+
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_captures: Memo<Self::PrevCaptures>,
+    ) -> AnyView {
+        let part1_owner_name_part2_repo_name_part3_empty_captures =
+            Memo::new(move |_| match self.get() {
+                Part1OwnerNamePart2RepoNamePart3::Empty => {
+                    let captures = Part1OwnerNamePart2RepoNamePart3EmptyCaptures { prev_captures };
+                    Some(captures)
+                }
+                _ => None,
+            });
+
+        let part1_owner_name_part2_repo_name_part3_pulls_captures =
+            Memo::new(move |_| match self.get() {
+                Part1OwnerNamePart2RepoNamePart3::Empty => {
+                    let captures = Part1OwnerNamePart2RepoNamePart3PullsCaptures { prev_captures };
+                    Some(captures)
+                }
+                _ => None,
+            });
+
+        let part1_owner_name_part2_repo_name_part3_issues_captures =
+            Memo::new(move |_| match self.get() {
+                Part1OwnerNamePart2RepoNamePart3::Issues(_) => {
+                    let captures = Part1OwnerNamePart2RepoNamePart3IssuesCaptures { prev_captures };
+                    Some(captures)
+                }
+                _ => None,
+            });
+
+        let part1_owner_name_part2_repo_name_part3_issues_child_parts =
+            Memo::new(move |_| match self.get() {
+                Part1OwnerNamePart2RepoNamePart3::Issues(child_parts) => Some(child_parts),
+                _ => None,
+            });
+
+        let this_part_only = Memo::new(move |_| self.get().get_only());
+
+        (move || {
+            this_part_only.track();
+            match self.get_untracked() {
+                Part1OwnerNamePart2RepoNamePart3::Empty => {
+                    let captures = Memo::new(move |_| {
+                        part1_owner_name_part2_repo_name_part3_empty_captures
+                            .get()
+                            .expect("")
+                    });
+                    todo!()
+                }
+                Part1OwnerNamePart2RepoNamePart3::Pulls => {
+                    let captures = Memo::new(move |_| {
+                        part1_owner_name_part2_repo_name_part3_pulls_captures
+                            .get()
+                            .expect("")
+                    });
+                    PullRequestsTab(empty_component, captures, arg_from_parent).into_any()
+                }
+                Part1OwnerNamePart2RepoNamePart3::Issues(
+                    part1_owner_name_part2_repo_name_part3_issues,
+                ) => {
+                    todo!()
+                }
+            }
+        })
+        .into_any()
+    }
+}
+
+#[component]
+pub fn Routed() -> impl IntoView {
+    let pathname = use_pathname();
+    let part1 = Memo::new(move |_| {
+        let pathname = pathname.get();
+        let slashed =
+            Slashed::new(&pathname).expect("pathname doesn't start with a slash is weird");
+        Part1::try_from(slashed)
+    });
+    part1.render((), Memo::new(|_| ()))
 }

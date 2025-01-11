@@ -1,5 +1,6 @@
+use crate::signal_ext::*;
 use leptos::{prelude::*, task::spawn_local};
-use leptos_router::params::Params;
+use leptos_reactive::IntoSignal;
 use shared::{
     types::{
         self,
@@ -16,8 +17,7 @@ mod top_bar;
 use crate::{
     app::{
         installation_id_sync::use_sync_installation_ids_and_recv_websocket_updates,
-        not_found::NotFound,
-        routing::{self, set_pathname},
+        not_found::NotFound, routing::*,
     },
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
@@ -25,39 +25,66 @@ use crate::{
 
 use super::{
     flowbite::{Spinner, Tabs},
+    routing::{Part1OwnerNamePart2RepoNameCaptures, Part1OwnerNamePart2RepoNamePart3},
     sync_engine_provider::use_sync_engine,
 };
 
-#[derive(Params, PartialEq, Clone, Debug)]
-struct RepositoryPageParams {
-    owner_name: String,
-    repo_name: String,
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+enum Tab {
+    Issues,
+    Pulls,
 }
 
-#[component]
+impl From<Part1OwnerNamePart2RepoNamePart3> for Tab {
+    fn from(value: Part1OwnerNamePart2RepoNamePart3) -> Self {
+        match value {
+            Part1OwnerNamePart2RepoNamePart3::Pulls => Self::Pulls,
+            Part1OwnerNamePart2RepoNamePart3::Empty => Self::Issues,
+            Part1OwnerNamePart2RepoNamePart3::Issues(_) => Self::Issues,
+        }
+    }
+}
+
+impl Into<Part1OwnerNamePart2RepoNamePart3> for Tab {
+    fn into(self) -> Part1OwnerNamePart2RepoNamePart3 {
+        match self {
+            Tab::Issues => Part1OwnerNamePart2RepoNamePart3::Issues(
+                Part1OwnerNamePart2RepoNamePart3Issues::Empty,
+            ),
+            Tab::Pulls => Part1OwnerNamePart2RepoNamePart3::Pulls,
+        }
+    }
+}
+
+#[allow(non_snake_case)]
 pub fn RepositoryPage(
-    #[prop(into)] child_component: Signal<Box<dyn Fn(RepositoryId) -> AnyView + Send + Sync>>,
-    #[prop(into)] path_so_far: Signal<routing::TopLevelEmptyOwnerName>,
+    #[allow(unused_variables)] child_component: impl Fn(Signal<RepositoryId>) -> AnyView
+        + Send
+        + Sync
+        + 'static,
+    #[allow(unused_variables)] captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
+    #[allow(unused_variables)] arg_from_parent: (),
+    #[allow(unused_variables)] child_path: Memo<Part1OwnerNamePart2RepoNamePart3>,
 ) -> impl IntoView {
-    let owner_name = Memo::new(move |_| path_so_far.get().owner_name.clone());
-    let repo_name = Memo::new(move |_| path_so_far.get().child.repo_name.clone());
-    let active_tab = Memo::new(move |_| path_so_far.get().child.child);
+    let owner_name = Memo::new(move |_| captures.get().prev_captures.get().owner_name);
+    let repo_name = Memo::new(move |_| captures.get().repo_name);
+    let active_tab = Memo::new(move |_| Tab::from(child_path.get()));
     let new_active_tab = RwSignal::new(active_tab.get_untracked());
 
     Effect::new(move || {
         let active_tab = active_tab.get_untracked();
         let new_active_tab = new_active_tab.get();
-        if active_tab != new_active_tab {
-            set_pathname(routing::TopLevel::Empty(routing::TopLevelEmpty::OwnerName(
-                routing::TopLevelEmptyOwnerName {
-                    owner_name: owner_name.get_untracked(),
-                    child: routing::TopLevelEmptyOwnerNameRepoName {
-                        repo_name: repo_name.get_untracked(),
-                        child: new_active_tab,
-                    },
-                },
-            )))
+        if active_tab == new_active_tab {
+            return ();
         }
+
+        set_pathname(Part1::OwnerName {
+            owner_name: owner_name.get_untracked(),
+            child_parts: Part1OwnerNamePart2::RepoName {
+                repo_name: repo_name.get_untracked(),
+                child_parts: new_active_tab.into(),
+            },
+        });
     });
 
     use_sync_installation_ids_and_recv_websocket_updates();
@@ -121,24 +148,22 @@ pub fn RepositoryPage(
             }
         }>
             {move || {
-                let repository_id = match repository_id.get() {
-                    Some(r) => r?,
+                let repository_id = Signal::derive(move || repository_id.get());
+                let repository_id = match repository_id.transpose() {
+                    Some(r) => r.transpose().map_err(|s| s.get())?,
                     None => return Ok::<_, FrontendError>(None),
                 };
-                let repository_id = match repository_id {
+                let repository_id = match repository_id.transpose() {
                     Some(r) => r,
                     None => {
                         return Ok(Some(view! { <NotFound /> }.into_any()));
                     }
                 };
-                let tabs = vec![
-                    routing::TopLevelEmptyOwnerNameRepoNameChild::Issues,
-                    routing::TopLevelEmptyOwnerNameRepoNameChild::Pulls,
-                ];
-                let get_tab_label = |key: &routing::TopLevelEmptyOwnerNameRepoNameChild| {
+                let tabs = vec![Tab::Issues, Tab::Pulls];
+                let get_tab_label = |key: &Tab| {
                     match key {
-                        routing::TopLevelEmptyOwnerNameRepoNameChild::Issues => "Issues",
-                        routing::TopLevelEmptyOwnerNameRepoNameChild::Pulls => "Pulls",
+                        Tab::Issues => "Issues",
+                        Tab::Pulls => "Pulls",
                     }
                         .to_owned()
                 };
@@ -149,13 +174,13 @@ pub fn RepositoryPage(
                             <div>
                                 <Tabs
                                     tabs
-                                    active_tab=Signal::derive(active_tab)
+                                    active_tab=active_tab
                                     set_active_tab=move |t| *new_active_tab.write() = t
                                     get_tab_label
                                 />
                                 <div class="flex items-center justify-center">
                                     <div class="m-5 max-w-screen-xl w-full">
-                                        {child_component.read()(repository_id)}
+                                        {child_component(repository_id)}
                                     </div>
                                 </div>
                             </div>

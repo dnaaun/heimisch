@@ -10,6 +10,7 @@ mod idb_signal_from_sync_engine;
 mod local_storage;
 pub mod typed_transport;
 mod use_unwrapped_context;
+pub mod signal_ext;
 
 use app::App;
 
