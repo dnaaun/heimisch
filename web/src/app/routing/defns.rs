@@ -154,12 +154,15 @@ impl RouteToComponent for Memo<Result<Part1, String>> {
         prev_captures: Memo<Self::PrevCaptures>,
     ) -> AnyView {
         let ok_memo = Memo::new(move |_| self.get().ok());
-        (move || match self.get() {
+        let this_part_only = Memo::new(move |_| self.get().map(|i| i.get_only()));
+        (move || {
+            this_part_only.track();
+            match self.get_untracked() {
             Ok(_) => {
                 Memo::new(move |_| ok_memo.get().unwrap()).render(arg_from_parent, prev_captures)
             }
             Err(_) => view! { <NotFound /> }.into_any(),
-        })
+        }})
         .into_any()
     }
 }
@@ -212,6 +215,7 @@ impl RouteToComponent for Memo<Part1> {
 
         (move || {
             this_part_only.track();
+            Effect::new(move || tracing::info!("redrawing part1"));
             match self.get_untracked() {
                 Part1::Auth => {
                     let captures = Memo::new(move |_| part1_auth_captures.get().expect(""));

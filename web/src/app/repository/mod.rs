@@ -138,7 +138,6 @@ pub fn RepositoryPage(
             })
         };
     });
-    Effect::new(move || tracing::info!("{:?}", repository_id.get()));
 
     view! {
         <Transition fallback=|| {
@@ -161,7 +160,6 @@ pub fn RepositoryPage(
                         return Ok(Some(view! { <NotFound /> }.into_any()));
                     }
                 };
-                Effect::new(move || tracing::info!("inside: {:?}", repository_id.get()));
                 let tabs = vec![Tab::Issues, Tab::Pulls];
                 let get_tab_label = |key: &Tab| {
                     match key {
