@@ -1,5 +1,4 @@
-use leptos_router::hooks::use_query_map;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use shared::{
     endpoints::{
         defns::api::{
@@ -24,7 +23,7 @@ use shared::endpoints::defns::api::auth::finish::{
 use wasm_bindgen_futures::JsFuture;
 
 use crate::{
-    app::{flowbite::Spinner, sync_engine_provider::use_sync_engine},
+    app::{flowbite::Spinner, routing::use_serde_search, sync_engine_provider::use_sync_engine},
     consts::ENDPOINT_CLIENT,
     local_storage::add_installation_ids_to_local_storage,
 };
@@ -56,21 +55,13 @@ pub struct AppInstallationQParams {
     installation_id: String,
 }
 
-/// use_query() from leptos doesn't support he full power of serde. Specifically, what I want
-/// is the ability to sepcify an enum (with an untagged serde (de)serialization flag).
-fn use_serde_query_string<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
-    let query_string = use_query_map().get().to_query_string();
-    let query_string = query_string.strip_prefix("?").unwrap_or("");
-    serde_urlencoded::from_str(query_string)
-}
-
 #[allow(non_snake_case)]
 pub fn Auth(
     #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
     #[allow(unused_variables)] captures: Memo<Part1AuthCaptures>,
     #[allow(unused_variables)] arg_from_parent: (),
 ) -> impl IntoView {
-    let body = match use_serde_query_string() {
+    let body = match use_serde_search().get() {
         Ok(AuthQParams::UserAuthQParams(params)) => view! { <UserAuth params /> }.into_any(),
         Ok(AuthQParams::AppInstallationQParams(params)) => {
             view! { <AppInstallationAuth params /> }.into_any()

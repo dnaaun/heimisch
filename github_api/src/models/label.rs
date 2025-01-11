@@ -20,8 +20,10 @@ pub struct Label {
     pub default: bool,
     #[serde(rename = "description", deserialize_with = "Option::deserialize")]
     pub description: Option<String>,
-    #[serde(rename = "id")]
-    pub id: i32,
+
+    /// Had to be i64 because I encountered a real life case where i64 didn't fit.
+    pub id: i64,
+
     /// The name of the label.
     #[serde(rename = "name")]
     pub name: String,

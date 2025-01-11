@@ -15,8 +15,27 @@ use crate::{
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
-#[component]
-pub fn IssuesTab(#[prop(into)] repository_id: Signal<RepositoryId>) -> impl IntoView {
+use super::{
+    Part1OwnerNamePart2RepoNamePart3EmptyCaptures, Part1OwnerNamePart2RepoNamePart3IssuesCaptures,
+};
+
+#[allow(non_snake_case)]
+pub fn IssuesTabEmpty(
+    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
+    #[allow(unused_variables)] captures: Memo<Part1OwnerNamePart2RepoNamePart3EmptyCaptures>,
+    #[allow(unused_variables)] repository_id: Signal<RepositoryId>,
+) -> impl IntoView {
+    IssuesTab(repository_id)
+}
+pub fn IssuesTabWithIssueId(
+    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
+    #[allow(unused_variables)] captures: Memo<Part1OwnerNamePart2RepoNamePart3IssuesCaptures>,
+    #[allow(unused_variables)] repository_id: Signal<RepositoryId>,
+) -> impl IntoView {
+    IssuesTab(repository_id)
+}
+
+pub fn IssuesTab(#[allow(unused_variables)] repository_id: Signal<RepositoryId>) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
     let issues = sync_engine.idb_signal(
@@ -62,8 +81,8 @@ pub fn IssuesTab(#[prop(into)] repository_id: Signal<RepositoryId>) -> impl Into
         <>
             <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
                 <div class="flex flex-nowrap gap-x-2">
-                    <div>Open {counts().map(|c| c.0)}</div>
-                    <div>Closed {counts().map(|c| c.1)}</div>
+                    <div>Open {move || counts().map(|c| c.0)}</div>
+                    <div>Closed {move || counts().map(|c| c.1)}</div>
                 </div>
                 <div>Author</div>
             </div>

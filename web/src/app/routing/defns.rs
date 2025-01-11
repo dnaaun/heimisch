@@ -1,14 +1,14 @@
 use crate::app::{
     not_found::NotFound,
-    repository::RepositoryPage,
+    repository::{
+        issues_tab::{IssuesTabEmpty, IssuesTabWithIssueId},
+        RepositoryPage,
+    },
     sidebar::{SidebarEmpty, SidebarOwnerName},
 };
 
 use super::{
-    super::{
-        auth::Auth,
-        repository::{issues_tab::IssuesTab, pull_requests_tab::PullRequestsTab},
-    },
+    super::{auth::Auth, repository::pull_requests_tab::PullRequestsTab},
     use_pathname,
 };
 
@@ -18,7 +18,7 @@ use shared::types::repository::RepositoryId;
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-struct NoPart;
+pub struct NoPart;
 
 impl<'a> TryFrom<Slashed<'a>> for NoPart {
     type Error = String;
@@ -506,7 +506,7 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
                             .get()
                             .expect("")
                     });
-                    todo!()
+                    IssuesTabEmpty(empty_component, captures, arg_from_parent).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3::Pulls => {
                     let captures = Memo::new(move |_| {
@@ -516,10 +516,13 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
                     });
                     PullRequestsTab(empty_component, captures, arg_from_parent).into_any()
                 }
-                Part1OwnerNamePart2RepoNamePart3::Issues(
-                    part1_owner_name_part2_repo_name_part3_issues,
-                ) => {
-                    todo!()
+                Part1OwnerNamePart2RepoNamePart3::Issues(_) => {
+                    let captures = Memo::new(move |_| {
+                        part1_owner_name_part2_repo_name_part3_issues_captures
+                            .get()
+                            .expect("")
+                    });
+                    IssuesTabWithIssueId(empty_component, captures, arg_from_parent).into_any()
                 }
             }
         })

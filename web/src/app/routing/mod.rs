@@ -3,6 +3,7 @@ mod defns;
 pub use defns::*;
 
 use leptos::{prelude::*, tachys::html::class::IntoClass};
+use serde::de::DeserializeOwned;
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
 mod slashed_and_segmented {
@@ -82,18 +83,25 @@ struct PathnameManager {
     /// We're making this ArcMemo and not ArcRwSignal because sometimes, popstate gets emitted when
     /// set_pathname() is used, and sometimes it isn't. And I want to avoid doing double rerenders.
     pathname: ArcMemo<String>,
+    search: ArcMemo<String>,
     set_pathname: ArcWriteSignal<String>,
+    set_search: ArcWriteSignal<String>,
 }
 
 impl PathnameManager {
     fn new() -> Self {
         let location = window().location();
         let (pathname, set_pathname) = ArcRwSignal::new(location.pathname().expect("")).split();
+        let (search, set_search) = ArcRwSignal::new(location.search().expect("")).split();
 
         let set_pathname2 = set_pathname.clone();
+        let set_search2 = set_search.clone();
         let cb = move || {
-            let new_pathname = window().location().pathname().expect("");
+            let new_location = window().location();
+            let new_pathname = new_location.pathname().expect("");
+            let new_search = new_location.search().expect("");
             set_pathname2(new_pathname);
+            set_search2(new_search);
         };
         let closure = Closure::wrap(Box::new(cb) as Box<dyn Fn()>).into_js_value();
 
@@ -103,7 +111,9 @@ impl PathnameManager {
 
         Self {
             pathname: ArcMemo::new(move |_| pathname.get()),
+            search: ArcMemo::new(move |_| search.get()),
             set_pathname,
+            set_search,
         }
     }
 }
@@ -112,8 +122,8 @@ thread_local! {
     pub static PATHNAME_MANAGER: PathnameManager = PathnameManager::new();
 }
 
-pub fn use_pathname() -> Signal<String> {
-    PATHNAME_MANAGER.with(|i| i.pathname.clone()).into()
+pub fn use_pathname() -> ArcMemo<String> {
+    PATHNAME_MANAGER.with(|i| i.pathname.clone())
 }
 
 pub fn set_pathname(path: impl ToString) {
@@ -125,7 +135,23 @@ pub fn set_pathname(path: impl ToString) {
     PATHNAME_MANAGER.with(|i| (i.set_pathname)(window().location().pathname().expect("")));
 }
 
+pub fn set_search(search: impl ToString) {
+    let search = search.to_string();
+    window().location().set_search(&search).expect("");
+    PATHNAME_MANAGER.with(|i| (i.set_search)(window().location().search().expect("")));
+}
 
+pub fn use_search() -> ArcMemo<String> {
+    PATHNAME_MANAGER.with(|i| i.search.clone())
+}
+
+pub fn use_serde_search<T: DeserializeOwned>() -> Signal<Result<T, serde::de::value::Error>>
+where
+    T: Send + Sync + 'static,
+{
+    let search = use_search();
+    Signal::derive(move || serde_urlencoded::from_str(search.get().strip_prefix("?").unwrap_or("")))
+}
 
 #[component]
 pub fn A(
