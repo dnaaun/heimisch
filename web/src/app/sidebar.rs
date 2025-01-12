@@ -4,10 +4,7 @@ use leptos::prelude::*;
 use shared::types::{repository::Repository, user::User};
 
 use crate::{
-    app::{
-        icon::Icon,
-        routing::{self, A},
-    },
+    app::{icon::Icon, routing::A},
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
@@ -161,16 +158,14 @@ fn Sidebar(child_component: impl Fn(()) -> AnyView + Send + Sync) -> impl IntoVi
                                                                 children=move |(_, name)| {
                                                                     let href = match &user_login {
                                                                         Some(u) => {
-                                                                            Some(
-                                                                                Part1::OwnerName {
-                                                                                    owner_name: u.clone(),
-                                                                                    child_parts: Part1OwnerNamePart2::RepoName {
-                                                                                        repo_name: name.clone(),
-                                                                                        child_parts: Part1OwnerNamePart2RepoNamePart3::Empty,
-                                                                                    },
-                                                                                }
-                                                                                    .to_string(),
-                                                                            )
+                                                                            Part1::OwnerName {
+                                                                                owner_name: u.clone(),
+                                                                                child_parts: Part1OwnerNamePart2::RepoName {
+                                                                                    repo_name: name.clone(),
+                                                                                    child_parts: Part1OwnerNamePart2RepoNamePart3::Empty,
+                                                                                },
+                                                                            }
+                                                                                .to_string()
                                                                         }
                                                                         None => todo!(),
                                                                     };

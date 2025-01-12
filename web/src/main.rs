@@ -12,6 +12,9 @@ pub mod typed_transport;
 mod use_unwrapped_context;
 pub mod signal_ext;
 
+// #[cfg(test)]
+// mod tests;
+
 use app::App;
 
 pub fn main() {

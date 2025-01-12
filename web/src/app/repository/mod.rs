@@ -141,12 +141,7 @@ pub fn RepositoryPage(
 
     view! {
         <Transition fallback=|| {
-            view! {
-                <div class="min-w-min h-screen">
-                    asdfasdf
-                    <Spinner />
-                </div>
-            }
+            view! { <div class="min-w-min h-screen">asdfasdf <Spinner /></div> }
         }>
             {move || {
                 let repository_id = Signal::derive(move || repository_id.get());

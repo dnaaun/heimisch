@@ -8,6 +8,7 @@ use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
 mod slashed_and_segmented {
     /// Newtype where the contained string is guaranteed to start with a slash.
+    #[derive(Clone)]
     pub struct Slashed<'a>(&'a str);
 
     impl<'a> Slashed<'a> {
@@ -76,6 +77,25 @@ mod slashed_and_segmented {
 
     pub fn split_slashed(slashed: Slashed) -> (PathSegment, Slashed) {
         split_path(slashed.0).expect("should not give us DoesNotStartWithSlashError because Slashed is guaranteed to start with a slash")
+    }
+}
+
+pub trait MemoExt<T>
+where
+    T: Send + Sync + 'static,
+{
+    fn unwrap(self) -> Memo<T>;
+}
+
+impl<T> MemoExt<T> for Memo<Option<T>>
+where
+    T: Clone + Send + Sync + 'static + PartialEq,
+{
+    fn unwrap(self) -> Memo<T> {
+        Memo::new(move |_| {
+            let option: Option<T> = self.get();
+            option.unwrap()
+        })
     }
 }
 
@@ -155,18 +175,17 @@ where
 
 #[component]
 pub fn A(
-    #[prop(into)] href: Option<String>,
+    #[prop(into)] href: Signal<String>,
     class: impl IntoClass,
     children: Children,
 ) -> impl IntoView {
+    let href = href.get();
     view! {
         <a
             class=class
             href=href.clone()
             on:click=move |ev| {
-                if let Some(href) = href.clone() {
-                    set_pathname(href);
-                }
+                set_pathname(href.clone());
                 ev.prevent_default();
             }
         >
