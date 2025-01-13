@@ -18,59 +18,19 @@ use crate::{
 #[allow(non_snake_case)]
 pub fn IssuesListEmpty(
     #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] captures: Memo<Part1OwnerNamePart2RepoNamePart3IssuesEmptyCaptures>,
+    #[allow(unused_variables)] params: ParamsOwnerNameRepoName,
     #[allow(unused_variables)] repository_id: Signal<RepositoryId>,
 ) -> impl IntoView {
-    let owner_name = Signal::derive(move || {
-        captures
-            .get()
-            .prev_captures
-            .get()
-            .prev_captures
-            .get()
-            .prev_captures
-            .get()
-            .owner_name
-    });
-    let repo_name = Signal::derive(move || {
-        captures
-            .get()
-            .prev_captures
-            .get()
-            .prev_captures
-            .get()
-            .repo_name
-    });
-    view! { <IssuesList repository_id owner_name repo_name /> }
+    view! { <IssuesList repository_id owner_name=params.owner_name repo_name=params.repo_name /> }
 }
 
 #[allow(non_snake_case)]
 pub fn IssuesListWithIssues(
     #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] captures: Memo<Part1OwnerNamePart2RepoNamePart3IssuesEmptyCaptures>,
+    #[allow(unused_variables)] params: ParamsOwnerNameRepoName,
     #[allow(unused_variables)] repository_id: Signal<RepositoryId>,
 ) -> impl IntoView {
-    let owner_name = Signal::derive(move || {
-        captures
-            .get()
-            .prev_captures
-            .get()
-            .prev_captures
-            .get()
-            .prev_captures
-            .get()
-            .owner_name
-    });
-    let repo_name = Signal::derive(move || {
-        captures
-            .get()
-            .prev_captures
-            .get()
-            .prev_captures
-            .get()
-            .repo_name
-    });
-    view! { <IssuesList repository_id owner_name repo_name /> }
+    view! { <IssuesList repository_id owner_name=params.owner_name repo_name=params.repo_name /> }
 }
 
 #[component]

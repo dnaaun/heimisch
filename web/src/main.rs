@@ -1,3 +1,5 @@
+#![feature(unboxed_closures)]
+#![feature(fn_traits)]
 #![feature(async_closure)]
 
 use leptos::mount::mount_to_body;

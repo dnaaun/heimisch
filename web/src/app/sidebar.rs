@@ -202,8 +202,6 @@ fn Sidebar(child_component: impl Fn(()) -> AnyView + Send + Sync) -> impl IntoVi
 #[allow(non_snake_case)]
 pub fn SidebarEmpty(
     #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] captures: Memo<Part1EmptyCaptures>,
-    #[allow(unused_variables)] arg_from_parent: (),
 ) -> impl IntoView {
     Sidebar(child_component)
 }
@@ -211,7 +209,7 @@ pub fn SidebarEmpty(
 #[allow(non_snake_case)]
 pub fn SidebarOwnerName(
     #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] captures: Memo<Part1OwnerNameCaptures>,
+    #[allow(unused_variables)] captures: ParamsOwnerName,
     #[allow(unused_variables)] arg_from_parent: (),
 ) -> impl IntoView {
     Sidebar(child_component)

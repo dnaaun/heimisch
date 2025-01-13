@@ -1,5 +1,7 @@
 mod defns;
 
+use std::{ops::Deref, sync::Arc};
+
 pub use defns::*;
 
 use leptos::{prelude::*, tachys::html::class::IntoClass};
@@ -135,6 +137,164 @@ impl PathnameManager {
             set_pathname,
             set_search,
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct ArgFromParent<T>(pub T);
+
+impl<A> Deref for ArgFromParent<A> {
+    type Target = A;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+pub struct Outlet<A, V>(Arc<dyn Fn(A) -> V + Send + Sync + 'static>);
+impl<A, V> Outlet<A, V> {
+    pub fn call(&self, a: A) -> V {
+        (self.0)(a)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct RouteParams<T>(pub T);
+
+impl<T> Deref for RouteParams<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+pub(crate) struct RoutingInfoForComponent<ArgFromParentInner, OutletInner, ParamsInner>
+where
+    ArgFromParentInner: Clone,
+    OutletInner: Clone,
+    ParamsInner: Clone,
+{
+    pub(crate) arg_from_parent_inner: ArgFromParentInner,
+    pub(crate) outlet_inner: OutletInner,
+    pub(crate) params_inner: ParamsInner,
+}
+
+impl<A, C, P> From<&RoutingInfoForComponent<A, C, P>> for ArgFromParent<A>
+where
+    A: Clone,
+    C: Clone,
+    P: Clone,
+{
+    fn from(value: &RoutingInfoForComponent<A, C, P>) -> Self {
+        Self(value.arg_from_parent_inner.clone())
+    }
+}
+
+impl<A, CA, CV, P> From<&RoutingInfoForComponent<A, Arc<dyn Fn(CA) -> CV + Send + Sync>, P>>
+    for Outlet<CA, CV>
+where
+    A: Clone,
+    CA: Clone,
+    P: Clone,
+{
+    fn from(value: &RoutingInfoForComponent<A, Arc<dyn Fn(CA) -> CV + Send + Sync>, P>) -> Self {
+        Self(value.outlet_inner.clone())
+    }
+}
+
+impl<A, C, P> From<&RoutingInfoForComponent<A, C, P>> for RouteParams<P>
+where
+    A: Clone,
+    C: Clone,
+    P: Clone,
+{
+    fn from(value: &RoutingInfoForComponent<A, C, P>) -> Self {
+        Self(value.params_inner.clone())
+    }
+}
+
+pub trait RoutableComponent<ArgFromParent, ChildComp, Param, ArgsTuple>
+where
+    ArgFromParent: Clone,
+    ChildComp: Clone,
+    Param: Clone,
+{
+    fn do_it(self, info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>)
+        -> impl IntoView;
+}
+
+impl<ArgFromParent, ChildComp, Param, F, V> RoutableComponent<ArgFromParent, ChildComp, Param, ()>
+    for F
+where
+    F: Fn() -> V,
+    V: IntoView,
+    ArgFromParent: Clone,
+    ChildComp: Clone,
+    Param: Clone,
+{
+    fn do_it(
+        self,
+        _info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
+    ) -> impl IntoView {
+        self()
+    }
+}
+
+impl<ArgFromParent, ChildComp, Param, F, V, A1>
+    RoutableComponent<ArgFromParent, ChildComp, Param, (A1,)> for F
+where
+    F: Fn(A1) -> V,
+    V: IntoView,
+    ArgFromParent: Clone,
+    ChildComp: Clone,
+    Param: Clone,
+    A1: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
+{
+    fn do_it(
+        self,
+        info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
+    ) -> impl IntoView {
+        self((&info).into())
+    }
+}
+
+impl<ArgFromParent, ChildComp, Param, F, V, A1, A2>
+    RoutableComponent<ArgFromParent, ChildComp, Param, (A1, A2)> for F
+where
+    F: Fn(A1, A2) -> V,
+    V: IntoView,
+    ArgFromParent: Clone,
+    ChildComp: Clone,
+    Param: Clone,
+    A1: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
+    A2: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
+{
+    fn do_it(
+        self,
+        info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
+    ) -> impl IntoView {
+        self((&info).into(), (&info).into())
+    }
+}
+
+impl<ArgFromParent, ChildComp, Param, F, V, A1, A2, A3>
+    RoutableComponent<ArgFromParent, ChildComp, Param, (A1, A2, A3)> for F
+where
+    F: Fn(A1, A2, A3) -> V,
+    V: IntoView,
+    ArgFromParent: Clone,
+    ChildComp: Clone,
+    Param: Clone,
+    A1: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
+    A2: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
+    A3: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
+{
+    fn do_it(
+        self,
+        info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
+    ) -> impl IntoView {
+        self((&info).into(), (&info).into(), (&info).into())
     }
 }
 

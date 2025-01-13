@@ -111,88 +111,57 @@ enum Part1Only {
     OwnerName,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1AuthCaptures {
-    pub prev_captures: Memo<()>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1EmptyCaptures {
-    pub prev_captures: Memo<()>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNameCaptures {
-    pub prev_captures: Memo<()>,
-    pub owner_name: String,
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct ParamsOwnerName {
+    pub owner_name: Memo<String>,
 }
 
 trait RouteToComponent {
-    type PrevCaptures: Sync + Send + 'static;
+    type PrevParams: Sync + Send + 'static;
     type ArgFromParent;
     fn render(
         self,
         arg_from_parent: Self::ArgFromParent,
-        prev_captures: Memo<Self::PrevCaptures>,
-    ) -> AnyView;
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView;
 }
 
 impl RouteToComponent for Memo<Result<Part1, String>> {
-    type PrevCaptures = ();
+    type PrevParams = ();
 
     type ArgFromParent = ();
 
     fn render(
         self,
         arg_from_parent: Self::ArgFromParent,
-        prev_captures: Memo<Self::PrevCaptures>,
-    ) -> AnyView {
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView {
         let ok_memo = Memo::new(move |_| self.get().ok());
         let this_part_only = Memo::new(move |_| self.get().map(|i| i.get_only()));
-        (move || {
+        move || {
             let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
                                           // doesn't work.
             match self.get_untracked() {
                 Ok(_) => Memo::new(move |_| ok_memo.get().unwrap())
-                    .render(arg_from_parent, prev_captures),
+                    .render(arg_from_parent, prev_params)
+                    .into_any(),
                 Err(_) => view! { <NotFound /> }.into_any(),
             }
-        })
-        .into_any()
+        }
     }
 }
 
 impl RouteToComponent for Memo<Part1> {
-    type PrevCaptures = ();
+    type PrevParams = ();
     type ArgFromParent = ();
 
     fn render(
         self,
         arg_from_parent: Self::ArgFromParent,
-        prev_captures: Memo<Self::PrevCaptures>,
-    ) -> AnyView {
-        let part1_auth_captures = Memo::new(move |_| match self.get() {
-            Part1::Auth => {
-                let captures = Part1AuthCaptures { prev_captures };
-                Some(captures)
-            }
-            _ => None,
-        });
-        let part1_empty_captures = Memo::new(move |_| match self.get() {
-            Part1::Empty => {
-                let captures = Part1EmptyCaptures { prev_captures };
-                Some(captures)
-            }
-            _ => None,
-        });
-        let part1_owner_name_captures = Memo::new(move |_| match self.get() {
-            Part1::OwnerName { owner_name, .. } => {
-                let captures = Part1OwnerNameCaptures {
-                    prev_captures,
-                    owner_name,
-                };
-                Some(captures)
-            }
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView {
+        let params_owner_name = Memo::new(move |_| match self.get() {
+            Part1::OwnerName { owner_name, .. } => Some(owner_name),
             _ => None,
         });
         let part1_owner_name_child_parts = Memo::new(move |_| match self.get() {
@@ -202,29 +171,24 @@ impl RouteToComponent for Memo<Part1> {
 
         let this_part_only = Memo::new(move |_| self.get().get_only());
 
-        (move || {
+        move || {
             let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
                                           // doesn't work.
             Effect::new(move || tracing::info!("redrawing part1"));
             match self.get_untracked() {
-                Part1::Auth => {
-                    let captures = part1_auth_captures.unwrap();
-                    Auth(empty_component, captures, arg_from_parent).into_any()
-                }
-                Part1::Empty => {
-                    let captures = part1_empty_captures.unwrap();
-                    SidebarEmpty(empty_component, captures, arg_from_parent).into_any()
-                }
+                Part1::Auth => Auth().into_any(),
+                Part1::Empty => SidebarEmpty(empty_component).into_any(),
                 Part1::OwnerName { .. } => {
-                    let captures = part1_owner_name_captures.unwrap();
+                    let params = ParamsOwnerName {
+                        owner_name: params_owner_name.unwrap(),
+                    };
                     let child_parts_memo = part1_owner_name_child_parts.unwrap();
                     let child_component =
-                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, captures);
-                    SidebarOwnerName(child_component, captures, arg_from_parent).into_any()
+                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, params);
+                    SidebarOwnerName(child_component, params, arg_from_parent).into_any()
                 }
             }
-        })
-        .into_any()
+        }
     }
 }
 
@@ -277,29 +241,23 @@ enum Part1OwnerNamePart2Only {
     RepoName,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNamePart2RepoNameCaptures {
-    pub prev_captures: Memo<Part1OwnerNameCaptures>,
-    pub repo_name: String,
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct ParamsOwnerNameRepoName {
+    pub owner_name: Memo<String>,
+    pub repo_name: Memo<String>,
 }
 
 impl RouteToComponent for Memo<Part1OwnerNamePart2> {
-    type PrevCaptures = Part1OwnerNameCaptures;
+    type PrevParams = ParamsOwnerName;
     type ArgFromParent = ();
 
     fn render(
         self,
         arg_from_parent: Self::ArgFromParent,
-        prev_captures: Memo<Self::PrevCaptures>,
-    ) -> AnyView {
-        let part1_owner_name_part2_repo_name_captures = Memo::new(move |_| match self.get() {
-            Part1OwnerNamePart2::RepoName { repo_name, .. } => {
-                let captures = Part1OwnerNamePart2RepoNameCaptures {
-                    prev_captures,
-                    repo_name,
-                };
-                Some(captures)
-            }
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView {
+        let params_repo_name = Memo::new(move |_| match self.get() {
+            Part1OwnerNamePart2::RepoName { repo_name, .. } => Some(repo_name),
         });
         let part1_owner_name_part2_repo_child_parts = Memo::new(move |_| match self.get() {
             Part1OwnerNamePart2::RepoName { child_parts, .. } => Some(child_parts),
@@ -307,20 +265,22 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2> {
 
         let this_part_only = Memo::new(move |_| self.get().get_only());
 
-        (move || {
+        move || {
             let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
                                           // doesn't work.
             match self.get_untracked() {
                 Part1OwnerNamePart2::RepoName { .. } => {
-                    let captures = part1_owner_name_part2_repo_name_captures.unwrap();
+                    let params = ParamsOwnerNameRepoName {
+                        owner_name: prev_params.owner_name,
+                        repo_name: params_repo_name.unwrap(),
+                    };
                     let child_parts_memo = part1_owner_name_part2_repo_child_parts.unwrap();
                     let child_component =
-                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, captures);
-                    RepositoryPage(child_component, captures, arg_from_parent, child_parts_memo)
+                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, params);
+                    RepositoryPage(child_component, params, arg_from_parent).into_any()
                 }
             }
-        })
-        .into_any()
+        }
     }
 }
 
@@ -377,58 +337,16 @@ impl Part1OwnerNamePart2RepoNamePart3 {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNamePart2RepoNamePart3EmptyCaptures {
-    pub prev_captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNamePart2RepoNamePart3PullsCaptures {
-    pub prev_captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNamePart2RepoNamePart3IssuesCaptures {
-    pub prev_captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
-}
-
 impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
-    type PrevCaptures = Part1OwnerNamePart2RepoNameCaptures;
+    type PrevParams = ParamsOwnerNameRepoName;
 
     type ArgFromParent = Signal<RepositoryId>;
 
     fn render(
         self,
         arg_from_parent: Self::ArgFromParent,
-        prev_captures: Memo<Self::PrevCaptures>,
-    ) -> AnyView {
-        let part1_owner_name_part2_repo_name_part3_empty_captures =
-            Memo::new(move |_| match self.get() {
-                Part1OwnerNamePart2RepoNamePart3::Empty => {
-                    let captures = Part1OwnerNamePart2RepoNamePart3EmptyCaptures { prev_captures };
-                    Some(captures)
-                }
-                _ => None,
-            });
-
-        let part1_owner_name_part2_repo_name_part3_pulls_captures =
-            Memo::new(move |_| match self.get() {
-                Part1OwnerNamePart2RepoNamePart3::Empty => {
-                    let captures = Part1OwnerNamePart2RepoNamePart3PullsCaptures { prev_captures };
-                    Some(captures)
-                }
-                _ => None,
-            });
-
-        let part1_owner_name_part2_repo_name_part3_issues_captures =
-            Memo::new(move |_| match self.get() {
-                Part1OwnerNamePart2RepoNamePart3::Issues(_) => {
-                    let captures = Part1OwnerNamePart2RepoNamePart3IssuesCaptures { prev_captures };
-                    Some(captures)
-                }
-                _ => None,
-            });
-
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView {
         let part1_owner_name_part2_repo_name_part3_issues_child_parts =
             Memo::new(move |_| match self.get() {
                 Part1OwnerNamePart2RepoNamePart3::Issues(child_parts) => Some(child_parts),
@@ -437,31 +355,27 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
 
         let this_part_only = Memo::new(move |_| self.get().get_only());
 
-        (move || {
-            let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
+        move || {
+            let _ = this_part_only.get(); // Very weirdly, if I don't .track(), this sometimes,
                                           // doesn't work.
             match self.get_untracked() {
                 Part1OwnerNamePart2RepoNamePart3::Empty => {
-                    let captures = part1_owner_name_part2_repo_name_part3_empty_captures.unwrap();
-                    IssuesTabEmpty(empty_component, captures, arg_from_parent).into_any()
+                    IssuesTabEmpty(empty_component, prev_params, arg_from_parent).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3::Pulls => {
-                    let captures = part1_owner_name_part2_repo_name_part3_pulls_captures.unwrap();
-                    PullRequestsTab(empty_component, captures, arg_from_parent).into_any()
+                    PullRequestsTab(empty_component, prev_params, arg_from_parent).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3::Issues(_) => {
-                    let captures = part1_owner_name_part2_repo_name_part3_issues_captures.unwrap();
-
                     let child_parts_memo =
                         part1_owner_name_part2_repo_name_part3_issues_child_parts.unwrap();
 
-                    let child_component =
-                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, captures);
-                    IssuesTabWithIssues(child_component, captures, arg_from_parent).into_any()
+                    let child_component = move |arg_from_parent| {
+                        child_parts_memo.render(arg_from_parent, prev_params)
+                    };
+                    IssuesTabWithIssues(child_component, prev_params, arg_from_parent).into_any()
                 }
             }
-        })
-        .into_any()
+        }
     }
 }
 
@@ -471,15 +385,11 @@ pub enum Part1OwnerNamePart2RepoNamePart3Issues {
     IssueNumber { issue_number: String },
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNamePart2RepoNamePart3IssuesEmptyCaptures {
-    pub prev_captures: Memo<Part1OwnerNamePart2RepoNamePart3IssuesCaptures>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Part1OwnerNamePart2RepoNamePart3IssuesIssueNumberCaptures {
-    pub prev_captures: Memo<Part1OwnerNamePart2RepoNamePart3IssuesCaptures>,
-    pub issue_number: String,
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct ParamsOwnerNameRepoNameIssueNumber {
+    pub owner_name: Memo<String>,
+    pub repo_name: Memo<String>,
+    pub issue_number: Memo<String>,
 }
 
 impl std::fmt::Display for Part1OwnerNamePart2RepoNamePart3Issues {
@@ -530,55 +440,42 @@ impl Part1OwnerNamePart2RepoNamePart3Issues {
 }
 
 impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3Issues> {
-    type PrevCaptures = Part1OwnerNamePart2RepoNamePart3IssuesCaptures;
+    type PrevParams = ParamsOwnerNameRepoName;
 
     type ArgFromParent = Signal<RepositoryId>;
 
     fn render(
         self,
         arg_from_parent: Self::ArgFromParent,
-        prev_captures: Memo<Self::PrevCaptures>,
-    ) -> AnyView {
-        let part1_owner_name_part2_repo_name_part3_issues_empty_captures =
-            Memo::new(move |_| match self.get() {
-                Part1OwnerNamePart2RepoNamePart3Issues::Empty => {
-                    Some(Part1OwnerNamePart2RepoNamePart3IssuesEmptyCaptures { prev_captures })
-                }
-                _ => None,
-            });
-
-        let part1_owner_name_part2_repo_name_part3_issues_issue_number_captures =
-            Memo::new(move |_| match self.get() {
-                Part1OwnerNamePart2RepoNamePart3Issues::IssueNumber { issue_number, .. } => {
-                    Some(Part1OwnerNamePart2RepoNamePart3IssuesIssueNumberCaptures {
-                        prev_captures,
-                        issue_number,
-                    })
-                }
-                _ => None,
-            });
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView {
+        let params_issue_number = Memo::new(move |_| match self.get() {
+            Part1OwnerNamePart2RepoNamePart3Issues::IssueNumber { issue_number, .. } => {
+                Some(issue_number)
+            }
+            _ => None,
+        });
 
         let this_part_only = Memo::new(move |_| self.get().get_only());
 
-        (move || {
+        move || {
             let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
                                           // doesn't work.
             match *self.read_untracked() {
                 Part1OwnerNamePart2RepoNamePart3Issues::Empty => {
-                    let captures =
-                        part1_owner_name_part2_repo_name_part3_issues_empty_captures.unwrap();
-                    IssuesListEmpty(empty_component, captures, arg_from_parent).into_any()
+                    IssuesListEmpty(empty_component, prev_params, arg_from_parent).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3Issues::IssueNumber { .. } => {
-                    let captures =
-                        part1_owner_name_part2_repo_name_part3_issues_issue_number_captures
-                            .unwrap();
+                    let params = ParamsOwnerNameRepoNameIssueNumber {
+                        owner_name: prev_params.owner_name,
+                        repo_name: prev_params.repo_name,
+                        issue_number: params_issue_number.unwrap(),
+                    };
 
-                    OneIssue(empty_component, captures, arg_from_parent).into_any()
+                    OneIssue(empty_component, params, arg_from_parent).into_any()
                 }
             }
-        })
-        .into_any()
+        }
     }
 }
 
@@ -592,5 +489,5 @@ pub fn Routed() -> impl IntoView {
         tracing::info!("{:?}", Part1::try_from(slashed.clone()));
         Part1::try_from(slashed)
     });
-    part1.render((), Memo::new(|_| ()))
+    part1.render((), ())
 }

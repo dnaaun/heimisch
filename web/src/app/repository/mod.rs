@@ -1,6 +1,5 @@
 use crate::signal_ext::*;
 use leptos::{prelude::*, task::spawn_local};
-use leptos_reactive::IntoSignal;
 use shared::{
     types::{
         self,
@@ -25,7 +24,6 @@ use crate::{
 
 use super::{
     flowbite::{Spinner, Tabs},
-    routing::{Part1OwnerNamePart2RepoNameCaptures, Part1OwnerNamePart2RepoNamePart3},
     sync_engine_provider::use_sync_engine,
 };
 
@@ -58,16 +56,10 @@ impl Into<Part1OwnerNamePart2RepoNamePart3> for Tab {
 
 #[allow(non_snake_case)]
 pub fn RepositoryPage(
-    #[allow(unused_variables)] child_component: impl Fn(Signal<RepositoryId>) -> AnyView
-        + Send
-        + Sync
-        + 'static,
-    #[allow(unused_variables)] captures: Memo<Part1OwnerNamePart2RepoNameCaptures>,
-    #[allow(unused_variables)] arg_from_parent: (),
-    #[allow(unused_variables)] child_path: Memo<Part1OwnerNamePart2RepoNamePart3>,
+    outlet: Outlet<Signal<RepositoryId>, impl IntoView>,
+    params: RouteParams<ParamsOwnerNameRepoName>,
 ) -> impl IntoView {
-    let owner_name = Memo::new(move |_| captures.get().prev_captures.get().owner_name);
-    let repo_name = Memo::new(move |_| captures.get().repo_name);
+    let _ = outlet;
     let active_tab = Memo::new(move |_| Tab::from(child_path.get()));
     let new_active_tab = RwSignal::new(active_tab.get_untracked());
 
@@ -79,9 +71,9 @@ pub fn RepositoryPage(
         }
 
         set_pathname(Part1::OwnerName {
-            owner_name: owner_name.get_untracked(),
+            owner_name: params.owner_name.get_untracked(),
             child_parts: Part1OwnerNamePart2::RepoName {
-                repo_name: repo_name.get_untracked(),
+                repo_name: params.repo_name.get_untracked(),
                 child_parts: new_active_tab.into(),
             },
         });
@@ -102,7 +94,7 @@ pub fn RepositoryPage(
             let user = txn
                 .object_store::<User>()?
                 .index::<user::LoginIndex>()?
-                .get(&owner_name.read())
+                .get(&params.owner_name.read())
                 .await?;
             match user {
                 Some(user) => {
@@ -110,7 +102,7 @@ pub fn RepositoryPage(
                     let repos = txn
                         .object_store::<Repository>()?
                         .index::<types::repository::NameIndex>()?
-                        .get_all(Some(&repo_name.read()))
+                        .get_all(Some(&params.repo_name.read()))
                         .await?;
 
                     let repo = repos
@@ -166,7 +158,7 @@ pub fn RepositoryPage(
                 Ok(
                     Some(
                         view! {
-                            <TopBar repository_id owner_name repo_name />
+                            <TopBar repository_id owner_name=params.owner_name repo_name=params.repo_name />
                             <div>
                                 <Tabs
                                     tabs
@@ -176,7 +168,7 @@ pub fn RepositoryPage(
                                 />
                                 <div class="flex items-center justify-center">
                                     <div class="m-5 max-w-screen-xl w-full">
-                                        {child_component(repository_id)}
+                                        {outlet.call(repository_id)}
                                     </div>
                                 </div>
                             </div>

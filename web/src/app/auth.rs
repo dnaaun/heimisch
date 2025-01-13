@@ -28,8 +28,6 @@ use crate::{
     local_storage::add_installation_ids_to_local_storage,
 };
 
-use super::routing::Part1AuthCaptures;
-
 #[derive(PartialEq, Deserialize, Serialize, Clone)]
 #[serde(untagged)]
 enum AuthQParams {
@@ -56,11 +54,7 @@ pub struct AppInstallationQParams {
 }
 
 #[allow(non_snake_case)]
-pub fn Auth(
-    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] captures: Memo<Part1AuthCaptures>,
-    #[allow(unused_variables)] arg_from_parent: (),
-) -> impl IntoView {
+pub fn Auth() -> impl IntoView {
     let body = match use_serde_search().get() {
         Ok(AuthQParams::UserAuthQParams(params)) => view! { <UserAuth params /> }.into_any(),
         Ok(AuthQParams::AppInstallationQParams(params)) => {
