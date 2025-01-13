@@ -1,48 +1,63 @@
+use proc_macro2::Span;
 use syn::parse::{Parse, ParseStream, Result};
-use syn::{braced, Ident, LitStr, Token};
+use syn::*;
 
 // Represents a collection of routes with an optional fallback
-struct Routes {
-    fallback: Ident,
-    routes: Vec<Route>,
+pub struct Parts {
+    pub fallback: Ident,
+    pub parts: Vec<Part>,
 }
 
 // Represents an individual route
 #[derive(Debug)]
-struct Route {
-    path: Vec<PathSegment>,
-    view: Option<Ident>,
-    children: Option<Vec<Route>>,
-    will_pass: Option<Ident>
+pub struct Part {
+    pub path: (PathSegment, Span),
+    pub view: Option<Ident>,
+    pub children: Vec<Part>,
+    pub will_pass: Option<Type>,
+    pub span: Span,
 }
 
 // Represents static versus parameterized path segments
 #[derive(Debug)]
-enum PathSegment {
+pub enum PathSegment {
     Static(String),
     Param(String),
 }
 
-// Function to parse path segments
-fn parse_path(input: ParseStream) -> Result<Vec<PathSegment>> {
-    let path: LitStr = input.parse()?;
-    let content = path.value();
-    let segments = content
-        .split('/')
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            if s.starts_with('{') && s.ends_with('}') {
-                PathSegment::Param(s[1..s.len() - 1].to_owned())
-            } else {
-                PathSegment::Static(s.to_owned())
-            }
+impl std::fmt::Display for PathSegment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            PathSegment::Static(s) => s,
+            PathSegment::Param(s) => s,
         })
-        .collect();
-    Ok(segments)
+    }
+}
+
+// Function to parse path segments
+fn parse_path(input: ParseStream) -> Result<(PathSegment, Span)> {
+    let path: LitStr = input.parse()?;
+    let span = path.span();
+    let content = &path.value();
+    let mut content_chars = content.chars();
+    if content_chars.next() != Some('/') || content_chars.any(|x| x == '/') {
+        return Err(Error::new(
+            span,
+            "`path` must start with a slash, and contain none thereafter.",
+        ));
+    }
+    let s = &content[1..];
+
+    let segment = if s.starts_with('{') && s.ends_with('}') {
+        PathSegment::Param(s[1..s.len() - 1].to_owned())
+    } else {
+        PathSegment::Static(s.to_owned())
+    };
+    Ok((segment, span))
 }
 
 // Parsing logic for individual routes
-impl Parse for Route {
+impl Parse for Part {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut path = None;
         let mut view = None;
@@ -54,7 +69,7 @@ impl Parse for Route {
         loop {
             let _ = inside_braces.parse::<Token![,]>();
             if inside_braces.is_empty() {
-                break
+                break;
             }
 
             let ident: Ident = inside_braces.parse()?;
@@ -62,46 +77,50 @@ impl Parse for Route {
             match &*ident.to_string() {
                 "path" => {
                     if path.is_some() {
-                        return Err(inside_braces.error("Found `path` specified twice."));
+                        return Err(input.error("Found `path` specified twice."));
                     }
                     path = Some(parse_path(&inside_braces)?);
                 }
                 "view" => {
                     if view.is_some() {
-                        return Err(inside_braces.error("Found `view` specified twice."));
+                        return Err(input.error("Found `view` specified twice."));
                     }
-                    view = Some(inside_braces.parse()?);
+                    view = inside_braces.parse()?;
                 }
                 "will_pass" => {
                     if will_pass.is_some() {
-                        return Err(inside_braces.error("Found `will_pass` specified twice."));
+                        return Err(input.error("Found `will_pass` specified twice."));
                     }
                     will_pass = Some(inside_braces.parse()?);
                 }
                 "children" => {
                     if children.is_some() {
-                        return Err(inside_braces.error("Found `children` specified twice."));
+                        return Err(input.error("Found `children` specified twice."));
                     }
                     let content;
                     syn::bracketed!(content in inside_braces);
                     children = Some(
                         content
-                            .parse_terminated(Route::parse, Token![,])?
+                            .parse_terminated(Part::parse, Token![,])?
                             .into_iter()
                             .collect(),
                     );
                 }
                 key @ _ => {
-                    return Err(inside_braces.error(format!("unexpected key found: '{key}'")));
+                    return Err(input.error(format!("unexpected key found: '{key}'")));
                 }
             }
         }
 
-        Ok(Route {
-            path: path.expect("`path` not specified."),
+        Ok(Part {
+            path: match path {
+                Some(p) => p,
+                None => return Err(input.error("`path` not specified.")),
+            },
             view,
-            children,
-            will_pass
+            children: children.unwrap_or_default(),
+            will_pass,
+            span: input.span(),
         })
     }
 }
@@ -117,79 +136,31 @@ pub fn parse_fallback(input: ParseStream) -> Result<Ident> {
 }
 
 // Parsing logic for multiple routes and fallback
-impl Parse for Routes {
+impl Parse for Parts {
     fn parse(input: ParseStream) -> Result<Self> {
         let fallback = parse_fallback(input)?;
         let content;
         braced!(content in input);
 
         let routes = content
-            .parse_terminated(Route::parse, Token![,])?
+            .parse_terminated(Part::parse, Token![,])?
             .into_iter()
             .collect();
 
-        Ok(Routes { fallback, routes })
+        Ok(Parts { fallback, parts: routes })
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::typed_router::TEST_STR;
+
     use super::*;
     use syn::parse_str;
 
     #[test]
     fn test_parse_routes_with_fallback() {
-        let routes_str = r#"
-fallback: NotFound,
-{
-
-    {
-        path: "/auth",
-        view: Auth
-    },
-    {
-        path: "/",
-        view: Sidebar,
-        children: [
-            {
-                path: "/{owner_name}",
-                children: [
-                    {
-                        path: "/{repo_name}"
-                        view: RepositoryPage,
-                        will_pass: RepositoryId,
-                        children: [
-                            {
-                                path: "/pulls",
-                                view: PullRequestsTab
-                            },
-                            {
-                                path: "/",
-                                view: IssuesTab
-                            },
-                            {
-                                path: "/issues",
-                                children: [
-                                    {
-                                        path: "/",
-                                        view: IssuesList
-                                    },
-                                    {
-                                        path: "/{issue_number}",
-                                        view: OneIssue
-                                    }
-                                ]
-                            },
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-}
-"#;
-
-        let parsed: Routes = parse_str(routes_str).expect("Unable to parse routes");
+        let parsed: Parts = parse_str(TEST_STR).expect("Unable to parse routes");
         assert_eq!(parsed.fallback.to_string(), "NotFound");
     }
 }

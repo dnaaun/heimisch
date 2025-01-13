@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 convert_case = "0.6.0"
 darling = "0.20.10"
+derive_more = { version = "1.0.0", features = ["deref", "from"] }
 itertools = "0.13.0"
 proc-macro2 = "1.0.89"
 quote = "1.0.37"
