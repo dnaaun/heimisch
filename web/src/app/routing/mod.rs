@@ -157,7 +157,7 @@ impl<A> Deref for ArgFromParent<A> {
     }
 }
 
-pub struct Outlet<A, V = AnyView>(Arc<dyn Fn(A) -> V + Send + Sync + 'static>);
+pub struct Outlet<A = (), V = AnyView>(Arc<dyn Fn(A) -> V + Send + Sync + 'static>);
 impl<A, V> Outlet<A, V> {
     pub fn call(&self, a: A) -> V {
         (self.0)(a)

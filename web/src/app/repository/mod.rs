@@ -33,23 +33,23 @@ enum Tab {
     Pulls,
 }
 
-impl From<Part1OwnerNamePart2RepoNamePart3> for Tab {
-    fn from(value: Part1OwnerNamePart2RepoNamePart3) -> Self {
+impl From<RootOwnerNameRepoName> for Tab {
+    fn from(value: RootOwnerNameRepoName) -> Self {
         match value {
-            Part1OwnerNamePart2RepoNamePart3::Pulls => Self::Pulls,
-            Part1OwnerNamePart2RepoNamePart3::Empty => Self::Issues,
-            Part1OwnerNamePart2RepoNamePart3::Issues(_) => Self::Issues,
+            RootOwnerNameRepoName::Pulls => Self::Pulls,
+            RootOwnerNameRepoName::Empty => Self::Issues,
+            RootOwnerNameRepoName::Issues(_) => Self::Issues,
         }
     }
 }
 
-impl Into<Part1OwnerNamePart2RepoNamePart3> for Tab {
-    fn into(self) -> Part1OwnerNamePart2RepoNamePart3 {
+impl Into<RootOwnerNameRepoName> for Tab {
+    fn into(self) -> RootOwnerNameRepoName {
         match self {
-            Tab::Issues => Part1OwnerNamePart2RepoNamePart3::Issues(
-                Part1OwnerNamePart2RepoNamePart3Issues::Empty,
+            Tab::Issues => RootOwnerNameRepoName::Issues(
+                RootOwnerNameRepoNameIssues::Empty,
             ),
-            Tab::Pulls => Part1OwnerNamePart2RepoNamePart3::Pulls,
+            Tab::Pulls => RootOwnerNameRepoName::Pulls,
         }
     }
 }
@@ -59,11 +59,11 @@ pub fn RepositoryPage(
     outlet: Outlet<Signal<RepositoryId>, impl IntoView + 'static>,
     params: RouteParams<ParamsOwnerNameRepoName>,
 ) -> impl IntoView {
-    let parsed_path = use_context::<ParsedPath<Part1>>().expect("");
+    let parsed_path = use_context::<ParsedPath<Root>>().expect("");
     let active_tab = Memo::new(move |_| {
         Tab::from(match parsed_path.get() {
-            Ok(Part1::OwnerName {
-                child_parts: Part1OwnerNamePart2::RepoName { child_parts, .. },
+            Ok(Root::OwnerName {
+                child: RootOwnerName::RepoName { child: child_parts, .. },
                 ..
             }) => child_parts,
             _ => panic!("Component shouldnt' be rendered if this isn't the path."),
@@ -78,11 +78,11 @@ pub fn RepositoryPage(
             return ();
         }
 
-        set_pathname(Part1::OwnerName {
+        set_pathname(Root::OwnerName {
             owner_name: params.owner_name.get_untracked(),
-            child_parts: Part1OwnerNamePart2::RepoName {
+            child: RootOwnerName::RepoName {
                 repo_name: params.repo_name.get_untracked(),
-                child_parts: new_active_tab.into(),
+                child: new_active_tab.into(),
             },
         });
     });

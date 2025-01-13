@@ -158,11 +158,11 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                                                                 children=move |(_, name)| {
                                                                     let href = match &user_login {
                                                                         Some(u) => {
-                                                                            Part1::OwnerName {
+                                                                            Root::OwnerName {
                                                                                 owner_name: u.clone(),
-                                                                                child_parts: Part1OwnerNamePart2::RepoName {
+                                                                                child: RootOwnerName::RepoName {
                                                                                     repo_name: name.clone(),
-                                                                                    child_parts: Part1OwnerNamePart2RepoNamePart3::Empty,
+                                                                                    child: RootOwnerNameRepoName::Empty,
                                                                                 },
                                                                             }
                                                                                 .to_string()

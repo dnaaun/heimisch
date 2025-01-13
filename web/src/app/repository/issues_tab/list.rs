@@ -92,7 +92,6 @@ pub fn IssuesList(
             />
         </>
     }
-    .into_any()
 }
 
 #[component]
@@ -118,7 +117,6 @@ fn IssueRow(
         },
     );
     let id = issue.id;
-    let number = issue.number;
     let comments_count = sync_engine.idb_signal(
         |builder| builder.with_store::<IssueComment>().build(),
         move |txn| async move {
@@ -151,12 +149,12 @@ fn IssueRow(
         });
 
     let href = Signal::derive(move || {
-        Part1::OwnerName {
+        Root::OwnerName {
             owner_name: owner_name.get(),
-            child_parts: Part1OwnerNamePart2::RepoName {
+            child: RootOwnerName::RepoName {
                 repo_name: repo_name.get(),
-                child_parts: Part1OwnerNamePart2RepoNamePart3::Issues(
-                    Part1OwnerNamePart2RepoNamePart3Issues::IssueNumber {
+                child: RootOwnerNameRepoName::Issues(
+                    RootOwnerNameRepoNameIssues::IssueNumber {
                         issue_number: number.to_string(),
                     },
                 ),
