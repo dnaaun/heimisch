@@ -56,11 +56,19 @@ impl Into<Part1OwnerNamePart2RepoNamePart3> for Tab {
 
 #[allow(non_snake_case)]
 pub fn RepositoryPage(
-    outlet: Outlet<Signal<RepositoryId>, impl IntoView>,
+    outlet: Outlet<Signal<RepositoryId>, impl IntoView + 'static>,
     params: RouteParams<ParamsOwnerNameRepoName>,
 ) -> impl IntoView {
-    let _ = outlet;
-    let active_tab = Memo::new(move |_| Tab::from(child_path.get()));
+    let parsed_path = use_context::<ParsedPath<Part1>>().expect("");
+    let active_tab = Memo::new(move |_| {
+        Tab::from(match parsed_path.get() {
+            Ok(Part1::OwnerName {
+                child_parts: Part1OwnerNamePart2::RepoName { child_parts, .. },
+                ..
+            }) => child_parts,
+            _ => panic!("Component shouldnt' be rendered if this isn't the path."),
+        })
+    });
     let new_active_tab = RwSignal::new(active_tab.get_untracked());
 
     Effect::new(move || {

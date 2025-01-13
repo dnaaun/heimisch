@@ -1,23 +1,21 @@
 use crate::app::{
     not_found::NotFound,
     repository::{
-        issues_tab::{
-            list::IssuesListEmpty, one_issue::OneIssue, IssuesTabEmpty, IssuesTabWithIssues,
-        },
+        issues_tab::{list::IssuesList, one_issue::OneIssue, IssuesTab},
         RepositoryPage,
     },
-    sidebar::{SidebarEmpty, SidebarOwnerName},
+    sidebar::Sidebar,
 };
 
 use super::{
     super::{auth::Auth, repository::pull_requests_tab::PullRequestsTab},
-    use_pathname, MemoExt,
+    use_pathname, MemoExt, RoutableComponent, RouteToView, RoutingInfoForComponent,
 };
 
 use super::slashed_and_segmented::{split_slashed, Slashed};
 use leptos::prelude::*;
 use shared::types::repository::RepositoryId;
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NoPart;
@@ -42,7 +40,7 @@ impl std::fmt::Display for NoPart {
     }
 }
 
-fn empty_component<I>(_i: I) -> AnyView {
+fn empty_component<I>(_i: I) -> impl IntoView {
     ().into_any()
 }
 
@@ -52,7 +50,7 @@ pub enum Part1 {
     Empty,
     OwnerName {
         owner_name: String,
-        child_parts: Part1OwnerNamePart2,
+        child: Part1OwnerNamePart2,
     },
 }
 
@@ -61,11 +59,8 @@ impl Display for Part1 {
         match self {
             Part1::Auth => write!(f, "/auth"),
             Part1::Empty => write!(f, "/"),
-            Part1::OwnerName {
-                owner_name,
-                child_parts,
-            } => {
-                write!(f, "/{}{}", owner_name, child_parts)
+            Part1::OwnerName { owner_name, child } => {
+                write!(f, "/{}{}", owner_name, child)
             }
         }
     }
@@ -88,7 +83,7 @@ impl<'a> TryFrom<Slashed<'a>> for Part1 {
             }
             owner_name @ _ => Self::OwnerName {
                 owner_name: owner_name.to_owned(),
-                child_parts: tail.try_into()?,
+                child: tail.try_into()?,
             },
         })
     }
@@ -116,17 +111,7 @@ pub struct ParamsOwnerName {
     pub owner_name: Memo<String>,
 }
 
-trait RouteToComponent {
-    type PrevParams: Sync + Send + 'static;
-    type ArgFromParent;
-    fn render(
-        self,
-        arg_from_parent: Self::ArgFromParent,
-        prev_params: Self::PrevParams,
-    ) -> impl IntoView;
-}
-
-impl RouteToComponent for Memo<Result<Part1, String>> {
+impl RouteToView for Memo<Result<Part1, String>> {
     type PrevParams = ();
 
     type ArgFromParent = ();
@@ -151,7 +136,7 @@ impl RouteToComponent for Memo<Result<Part1, String>> {
     }
 }
 
-impl RouteToComponent for Memo<Part1> {
+impl RouteToView for Memo<Part1> {
     type PrevParams = ();
     type ArgFromParent = ();
 
@@ -164,28 +149,54 @@ impl RouteToComponent for Memo<Part1> {
             Part1::OwnerName { owner_name, .. } => Some(owner_name),
             _ => None,
         });
-        let part1_owner_name_child_parts = Memo::new(move |_| match self.get() {
-            Part1::OwnerName { child_parts, .. } => Some(child_parts),
+        let part1_owner_name_child_memo = Memo::new(move |_| match self.get() {
+            Part1::OwnerName { child, .. } => Some(child),
             _ => None,
         });
 
         let this_part_only = Memo::new(move |_| self.get().get_only());
 
         move || {
-            let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
-                                          // doesn't work.
-            Effect::new(move || tracing::info!("redrawing part1"));
+            let _ = this_part_only.get(); // Very weirdly, if I .track(), this sometimes doesn't
+                                          // work.
             match self.get_untracked() {
-                Part1::Auth => Auth().into_any(),
-                Part1::Empty => SidebarEmpty(empty_component).into_any(),
+                Part1::Auth => {
+                    let params = prev_params;
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(empty_component);
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    Auth.into_view_with_route_info(info).into_any()
+                }
+                Part1::Empty => {
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(empty_component);
+                    let params = prev_params;
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+
+                    Sidebar.into_view_with_route_info(info).into_any()
+                }
                 Part1::OwnerName { .. } => {
                     let params = ParamsOwnerName {
                         owner_name: params_owner_name.unwrap(),
                     };
-                    let child_parts_memo = part1_owner_name_child_parts.unwrap();
-                    let child_component =
-                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, params);
-                    SidebarOwnerName(child_component, params, arg_from_parent).into_any()
+                    let child_memo = part1_owner_name_child_memo.unwrap();
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(move |arg_from_parent| child_memo.render(arg_from_parent, params));
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+
+                    Sidebar.into_view_with_route_info(info).into_any()
                 }
             }
         }
@@ -196,18 +207,15 @@ impl RouteToComponent for Memo<Part1> {
 pub enum Part1OwnerNamePart2 {
     RepoName {
         repo_name: String,
-        child_parts: Part1OwnerNamePart2RepoNamePart3,
+        child: Part1OwnerNamePart2RepoNamePart3,
     },
 }
 
 impl Display for Part1OwnerNamePart2 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Part1OwnerNamePart2::RepoName {
-                repo_name,
-                child_parts,
-            } => {
-                write!(f, "/{}{}", repo_name, child_parts)
+            Part1OwnerNamePart2::RepoName { repo_name, child } => {
+                write!(f, "/{}{}", repo_name, child)
             }
         }
     }
@@ -222,7 +230,7 @@ impl<'a> TryFrom<Slashed<'a>> for Part1OwnerNamePart2 {
         Ok(match head.non_slash() {
             repo_name @ _ => Self::RepoName {
                 repo_name: repo_name.to_owned(),
-                child_parts: tail.try_into()?,
+                child: tail.try_into()?,
             },
         })
     }
@@ -247,7 +255,7 @@ pub struct ParamsOwnerNameRepoName {
     pub repo_name: Memo<String>,
 }
 
-impl RouteToComponent for Memo<Part1OwnerNamePart2> {
+impl RouteToView for Memo<Part1OwnerNamePart2> {
     type PrevParams = ParamsOwnerName;
     type ArgFromParent = ();
 
@@ -259,8 +267,8 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2> {
         let params_repo_name = Memo::new(move |_| match self.get() {
             Part1OwnerNamePart2::RepoName { repo_name, .. } => Some(repo_name),
         });
-        let part1_owner_name_part2_repo_child_parts = Memo::new(move |_| match self.get() {
-            Part1OwnerNamePart2::RepoName { child_parts, .. } => Some(child_parts),
+        let part1_owner_name_part2_repo_child_memo = Memo::new(move |_| match self.get() {
+            Part1OwnerNamePart2::RepoName { child, .. } => Some(child),
         });
 
         let this_part_only = Memo::new(move |_| self.get().get_only());
@@ -274,10 +282,16 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2> {
                         owner_name: prev_params.owner_name,
                         repo_name: params_repo_name.unwrap(),
                     };
-                    let child_parts_memo = part1_owner_name_part2_repo_child_parts.unwrap();
-                    let child_component =
-                        move |arg_from_parent| child_parts_memo.render(arg_from_parent, params);
-                    RepositoryPage(child_component, params, arg_from_parent).into_any()
+                    let child_memo = part1_owner_name_part2_repo_child_memo.unwrap();
+                    let outlet: Arc<dyn Fn(Signal<RepositoryId>) -> _ + Send + Sync + 'static> =
+                        Arc::new(move |arg_from_parent| child_memo.render(arg_from_parent, params));
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+
+                    RepositoryPage.into_view_with_route_info(info).into_any()
                 }
             }
         }
@@ -337,7 +351,7 @@ impl Part1OwnerNamePart2RepoNamePart3 {
     }
 }
 
-impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
+impl RouteToView for Memo<Part1OwnerNamePart2RepoNamePart3> {
     type PrevParams = ParamsOwnerNameRepoName;
 
     type ArgFromParent = Signal<RepositoryId>;
@@ -347,9 +361,9 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
         arg_from_parent: Self::ArgFromParent,
         prev_params: Self::PrevParams,
     ) -> impl IntoView {
-        let part1_owner_name_part2_repo_name_part3_issues_child_parts =
+        let part1_owner_name_part2_repo_name_part3_issues_child_memo =
             Memo::new(move |_| match self.get() {
-                Part1OwnerNamePart2RepoNamePart3::Issues(child_parts) => Some(child_parts),
+                Part1OwnerNamePart2RepoNamePart3::Issues(child) => Some(child),
                 _ => None,
             });
 
@@ -360,19 +374,46 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3> {
                                           // doesn't work.
             match self.get_untracked() {
                 Part1OwnerNamePart2RepoNamePart3::Empty => {
-                    IssuesTabEmpty(empty_component, prev_params, arg_from_parent).into_any()
+                    let params = prev_params;
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(empty_component);
+
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    IssuesList.into_view_with_route_info(info).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3::Pulls => {
-                    PullRequestsTab(empty_component, prev_params, arg_from_parent).into_any()
+                    let params = prev_params;
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(empty_component);
+
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    PullRequestsTab.into_view_with_route_info(info).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3::Issues(_) => {
-                    let child_parts_memo =
-                        part1_owner_name_part2_repo_name_part3_issues_child_parts.unwrap();
+                    let child_memo =
+                        part1_owner_name_part2_repo_name_part3_issues_child_memo.unwrap();
 
-                    let child_component = move |arg_from_parent| {
-                        child_parts_memo.render(arg_from_parent, prev_params)
+                    let outlet: Arc<dyn Fn(Signal<RepositoryId>) -> _ + Send + Sync + 'static> =
+                        Arc::new(move |arg_from_parent| {
+                            child_memo.render(arg_from_parent, prev_params)
+                        });
+                    let params = prev_params;
+
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
                     };
-                    IssuesTabWithIssues(child_component, prev_params, arg_from_parent).into_any()
+
+                    IssuesTab.into_view_with_route_info(info).into_any()
                 }
             }
         }
@@ -439,7 +480,7 @@ impl Part1OwnerNamePart2RepoNamePart3Issues {
     }
 }
 
-impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3Issues> {
+impl RouteToView for Memo<Part1OwnerNamePart2RepoNamePart3Issues> {
     type PrevParams = ParamsOwnerNameRepoName;
 
     type ArgFromParent = Signal<RepositoryId>;
@@ -459,11 +500,20 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3Issues> {
         let this_part_only = Memo::new(move |_| self.get().get_only());
 
         move || {
-            let _ = this_part_only.get(); // Very weirdly, if I onlt don't .track(), this sometimes,
+            let _ = this_part_only.get(); // Very weirdly, if I don't .track(), this sometimes,
                                           // doesn't work.
             match *self.read_untracked() {
                 Part1OwnerNamePart2RepoNamePart3Issues::Empty => {
-                    IssuesListEmpty(empty_component, prev_params, arg_from_parent).into_any()
+                    let params = prev_params;
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(empty_component);
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+
+                    IssuesList.into_view_with_route_info(info).into_any()
                 }
                 Part1OwnerNamePart2RepoNamePart3Issues::IssueNumber { .. } => {
                     let params = ParamsOwnerNameRepoNameIssueNumber {
@@ -471,11 +521,28 @@ impl RouteToComponent for Memo<Part1OwnerNamePart2RepoNamePart3Issues> {
                         repo_name: prev_params.repo_name,
                         issue_number: params_issue_number.unwrap(),
                     };
-
-                    OneIssue(empty_component, params, arg_from_parent).into_any()
+                    let outlet: Arc<dyn Fn(()) -> _ + Send + Sync + 'static> =
+                        Arc::new(empty_component);
+                    let info = RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    OneIssue.into_view_with_route_info(info).into_any()
                 }
             }
         }
+    }
+}
+
+#[derive(Clone, Debug, Copy)]
+pub struct ParsedPath<T: Sync + Send + 'static>(pub Memo<Result<T, String>>);
+
+impl<T: Sync + Send + 'static> std::ops::Deref for ParsedPath<T> {
+    type Target = Memo<Result<T, String>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -486,8 +553,8 @@ pub fn Routed() -> impl IntoView {
         let pathname = pathname.get();
         let slashed =
             Slashed::new(&pathname).expect("pathname doesn't start with a slash is weird");
-        tracing::info!("{:?}", Part1::try_from(slashed.clone()));
         Part1::try_from(slashed)
     });
+    provide_context(ParsedPath(part1));
     part1.render((), ())
 }

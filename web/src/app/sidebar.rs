@@ -12,7 +12,7 @@ use crate::{
 use super::{flowbite::checkbox::Checkbox, routing::*, sync_engine_provider::use_sync_engine};
 
 #[allow(non_snake_case)]
-fn Sidebar(child_component: impl Fn(()) -> AnyView + Send + Sync) -> impl IntoView {
+pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
     let show_forks = RwSignal::new(true);
@@ -193,24 +193,7 @@ fn Sidebar(child_component: impl Fn(()) -> AnyView + Send + Sync) -> impl IntoVi
                     }}
                 </div>
             </aside>
-            <main class="flex-grow">{child_component(())}</main>
+            <main class="flex-grow">{outlet.call(())}</main>
         </div>
     }))
-}
-
-#[allow(unused_variables)]
-#[allow(non_snake_case)]
-pub fn SidebarEmpty(
-    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-) -> impl IntoView {
-    Sidebar(child_component)
-}
-
-#[allow(non_snake_case)]
-pub fn SidebarOwnerName(
-    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] captures: ParamsOwnerName,
-    #[allow(unused_variables)] arg_from_parent: (),
-) -> impl IntoView {
-    Sidebar(child_component)
 }

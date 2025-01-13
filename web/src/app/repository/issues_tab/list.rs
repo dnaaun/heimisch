@@ -16,28 +16,9 @@ use crate::{
 };
 
 #[allow(non_snake_case)]
-pub fn IssuesListEmpty(
-    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] params: ParamsOwnerNameRepoName,
-    #[allow(unused_variables)] repository_id: Signal<RepositoryId>,
-) -> impl IntoView {
-    view! { <IssuesList repository_id owner_name=params.owner_name repo_name=params.repo_name /> }
-}
-
-#[allow(non_snake_case)]
-pub fn IssuesListWithIssues(
-    #[allow(unused_variables)] child_component: impl Fn(()) -> AnyView + Send + Sync,
-    #[allow(unused_variables)] params: ParamsOwnerNameRepoName,
-    #[allow(unused_variables)] repository_id: Signal<RepositoryId>,
-) -> impl IntoView {
-    view! { <IssuesList repository_id owner_name=params.owner_name repo_name=params.repo_name /> }
-}
-
-#[component]
 pub fn IssuesList(
-    repository_id: Signal<RepositoryId>,
-    #[prop(into)] owner_name: Signal<String>,
-    #[prop(into)] repo_name: Signal<String>,
+    params: RouteParams<ParamsOwnerNameRepoName>,
+    ArgFromParent(repository_id): ArgFromParent<Signal<RepositoryId>>,
 ) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
@@ -100,8 +81,8 @@ pub fn IssuesList(
                     >(
                         view! {
                             <IssueRow
-                                owner_name
-                                repo_name
+                                owner_name=params.owner_name
+                                repo_name=params.repo_name
                                 issue=issue.clone()
                                 is_last=i == issues_len - 1
                             />

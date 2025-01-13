@@ -8,6 +8,16 @@ use leptos::{prelude::*, tachys::html::class::IntoClass};
 use serde::de::DeserializeOwned;
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
+trait RouteToView {
+    type PrevParams: Sync + Send + 'static;
+    type ArgFromParent;
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_params: Self::PrevParams,
+    ) -> impl IntoView;
+}
+
 mod slashed_and_segmented {
     /// Newtype where the contained string is guaranteed to start with a slash.
     #[derive(Clone)]
@@ -42,10 +52,6 @@ mod slashed_and_segmented {
     impl<'a> PathSegment<'a> {
         pub fn non_slash(&self) -> &str {
             &self.0[1..]
-        }
-
-        pub fn non_slash_len(&self) -> usize {
-            self.0.len() - 1
         }
     }
 
@@ -151,7 +157,7 @@ impl<A> Deref for ArgFromParent<A> {
     }
 }
 
-pub struct Outlet<A, V>(Arc<dyn Fn(A) -> V + Send + Sync + 'static>);
+pub struct Outlet<A, V = AnyView>(Arc<dyn Fn(A) -> V + Send + Sync + 'static>);
 impl<A, V> Outlet<A, V> {
     pub fn call(&self, a: A) -> V {
         (self.0)(a)
@@ -175,9 +181,9 @@ where
     OutletInner: Clone,
     ParamsInner: Clone,
 {
-    pub(crate) arg_from_parent_inner: ArgFromParentInner,
-    pub(crate) outlet_inner: OutletInner,
-    pub(crate) params_inner: ParamsInner,
+    pub(crate) arg_from_parent: ArgFromParentInner,
+    pub(crate) outlet: OutletInner,
+    pub(crate) params: ParamsInner,
 }
 
 impl<A, C, P> From<&RoutingInfoForComponent<A, C, P>> for ArgFromParent<A>
@@ -187,7 +193,7 @@ where
     P: Clone,
 {
     fn from(value: &RoutingInfoForComponent<A, C, P>) -> Self {
-        Self(value.arg_from_parent_inner.clone())
+        Self(value.arg_from_parent.clone())
     }
 }
 
@@ -199,7 +205,7 @@ where
     P: Clone,
 {
     fn from(value: &RoutingInfoForComponent<A, Arc<dyn Fn(CA) -> CV + Send + Sync>, P>) -> Self {
-        Self(value.outlet_inner.clone())
+        Self(value.outlet.clone())
     }
 }
 
@@ -210,18 +216,20 @@ where
     P: Clone,
 {
     fn from(value: &RoutingInfoForComponent<A, C, P>) -> Self {
-        Self(value.params_inner.clone())
+        Self(value.params.clone())
     }
 }
 
-pub trait RoutableComponent<ArgFromParent, ChildComp, Param, ArgsTuple>
+trait RoutableComponent<ArgFromParent, ChildComp, Param, ArgsTuple>
 where
     ArgFromParent: Clone,
     ChildComp: Clone,
     Param: Clone,
 {
-    fn do_it(self, info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>)
-        -> impl IntoView;
+    fn into_view_with_route_info(
+        self,
+        info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
+    ) -> impl IntoView;
 }
 
 impl<ArgFromParent, ChildComp, Param, F, V> RoutableComponent<ArgFromParent, ChildComp, Param, ()>
@@ -233,7 +241,7 @@ where
     ChildComp: Clone,
     Param: Clone,
 {
-    fn do_it(
+    fn into_view_with_route_info(
         self,
         _info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
     ) -> impl IntoView {
@@ -251,7 +259,7 @@ where
     Param: Clone,
     A1: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
 {
-    fn do_it(
+    fn into_view_with_route_info(
         self,
         info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
     ) -> impl IntoView {
@@ -270,7 +278,7 @@ where
     A1: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
     A2: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
 {
-    fn do_it(
+    fn into_view_with_route_info(
         self,
         info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
     ) -> impl IntoView {
@@ -290,7 +298,7 @@ where
     A2: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
     A3: for<'a> From<&'a RoutingInfoForComponent<ArgFromParent, ChildComp, Param>>,
 {
-    fn do_it(
+    fn into_view_with_route_info(
         self,
         info: RoutingInfoForComponent<ArgFromParent, ChildComp, Param>,
     ) -> impl IntoView {
