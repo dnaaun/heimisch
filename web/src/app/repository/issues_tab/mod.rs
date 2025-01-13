@@ -3,8 +3,7 @@ pub mod one_issue;
 
 use leptos::prelude::*;
 use shared::types::repository::RepositoryId;
-
-use super::{ArgFromParent, Outlet};
+use zwang_router::{ArgFromParent, Outlet};
 
 #[allow(non_snake_case)]
 pub fn IssuesTab(

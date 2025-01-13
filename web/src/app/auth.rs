@@ -11,6 +11,7 @@ use shared::{
     },
     types::installation::InstallationId,
 };
+use zwang_router::use_serde_search;
 use std::{collections::HashSet, ops::Deref};
 
 use leptos::{
@@ -23,7 +24,7 @@ use shared::endpoints::defns::api::auth::finish::{
 use wasm_bindgen_futures::JsFuture;
 
 use crate::{
-    app::{flowbite::Spinner, routing::use_serde_search, sync_engine_provider::use_sync_engine},
+    app::{flowbite::Spinner, sync_engine_provider::use_sync_engine},
     consts::ENDPOINT_CLIENT,
     local_storage::add_installation_ids_to_local_storage,
 };

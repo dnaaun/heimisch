@@ -2,10 +2,10 @@ use futures::future::{join_all, OptionFuture};
 use itertools::Itertools;
 use leptos::prelude::*;
 use shared::types::{repository::Repository, user::User};
+use zwang_router::{Outlet, A};
 
 use crate::{
-    app::{icon::Icon, routing::A},
-    frontend_error::FrontendError,
+    app::icon::Icon, frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 

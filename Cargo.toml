@@ -14,6 +14,7 @@ members = [
     "github_api",
     "typesafe_idb",
     "reqwest_wiremock",
+    "zwang_router",
 ]
 
 [[workspace.metadata.leptos]]

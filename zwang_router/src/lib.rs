@@ -1,92 +1,11 @@
-mod defns;
+mod slashed_and_segmented;
 
-use std::{ops::Deref, sync::Arc};
-
-pub use defns::*;
+pub use slashed_and_segmented::*;
 
 use leptos::{prelude::*, tachys::html::class::IntoClass};
 use serde::de::DeserializeOwned;
+use std::{ops::Deref, sync::Arc};
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
-
-trait RouteToView {
-    type PrevParams: Sync + Send + 'static;
-    type ArgFromParent;
-    fn render(
-        self,
-        arg_from_parent: Self::ArgFromParent,
-        prev_params: Self::PrevParams,
-    ) -> impl IntoView;
-}
-
-mod slashed_and_segmented {
-    /// Newtype where the contained string is guaranteed to start with a slash.
-    #[derive(Clone)]
-    pub struct Slashed<'a>(&'a str);
-
-    impl<'a> Slashed<'a> {
-        pub fn new(p: &'a str) -> Result<Slashed<'a>, String> {
-            if p.chars().next() != Some('/') {
-                Err("first char not /".into())
-            } else {
-                Ok(Self(p))
-            }
-        }
-    }
-
-    impl<'a> std::fmt::Display for Slashed<'a> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.write_str(self.0)
-        }
-    }
-
-    impl<'a> Slashed<'a> {
-        pub fn non_slash_len(&self) -> usize {
-            self.0.len() - 1
-        }
-    }
-
-    /// New type where the contained str is guaranteed to start with a slash and no other slashes are
-    /// contained there after.
-    pub struct PathSegment<'a>(&'a str);
-
-    impl<'a> PathSegment<'a> {
-        pub fn non_slash(&self) -> &str {
-            &self.0[1..]
-        }
-    }
-
-    #[derive(Debug, PartialEq)]
-    pub struct DoesNotStartWithSlashError;
-
-    /// Will error out if first char is not a slash.
-    /// split_to_two_at_non_initial_slash("/hi/hello/asdf") == Ok((PathSegment("/hi"), Slashed("/hello/asdf"))).
-    /// split_to_two_at_non_initial_slash("hi/hello/asdf") == Err(DoesNotStartWithSlashError).
-    /// split_to_two_at_non_initial_slash("/hi") == (PathSegment("/hi"), Slashed("/")).
-    /// split_to_two_at_non_initial_slash("hi") == Err(DoesNotStartWithSlashError)).
-    /// split_to_two_at_non_initial_slash("/") == (PathSegment("/"), Slashed("/"))
-    pub fn split_path(path: &str) -> Result<(PathSegment, Slashed), DoesNotStartWithSlashError> {
-        let mut chars = path.chars().enumerate();
-        if chars.next().map(|p| p.1) != Some('/') {
-            return Err(DoesNotStartWithSlashError);
-        }
-        let slash_2_idx = chars.find(|(_, i)| *i == '/').map(|p| p.0);
-
-        Ok((
-            PathSegment(match slash_2_idx {
-                Some(idx) => &path[..idx],
-                None => path,
-            }),
-            Slashed(match slash_2_idx {
-                Some(idx) => &path[idx..],
-                None => "/",
-            }),
-        ))
-    }
-
-    pub fn split_slashed(slashed: Slashed) -> (PathSegment, Slashed) {
-        split_path(slashed.0).expect("should not give us DoesNotStartWithSlashError because Slashed is guaranteed to start with a slash")
-    }
-}
 
 pub trait MemoExt<T>
 where
@@ -175,15 +94,15 @@ impl<T> Deref for RouteParams<T> {
     }
 }
 
-pub(crate) struct RoutingInfoForComponent<ArgFromParentInner, OutletInner, ParamsInner>
+pub struct RoutingInfoForComponent<ArgFromParentInner, OutletInner, ParamsInner>
 where
     ArgFromParentInner: Clone,
     OutletInner: Clone,
     ParamsInner: Clone,
 {
-    pub(crate) arg_from_parent: ArgFromParentInner,
-    pub(crate) outlet: OutletInner,
-    pub(crate) params: ParamsInner,
+    pub arg_from_parent: ArgFromParentInner,
+    pub outlet: OutletInner,
+    pub params: ParamsInner,
 }
 
 impl<A, C, P> From<&RoutingInfoForComponent<A, C, P>> for ArgFromParent<A>
@@ -220,7 +139,7 @@ where
     }
 }
 
-trait RoutableComponent<ArgFromParent, ChildComp, Param, ArgsTuple>
+pub trait RoutableComponent<ArgFromParent, ChildComp, Param, ArgsTuple>
 where
     ArgFromParent: Clone,
     ChildComp: Clone,
@@ -318,7 +237,7 @@ pub fn set_pathname(path: impl ToString) {
     window()
         .history()
         .expect("")
-        .push_state_with_url(&JsValue::NULL, "Some crazy title", Some(&path.to_string()))
+        .push_state_with_url(&JsValue::NULL, "", Some(&path.to_string()))
         .expect("");
     PATHNAME_MANAGER.with(|i| (i.set_pathname)(window().location().pathname().expect("")));
 }
@@ -359,5 +278,43 @@ pub fn A(
         >
             {children()}
         </a>
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct NoPart;
+
+impl<'a> TryFrom<Slashed<'a>> for NoPart {
+    type Error = String;
+
+    fn try_from(value: Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        if value.non_slash_len() == 0 {
+            return Ok(Self);
+        } else {
+            return Err(format!("non slash length is not 0 in '{value}'"));
+        }
+    }
+}
+
+// Ensure `NoPart` has a `Display` implementation if it is a custom type
+impl std::fmt::Display for NoPart {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Implement according to its actual structure and desired string representation.
+        write!(f, "")
+    }
+}
+
+pub fn empty_component<ArgFromParent>(_: ArgFromParent) -> impl IntoView {
+    ()
+}
+
+#[derive(Clone, Debug, Copy)]
+pub struct ParsedPath<T: Sync + Send + 'static>(pub ::leptos::prelude::Memo<Result<T, String>>);
+
+impl<T: Sync + Send + 'static> std::ops::Deref for ParsedPath<T> {
+    type Target = ::leptos::prelude::Memo<Result<T, String>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

@@ -8,6 +8,7 @@ use shared::types::{
 };
 
 use itertools::Itertools;
+use zwang_router::{ArgFromParent, RouteParams, A};
 
 use crate::{
     app::{routing::*, sync_engine_provider::use_sync_engine},
@@ -153,11 +154,9 @@ fn IssueRow(
             owner_name: owner_name.get(),
             child: RootOwnerName::RepoName {
                 repo_name: repo_name.get(),
-                child: RootOwnerNameRepoName::Issues(
-                    RootOwnerNameRepoNameIssues::IssueNumber {
-                        issue_number: number.to_string(),
-                    },
-                ),
+                child: RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::IssueNumber {
+                    issue_number: number.to_string(),
+                }),
             },
         }
         .to_string()

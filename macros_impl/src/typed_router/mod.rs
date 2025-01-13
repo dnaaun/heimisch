@@ -1,5 +1,7 @@
 pub mod main_model;
 pub mod parsing;
+pub mod try_from_slashed_impl;
+pub mod enum_impl;
 
 #[cfg(test)]
 const TEST_STR: &str = r#"

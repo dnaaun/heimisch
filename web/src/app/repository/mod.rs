@@ -9,6 +9,7 @@ use shared::{
     utils::LogErr,
 };
 use top_bar::TopBar;
+use zwang_router::{set_pathname, Outlet, RouteParams, ParsedPath};
 pub mod issues_tab;
 pub mod pull_requests_tab;
 mod top_bar;

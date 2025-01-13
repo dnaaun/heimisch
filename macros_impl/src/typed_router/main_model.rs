@@ -1,5 +1,8 @@
 use itertools::{Either, Itertools};
-use std::collections::{btree_set, BTreeSet};
+use std::{
+    collections::{btree_set, BTreeSet},
+    iter::once,
+};
 
 use proc_macro2::Span;
 use syn::*;
@@ -18,6 +21,8 @@ pub type Part = Either<NonParamPart, ParamPart>;
 pub struct PartInfo {
     path: String,
     path_span: Span,
+    name: String,
+    names_from_higher_levels: Vec<String>,
     view: Option<Ident>,
     arg_from_parent_type: Type,
     params_from_higher_levels: BTreeSet<Ident>,
@@ -42,11 +47,19 @@ impl PartInfo {
 fn from_parsing_route(
     parsing_part: parsing::Part,
     arg_from_parent_type: Type,
+    names_from_higher_levels: Vec<String>,
     params_from_higher_levels: BTreeSet<Ident>,
 ) -> Result<Part> {
-    let arg_to_children = parsing_part.will_pass.unwrap_or(parse_quote!(()));
+    let mut name = parsing_part.path.0.to_string();
+    if name.len() == 0 {
+        name = "empty".to_owned()
+    }
+    let names_from_higher_levels_to_children = names_from_higher_levels
+        .iter()
+        .cloned()
+        .chain(once(name.clone()))
+        .collect::<Vec<_>>();
     let mut params_from_higher_levels_to_children = params_from_higher_levels.clone();
-
     if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
         let param = Ident::new(p, parsing_part.path.1);
 
@@ -63,19 +76,39 @@ fn from_parsing_route(
             btree_set::Entry::Vacant(entry) => entry.insert(),
         }
     };
-    let (non_param_children, param_children): (Vec<_>, Vec<_>) = parsing_part
+
+    let arg_to_children = parsing_part.will_pass.unwrap_or(parse_quote!(()));
+    let children = parsing_part
         .children
         .into_iter()
         .map(|child_part| {
             from_parsing_route(
                 child_part,
                 arg_to_children.clone(),
+                names_from_higher_levels_to_children.clone(),
                 params_from_higher_levels_to_children.clone(),
             )
         })
-        .collect::<Result<Vec<_>>>()?
+        .collect::<Result<Vec<_>>>()?;
+
+    let duplicated_names = children
+        .iter()
+        .map(|c| c.name.to_lowercase())
+        .sorted()
+        .chunk_by(|n| n.clone())
         .into_iter()
-        .partition_map(|p| p);
+        .filter_map(|(name, things)| if things.count() > 1 { Some(name) } else { None })
+        .collect::<Vec<_>>();
+
+    if duplicated_names.len() > 0 {
+        return Err(Error::new(
+            parsing_part.span,
+            "Mulitiple children of this part have the same name/path.",
+        ));
+    }
+
+    let (non_param_children, param_children): (Vec<_>, Vec<_>) =
+        children.into_iter().partition_map(|p| p);
 
     let mut param_children = param_children.into_iter();
     let param_child = param_children.next().map(Box::new);
@@ -88,6 +121,8 @@ fn from_parsing_route(
 
     let part_info = PartInfo {
         path: parsing_part.path.0.to_string(),
+        name,
+        names_from_higher_levels,
         path_span: parsing_part.path.1,
         view: parsing_part.view,
         arg_from_parent_type,
@@ -104,6 +139,8 @@ fn from_parsing_route(
     })
 }
 
+const ROOT: &str = "root";
+
 impl TryFrom<parsing::Parts> for Parts {
     type Error = Error;
 
@@ -113,7 +150,7 @@ impl TryFrom<parsing::Parts> for Parts {
             top_parts: value
                 .parts
                 .into_iter()
-                .map(|x| from_parsing_route(x, parse_quote!(()), Default::default()))
+                .map(|x| from_parsing_route(x, parse_quote!(()), vec![ROOT.into()], Default::default()))
                 .collect::<Result<_>>()?,
         })
     }
@@ -126,7 +163,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_main_model_routes() -> Result<()> {
+    fn test_converting_to_main_model_parts() -> Result<()> {
         let parsed: parsing::Parts = parse_str(TEST_STR).expect("Unable to parse routes");
         let main_model_parts = Parts::try_from(parsed)?;
         println!("{:#?}", main_model_parts);

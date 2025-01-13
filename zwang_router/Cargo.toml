@@ -1,0 +1,13 @@
+[package]
+name = "zwang_router"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+leptos = "0.7.3"
+serde = "1.0.217"
+serde_urlencoded = "0.7.1"
+wasm-bindgen = "0.2.100"
+
+[features]
+tracing = [] # Addeed this to slilence a lint about it not existing when  using leptos' `#[component] macro
