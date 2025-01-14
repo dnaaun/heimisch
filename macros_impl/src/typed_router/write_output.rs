@@ -44,11 +44,15 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
 
     let all_parts_output = flatten_parts(Some(root_part))
         .iter()
-        .filter(|x| x.len_sub_parts() > 0)
+        .filter(|x| x.has_sub_parts())
         .map(|x| {
-            [write_part_defn(x), write_from_slashed_impl(x)]
-                .into_iter()
-                .collect::<TokenStream>()
+            [
+                write_part_defn(x),
+                write_from_slashed_impl(x),
+                write_display_impl(x),
+            ]
+            .into_iter()
+            .collect::<TokenStream>()
         })
         .collect_vec();
     Ok(quote! {
@@ -104,7 +108,7 @@ impl PartExt for main_model::Part {
 }
 
 fn write_part_defn(part: &main_model::Part) -> TokenStream {
-    debug_assert!(part.len_sub_parts() > 0);
+    debug_assert!(part.has_sub_parts());
 
     let ident = part.as_ident();
 
@@ -115,7 +119,7 @@ fn write_part_defn(part: &main_model::Part) -> TokenStream {
             let variant_ident = non_param_child.as_variant_ident();
             let field_ident = non_param_child.as_ident();
 
-            if non_param_child.len_sub_parts() > 0 {
+            if non_param_child.has_sub_parts() {
                 quote! { #variant_ident(#field_ident) }
             } else {
                 quote! { #variant_ident }
@@ -126,7 +130,7 @@ fn write_part_defn(part: &main_model::Part) -> TokenStream {
     if let Some(param_sub_part) = &part.param_sub_part {
         let variant_ident = param_sub_part.as_variant_ident();
         let param_name_ident = param_sub_part.as_param_name_ident();
-        let child_field = if param_sub_part.len_sub_parts() > 0 {
+        let child_field = if param_sub_part.has_sub_parts() {
             let child_field_type_ident = param_sub_part.as_ident();
             Some(quote! { child: #child_field_type_ident, })
         } else {
@@ -155,7 +159,7 @@ fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
             let path_part = sub_part.as_path_part_literal();
             let variant_name_ident = sub_part.as_variant_ident();
 
-            if sub_part.len_sub_parts() == 0 {
+            if !sub_part.has_sub_parts() {
                 quote! {
                     #path_part => {
                         ::zwang_router::NoPart::try_from(tail)?;
@@ -175,7 +179,7 @@ fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
             let variant_name_ident = sub_part.as_variant_ident();
             let param_name_ident = sub_part.as_param_name_ident();
 
-            let child_field = if sub_part.len_sub_parts() > 0 {
+            let child_field = if sub_part.has_sub_parts() {
                 Some(quote! { child: tail.try_into()? })
             } else {
                 None
@@ -211,6 +215,64 @@ fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
                 }
             }
         }
+    }
+}
+
+fn write_display_impl(part: &main_model::Part) -> TokenStream {
+    let mut matches = part
+        .non_param_sub_parts
+        .iter()
+        .map(|p| {
+            let variant_ident = p.as_variant_ident();
+            if p.has_sub_parts() {
+                let mut interpolated_str_literal = Literal::string(&format!("/{}{{}}", p.path));
+                interpolated_str_literal.set_span(p.path_span);
+                quote! {
+                Self::#variant_ident(child) => {
+                    write!(f, #interpolated_str_literal, child)
+                }
+
+                }
+            } else {
+                let mut interpolated_str_literal = Literal::string(&format!("/{}", p.path));
+                interpolated_str_literal.set_span(p.path_span);
+                quote! {
+                    Self::#variant_ident => {
+                        write!(f, #interpolated_str_literal)
+                    }
+                }
+            }
+        })
+        .collect_vec();
+
+    if let Some(p) = &part.param_sub_part {
+        let variant_ident = p.as_variant_ident();
+        let param_name_ident = p.as_param_name_ident();
+        matches.push(if p.has_sub_parts() {
+            quote! {
+                Self::#variant_ident { #param_name_ident, child } => {
+                    write!(f, "/{}{}", #param_name_ident, child)
+                }
+            }
+        } else {
+            quote! {
+                    Self::#variant_ident { #param_name_ident } => {
+                    write!(f, "/{}", #param_name_ident)
+                }
+
+            }
+        });
+    }
+    let ident = part.as_ident();
+
+    quote! {
+            impl std::fmt::Display for #ident {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    match self {
+                        #(#matches)*
+                    }
+                }
+            }
     }
 }
 

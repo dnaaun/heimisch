@@ -68,8 +68,8 @@ pub struct Part {
 // pub struct NonParamPart(pub PartInfo);
 
 impl Part {
-    pub fn len_sub_parts(&self) -> usize {
-        self.non_param_sub_parts.len() + self.param_sub_part.iter().count()
+    pub fn has_sub_parts(&self) -> bool {
+        self.non_param_sub_parts.len() + self.param_sub_part.iter().count() > 0
     }
 }
 
