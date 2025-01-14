@@ -50,6 +50,8 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
                 write_part_defn(x),
                 write_from_slashed_impl(x),
                 write_display_impl(x),
+                write_only_struct(x),
+                write_get_only_impl(x),
             ]
             .into_iter()
             .collect::<TokenStream>()
@@ -78,6 +80,7 @@ trait PartExt {
     fn as_ident(&self) -> Ident;
     fn as_param_name_ident(&self) -> Option<Ident>;
     fn as_path_part_literal(&self) -> Literal;
+    fn as_only_ident(&self) -> Ident;
 }
 impl PartExt for main_model::Part {
     fn as_variant_ident(&self) -> Ident {
@@ -104,6 +107,10 @@ impl PartExt for main_model::Part {
         let mut path_part = Literal::string(&self.path);
         path_part.set_span(self.path_span);
         path_part
+    }
+
+    fn as_only_ident(&self) -> Ident {
+        Ident::new(&((*self.name).to_owned() + "Only"), self.path_span)
     }
 }
 
@@ -145,6 +152,7 @@ fn write_part_defn(part: &main_model::Part) -> TokenStream {
     }
 
     quote! {
+        #[derive(Debug, PartialEq, Eq, Clone)]
         pub enum #ident {
             #(#variants),*
         }
@@ -273,6 +281,59 @@ fn write_display_impl(part: &main_model::Part) -> TokenStream {
                     }
                 }
             }
+    }
+}
+
+fn write_only_struct(part: &main_model::Part) -> TokenStream {
+    let mut variants = part
+        .non_param_sub_parts
+        .iter()
+        .map(|p| p.as_variant_ident())
+        .collect_vec();
+    if let Some(p) = &part.param_sub_part {
+        variants.push(p.as_variant_ident())
+    }
+
+    let only_ident = Ident::new(&((*part.name).to_owned() + "Only"), part.path_span);
+
+    quote! {
+        #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+        enum #only_ident {
+            #(#variants),*
+        }
+    }
+}
+
+fn write_get_only_impl(part: &main_model::Part) -> TokenStream {
+    let only_ident = part.as_only_ident();
+    let mut variants = part
+        .non_param_sub_parts
+        .iter()
+        .map(|p| {
+            let variant_ident = p.as_variant_ident();
+            if p.has_sub_parts() {
+                quote! { Self::#variant_ident(..) => #only_ident::#variant_ident }
+            } else {
+                quote! { Self::#variant_ident => #only_ident::#variant_ident }
+            }
+        })
+        .collect_vec();
+    if let Some(p) = &part.param_sub_part {
+        let variant_ident = p.as_variant_ident();
+
+        variants.push(quote! { Self::#variant_ident { .. } => #only_ident::#variant_ident })
+    }
+
+    let ident = part.as_ident();
+
+    quote! {
+        impl #ident {
+            fn get_only(&self) -> #only_ident {
+                match self {
+                    #(#variants),*
+                }
+            }
+        }
     }
 }
 
