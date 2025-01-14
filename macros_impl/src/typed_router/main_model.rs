@@ -1,5 +1,4 @@
 use convert_case::{Case, Casing};
-use derive_more::derive::Deref;
 use itertools::Itertools;
 use nutype::nutype;
 use std::{
@@ -39,7 +38,7 @@ struct Pascal(String);
 pub struct ParamsSet(BTreeSet<Ident>);
 
 impl ParamsSet {
-    fn with_added(&self, param: Ident) -> Result<Self> {
+    pub fn with_added(&self, param: Ident) -> Result<Self> {
         let mut clone = self.0.clone();
         let span = param.span();
         match clone.entry(param.clone()) {
@@ -73,7 +72,7 @@ pub struct Part {
     pub view: Option<Ident>,
     pub arg_from_parent_type: Type,
 
-    pub available_params: ParamsSet,
+    pub params_from_higher_levels: ParamsSet,
 
     pub non_param_sub_parts: Vec<Part>,
 
@@ -82,7 +81,7 @@ pub struct Part {
     pub arg_to_sub_parts: Type,
     pub span: Span,
 
-    pub is_param_itself: bool,
+    pub param_at_this_level: Option<Ident>,
 }
 
 // #[derive(derive_more::From, derive_more::Deref, Debug, Clone)]
@@ -113,11 +112,15 @@ fn from_parsing_route(
         .chain(once(short_name.clone()))
         .collect::<Vec<_>>();
 
-    let available_params = if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
-        let param = Ident::new(p, parsing_part.path.1);
-        params_from_higher_levels.with_added(param)?
+    let param_at_this_level = if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
+        Some(Ident::new(p, parsing_part.path.1))
     } else {
-        params_from_higher_levels.clone()
+        None
+    };
+
+    let params_from_higher_levels_to_children = match param_at_this_level.clone() {
+        Some(param) => params_from_higher_levels.with_added(param)?,
+        None => params_from_higher_levels.clone(),
     };
 
     let arg_to_sub_parts = parsing_part.will_pass.unwrap_or(parse_quote!(()));
@@ -129,7 +132,7 @@ fn from_parsing_route(
                 sub_part,
                 arg_to_sub_parts.clone(),
                 names_from_higher_levels_to_sub_parts.clone(),
-                available_params.clone(),
+                params_from_higher_levels_to_children.clone(),
             )
         })
         .collect::<Result<Vec<_>>>()?;
@@ -154,8 +157,9 @@ fn from_parsing_route(
         ));
     }
 
-    let (param_sub_parts, non_param_sub_parts): (Vec<_>, Vec<_>) =
-        sub_parts.into_iter().partition(|p| p.is_param_itself);
+    let (param_sub_parts, non_param_sub_parts): (Vec<_>, Vec<_>) = sub_parts
+        .into_iter()
+        .partition(|p| p.param_at_this_level.is_some());
 
     let mut param_sub_parts = param_sub_parts.into_iter();
     let param_sub_part = param_sub_parts.next().map(Box::new);
@@ -180,15 +184,12 @@ fn from_parsing_route(
         short_name: short_name.into(),
         view: parsing_part.view,
         arg_from_parent_type,
-        available_params,
+        params_from_higher_levels,
         non_param_sub_parts,
         param_sub_part,
         arg_to_sub_parts,
         span: parsing_part.span,
-        is_param_itself: match parsing_part.path.0 {
-            parsing::PathSegment::Static(_) => false,
-            parsing::PathSegment::Param(_) => true,
-        },
+        param_at_this_level,
     };
 
     Ok(part)

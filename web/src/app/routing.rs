@@ -24,9 +24,9 @@ pub enum Root {
 impl std::fmt::Display for Root {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Root::Auth => write!(f, "/auth"),
-            Root::Empty => write!(f, "/"),
-            Root::OwnerName { owner_name, child } => {
+            Self::Auth => write!(f, "/auth"),
+            Self::Empty => write!(f, "/"),
+            Self::OwnerName { owner_name, child } => {
                 write!(f, "/{}{}", owner_name, child)
             }
         }
@@ -57,17 +57,17 @@ impl<'a> TryFrom<::zwang_router::Slashed<'a>> for Root {
 }
 
 impl Root {
-    fn get_only(&self) -> Part1Only {
+    fn get_only(&self) -> RootOnly {
         match self {
-            Root::Auth => Part1Only::Auth,
-            Root::Empty => Part1Only::Empty,
-            Root::OwnerName { .. } => Part1Only::OwnerName,
+            Root::Auth => RootOnly::Auth,
+            Root::Empty => RootOnly::Empty,
+            Root::OwnerName { .. } => RootOnly::OwnerName,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-enum Part1Only {
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum RootOnly {
     Auth,
     Empty,
     OwnerName,
@@ -319,9 +319,9 @@ pub enum RootOwnerNameRepoName {
 impl std::fmt::Display for RootOwnerNameRepoName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RootOwnerNameRepoName::Empty => write!(f, "/"),
-            RootOwnerNameRepoName::Pulls => write!(f, "/pulls"),
-            RootOwnerNameRepoName::Issues(child) => {
+            Self::Empty => write!(f, "/"),
+            Self::Pulls => write!(f, "/pulls"),
+            Self::Issues(child) => {
                 write!(f, "/issues{}", child)
             }
         }
@@ -353,9 +353,9 @@ enum Part1OwnerNamePart2RepoNamePart3Only {
 impl RootOwnerNameRepoName {
     fn get_only(&self) -> Part1OwnerNamePart2RepoNamePart3Only {
         match self {
-            RootOwnerNameRepoName::Empty => Part1OwnerNamePart2RepoNamePart3Only::Empty,
-            RootOwnerNameRepoName::Pulls => Part1OwnerNamePart2RepoNamePart3Only::Pulls,
-            RootOwnerNameRepoName::Issues(..) => Part1OwnerNamePart2RepoNamePart3Only::Issues,
+            Self::Empty => Part1OwnerNamePart2RepoNamePart3Only::Empty,
+            Self::Pulls => Part1OwnerNamePart2RepoNamePart3Only::Pulls,
+            Self::Issues(..) => Part1OwnerNamePart2RepoNamePart3Only::Issues,
         }
     }
 }
