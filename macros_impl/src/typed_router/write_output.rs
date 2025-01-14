@@ -1,4 +1,4 @@
-use std::iter::once;
+use std::{collections::HashSet, iter::once};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
@@ -38,11 +38,12 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
         path: Default::default(),
         view: Default::default(),
         arg_from_parent_type: parse_quote!(()),
-        params_from_higher_levels: Default::default(),
+        available_params: Default::default(),
         is_param_itself: false,
     };
 
-    let all_parts_output = flatten_parts(Some(root_part))
+    let (all_parts, all_params) = flatten_parts_and_params(Some(root_part));
+    let all_parts_output = all_parts
         .iter()
         .filter(|x| x.has_sub_parts())
         .map(|x| {
@@ -57,22 +58,50 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
             .collect::<TokenStream>()
         })
         .collect_vec();
+
+    eprintln!("THE COUNT WAS: {}", all_params.len());
+    let all_params_output = all_params
+        .iter()
+        .sorted_by_key(|a| a.len())
+        .map(write_params_struct);
     Ok(quote! {
         #(#all_parts_output)*
+        #(#all_params_output)*
     })
 }
 
 /// NOTE: There's a lot of cloning here, and it feels like that shouldn't be necessary.
-fn flatten_parts(parts: impl IntoIterator<Item = main_model::Part>) -> Vec<main_model::Part> {
-    parts
+fn flatten_parts_and_params(
+    parts: impl IntoIterator<Item = main_model::Part>,
+) -> (Vec<main_model::Part>, HashSet<main_model::ParamsSet>) {
+    let (parts, params): (Vec<_>, Vec<_>) = parts
         .into_iter()
         .map(|part| {
-            let non_param_flat = flatten_parts(part.non_param_sub_parts.clone());
-            let param_flat = flatten_parts(part.param_sub_part.clone().map(|x| *x));
-            once(part).chain(non_param_flat).chain(param_flat)
+            let (non_param_parts, params1) =
+                flatten_parts_and_params(part.non_param_sub_parts.clone());
+            let (param_parts, params2) =
+                flatten_parts_and_params(part.param_sub_part.clone().map(|x| *x));
+            let available_params = part.available_params.clone();
+            (
+                once(part).chain(non_param_parts).chain(param_parts),
+                params1
+                    .union(&params2)
+                    .cloned()
+                    .chain(if available_params.len() > 0 {
+                        Some(available_params)
+                    } else {
+                        None
+                    })
+                    .collect::<HashSet<_>>(),
+            )
         })
-        .flatten()
-        .collect()
+        .unzip();
+    (
+        parts.into_iter().flatten().collect(),
+        params
+            .into_iter()
+            .fold(Default::default(), |a, b| a.union(&b).cloned().collect()),
+    )
 }
 
 trait PartExt {
@@ -111,6 +140,23 @@ impl PartExt for main_model::Part {
 
     fn as_only_ident(&self) -> Ident {
         Ident::new(&((*self.name).to_owned() + "Only"), self.path_span)
+    }
+}
+
+trait ParamsSetExt {
+    fn as_ident(&self) -> Ident;
+}
+impl ParamsSetExt for main_model::ParamsSet {
+    fn as_ident(&self) -> Ident {
+        Ident::new(
+            &("Params".to_owned()
+                + &self
+                    .iter()
+                    .map(|p| p.to_string().to_case(Case::Pascal))
+                    .reduce(|a, b| a + &b)
+                    .expect("")),
+            Span::call_site(),
+        )
     }
 }
 
@@ -333,6 +379,19 @@ fn write_get_only_impl(part: &main_model::Part) -> TokenStream {
                     #(#variants),*
                 }
             }
+        }
+    }
+}
+
+fn write_params_struct(params: &main_model::ParamsSet) -> TokenStream {
+    let ident = params.as_ident();
+    let fields = params
+        .iter()
+        .map(|p| quote! { pub #p: ::leptos::prelude::Memo<String> });
+    quote! {
+        #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+        pub struct #ident {
+            #(#fields),*
         }
     }
 }

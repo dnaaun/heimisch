@@ -1,4 +1,5 @@
 use convert_case::{Case, Casing};
+use derive_more::derive::Deref;
 use itertools::Itertools;
 use nutype::nutype;
 use std::{
@@ -34,6 +35,29 @@ pub struct Parts {
 )]
 struct Pascal(String);
 
+#[derive(Clone, Debug, Default, derive_more::Deref, Hash, PartialEq, Eq)]
+pub struct ParamsSet(BTreeSet<Ident>);
+
+impl ParamsSet {
+    fn with_added(&self, param: Ident) -> Result<Self> {
+        let mut clone = self.0.clone();
+        let span = param.span();
+        match clone.entry(param.clone()) {
+            btree_set::Entry::Occupied(_) => {
+                return Err(Error::new(
+                    span,
+                    format!(
+                        "The route param `{}` is already defined at a higher level",
+                        param
+                    ),
+                ))
+            }
+            btree_set::Entry::Vacant(entry) => entry.insert(),
+        }
+        Ok(Self(clone))
+    }
+}
+
 /// NOTE: This can be divided into fields that are used at the top level, and the fields that are
 /// not.
 #[derive(Debug, Clone)]
@@ -49,7 +73,7 @@ pub struct Part {
     pub view: Option<Ident>,
     pub arg_from_parent_type: Type,
 
-    pub params_from_higher_levels: BTreeSet<Ident>,
+    pub available_params: ParamsSet,
 
     pub non_param_sub_parts: Vec<Part>,
 
@@ -77,7 +101,7 @@ fn from_parsing_route(
     parsing_part: parsing::Part,
     arg_from_parent_type: Type,
     names_from_higher_levels: Vec<String>,
-    params_from_higher_levels: BTreeSet<Ident>,
+    params_from_higher_levels: ParamsSet,
 ) -> Result<Part> {
     let mut short_name = parsing_part.path.0.to_string().to_case(Case::Pascal);
     if short_name.len() == 0 {
@@ -89,22 +113,11 @@ fn from_parsing_route(
         .chain(once(short_name.clone()))
         .collect::<Vec<_>>();
 
-    let mut params_from_higher_levels_to_sub_parts = params_from_higher_levels.clone();
-    if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
+    let available_params = if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
         let param = Ident::new(p, parsing_part.path.1);
-
-        match params_from_higher_levels_to_sub_parts.entry(param.clone()) {
-            btree_set::Entry::Occupied(_) => {
-                return Err(Error::new(
-                    param.span(),
-                    format!(
-                        "The route param `{}` is already defined at a higher level",
-                        param
-                    ),
-                ))
-            }
-            btree_set::Entry::Vacant(entry) => entry.insert(),
-        }
+        params_from_higher_levels.with_added(param)?
+    } else {
+        params_from_higher_levels.clone()
     };
 
     let arg_to_sub_parts = parsing_part.will_pass.unwrap_or(parse_quote!(()));
@@ -116,7 +129,7 @@ fn from_parsing_route(
                 sub_part,
                 arg_to_sub_parts.clone(),
                 names_from_higher_levels_to_sub_parts.clone(),
-                params_from_higher_levels_to_sub_parts.clone(),
+                available_params.clone(),
             )
         })
         .collect::<Result<Vec<_>>>()?;
@@ -160,7 +173,6 @@ fn from_parsing_route(
         .reduce(|a, b| a + &b)
         .expect("");
 
-
     let part = Part {
         path: parsing_part.path.0.to_string(),
         path_span: parsing_part.path.1,
@@ -168,7 +180,7 @@ fn from_parsing_route(
         short_name: short_name.into(),
         view: parsing_part.view,
         arg_from_parent_type,
-        params_from_higher_levels,
+        available_params,
         non_param_sub_parts,
         param_sub_part,
         arg_to_sub_parts,
