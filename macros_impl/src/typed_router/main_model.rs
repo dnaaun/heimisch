@@ -1,4 +1,6 @@
-use itertools::{Either, Itertools};
+use convert_case::{Case, Casing};
+use itertools::Itertools;
+use nutype::nutype;
 use std::{
     collections::{btree_set, BTreeSet},
     iter::once,
@@ -11,36 +13,62 @@ use super::parsing;
 
 #[derive(Debug)]
 pub struct Parts {
-    fallback: Ident,
-    top_parts: Vec<Part>,
+    pub fallback: Ident,
+    pub top_parts: Vec<Part>,
 }
 
-pub type Part = Either<NonParamPart, ParamPart>;
+// impl Deref for Part {
+//     type Target = PartInfo;
+//
+//     fn deref(&self) -> &Self::Target {
+//         match &self {
+//             Part::NonParam(part_info) => part_info,
+//             Part::Param(part_info) => part_info,
+//         }
+//     }
+// }
 
-#[derive(Debug)]
-pub struct PartInfo {
-    path: String,
-    path_span: Span,
-    name: String,
-    names_from_higher_levels: Vec<String>,
-    view: Option<Ident>,
-    arg_from_parent_type: Type,
-    params_from_higher_levels: BTreeSet<Ident>,
-    non_param_children: Vec<NonParamPart>,
-    param_child: Option<Box<ParamPart>>,
-    arg_to_children: Type,
-    span: Span,
+#[nutype(
+    derive(Clone, Debug, Deref, PartialEq, Ord, Eq, PartialOrd, Display, From),
+    sanitize(with = |s: String| s.to_case(Case::Pascal))
+)]
+struct Pascal(String);
+
+/// NOTE: This can be divided into fields that are used at the top level, and the fields that are
+/// not.
+#[derive(Debug, Clone)]
+pub struct Part {
+    pub path: String,
+    pub path_span: Span,
+
+    /// This will contain the prefixes from higher levels.
+    pub name: Pascal,
+
+    pub short_name: Pascal,
+
+    pub view: Option<Ident>,
+    pub arg_from_parent_type: Type,
+
+    pub params_from_higher_levels: BTreeSet<Ident>,
+
+    pub non_param_sub_parts: Vec<Part>,
+    pub param_sub_part: Option<Box<Part>>,
+
+    pub arg_to_sub_parts: Type,
+    pub span: Span,
+
+    pub is_param_itself: bool,
 }
 
-#[derive(derive_more::Deref, Debug)]
-pub struct ParamPart(pub PartInfo);
+// #[derive(derive_more::From, derive_more::Deref, Debug, Clone)]
+// pub struct ParamPart(pub PartInfo);
+//
+// #[derive(derive_more::From, derive_more::Deref, Debug, Clone)]
+// pub struct NonParamPart(pub PartInfo);
 
-#[derive(derive_more::Deref, Debug)]
-pub struct NonParamPart(pub PartInfo);
-
-impl PartInfo {
-    fn len_sub_levels(&self) -> usize {
-        self.non_param_children.len() + self.param_child.iter().count()
+impl Part {
+    pub fn len_sub_parts(&self) -> usize {
+        self.non_param_sub_parts.len() + self.param_sub_part.iter().count()
     }
 }
 
@@ -50,20 +78,21 @@ fn from_parsing_route(
     names_from_higher_levels: Vec<String>,
     params_from_higher_levels: BTreeSet<Ident>,
 ) -> Result<Part> {
-    let mut name = parsing_part.path.0.to_string();
-    if name.len() == 0 {
-        name = "empty".to_owned()
+    let mut short_name = parsing_part.path.0.to_string().to_case(Case::Pascal);
+    if short_name.len() == 0 {
+        short_name = "Empty".to_owned()
     }
-    let names_from_higher_levels_to_children = names_from_higher_levels
+    let names_from_higher_levels_to_sub_parts = names_from_higher_levels
         .iter()
         .cloned()
-        .chain(once(name.clone()))
+        .chain(once(short_name.clone()))
         .collect::<Vec<_>>();
-    let mut params_from_higher_levels_to_children = params_from_higher_levels.clone();
+
+    let mut params_from_higher_levels_to_sub_parts = params_from_higher_levels.clone();
     if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
         let param = Ident::new(p, parsing_part.path.1);
 
-        match params_from_higher_levels_to_children.entry(param.clone()) {
+        match params_from_higher_levels_to_sub_parts.entry(param.clone()) {
             btree_set::Entry::Occupied(_) => {
                 return Err(Error::new(
                     param.span(),
@@ -77,25 +106,28 @@ fn from_parsing_route(
         }
     };
 
-    let arg_to_children = parsing_part.will_pass.unwrap_or(parse_quote!(()));
-    let children = parsing_part
-        .children
+    let arg_to_sub_parts = parsing_part.will_pass.unwrap_or(parse_quote!(()));
+    let sub_parts = parsing_part
+        .sub_parts
         .into_iter()
-        .map(|child_part| {
+        .map(|sub_part| {
             from_parsing_route(
-                child_part,
-                arg_to_children.clone(),
-                names_from_higher_levels_to_children.clone(),
-                params_from_higher_levels_to_children.clone(),
+                sub_part,
+                arg_to_sub_parts.clone(),
+                names_from_higher_levels_to_sub_parts.clone(),
+                params_from_higher_levels_to_sub_parts.clone(),
             )
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let duplicated_names = children
+    let duplicated_names = sub_parts
         .iter()
-        .map(|c| c.name.to_lowercase())
+        .map(|c| &c.short_name)
         .sorted()
-        .chunk_by(|n| n.clone())
+        .chunk_by(|n| {
+            #[allow(suspicious_double_ref_op)]
+            n.clone()
+        })
         .into_iter()
         .filter_map(|(name, things)| if things.count() > 1 { Some(name) } else { None })
         .collect::<Vec<_>>();
@@ -103,43 +135,54 @@ fn from_parsing_route(
     if duplicated_names.len() > 0 {
         return Err(Error::new(
             parsing_part.span,
-            "Mulitiple children of this part have the same name/path.",
+            format!(
+            "Mulitiple sub-parts of this part have the same name/path. Duplicates names/paths are: {}", duplicated_names.iter().cloned().join(", ")),
         ));
     }
 
-    let (non_param_children, param_children): (Vec<_>, Vec<_>) =
-        children.into_iter().partition_map(|p| p);
+    let (param_sub_parts, non_param_sub_parts): (Vec<_>, Vec<_>) =
+        sub_parts.into_iter().partition(|p| p.is_param_itself);
 
-    let mut param_children = param_children.into_iter();
-    let param_child = param_children.next().map(Box::new);
-    if param_children.next().is_some() {
+    let mut param_sub_parts = param_sub_parts.into_iter();
+    let param_sub_part = param_sub_parts.next().map(Box::new);
+    if param_sub_parts.next().is_some() {
         return Err(Error::new(
             parsing_part.span,
-            "This part has more than one parameterized child parts. That's not supported.",
+            "This part has more than one parameterized sub parts. That's not supported.",
         ));
     }
 
-    let part_info = PartInfo {
+    let name = names_from_higher_levels
+        .iter()
+        .map(|n| n.to_case(Case::Pascal))
+        .chain(once(short_name.clone()))
+        .reduce(|a, b| a + &b)
+        .expect("");
+
+    println!("name: {name}");
+
+    let part = Part {
         path: parsing_part.path.0.to_string(),
-        name,
-        names_from_higher_levels,
         path_span: parsing_part.path.1,
+        name: name.into(),
+        short_name: short_name.into(),
         view: parsing_part.view,
         arg_from_parent_type,
         params_from_higher_levels,
-        non_param_children,
-        param_child,
-        arg_to_children,
+        non_param_sub_parts,
+        param_sub_part,
+        arg_to_sub_parts,
         span: parsing_part.span,
+        is_param_itself: match parsing_part.path.0 {
+            parsing::PathSegment::Static(_) => false,
+            parsing::PathSegment::Param(_) => true,
+        },
     };
 
-    Ok(match parsing_part.path.0 {
-        parsing::PathSegment::Static(_) => Either::Left(NonParamPart(part_info)),
-        parsing::PathSegment::Param(_) => Either::Right(ParamPart(part_info)),
-    })
+    Ok(part)
 }
 
-const ROOT: &str = "root";
+pub const ROOT: &str = "Root";
 
 impl TryFrom<parsing::Parts> for Parts {
     type Error = Error;
@@ -150,7 +193,9 @@ impl TryFrom<parsing::Parts> for Parts {
             top_parts: value
                 .parts
                 .into_iter()
-                .map(|x| from_parsing_route(x, parse_quote!(()), vec![ROOT.into()], Default::default()))
+                .map(|x| {
+                    from_parsing_route(x, parse_quote!(()), vec![ROOT.into()], Default::default())
+                })
                 .collect::<Result<_>>()?,
         })
     }

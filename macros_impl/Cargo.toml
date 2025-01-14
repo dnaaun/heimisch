@@ -8,6 +8,8 @@ convert_case = "0.6.0"
 darling = "0.20.10"
 derive_more = { version = "1.0.0", features = ["deref", "from"] }
 itertools = "0.13.0"
+nutype = "0.5.1"
+prettyplease = "0.2.29"
 proc-macro2 = "1.0.89"
 quote = "1.0.37"
 serde = { version = "1.0.215", features = ["derive"] }

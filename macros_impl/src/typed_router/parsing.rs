@@ -13,7 +13,7 @@ pub struct Parts {
 pub struct Part {
     pub path: (PathSegment, Span),
     pub view: Option<Ident>,
-    pub children: Vec<Part>,
+    pub sub_parts: Vec<Part>,
     pub will_pass: Option<Type>,
     pub span: Span,
 }
@@ -118,7 +118,7 @@ impl Parse for Part {
                 None => return Err(input.error("`path` not specified.")),
             },
             view,
-            children: children.unwrap_or_default(),
+            sub_parts: children.unwrap_or_default(),
             will_pass,
             span: input.span(),
         })
