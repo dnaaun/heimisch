@@ -52,6 +52,7 @@ pub struct Part {
     pub params_from_higher_levels: BTreeSet<Ident>,
 
     pub non_param_sub_parts: Vec<Part>,
+
     pub param_sub_part: Option<Box<Part>>,
 
     pub arg_to_sub_parts: Type,
@@ -159,7 +160,6 @@ fn from_parsing_route(
         .reduce(|a, b| a + &b)
         .expect("");
 
-    println!("name: {name}");
 
     let part = Part {
         path: parsing_part.path.0.to_string(),
