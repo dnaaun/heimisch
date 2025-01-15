@@ -22,7 +22,7 @@ fallback: NotFound,
                     {
                         path: "/{repo_name}"
                         view: RepositoryPage,
-                        will_pass: RepositoryId,
+                        will_pass: Signal<RepositoryId>,
                         children: [
                             {
                                 path: "/pulls",
@@ -34,6 +34,7 @@ fallback: NotFound,
                             },
                             {
                                 path: "/issues",
+                                will_pass: Signal<RepositoryId>,
                                 children: [
                                     {
                                         path: "/",

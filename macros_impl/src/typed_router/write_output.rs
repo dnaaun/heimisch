@@ -3,7 +3,7 @@ use std::{collections::HashSet, iter::once};
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::{Literal, Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::*;
 
 use super::main_model::{self, ROOT};
@@ -50,23 +50,27 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
         .iter()
         .filter(|x| x.has_sub_parts())
         .map(|x| {
-            [
+            Ok([
                 write_part_defn(x),
                 write_from_slashed_impl(x),
                 write_display_impl(x),
                 write_only_struct(x),
                 write_get_only_impl(x),
+                write_route_to_view_impl(x)?,
             ]
             .into_iter()
-            .collect::<TokenStream>()
+            .collect::<TokenStream>())
         })
-        .collect_vec();
+        .collect::<Result<Vec<_>>>()?;
 
     let all_params_output = all_params
         .iter()
         .sorted_by_key(|a| a.len())
         .map(write_params_struct);
+
+    let route_to_view_written = write_route_to_view_trait();
     Ok(quote! {
+        #route_to_view_written
         #(#all_parts_output)*
         #(#all_params_output)*
     })
@@ -161,6 +165,7 @@ impl PartExt for main_model::Part {
 trait ParamsSetExt {
     fn as_ident(&self) -> Ident;
 }
+
 impl ParamsSetExt for main_model::ParamsSet {
     fn as_ident(&self) -> Ident {
         Ident::new(
@@ -169,7 +174,7 @@ impl ParamsSetExt for main_model::ParamsSet {
                     .iter()
                     .map(|p| p.to_string().to_case(Case::Pascal))
                     .reduce(|a, b| a + &b)
-                    .expect("")),
+                    .expect("Unexpected empty set of params")),
             Span::call_site(),
         )
     }
@@ -425,7 +430,7 @@ fn write_route_to_view_trait() -> TokenStream {
     }
 }
 
-fn write_route_to_view_impl(part: &main_model::Part) -> TokenStream {
+fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     let ident = part.as_ident();
     let param_memo_written = part.param_sub_part.as_ref().map(|sub_part| {
         let param_ident = sub_part.param_at_this_level.as_ref().expect("");
@@ -448,27 +453,216 @@ fn write_route_to_view_impl(part: &main_model::Part) -> TokenStream {
         .map(|p| {
             let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
             let variant_ident = p.as_variant_ident();
-
-            if p.param_at_this_level.is_some() {
-                quote! {
-                    let #child_memo_var_name_ident =
-                        ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
-                            #ident::#variant_ident { child, .. } => Some(child),
-                            _ => None,
-                        });
-                }
-            } else {
-                quote! {
-                    let #child_memo_var_name_ident =
-                        ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
-                            #ident::#variant_ident(child) => Some(child),
-                            _ => None,
-                        });
-                }
+            quote! {
+                let #child_memo_var_name_ident =
+                    ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                        #ident::#variant_ident(child) => Some(child),
+                        _ => None,
+                    });
             }
         })
         .collect_vec();
-    todo!()
+    if let Some(p) = &part.param_sub_part {
+        if p.has_sub_parts() {
+            let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
+            let variant_ident = p.as_variant_ident();
+            child_memos_written.push(quote! {
+                let #child_memo_var_name_ident =
+                    ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                        #ident::#variant_ident { child, .. } => Some(child),
+                        _ => None,
+                    });
+            });
+        }
+    }
+
+    let mut variants = part.non_param_sub_parts.iter()
+        .map(|p| {
+            let variant_ident = p.as_variant_ident();
+            Ok(if !p.has_sub_parts() {
+                let view_ident = match &p.view {
+                    Some(i) => i.clone(),
+                    None => return Err(Error::new(p.span, "This leaf path has no associated view.")),
+                };
+                quote! {
+                    #ident::#variant_ident => {
+                        let outlet: ::std::sync::Arc<
+                        dyn core::ops::Fn(_) -> _ + ::core::marker::Send + ::core::marker::Sync,
+                    > =
+                            std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                        let params = prev_params;
+                        let info = ::zwang_router::RoutingInfoForComponent {
+                            arg_from_parent,
+                            outlet,
+                            params,
+                        };
+
+                        ::leptos::prelude::IntoAny::into_any(
+                            ::zwang_router::RoutableComponent::into_view_with_route_info(#view_ident, info),
+                        )
+                    }
+                }
+            } else {
+                let view_ident = p.view.as_ref().map(|x| x.to_token_stream()).unwrap_or_else( || {
+                    parse_quote! {::zwang_router::passthrough_component }
+                    });
+                let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
+                quote! {
+                    #ident::#variant_ident(_) => {
+                        let child_memo = ::zwang_router::MemoExt::unwrap(
+                            #child_memo_var_name_ident
+                        );
+
+                        let outlet: ::std::sync::Arc<
+                            dyn core::ops::Fn(_) -> _
+                                + ::core::marker::Send
+                                + ::core::marker::Sync,
+                        > = ::std::sync::Arc::new(move |arg_from_parent| {
+                            child_memo.render(arg_from_parent, prev_params)
+                        });
+                        let params = prev_params;
+
+                        let info = ::zwang_router::RoutingInfoForComponent {
+                            arg_from_parent,
+                            outlet,
+                            params,
+                        };
+
+                        ::leptos::prelude::IntoAny::into_any(
+                            ::zwang_router::RoutableComponent::into_view_with_route_info(
+                                #view_ident,
+                                info,
+                            ),
+                        )
+                    }
+                }
+            })
+    })
+    .collect::<Result<Vec<_>>>()?;
+
+    if let Some(p) = &part.param_sub_part {
+        let variant_ident = p.as_variant_ident();
+        let params_construction = write_param_struct_construction_at_sub_part(&p);
+        variants.push(
+        if !p.has_sub_parts() {
+            let view_ident = match &p.view {
+                Some(i) => i.clone(),
+                None => return Err(Error::new(p.span, "This leaf path has no associated view.")),
+            };
+            quote! {
+                #ident::#variant_ident { .. } => {
+                    #params_construction
+                    let outlet: ::std::sync::Arc<
+                        dyn core::ops::Fn(_) -> _ + core::marker::Send + core::marker::Sync
+                    > =
+                        ::std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                    let info = ::zwang_router::RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    ::leptos::prelude::IntoAny::into_any(
+                        ::zwang_router::RoutableComponent::into_view_with_route_info(
+                            #view_ident, info,
+                        ),
+                    )
+                }
+            }
+        } else {
+            let view_ident = p.view.as_ref().map(|x| x.to_token_stream()).unwrap_or(parse_quote!(
+                ::zwang_router::passthrough_component
+            ));
+            let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
+            quote! {
+                #ident::#variant_ident { .. } => {
+                    #params_construction
+                    let child_memo =
+                        ::zwang_router::MemoExt::unwrap(#child_memo_var_name_ident);
+                    let outlet: ::std::sync::Arc<
+                        dyn core::ops::Fn(_) -> _ + core::marker::Send + core::marker::Sync
+                    > = std::sync::Arc::new(move |arg_from_parent| {
+                        child_memo.render(arg_from_parent, params)
+                    });
+                    let info = ::zwang_router::RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+
+                    ::leptos::prelude::IntoAny::into_any(
+                        ::zwang_router::RoutableComponent::into_view_with_route_info(
+                            #view_ident,
+                            info,
+                        ),
+                    )
+                }
+            }
+        });
+    }
+
+    let params_available_at_this_level = part.params_available_at_this_level()?;
+    let prev_params_type = if params_available_at_this_level.len() > 0 {
+        params_available_at_this_level.as_ident().to_token_stream()
+    } else {
+        parse_quote!(())
+    };
+    let arg_from_parent_type = part.arg_to_sub_parts.clone();
+
+    Ok(quote! {
+        impl RouteToView for ::leptos::prelude::Memo<#ident> {
+            type PrevParams = #prev_params_type;
+            type ArgFromParent = #arg_from_parent_type;
+
+            fn render(
+                self,
+                arg_from_parent: Self::ArgFromParent,
+                prev_params: Self::PrevParams,
+            ) -> impl ::leptos::prelude::IntoView {
+                #param_memo_written
+                #(#child_memos_written);*
+
+                let this_part_only =
+                    ::leptos::prelude::Memo::new(move |_| ::leptos::prelude::Get::get(&self).get_only());
+
+                move || {
+                    let _ = ::leptos::prelude::Get::get(&this_part_only); // Very weirdly, if I .track(), this sometimes doesn't
+                                                                          // work.
+                    match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
+                        #(#variants)*
+                    }
+                }
+            }
+        }
+    })
+}
+
+fn write_param_struct_construction_at_sub_part(sub_part: &main_model::Part) -> TokenStream {
+    let new_param = sub_part.param_at_this_level.as_ref().expect("");
+
+    let mut assigns = sub_part
+        .params_from_higher_levels
+        .iter()
+        .map(|p| {
+            quote! { #p: prev_params.#p }
+        })
+        .collect_vec();
+
+    let new_param_value_memo = sub_part.as_param_var_name_ident().expect("");
+    assigns.push(quote! {
+        #new_param: ::zwang_router::MemoExt::unwrap(#new_param_value_memo),
+    });
+
+    let params_struct_ident = sub_part
+        .params_available_at_this_level()
+        .expect("")
+        .as_ident();
+
+    quote! {
+            let params = #params_struct_ident {
+                #(#assigns),*
+            };
+
+    }
 }
 
 #[cfg(test)]
@@ -484,10 +678,11 @@ mod tests {
         let parsed: parsing::Parts = parse_str(TEST_STR).expect("Unable to parse routes");
         let main_model_parts = Parts::try_from(parsed)?;
         let output = write_output(main_model_parts).unwrap().to_string();
-        println!(
-            "\n\n{}\n\n",
-            prettyplease::unparse(&syn::parse_file(&output).unwrap())
-        );
+        println!("\n\n{output}\n\n");
+        // println!(
+        //     "\n\n{}\n\n",
+        //     prettyplease::unparse(&syn::parse_file(&output).unwrap())
+        // );
         Ok(())
     }
 }

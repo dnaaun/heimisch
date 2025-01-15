@@ -1,6 +1,7 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use nutype::nutype;
+use quote::ToTokens;
 use std::{
     collections::{btree_set, BTreeSet},
     iter::once,
@@ -16,17 +17,6 @@ pub struct Parts {
     pub fallback: Ident,
     pub top_parts: Vec<Part>,
 }
-
-// impl Deref for Part {
-//     type Target = PartInfo;
-//
-//     fn deref(&self) -> &Self::Target {
-//         match &self {
-//             Part::NonParam(part_info) => part_info,
-//             Part::Param(part_info) => part_info,
-//         }
-//     }
-// }
 
 #[nutype(
     derive(Clone, Debug, Deref, PartialEq, Ord, Eq, PartialOrd, Display, From),
@@ -83,12 +73,6 @@ pub struct Part {
 
     pub param_at_this_level: Option<Ident>,
 }
-
-// #[derive(derive_more::From, derive_more::Deref, Debug, Clone)]
-// pub struct ParamPart(pub PartInfo);
-//
-// #[derive(derive_more::From, derive_more::Deref, Debug, Clone)]
-// pub struct NonParamPart(pub PartInfo);
 
 impl Part {
     pub fn has_sub_parts(&self) -> bool {
@@ -191,6 +175,12 @@ fn from_parsing_route(
         span: parsing_part.span,
         param_at_this_level,
     };
+    println!(
+        "at {}, arg_from_parent: {}, will_pass {}",
+        part.name,
+        part.arg_from_parent_type.to_token_stream(),
+        part.arg_to_sub_parts.to_token_stream()
+    );
 
     Ok(part)
 }

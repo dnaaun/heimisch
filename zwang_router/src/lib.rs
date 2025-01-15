@@ -77,6 +77,7 @@ impl<A> Deref for ArgFromParent<A> {
 }
 
 pub struct Outlet<A = (), V = AnyView>(Arc<dyn Fn(A) -> V + Send + Sync + 'static>);
+
 impl<A, V> Outlet<A, V> {
     pub fn call(&self, a: A) -> V {
         (self.0)(a)
@@ -306,6 +307,16 @@ impl std::fmt::Display for NoPart {
 
 pub fn empty_component<ArgFromParent>(_: ArgFromParent) -> impl IntoView {
     ()
+}
+
+pub fn passthrough_component<A, V>(
+    ArgFromParent(arg_from_parent): ArgFromParent<A>,
+    outlet: Outlet<A, V>,
+) -> impl IntoView
+where
+    V: IntoView,
+{
+    outlet.call(arg_from_parent)
 }
 
 #[derive(Clone, Debug, Copy)]
