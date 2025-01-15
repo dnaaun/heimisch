@@ -114,6 +114,8 @@ trait PartExt {
     fn as_path_part_literal(&self) -> Literal;
     fn as_only_ident(&self) -> Ident;
     fn params_available_at_this_level(&self) -> Result<main_model::ParamsSet>;
+    fn as_param_var_name_ident(&self) -> Option<Ident>;
+    fn as_child_memo_var_name_ident(&self) -> Ident;
 }
 impl PartExt for main_model::Part {
     fn as_variant_ident(&self) -> Ident {
@@ -133,12 +135,26 @@ impl PartExt for main_model::Part {
     fn as_only_ident(&self) -> Ident {
         Ident::new(&((*self.name).to_owned() + "Only"), self.path_span)
     }
+
     fn params_available_at_this_level(&self) -> Result<main_model::ParamsSet> {
         Ok(if let Some(param) = &self.param_at_this_level {
             self.params_from_higher_levels.with_added(param.clone())?
         } else {
             self.params_from_higher_levels.clone()
         })
+    }
+
+    fn as_param_var_name_ident(&self) -> Option<Ident> {
+        self.param_at_this_level
+            .as_ref()
+            .map(|p| Ident::new(&format!("param_memo_{p}"), p.span()))
+    }
+
+    fn as_child_memo_var_name_ident(&self) -> Ident {
+        Ident::new(
+            &format!("child_memo_{}", self.short_name.to_case(Case::Snake)),
+            self.path_span,
+        )
     }
 }
 
@@ -393,6 +409,66 @@ fn write_params_struct(params: &main_model::ParamsSet) -> TokenStream {
             #(#fields),*
         }
     }
+}
+
+fn write_route_to_view_trait() -> TokenStream {
+    quote! {
+        trait RouteToView {
+            type PrevParams: Sync + Send + 'static;
+            type ArgFromParent;
+            fn render(
+                self,
+                arg_from_parent: Self::ArgFromParent,
+                prev_params: Self::PrevParams,
+            ) -> impl ::leptos::prelude::IntoView;
+        }
+    }
+}
+
+fn write_route_to_view_impl(part: &main_model::Part) -> TokenStream {
+    let ident = part.as_ident();
+    let param_memo_written = part.param_sub_part.as_ref().map(|sub_part| {
+        let param_ident = sub_part.param_at_this_level.as_ref().expect("");
+        let var_name_ident = sub_part.as_param_var_name_ident().expect("");
+        let variant_ident = sub_part.as_variant_ident();
+        quote! {
+        let #var_name_ident =
+            ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                #ident::#variant_ident { #param_ident, .. } => Some(#param_ident),
+                _ => None,
+            });
+
+        }
+    });
+
+    let mut child_memos_written = part
+        .non_param_sub_parts
+        .iter()
+        .filter(|p| p.has_sub_parts())
+        .map(|p| {
+            let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
+            let variant_ident = p.as_variant_ident();
+
+            if p.param_at_this_level.is_some() {
+                quote! {
+                    let #child_memo_var_name_ident =
+                        ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                            #ident::#variant_ident { child, .. } => Some(child),
+                            _ => None,
+                        });
+                }
+            } else {
+                quote! {
+                    let #child_memo_var_name_ident =
+                        ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                            #ident::#variant_ident(child) => Some(child),
+                            _ => None,
+                        });
+                }
+            }
+        })
+        .collect_vec();
+    todo!()
 }
 
 #[cfg(test)]
