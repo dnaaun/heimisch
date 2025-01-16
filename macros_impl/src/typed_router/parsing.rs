@@ -4,15 +4,16 @@ use syn::*;
 
 // Represents a collection of routes with an optional fallback
 pub struct Parts {
-    pub fallback: Ident,
     pub parts: Vec<Part>,
 }
 
 // Represents an individual route
 #[derive(Debug)]
 pub struct Part {
-    pub path: (PathSegment, Span),
+    pub path: Option<(PathSegment, Span)>,
     pub view: Option<Ident>,
+    pub fallback: Option<Ident>,
+    pub layout: Option<Ident>,
     pub sub_parts: Vec<Part>,
     pub will_pass: Option<Type>,
     pub span: Span,
@@ -61,17 +62,14 @@ impl Parse for Part {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut path = None;
         let mut view = None;
+        let mut layout = None;
         let mut will_pass = None;
         let mut children = None;
+        let mut fallback = None;
 
         let inside_braces;
         braced!(inside_braces in input);
         loop {
-            let _ = inside_braces.parse::<Token![,]>();
-            if inside_braces.is_empty() {
-                break;
-            }
-
             let ident: Ident = inside_braces.parse()?;
             let _ = inside_braces.parse::<Token![:]>();
             match &*ident.to_string() {
@@ -81,11 +79,23 @@ impl Parse for Part {
                     }
                     path = Some(parse_path(&inside_braces)?);
                 }
+                "fallback" => {
+                    if fallback.is_some() {
+                        return Err(input.error("Found `fallback` specified twice."));
+                    }
+                    fallback = inside_braces.parse()?;
+                }
                 "view" => {
                     if view.is_some() {
                         return Err(input.error("Found `view` specified twice."));
                     }
                     view = inside_braces.parse()?;
+                }
+                "layout" => {
+                    if layout.is_some() {
+                        return Err(input.error("Found `layout` specified twice."));
+                    }
+                    layout = inside_braces.parse()?;
                 }
                 "will_pass" => {
                     if will_pass.is_some() {
@@ -110,14 +120,25 @@ impl Parse for Part {
                     return Err(input.error(format!("unexpected key found: '{key}'")));
                 }
             }
+
+            match inside_braces.parse::<Token![,]>() {
+                Ok(_) => (),
+                Err(e) => {
+                    if inside_braces.is_empty() {
+                        break;
+                    } else {
+                        println!("{}", inside_braces);
+                        return Err(e);
+                    }
+                }
+            }
         }
 
         Ok(Part {
-            path: match path {
-                Some(p) => p,
-                None => return Err(input.error("`path` not specified.")),
-            },
+            path,
             view,
+            fallback,
+            layout,
             sub_parts: children.unwrap_or_default(),
             will_pass,
             span: input.span(),
@@ -138,16 +159,14 @@ pub fn parse_fallback(input: ParseStream) -> Result<Ident> {
 // Parsing logic for multiple routes and fallback
 impl Parse for Parts {
     fn parse(input: ParseStream) -> Result<Self> {
-        let fallback = parse_fallback(input)?;
-        let content;
-        braced!(content in input);
-
-        let routes = content
+        let routes = input
             .parse_terminated(Part::parse, Token![,])?
             .into_iter()
             .collect();
 
-        Ok(Parts { fallback, parts: routes })
+        Ok(Parts {
+            parts: routes,
+        })
     }
 }
 
@@ -161,6 +180,5 @@ mod tests {
     #[test]
     fn test_parse_routes_with_fallback() {
         let parsed: Parts = parse_str(TEST_STR).expect("Unable to parse routes");
-        assert_eq!(parsed.fallback.to_string(), "NotFound");
     }
 }
