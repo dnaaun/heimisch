@@ -68,9 +68,9 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
         .sorted_by_key(|a| a.len())
         .map(write_params_struct);
 
-    let route_to_view_written = write_route_to_view_trait();
+    let non_varying_stuff_written = write_non_varying_stuff();
     Ok(quote! {
-        #route_to_view_written
+        #non_varying_stuff_written
         #(#all_parts_output)*
         #(#all_params_output)*
     })
@@ -416,7 +416,7 @@ fn write_params_struct(params: &main_model::ParamsSet) -> TokenStream {
     }
 }
 
-fn write_route_to_view_trait() -> TokenStream {
+fn write_non_varying_stuff() -> TokenStream {
     quote! {
         trait RouteToView {
             type PrevParams: Sync + Send + 'static;
@@ -427,20 +427,72 @@ fn write_route_to_view_trait() -> TokenStream {
                 prev_params: Self::PrevParams,
             ) -> impl ::leptos::prelude::IntoView;
         }
+
+        impl RouteToView for ::leptos::prelude::Memo<Result<Root, String>> {
+            type PrevParams = ();
+
+            type ArgFromParent = ();
+
+            fn render(
+                self,
+                arg_from_parent: Self::ArgFromParent,
+                prev_params: Self::PrevParams,
+            ) -> impl ::leptos::prelude::IntoView {
+                let ok_memo =
+                    ::leptos::prelude::Memo::new(move |_| ::leptos::prelude::Get::get(&self).ok());
+                let this_part_only = ::leptos::prelude::Memo::new(move |_| {
+                    ::leptos::prelude::Get::get(&self).map(|i| i.get_only())
+                });
+                move || {
+                    let _ = ::leptos::prelude::Get::get(&this_part_only); // Very weirdly, if I onlt don't .track(), this sometimes,
+                                                                          // doesn't work.
+                    match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
+                        Ok(_) => ::leptos::prelude::IntoAny::into_any(
+                            ::leptos::prelude::Memo::new(move |_| {
+                                ::leptos::prelude::Get::get(&ok_memo).unwrap()
+                            })
+                            .render(arg_from_parent, prev_params),
+                        ),
+                        Err(_) => {
+                            ::leptos::prelude::IntoAny::into_any(::leptos::prelude::view! { <NotFound /> })
+                        }
+                    }
+                }
+            }
+        }
+
+        #[::leptos::prelude::component]
+        pub fn Routed() -> impl ::leptos::prelude::IntoView {
+            let pathname = ::zwang_router::use_pathname();
+            let root = ::leptos::prelude::Memo::new(move |_| {
+                let pathname = ::leptos::prelude::Get::get(&pathname);
+                let slashed = ::zwang_router::Slashed::new(&pathname)
+                    .expect("pathname doesn't start with a slash is weird");
+                Root::try_from(slashed)
+            });
+            ::leptos::prelude::provide_context(::zwang_router::ParsedPath(root));
+            root.render((), ())
+        }
     }
 }
 
 fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     let ident = part.as_ident();
+    let catch_all = if part.count_sub_parts() > 1 {
+        Some(quote! { _ => None, })
+    } else {
+        None
+    };
     let param_memo_written = part.param_sub_part.as_ref().map(|sub_part| {
         let param_ident = sub_part.param_at_this_level.as_ref().expect("");
         let var_name_ident = sub_part.as_param_var_name_ident().expect("");
         let variant_ident = sub_part.as_variant_ident();
+
         quote! {
         let #var_name_ident =
             ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
                 #ident::#variant_ident { #param_ident, .. } => Some(#param_ident),
-                _ => None,
+                #catch_all
             });
 
         }
@@ -457,7 +509,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
                 let #child_memo_var_name_ident =
                     ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
                         #ident::#variant_ident(child) => Some(child),
-                        _ => None,
+                        #catch_all
                     });
             }
         })
@@ -470,7 +522,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
                 let #child_memo_var_name_ident =
                     ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
                         #ident::#variant_ident { child, .. } => Some(child),
-                        _ => None,
+                        #catch_all
                     });
             });
         }
