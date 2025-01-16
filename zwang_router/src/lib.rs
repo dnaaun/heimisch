@@ -319,6 +319,10 @@ where
     outlet.call(arg_from_parent)
 }
 
+pub fn not_found_compnent() -> impl IntoView {
+    "Zwang router: route not found."
+}
+
 #[derive(Clone, Debug, Copy)]
 pub struct ParsedPath<T: Sync + Send + 'static>(pub ::leptos::prelude::Memo<Result<T, String>>);
 

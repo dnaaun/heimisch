@@ -9,7 +9,7 @@ use shared::{
     utils::LogErr,
 };
 use top_bar::TopBar;
-use zwang_router::{set_pathname, Outlet, RouteParams, ParsedPath};
+use zwang_router::{set_pathname, Outlet, ParsedPath, RouteParams};
 pub mod issues_tab;
 pub mod pull_requests_tab;
 mod top_bar;
@@ -47,9 +47,9 @@ impl From<RootOwnerNameRepoName> for Tab {
 impl Into<RootOwnerNameRepoName> for Tab {
     fn into(self) -> RootOwnerNameRepoName {
         match self {
-            Tab::Issues => RootOwnerNameRepoName::Issues(
-                RootOwnerNameRepoNameIssues::Empty,
-            ),
+            Tab::Issues => {
+                RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::Empty)
+            }
             Tab::Pulls => RootOwnerNameRepoName::Pulls,
         }
     }
@@ -64,10 +64,13 @@ pub fn RepositoryPage(
     let active_tab = Memo::new(move |_| {
         Tab::from(match parsed_path.get() {
             Ok(Root::OwnerName {
-                child: RootOwnerName::RepoName { child: child_parts, .. },
-                ..
+                child:
+                    RootOwnerName::RepoName {
+                        child: child_parts, ..
+                    },
+                    ..
             }) => child_parts,
-            _ => panic!("Component shouldnt' be rendered if this isn't the path."),
+            _ => panic!("Component shouldn't be rendered if this isn't the path."),
         })
     });
     let new_active_tab = RwSignal::new(active_tab.get_untracked());

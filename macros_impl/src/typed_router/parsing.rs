@@ -2,11 +2,6 @@ use proc_macro2::Span;
 use syn::parse::{Parse, ParseStream, Result};
 use syn::*;
 
-// Represents a collection of routes with an optional fallback
-pub struct Parts {
-    pub parts: Vec<Part>,
-}
-
 // Represents an individual route
 #[derive(Debug)]
 pub struct Part {
@@ -24,6 +19,17 @@ pub struct Part {
 pub enum PathSegment {
     Static(String),
     Param(String),
+}
+
+impl std::ops::Deref for PathSegment {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            PathSegment::Static(d) => d,
+            PathSegment::Param(d) => d,
+        }
+    }
 }
 
 impl std::fmt::Display for PathSegment {
@@ -156,20 +162,6 @@ pub fn parse_fallback(input: ParseStream) -> Result<Ident> {
     ident
 }
 
-// Parsing logic for multiple routes and fallback
-impl Parse for Parts {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let routes = input
-            .parse_terminated(Part::parse, Token![,])?
-            .into_iter()
-            .collect();
-
-        Ok(Parts {
-            parts: routes,
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::typed_router::TEST_STR;
@@ -179,6 +171,7 @@ mod tests {
 
     #[test]
     fn test_parse_routes_with_fallback() {
-        let parsed: Parts = parse_str(TEST_STR).expect("Unable to parse routes");
+        let parsed: Part = parse_str(TEST_STR).expect("Unable to parse routes");
+        println!("{parsed:#?}");
     }
 }

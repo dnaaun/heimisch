@@ -1,7 +1,8 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use nutype::nutype;
-use quote::ToTokens;
+use part::NonLeafDetails;
+use proc_macro2::Span;
 use std::{
     collections::{btree_set, BTreeSet},
     iter::once,
@@ -15,7 +16,7 @@ use super::parsing;
 #[derive(Debug)]
 pub struct Parts {
     pub fallback: Ident,
-    pub top_parts: Vec<Part>,
+    pub top_part: Part,
 }
 
 #[nutype(
@@ -48,143 +49,35 @@ impl ParamsSet {
 }
 
 mod part {
-    use bon::{bon, builder};
+    // use bon::{bon, builder};
     use proc_macro2::Span;
     use syn::*;
 
     use super::{ParamsSet, __nutype_Pascal__::Pascal};
 
-    /// NOTE: This can be divided into fields that are used at the top level, and the
-    /// fields that are not.
-    /// RTI upheld: `param_sub_part` will have a `Part` that has `Some()`
-    /// `param_at_this_level`.
-    /// RTI upheld: `path` is non-empty if it has sub-parts.
+    /// RTI upheld: at least one sub part.
+    #[derive(Debug, Clone)]
+    pub struct NonLeafDetails {
+        pub layout: Option<Ident>,
+        pub non_param_sub_parts: Vec<Part>,
+        pub param_sub_part: Option<Box<Part>>,
+        pub arg_to_sub_parts: Type,
+        pub is_root_level: bool,
+    }
+
     #[derive(Debug, Clone)]
     pub struct Part {
-        path: String,
-        path_span: Span,
-
+        pub path: String,
+        pub path_span: Span,
         /// This will contain the prefixes from higher levels.
-        name: Pascal,
-
-        short_name: Pascal,
-
-        view: Option<Ident>,
-        arg_from_parent_type: Type,
-
-        params_from_higher_levels: ParamsSet,
-
-        non_param_sub_parts: Vec<Part>,
-
-        param_sub_part: Option<Box<Part>>,
-
-        arg_to_sub_parts: Type,
-        span: Span,
-
-        param_at_this_level: Option<Ident>,
-    }
-
-    #[bon]
-    impl Part {
-        #[builder]
-        pub fn new(
-            path: String,
-            path_span: Span,
-            name: Pascal,
-            short_name: Pascal,
-            view: Option<Ident>,
-            arg_from_parent_type: Type,
-            params_from_higher_levels: ParamsSet,
-            non_param_sub_parts: Vec<Part>,
-            param_sub_part: Option<Box<Part>>,
-            arg_to_sub_parts: Type,
-            span: Span,
-            param_at_this_level: Option<Ident>,
-        ) -> Self {
-            let ret = Self {
-                path,
-                path_span,
-                name,
-                short_name,
-                view,
-                arg_from_parent_type,
-                params_from_higher_levels,
-                non_param_sub_parts,
-                param_sub_part,
-                arg_to_sub_parts,
-                span,
-                param_at_this_level,
-            };
-
-            if ret.path.is_empty() && ret.has_sub_parts() {
-                panic!("The subparts of this `Part` should be 'hoisted up' one level higher because the path here is empty.")
-            }
-
-            if let Some(p) = &ret.param_sub_part {
-                if p.param_at_this_level.is_none() {
-                    panic!("A param sub-part has no param?")
-                }
-            }
-
-            ret
-        }
-    }
-
-    impl Part {
-        pub fn has_sub_parts(&self) -> bool {
-            self.count_sub_parts() > 0
-        }
-
-        pub fn count_sub_parts(&self) -> usize {
-            self.non_param_sub_parts.len() + self.param_sub_part.iter().count()
-        }
-        pub fn path(&self) -> &str {
-            &self.path
-        }
-
-        pub fn path_span(&self) -> Span {
-            self.path_span
-        }
-
-        pub fn name(&self) -> &Pascal {
-            &self.name
-        }
-
-        pub fn short_name(&self) -> &Pascal {
-            &self.short_name
-        }
-
-        pub fn view(&self) -> Option<&Ident> {
-            self.view.as_ref()
-        }
-
-        pub fn arg_from_parent_type(&self) -> &Type {
-            &self.arg_from_parent_type
-        }
-
-        pub fn params_from_higher_levels(&self) -> &ParamsSet {
-            &self.params_from_higher_levels
-        }
-
-        pub fn non_param_sub_parts(&self) -> &[Part] {
-            &self.non_param_sub_parts
-        }
-
-        pub fn param_sub_part(&self) -> Option<&Box<Part>> {
-            self.param_sub_part.as_ref()
-        }
-
-        pub fn arg_to_sub_parts(&self) -> &Type {
-            &self.arg_to_sub_parts
-        }
-
-        pub fn span(&self) -> Span {
-            self.span
-        }
-
-        pub fn param_at_this_level(&self) -> Option<&Ident> {
-            self.param_at_this_level.as_ref()
-        }
+        pub name: Pascal,
+        pub short_name: Pascal,
+        pub view: Option<Ident>,
+        pub arg_from_parent_type: Type,
+        pub params_from_higher_levels: ParamsSet,
+        pub span: Span,
+        pub param_at_this_level: Option<Ident>,
+        pub non_leaf_details: Option<NonLeafDetails>,
     }
 }
 
@@ -193,19 +86,57 @@ fn from_parsing_route(
     arg_from_parent_type: Type,
     names_from_higher_levels: Vec<String>,
     params_from_higher_levels: ParamsSet,
+    is_root_level: bool,
 ) -> Result<Part> {
-    let mut short_name = parsing_part.path.0.to_string().to_case(Case::Pascal);
-    if short_name.len() == 0 {
-        short_name = "Empty".to_owned()
+    if !is_root_level && parsing_part.fallback.is_some() {
+        return Err(Error::new(
+            parsing_part.span,
+            "`fallback` should be specified only at top level.",
+        ));
     }
+    let path = if is_root_level {
+        parsing_part
+            .path
+            .unwrap_or((parsing::PathSegment::Static("".into()), Span::call_site()))
+    } else {
+        match parsing_part.path {
+            Some(p) => {
+                // if p.0.is_empty() {
+                // return Err(Error::new(
+                //     parsing_part.span,
+                //     "Empty `path` not allowed anywhere except the top level specified.",
+                // ));
+                // } else {
+                p
+                // }
+            }
+            None => {
+                (parsing::PathSegment::Static("".into()), Span::call_site())
+                // return Err(Error::new(
+                //     parsing_part.span,
+                //     "`path` can be ommitted only at the top-level.",
+                // ))
+            }
+        }
+    };
+    let short_name = if is_root_level {
+        "Root".into()
+    } else {
+        if path.0.is_empty() {
+            "Empty".to_owned()
+        } else {
+            path.0.to_string().to_case(Case::Pascal)
+        }
+    };
+
     let names_from_higher_levels_to_sub_parts = names_from_higher_levels
         .iter()
         .cloned()
         .chain(once(short_name.clone()))
         .collect::<Vec<_>>();
 
-    let param_at_this_level = if let parsing::PathSegment::Param(p) = &parsing_part.path.0 {
-        Some(Ident::new(p, parsing_part.path.1))
+    let param_at_this_level = if let parsing::PathSegment::Param(p) = &path.0 {
+        Some(Ident::new(p, path.1))
     } else {
         None
     };
@@ -225,13 +156,14 @@ fn from_parsing_route(
                 arg_to_sub_parts.clone(),
                 names_from_higher_levels_to_sub_parts.clone(),
                 params_from_higher_levels_to_children.clone(),
+                false,
             )
         })
         .collect::<Result<Vec<_>>>()?;
 
     let duplicated_names = sub_parts
         .iter()
-        .map(|c| c.short_name())
+        .map(|c| c.short_name.clone())
         .sorted()
         .chunk_by(|n| {
             #[allow(suspicious_double_ref_op)]
@@ -251,7 +183,7 @@ fn from_parsing_route(
 
     let (param_sub_parts, non_param_sub_parts): (Vec<_>, Vec<_>) = sub_parts
         .into_iter()
-        .partition(|p| p.param_at_this_level().is_some());
+        .partition(|p| p.param_at_this_level.is_some());
 
     let mut param_sub_parts = param_sub_parts.into_iter();
     let param_sub_part = param_sub_parts.next().map(Box::new);
@@ -269,39 +201,55 @@ fn from_parsing_route(
         .reduce(|a, b| a + &b)
         .expect("");
 
-    let part = Part::builder()
-        .path(parsing_part.path.0.to_string())
-        .path_span(parsing_part.path.1)
-        .name(name.into())
-        .short_name(short_name.into())
-        .maybe_view(parsing_part.view)
-        .arg_from_parent_type(arg_from_parent_type)
-        .params_from_higher_levels(params_from_higher_levels)
-        .non_param_sub_parts(non_param_sub_parts)
-        .maybe_param_sub_part(param_sub_part)
-        .arg_to_sub_parts(arg_to_sub_parts)
-        .span(parsing_part.span)
-        .maybe_param_at_this_level(param_at_this_level)
-        .build();
+    let non_leaf_details = if non_param_sub_parts.len() + param_sub_part.iter().count() > 0 {
+        Some(NonLeafDetails {
+            layout: parsing_part.layout,
+            non_param_sub_parts,
+            param_sub_part,
+            arg_to_sub_parts,
+            is_root_level,
+        })
+    } else {
+        None
+    };
+    let part = Part {
+        path: path.0.to_string(),
+        path_span: path.1,
+        name: name.into(),
+        short_name: short_name.into(),
+        view: parsing_part.view,
+        arg_from_parent_type,
+        params_from_higher_levels,
+        non_leaf_details,
+        span: parsing_part.span,
+        param_at_this_level,
+    };
 
     Ok(part)
 }
 
 pub const ROOT: &str = "Root";
 
-impl TryFrom<parsing::Parts> for Parts {
+impl TryFrom<parsing::Part> for Parts {
     type Error = Error;
 
-    fn try_from(value: parsing::Parts) -> std::result::Result<Self, Self::Error> {
+    fn try_from(value: parsing::Part) -> std::result::Result<Self, Self::Error> {
         Ok(Self {
-            fallback: value.fallback,
-            top_parts: value
-                .parts
-                .into_iter()
-                .map(|x| {
-                    from_parsing_route(x, parse_quote!(()), vec![ROOT.into()], Default::default())
-                })
-                .collect::<Result<_>>()?,
+            fallback: value
+                .fallback
+                .as_ref()
+                .ok_or(Error::new(
+                    value.span,
+                    "`fallback` expected at the top level.",
+                ))?
+                .clone(),
+            top_part: from_parsing_route(
+                value,
+                parse_quote!(()),
+                vec![],
+                Default::default(),
+                true,
+            )?,
         })
     }
 }
@@ -314,7 +262,7 @@ mod tests {
 
     #[test]
     fn test_converting_to_main_model_parts() -> Result<()> {
-        let parsed: parsing::Parts = parse_str(TEST_STR).expect("Unable to parse routes");
+        let parsed: parsing::Part = parse_str(TEST_STR).expect("Unable to parse routes");
         let main_model_parts = Parts::try_from(parsed)?;
         println!("{:#?}", main_model_parts);
         Ok(())
