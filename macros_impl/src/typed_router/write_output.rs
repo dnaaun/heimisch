@@ -12,7 +12,7 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
     let (param_sub_parts, non_param_sub_parts): (Vec<_>, Vec<_>) = parts
         .top_parts
         .into_iter()
-        .partition(|p| p.param_at_this_level.is_some());
+        .partition(|p| p.param_at_this_level().is_some());
 
     let mut param_sub_parts = param_sub_parts.into_iter();
     let param_sub_part = param_sub_parts.next().map(Box::new);
@@ -23,27 +23,22 @@ pub fn write_output(parts: main_model::Parts) -> Result<TokenStream> {
         ));
     }
 
-    let root_part = main_model::Part {
-        name: ROOT.into(),
-        short_name: ROOT.into(),
-
-        non_param_sub_parts,
-        param_sub_part,
-
-        arg_to_sub_parts: parse_quote!(()),
-        span: Span::call_site(),
-        path_span: Span::call_site(),
-
+    let root_part = main_model::Part::builder()
+        .name(ROOT.into())
+        .short_name(ROOT.into())
+        .non_param_sub_parts(non_param_sub_parts)
+        .maybe_param_sub_part(param_sub_part)
+        .arg_to_sub_parts(parse_quote!(()))
+        .span(Span::call_site())
+        .path_span(Span::call_site())
         // The following won't (or really, _shouldn't_) be used. I add the
         // parenthetical because it's definitely possible to enforce this by
         // restructing the code such that "invalid states are unrepresentable."
         // But it ain't worth it.
-        path: Default::default(),
-        view: Default::default(),
-        arg_from_parent_type: parse_quote!(()),
-        params_from_higher_levels: Default::default(),
-        param_at_this_level: Default::default(),
-    };
+        .path(Default::default())
+        .arg_from_parent_type(parse_quote!(()))
+        .params_from_higher_levels(Default::default())
+        .build();
 
     let (all_parts, all_params) = flatten_parts_and_params(Some(root_part))?;
     let all_parts_output = all_parts
@@ -84,9 +79,9 @@ fn flatten_parts_and_params(
         .into_iter()
         .map(|part| {
             let (non_param_parts, params1) =
-                flatten_parts_and_params(part.non_param_sub_parts.clone())?;
+                flatten_parts_and_params(part.non_param_sub_parts().to_vec())?;
             let (param_parts, params2) =
-                flatten_parts_and_params(part.param_sub_part.clone().map(|x| *x))?;
+                flatten_parts_and_params(part.param_sub_part().as_ref().map(|x| *(**x).clone()))?;
             let available_params = part.params_available_at_this_level()?;
             Ok((
                 once(part).chain(non_param_parts).chain(param_parts),
@@ -123,41 +118,41 @@ trait PartExt {
 }
 impl PartExt for main_model::Part {
     fn as_variant_ident(&self) -> Ident {
-        Ident::new(&self.short_name, self.path_span)
+        Ident::new(&self.short_name(), self.path_span())
     }
 
     fn as_ident(&self) -> Ident {
-        Ident::new(&self.name, self.path_span)
+        Ident::new(&self.name(), self.path_span())
     }
 
     fn as_path_part_literal(&self) -> Literal {
-        let mut path_part = Literal::string(&self.path);
-        path_part.set_span(self.path_span);
+        let mut path_part = Literal::string(&self.path());
+        path_part.set_span(self.path_span());
         path_part
     }
 
     fn as_only_ident(&self) -> Ident {
-        Ident::new(&((*self.name).to_owned() + "Only"), self.path_span)
+        Ident::new(&((**self.name()).to_owned() + "Only"), self.path_span())
     }
 
     fn params_available_at_this_level(&self) -> Result<main_model::ParamsSet> {
-        Ok(if let Some(param) = &self.param_at_this_level {
-            self.params_from_higher_levels.with_added(param.clone())?
+        Ok(if let Some(param) = self.param_at_this_level() {
+            self.params_from_higher_levels().with_added(param.clone())?
         } else {
-            self.params_from_higher_levels.clone()
+            self.params_from_higher_levels().clone()
         })
     }
 
     fn as_param_var_name_ident(&self) -> Option<Ident> {
-        self.param_at_this_level
+        self.param_at_this_level()
             .as_ref()
             .map(|p| Ident::new(&format!("param_memo_{p}"), p.span()))
     }
 
     fn as_child_memo_var_name_ident(&self) -> Ident {
         Ident::new(
-            &format!("child_memo_{}", self.short_name.to_case(Case::Snake)),
-            self.path_span,
+            &format!("child_memo_{}", self.short_name().to_case(Case::Snake)),
+            self.path_span(),
         )
     }
 }
@@ -186,7 +181,7 @@ fn write_part_defn(part: &main_model::Part) -> TokenStream {
     let ident = part.as_ident();
 
     let mut variants = part
-        .non_param_sub_parts
+        .non_param_sub_parts()
         .iter()
         .map(|non_param_child| {
             let variant_ident = non_param_child.as_variant_ident();
@@ -200,9 +195,9 @@ fn write_part_defn(part: &main_model::Part) -> TokenStream {
         })
         .collect_vec();
 
-    if let Some(param_sub_part) = &part.param_sub_part {
+    if let Some(param_sub_part) = part.param_sub_part() {
         let variant_ident = param_sub_part.as_variant_ident();
-        let param_name_ident = param_sub_part.param_at_this_level.clone().expect("");
+        let param_name_ident = param_sub_part.param_at_this_level().clone().expect("");
         let child_field = if param_sub_part.has_sub_parts() {
             let child_field_type_ident = param_sub_part.as_ident();
             Some(quote! { child: #child_field_type_ident, })
@@ -227,7 +222,7 @@ fn write_part_defn(part: &main_model::Part) -> TokenStream {
 
 fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
     let mut matches = part
-        .non_param_sub_parts
+        .non_param_sub_parts()
         .iter()
         .map(|sub_part| {
             let path_part = sub_part.as_path_part_literal();
@@ -248,10 +243,10 @@ fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
         })
         .collect_vec();
 
-    matches.push(match &part.param_sub_part {
+    matches.push(match &part.param_sub_part() {
         Some(sub_part) => {
             let variant_name_ident = sub_part.as_variant_ident();
-            let param_name_ident = sub_part.param_at_this_level.clone();
+            let param_name_ident = sub_part.param_at_this_level().clone();
 
             let child_field = if sub_part.has_sub_parts() {
                 Some(quote! { child: tail.try_into()? })
@@ -294,13 +289,13 @@ fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
 
 fn write_display_impl(part: &main_model::Part) -> TokenStream {
     let mut matches = part
-        .non_param_sub_parts
+        .non_param_sub_parts()
         .iter()
         .map(|p| {
             let variant_ident = p.as_variant_ident();
             if p.has_sub_parts() {
-                let mut interpolated_str_literal = Literal::string(&format!("/{}{{}}", p.path));
-                interpolated_str_literal.set_span(p.path_span);
+                let mut interpolated_str_literal = Literal::string(&format!("/{}{{}}", p.path()));
+                interpolated_str_literal.set_span(p.path_span());
                 quote! {
                 Self::#variant_ident(child) => {
                     write!(f, #interpolated_str_literal, child)
@@ -308,8 +303,8 @@ fn write_display_impl(part: &main_model::Part) -> TokenStream {
 
                 }
             } else {
-                let mut interpolated_str_literal = Literal::string(&format!("/{}", p.path));
-                interpolated_str_literal.set_span(p.path_span);
+                let mut interpolated_str_literal = Literal::string(&format!("/{}", p.path()));
+                interpolated_str_literal.set_span(p.path_span());
                 quote! {
                     Self::#variant_ident => {
                         write!(f, #interpolated_str_literal)
@@ -319,9 +314,9 @@ fn write_display_impl(part: &main_model::Part) -> TokenStream {
         })
         .collect_vec();
 
-    if let Some(p) = &part.param_sub_part {
+    if let Some(p) = &part.param_sub_part() {
         let variant_ident = p.as_variant_ident();
-        let param_name_ident = p.param_at_this_level.clone().expect("");
+        let param_name_ident = p.param_at_this_level().clone().expect("");
         matches.push(if p.has_sub_parts() {
             quote! {
                 Self::#variant_ident { #param_name_ident, child } => {
@@ -352,15 +347,15 @@ fn write_display_impl(part: &main_model::Part) -> TokenStream {
 
 fn write_only_struct(part: &main_model::Part) -> TokenStream {
     let mut variants = part
-        .non_param_sub_parts
+        .non_param_sub_parts()
         .iter()
         .map(|p| p.as_variant_ident())
         .collect_vec();
-    if let Some(p) = &part.param_sub_part {
+    if let Some(p) = &part.param_sub_part() {
         variants.push(p.as_variant_ident())
     }
 
-    let only_ident = Ident::new(&((*part.name).to_owned() + "Only"), part.path_span);
+    let only_ident = Ident::new(&((**part.name()).to_owned() + "Only"), part.path_span());
 
     quote! {
         #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -373,7 +368,7 @@ fn write_only_struct(part: &main_model::Part) -> TokenStream {
 fn write_get_only_impl(part: &main_model::Part) -> TokenStream {
     let only_ident = part.as_only_ident();
     let mut variants = part
-        .non_param_sub_parts
+        .non_param_sub_parts()
         .iter()
         .map(|p| {
             let variant_ident = p.as_variant_ident();
@@ -384,7 +379,7 @@ fn write_get_only_impl(part: &main_model::Part) -> TokenStream {
             }
         })
         .collect_vec();
-    if let Some(p) = &part.param_sub_part {
+    if let Some(p) = part.param_sub_part() {
         let variant_ident = p.as_variant_ident();
 
         variants.push(quote! { Self::#variant_ident { .. } => #only_ident::#variant_ident })
@@ -483,8 +478,8 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     } else {
         None
     };
-    let param_memo_written = part.param_sub_part.as_ref().map(|sub_part| {
-        let param_ident = sub_part.param_at_this_level.as_ref().expect("");
+    let param_memo_written = part.param_sub_part().as_ref().map(|sub_part| {
+        let param_ident = sub_part.param_at_this_level().expect("");
         let var_name_ident = sub_part.as_param_var_name_ident().expect("");
         let variant_ident = sub_part.as_variant_ident();
 
@@ -499,7 +494,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     });
 
     let mut child_memos_written = part
-        .non_param_sub_parts
+        .non_param_sub_parts()
         .iter()
         .filter(|p| p.has_sub_parts())
         .map(|p| {
@@ -514,7 +509,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
             }
         })
         .collect_vec();
-    if let Some(p) = &part.param_sub_part {
+    if let Some(p) = &part.param_sub_part() {
         if p.has_sub_parts() {
             let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
             let variant_ident = p.as_variant_ident();
@@ -528,13 +523,13 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
         }
     }
 
-    let mut variants = part.non_param_sub_parts.iter()
+    let mut variants = part.non_param_sub_parts().iter()
         .map(|p| {
             let variant_ident = p.as_variant_ident();
             Ok(if !p.has_sub_parts() {
-                let view_ident = match &p.view {
+                let view_ident = match &p.view (){
                     Some(i) => i.clone(),
-                    None => return Err(Error::new(p.span, "This leaf path has no associated view.")),
+                    None => return Err(Error::new(p.span(), "This leaf path has no associated view.")),
                 };
                 quote! {
                     #ident::#variant_ident => {
@@ -555,7 +550,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
                     }
                 }
             } else {
-                let view_ident = p.view.as_ref().map(|x| x.to_token_stream()).unwrap_or_else( || {
+                let view_ident = p.view().as_ref().map(|x| x.to_token_stream()).unwrap_or_else( || {
                     parse_quote! {::zwang_router::passthrough_component }
                     });
                 let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
@@ -592,14 +587,14 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     })
     .collect::<Result<Vec<_>>>()?;
 
-    if let Some(p) = &part.param_sub_part {
+    if let Some(p) = &part.param_sub_part() {
         let variant_ident = p.as_variant_ident();
         let params_construction = write_param_struct_construction_at_sub_part(&p);
         variants.push(
         if !p.has_sub_parts() {
-            let view_ident = match &p.view {
+            let view_ident = match &p.view (){
                 Some(i) => i.clone(),
-                None => return Err(Error::new(p.span, "This leaf path has no associated view.")),
+                None => return Err(Error::new(p.span(), "This leaf path has no associated view.")),
             };
             quote! {
                 #ident::#variant_ident { .. } => {
@@ -621,7 +616,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
                 }
             }
         } else {
-            let view_ident = p.view.as_ref().map(|x| x.to_token_stream()).unwrap_or(parse_quote!(
+            let view_ident = p.view().as_ref().map(|x| x.to_token_stream()).unwrap_or(parse_quote!(
                 ::zwang_router::passthrough_component
             ));
             let child_memo_var_name_ident = p.as_child_memo_var_name_ident();
@@ -658,7 +653,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     } else {
         parse_quote!(())
     };
-    let arg_from_parent_type = part.arg_to_sub_parts.clone();
+    let arg_from_parent_type = part.arg_to_sub_parts().clone();
 
     Ok(quote! {
         impl RouteToView for ::leptos::prelude::Memo<#ident> {
@@ -689,10 +684,10 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
 }
 
 fn write_param_struct_construction_at_sub_part(sub_part: &main_model::Part) -> TokenStream {
-    let new_param = sub_part.param_at_this_level.as_ref().expect("");
+    let new_param = sub_part.param_at_this_level().expect("");
 
     let mut assigns = sub_part
-        .params_from_higher_levels
+        .params_from_higher_levels()
         .iter()
         .map(|p| {
             quote! { #p: prev_params.#p }

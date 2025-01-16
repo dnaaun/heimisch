@@ -7,7 +7,7 @@ use std::{
     iter::once,
 };
 
-use proc_macro2::Span;
+pub use part::Part;
 use syn::*;
 
 use super::parsing;
@@ -47,40 +47,144 @@ impl ParamsSet {
     }
 }
 
-/// NOTE: This can be divided into fields that are used at the top level, and the fields that are
-/// not.
-#[derive(Debug, Clone)]
-pub struct Part {
-    pub path: String,
-    pub path_span: Span,
+mod part {
+    use bon::{bon, builder};
+    use proc_macro2::Span;
+    use syn::*;
 
-    /// This will contain the prefixes from higher levels.
-    pub name: Pascal,
+    use super::{ParamsSet, __nutype_Pascal__::Pascal};
 
-    pub short_name: Pascal,
+    /// NOTE: This can be divided into fields that are used at the top level, and the
+    /// fields that are not.
+    /// RTI upheld: `param_sub_part` will have a `Part` that has `Some()`
+    /// `param_at_this_level`.
+    /// RTI upheld: `path` is non-empty if it has sub-parts.
+    #[derive(Debug, Clone)]
+    pub struct Part {
+        path: String,
+        path_span: Span,
 
-    pub view: Option<Ident>,
-    pub arg_from_parent_type: Type,
+        /// This will contain the prefixes from higher levels.
+        name: Pascal,
 
-    pub params_from_higher_levels: ParamsSet,
+        short_name: Pascal,
 
-    pub non_param_sub_parts: Vec<Part>,
+        view: Option<Ident>,
+        arg_from_parent_type: Type,
 
-    pub param_sub_part: Option<Box<Part>>,
+        params_from_higher_levels: ParamsSet,
 
-    pub arg_to_sub_parts: Type,
-    pub span: Span,
+        non_param_sub_parts: Vec<Part>,
 
-    pub param_at_this_level: Option<Ident>,
-}
+        param_sub_part: Option<Box<Part>>,
 
-impl Part {
-    pub fn has_sub_parts(&self) -> bool {
-        self.count_sub_parts() > 0
+        arg_to_sub_parts: Type,
+        span: Span,
+
+        param_at_this_level: Option<Ident>,
     }
 
-    pub fn count_sub_parts(&self) -> usize {
-        self.non_param_sub_parts.len() + self.param_sub_part.iter().count()
+    #[bon]
+    impl Part {
+        #[builder]
+        pub fn new(
+            path: String,
+            path_span: Span,
+            name: Pascal,
+            short_name: Pascal,
+            view: Option<Ident>,
+            arg_from_parent_type: Type,
+            params_from_higher_levels: ParamsSet,
+            non_param_sub_parts: Vec<Part>,
+            param_sub_part: Option<Box<Part>>,
+            arg_to_sub_parts: Type,
+            span: Span,
+            param_at_this_level: Option<Ident>,
+        ) -> Self {
+            let ret = Self {
+                path,
+                path_span,
+                name,
+                short_name,
+                view,
+                arg_from_parent_type,
+                params_from_higher_levels,
+                non_param_sub_parts,
+                param_sub_part,
+                arg_to_sub_parts,
+                span,
+                param_at_this_level,
+            };
+
+            if ret.path.is_empty() && ret.has_sub_parts() {
+                panic!("The subparts of this `Part` should be 'hoisted up' one level higher because the path here is empty.")
+            }
+
+            if let Some(p) = &ret.param_sub_part {
+                if p.param_at_this_level.is_none() {
+                    panic!("A param sub-part has no param?")
+                }
+            }
+
+            ret
+        }
+    }
+
+    impl Part {
+        pub fn has_sub_parts(&self) -> bool {
+            self.count_sub_parts() > 0
+        }
+
+        pub fn count_sub_parts(&self) -> usize {
+            self.non_param_sub_parts.len() + self.param_sub_part.iter().count()
+        }
+        pub fn path(&self) -> &str {
+            &self.path
+        }
+
+        pub fn path_span(&self) -> Span {
+            self.path_span
+        }
+
+        pub fn name(&self) -> &Pascal {
+            &self.name
+        }
+
+        pub fn short_name(&self) -> &Pascal {
+            &self.short_name
+        }
+
+        pub fn view(&self) -> Option<&Ident> {
+            self.view.as_ref()
+        }
+
+        pub fn arg_from_parent_type(&self) -> &Type {
+            &self.arg_from_parent_type
+        }
+
+        pub fn params_from_higher_levels(&self) -> &ParamsSet {
+            &self.params_from_higher_levels
+        }
+
+        pub fn non_param_sub_parts(&self) -> &[Part] {
+            &self.non_param_sub_parts
+        }
+
+        pub fn param_sub_part(&self) -> Option<&Box<Part>> {
+            self.param_sub_part.as_ref()
+        }
+
+        pub fn arg_to_sub_parts(&self) -> &Type {
+            &self.arg_to_sub_parts
+        }
+
+        pub fn span(&self) -> Span {
+            self.span
+        }
+
+        pub fn param_at_this_level(&self) -> Option<&Ident> {
+            self.param_at_this_level.as_ref()
+        }
     }
 }
 
@@ -127,7 +231,7 @@ fn from_parsing_route(
 
     let duplicated_names = sub_parts
         .iter()
-        .map(|c| &c.short_name)
+        .map(|c| c.short_name())
         .sorted()
         .chunk_by(|n| {
             #[allow(suspicious_double_ref_op)]
@@ -147,7 +251,7 @@ fn from_parsing_route(
 
     let (param_sub_parts, non_param_sub_parts): (Vec<_>, Vec<_>) = sub_parts
         .into_iter()
-        .partition(|p| p.param_at_this_level.is_some());
+        .partition(|p| p.param_at_this_level().is_some());
 
     let mut param_sub_parts = param_sub_parts.into_iter();
     let param_sub_part = param_sub_parts.next().map(Box::new);
@@ -165,26 +269,20 @@ fn from_parsing_route(
         .reduce(|a, b| a + &b)
         .expect("");
 
-    let part = Part {
-        path: parsing_part.path.0.to_string(),
-        path_span: parsing_part.path.1,
-        name: name.into(),
-        short_name: short_name.into(),
-        view: parsing_part.view,
-        arg_from_parent_type,
-        params_from_higher_levels,
-        non_param_sub_parts,
-        param_sub_part,
-        arg_to_sub_parts,
-        span: parsing_part.span,
-        param_at_this_level,
-    };
-    println!(
-        "at {}, arg_from_parent: {}, will_pass {}",
-        part.name,
-        part.arg_from_parent_type.to_token_stream(),
-        part.arg_to_sub_parts.to_token_stream()
-    );
+    let part = Part::builder()
+        .path(parsing_part.path.0.to_string())
+        .path_span(parsing_part.path.1)
+        .name(name.into())
+        .short_name(short_name.into())
+        .maybe_view(parsing_part.view)
+        .arg_from_parent_type(arg_from_parent_type)
+        .params_from_higher_levels(params_from_higher_levels)
+        .non_param_sub_parts(non_param_sub_parts)
+        .maybe_param_sub_part(param_sub_part)
+        .arg_to_sub_parts(arg_to_sub_parts)
+        .span(parsing_part.span)
+        .maybe_param_at_this_level(param_at_this_level)
+        .build();
 
     Ok(part)
 }
