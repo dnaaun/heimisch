@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::app::{
     repository::{
         issues_tab::{list::IssuesList, one_issue::OneIssue, IssuesTab},
@@ -66,7 +64,7 @@ pub fn Routed() -> impl ::leptos::prelude::IntoView {
 }
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Root {
-    Auth,
+    Auth(RootAuth),
     OwnerName {
         owner_name: String,
         child: RootOwnerName,
@@ -78,10 +76,7 @@ impl<'a> TryFrom<::zwang_router::Slashed<'a>> for Root {
     fn try_from(value: ::zwang_router::Slashed<'a>) -> std::result::Result<Self, Self::Error> {
         let (head, tail) = ::zwang_router::split_slashed(value);
         match head.non_slash() {
-            "auth" => {
-                ::zwang_router::NoPart::try_from(tail)?;
-                Ok(Self::Auth)
-            }
+            "auth" => Ok(Self::Auth(tail.try_into()?)),
             "" => {
                 ::zwang_router::NoPart::try_from(tail)?;
                 Ok(Self::Empty)
@@ -96,7 +91,7 @@ impl<'a> TryFrom<::zwang_router::Slashed<'a>> for Root {
 impl std::fmt::Display for Root {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Auth => write!(f, "/auth"),
+            Self::Auth(child) => write!(f, "/auth{}", child),
             Self::Empty => write!(f, "/"),
             Self::OwnerName { owner_name, child } => {
                 write!(f, "/{}{}", owner_name, child)
@@ -113,7 +108,7 @@ enum RootOnly {
 impl Root {
     fn get_only(&self) -> RootOnly {
         match self {
-            Self::Auth => RootOnly::Auth,
+            Self::Auth(..) => RootOnly::Auth,
             Self::OwnerName { .. } => RootOnly::OwnerName,
             Self::Empty => RootOnly::Empty,
         }
@@ -132,6 +127,11 @@ impl RouteToView for ::leptos::prelude::Memo<Root> {
                 Root::OwnerName { owner_name, .. } => Some(owner_name),
                 _ => None,
             });
+        let child_memo_auth =
+            ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                Root::Auth(child) => Some(child),
+                _ => None,
+            });
         let child_memo_owner_name =
             ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
                 Root::OwnerName { child, .. } => Some(child),
@@ -142,10 +142,13 @@ impl RouteToView for ::leptos::prelude::Memo<Root> {
         move || {
             let _ = ::leptos::prelude::Get::get(&this_part_only);
             match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
-                Root::Auth => {
+                Root::Auth(_) => {
+                    let child_memo = ::zwang_router::MemoExt::unwrap(child_memo_auth);
                     let outlet: ::std::sync::Arc<
                         dyn core::ops::Fn(_) -> _ + ::core::marker::Send + ::core::marker::Sync,
-                    > = std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                    > = ::std::sync::Arc::new(move |arg_from_parent| {
+                        child_memo.render(arg_from_parent, prev_params)
+                    });
                     let params = prev_params;
                     let info = ::zwang_router::RoutingInfoForComponent {
                         arg_from_parent,
@@ -153,7 +156,10 @@ impl RouteToView for ::leptos::prelude::Memo<Root> {
                         params,
                     };
                     ::leptos::prelude::IntoAny::into_any(
-                        ::zwang_router::RoutableComponent::into_view_with_route_info(Auth, info),
+                        ::zwang_router::RoutableComponent::into_view_with_route_info(
+                            ::zwang_router::passthrough_component,
+                            info,
+                        ),
                     )
                 }
                 Root::Empty => {
@@ -190,6 +196,72 @@ impl RouteToView for ::leptos::prelude::Memo<Root> {
                             ::zwang_router::passthrough_component,
                             info,
                         ),
+                    )
+                }
+            }
+        }
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum RootAuth {
+    Empty,
+}
+impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootAuth {
+    type Error = String;
+    fn try_from(value: ::zwang_router::Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = ::zwang_router::split_slashed(value);
+        match head.non_slash() {
+            "" => {
+                ::zwang_router::NoPart::try_from(tail)?;
+                Ok(Self::Empty)
+            }
+            other => Err(format!("Unrecognized path segment: '{}'", other)),
+        }
+    }
+}
+impl std::fmt::Display for RootAuth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Empty => write!(f, "/"),
+        }
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum RootAuthOnly {
+    Empty,
+}
+impl RootAuth {
+    fn get_only(&self) -> RootAuthOnly {
+        match self {
+            Self::Empty => RootAuthOnly::Empty,
+        }
+    }
+}
+impl RouteToView for ::leptos::prelude::Memo<RootAuth> {
+    type PrevParams = ();
+    type ArgFromParent = ();
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_params: Self::PrevParams,
+    ) -> impl ::leptos::prelude::IntoView {
+        let this_part_only =
+            ::leptos::prelude::Memo::new(move |_| ::leptos::prelude::Get::get(&self).get_only());
+        move || {
+            let _ = ::leptos::prelude::Get::get(&this_part_only);
+            match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
+                RootAuth::Empty => {
+                    let outlet: ::std::sync::Arc<
+                        dyn core::ops::Fn(_) -> _ + ::core::marker::Send + ::core::marker::Sync,
+                    > = std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                    let params = prev_params;
+                    let info = ::zwang_router::RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    ::leptos::prelude::IntoAny::into_any(
+                        ::zwang_router::RoutableComponent::into_view_with_route_info(Auth, info),
                     )
                 }
             }
@@ -283,7 +355,7 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerName> {
 }
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum RootOwnerNameRepoName {
-    Pulls,
+    Pulls(RootOwnerNameRepoNamePulls),
     Issues(RootOwnerNameRepoNameIssues),
     Empty,
 }
@@ -292,10 +364,7 @@ impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootOwnerNameRepoName {
     fn try_from(value: ::zwang_router::Slashed<'a>) -> std::result::Result<Self, Self::Error> {
         let (head, tail) = ::zwang_router::split_slashed(value);
         match head.non_slash() {
-            "pulls" => {
-                ::zwang_router::NoPart::try_from(tail)?;
-                Ok(Self::Pulls)
-            }
+            "pulls" => Ok(Self::Pulls(tail.try_into()?)),
             "issues" => Ok(Self::Issues(tail.try_into()?)),
             "" => {
                 ::zwang_router::NoPart::try_from(tail)?;
@@ -308,7 +377,7 @@ impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootOwnerNameRepoName {
 impl std::fmt::Display for RootOwnerNameRepoName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Pulls => write!(f, "/pulls"),
+            Self::Pulls(child) => write!(f, "/pulls{}", child),
             Self::Issues(child) => write!(f, "/issues{}", child),
             Self::Empty => write!(f, "/"),
         }
@@ -323,7 +392,7 @@ enum RootOwnerNameRepoNameOnly {
 impl RootOwnerNameRepoName {
     fn get_only(&self) -> RootOwnerNameRepoNameOnly {
         match self {
-            Self::Pulls => RootOwnerNameRepoNameOnly::Pulls,
+            Self::Pulls(..) => RootOwnerNameRepoNameOnly::Pulls,
             Self::Issues(..) => RootOwnerNameRepoNameOnly::Issues,
             Self::Empty => RootOwnerNameRepoNameOnly::Empty,
         }
@@ -337,6 +406,11 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoName> {
         arg_from_parent: Self::ArgFromParent,
         prev_params: Self::PrevParams,
     ) -> impl ::leptos::prelude::IntoView {
+        let child_memo_pulls =
+            ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                RootOwnerNameRepoName::Pulls(child) => Some(child),
+                _ => None,
+            });
         let child_memo_issues =
             ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
                 RootOwnerNameRepoName::Issues(child) => Some(child),
@@ -347,10 +421,13 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoName> {
         move || {
             let _ = ::leptos::prelude::Get::get(&this_part_only);
             match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
-                RootOwnerNameRepoName::Pulls => {
+                RootOwnerNameRepoName::Pulls(_) => {
+                    let child_memo = ::zwang_router::MemoExt::unwrap(child_memo_pulls);
                     let outlet: ::std::sync::Arc<
                         dyn core::ops::Fn(_) -> _ + ::core::marker::Send + ::core::marker::Sync,
-                    > = std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                    > = ::std::sync::Arc::new(move |arg_from_parent| {
+                        child_memo.render(arg_from_parent, prev_params)
+                    });
                     let params = prev_params;
                     let info = ::zwang_router::RoutingInfoForComponent {
                         arg_from_parent,
@@ -359,7 +436,7 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoName> {
                     };
                     ::leptos::prelude::IntoAny::into_any(
                         ::zwang_router::RoutableComponent::into_view_with_route_info(
-                            PullRequestsTab,
+                            ::zwang_router::passthrough_component,
                             info,
                         ),
                     )
@@ -405,8 +482,80 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoName> {
     }
 }
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub enum RootOwnerNameRepoNamePulls {
+    Empty,
+}
+impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootOwnerNameRepoNamePulls {
+    type Error = String;
+    fn try_from(value: ::zwang_router::Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = ::zwang_router::split_slashed(value);
+        match head.non_slash() {
+            "" => {
+                ::zwang_router::NoPart::try_from(tail)?;
+                Ok(Self::Empty)
+            }
+            other => Err(format!("Unrecognized path segment: '{}'", other)),
+        }
+    }
+}
+impl std::fmt::Display for RootOwnerNameRepoNamePulls {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Empty => write!(f, "/"),
+        }
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum RootOwnerNameRepoNamePullsOnly {
+    Empty,
+}
+impl RootOwnerNameRepoNamePulls {
+    fn get_only(&self) -> RootOwnerNameRepoNamePullsOnly {
+        match self {
+            Self::Empty => RootOwnerNameRepoNamePullsOnly::Empty,
+        }
+    }
+}
+impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoNamePulls> {
+    type PrevParams = ParamsOwnerNameRepoName;
+    type ArgFromParent = Signal<RepositoryId>;
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_params: Self::PrevParams,
+    ) -> impl ::leptos::prelude::IntoView {
+        let this_part_only =
+            ::leptos::prelude::Memo::new(move |_| ::leptos::prelude::Get::get(&self).get_only());
+        move || {
+            let _ = ::leptos::prelude::Get::get(&this_part_only);
+            match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
+                RootOwnerNameRepoNamePulls::Empty => {
+                    let outlet: ::std::sync::Arc<
+                        dyn core::ops::Fn(_) -> _ + ::core::marker::Send + ::core::marker::Sync,
+                    > = std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                    let params = prev_params;
+                    let info = ::zwang_router::RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    ::leptos::prelude::IntoAny::into_any(
+                        ::zwang_router::RoutableComponent::into_view_with_route_info(
+                            PullRequestsTab,
+                            info,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum RootOwnerNameRepoNameIssues {
-    IssueNumber { issue_number: String },
+    IssueNumber {
+        issue_number: String,
+        child: RootOwnerNameRepoNameIssuesIssueNumber,
+    },
     Empty,
 }
 impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootOwnerNameRepoNameIssues {
@@ -420,6 +569,7 @@ impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootOwnerNameRepoNameIssues {
             }
             issue_number @ _ => Ok(Self::IssueNumber {
                 issue_number: issue_number.to_owned(),
+                child: tail.try_into()?,
             }),
         }
     }
@@ -428,7 +578,12 @@ impl std::fmt::Display for RootOwnerNameRepoNameIssues {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Empty => write!(f, "/"),
-            Self::IssueNumber { issue_number } => write!(f, "/{}", issue_number),
+            Self::IssueNumber {
+                issue_number,
+                child,
+            } => {
+                write!(f, "/{}{}", issue_number, child)
+            }
         }
     }
 }
@@ -458,6 +613,11 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoNameIssues> {
                 RootOwnerNameRepoNameIssues::IssueNumber { issue_number, .. } => Some(issue_number),
                 _ => None,
             });
+        let child_memo_issue_number =
+            ::leptos::prelude::Memo::new(move |_| match ::leptos::prelude::Get::get(&self) {
+                RootOwnerNameRepoNameIssues::IssueNumber { child, .. } => Some(child),
+                _ => None,
+            });
         let this_part_only =
             ::leptos::prelude::Memo::new(move |_| ::leptos::prelude::Get::get(&self).get_only());
         move || {
@@ -485,11 +645,81 @@ impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoNameIssues> {
                         repo_name: prev_params.repo_name,
                         issue_number: ::zwang_router::MemoExt::unwrap(param_memo_issue_number),
                     };
+                    let child_memo = ::zwang_router::MemoExt::unwrap(child_memo_issue_number);
                     let outlet: ::std::sync::Arc<
                         dyn core::ops::Fn(_) -> _ + core::marker::Send + core::marker::Sync,
-                    > = ::std::sync::Arc::new(
-                        ::zwang_router::empty_component::<Self::ArgFromParent>,
-                    );
+                    > = std::sync::Arc::new(move |arg_from_parent| {
+                        child_memo.render(arg_from_parent, params)
+                    });
+                    let info = ::zwang_router::RoutingInfoForComponent {
+                        arg_from_parent,
+                        outlet,
+                        params,
+                    };
+                    ::leptos::prelude::IntoAny::into_any(
+                        ::zwang_router::RoutableComponent::into_view_with_route_info(
+                            ::zwang_router::passthrough_component,
+                            info,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum RootOwnerNameRepoNameIssuesIssueNumber {
+    Empty,
+}
+impl<'a> TryFrom<::zwang_router::Slashed<'a>> for RootOwnerNameRepoNameIssuesIssueNumber {
+    type Error = String;
+    fn try_from(value: ::zwang_router::Slashed<'a>) -> std::result::Result<Self, Self::Error> {
+        let (head, tail) = ::zwang_router::split_slashed(value);
+        match head.non_slash() {
+            "" => {
+                ::zwang_router::NoPart::try_from(tail)?;
+                Ok(Self::Empty)
+            }
+            other => Err(format!("Unrecognized path segment: '{}'", other)),
+        }
+    }
+}
+impl std::fmt::Display for RootOwnerNameRepoNameIssuesIssueNumber {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Empty => write!(f, "/"),
+        }
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum RootOwnerNameRepoNameIssuesIssueNumberOnly {
+    Empty,
+}
+impl RootOwnerNameRepoNameIssuesIssueNumber {
+    fn get_only(&self) -> RootOwnerNameRepoNameIssuesIssueNumberOnly {
+        match self {
+            Self::Empty => RootOwnerNameRepoNameIssuesIssueNumberOnly::Empty,
+        }
+    }
+}
+impl RouteToView for ::leptos::prelude::Memo<RootOwnerNameRepoNameIssuesIssueNumber> {
+    type PrevParams = ParamsIssueNumberOwnerNameRepoName;
+    type ArgFromParent = Signal<RepositoryId>;
+    fn render(
+        self,
+        arg_from_parent: Self::ArgFromParent,
+        prev_params: Self::PrevParams,
+    ) -> impl ::leptos::prelude::IntoView {
+        let this_part_only =
+            ::leptos::prelude::Memo::new(move |_| ::leptos::prelude::Get::get(&self).get_only());
+        move || {
+            let _ = ::leptos::prelude::Get::get(&this_part_only);
+            match *::leptos::prelude::ReadUntracked::read_untracked(&self) {
+                RootOwnerNameRepoNameIssuesIssueNumber::Empty => {
+                    let outlet: ::std::sync::Arc<
+                        dyn core::ops::Fn(_) -> _ + ::core::marker::Send + ::core::marker::Sync,
+                    > = std::sync::Arc::new(::zwang_router::empty_component::<Self::ArgFromParent>);
+                    let params = prev_params;
                     let info = ::zwang_router::RoutingInfoForComponent {
                         arg_from_parent,
                         outlet,

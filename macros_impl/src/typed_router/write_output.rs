@@ -721,10 +721,9 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     } else {
         parse_quote!(())
     };
-    let arg_from_parent_type = part
-        .non_leaf_details
-        .as_ref()
-        .map(|n| n.arg_to_sub_parts.clone());
+    let arg_from_parent_type = 
+        non_leaf_details
+        .arg_to_sub_parts.clone();
 
     Ok(quote! {
         impl RouteToView for ::leptos::prelude::Memo<#ident> {

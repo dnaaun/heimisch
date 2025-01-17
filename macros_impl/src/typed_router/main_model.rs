@@ -230,19 +230,59 @@ fn from_parsing_route(
 
 pub const ROOT: &str = "Root";
 
+fn process_to_add_empty_leaf_parts_when_necessary(
+    part: parsing::Part,
+    parent_will_pass: Option<Type>,
+) -> parsing::Part {
+    if part.sub_parts.len() > 0 {
+        parsing::Part {
+            sub_parts: part
+                .sub_parts
+                .into_iter()
+                .map(|x| process_to_add_empty_leaf_parts_when_necessary(x, part.will_pass.clone()))
+                .collect(),
+            ..part
+        }
+    } else {
+        // If the leaf node is already empty, no need to add anything here.
+        let leaf_is_empty = match &part.path {
+            None => true,
+            Some(p) if p.0.len() == 0 => true,
+            _ => false,
+        };
+        if leaf_is_empty {
+            part
+        } else {
+            let new_empty_part = parsing::Part {
+                path: Some((parsing::PathSegment::Static("".into()), part.span)),
+                will_pass: None,
+                ..part
+            };
+
+            parsing::Part {
+                path: part.path,
+                view: None,
+                fallback: None,
+                layout: None,
+                sub_parts: vec![new_empty_part],
+                will_pass: parent_will_pass,
+                span: part.span,
+            }
+        }
+    }
+}
+
 impl TryFrom<parsing::Part> for Parts {
     type Error = Error;
 
     fn try_from(value: parsing::Part) -> std::result::Result<Self, Self::Error> {
+        let fallback = value.fallback.clone();
+        let value = process_to_add_empty_leaf_parts_when_necessary(value, None);
         Ok(Self {
-            fallback: value
-                .fallback
-                .as_ref()
-                .ok_or(Error::new(
-                    value.span,
-                    "`fallback` expected at the top level.",
-                ))?
-                .clone(),
+            fallback: fallback.ok_or(Error::new(
+                value.span,
+                "`fallback` expected at the top level.",
+            ))?,
             top_part: from_parsing_route(
                 value,
                 parse_quote!(()),

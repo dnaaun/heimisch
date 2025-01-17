@@ -37,7 +37,7 @@ enum Tab {
 impl From<RootOwnerNameRepoName> for Tab {
     fn from(value: RootOwnerNameRepoName) -> Self {
         match value {
-            RootOwnerNameRepoName::Pulls => Self::Pulls,
+            RootOwnerNameRepoName::Pulls(_) => Self::Pulls,
             RootOwnerNameRepoName::Empty => Self::Issues,
             RootOwnerNameRepoName::Issues(_) => Self::Issues,
         }
@@ -47,10 +47,8 @@ impl From<RootOwnerNameRepoName> for Tab {
 impl Into<RootOwnerNameRepoName> for Tab {
     fn into(self) -> RootOwnerNameRepoName {
         match self {
-            Tab::Issues => {
-                RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::Empty)
-            }
-            Tab::Pulls => RootOwnerNameRepoName::Pulls,
+            Tab::Issues => RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::Empty),
+            Tab::Pulls => RootOwnerNameRepoName::Pulls(RootOwnerNameRepoNamePulls::Empty),
         }
     }
 }
@@ -68,7 +66,7 @@ pub fn RepositoryPage(
                     RootOwnerName::RepoName {
                         child: child_parts, ..
                     },
-                    ..
+                ..
             }) => child_parts,
             _ => panic!("Component shouldn't be rendered if this isn't the path."),
         })
