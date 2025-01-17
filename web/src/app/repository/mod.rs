@@ -56,7 +56,7 @@ impl Into<RootOwnerNameRepoName> for Tab {
 #[allow(non_snake_case)]
 pub fn RepositoryPage(
     outlet: Outlet<Signal<RepositoryId>, impl IntoView + 'static>,
-    params: RouteParams<ParamsOwnerNameRepoName>,
+    RouteParams(params): RouteParams<ParamsOwnerNameRepoName>,
 ) -> impl IntoView {
     let parsed_path = use_context::<ParsedPath<Root>>().expect("");
     let active_tab = Memo::new(move |_| {
@@ -71,23 +71,18 @@ pub fn RepositoryPage(
             _ => panic!("Component shouldn't be rendered if this isn't the path."),
         })
     });
-    let new_active_tab = RwSignal::new(active_tab.get_untracked());
 
-    Effect::new(move || {
-        let active_tab = active_tab.get_untracked();
-        let new_active_tab = new_active_tab.get();
-        if active_tab == new_active_tab {
-            return ();
-        }
+    let ParamsOwnerNameRepoName { owner_name , repo_name } = params;
 
+    let set_active_tab = move |new_active_tab: Tab| {
         set_pathname(Root::OwnerName {
-            owner_name: params.owner_name.get_untracked(),
+            owner_name: owner_name.get_untracked(),
             child: RootOwnerName::RepoName {
-                repo_name: params.repo_name.get_untracked(),
+                repo_name: repo_name.get_untracked(),
                 child: new_active_tab.into(),
             },
         });
-    });
+    };
 
     use_sync_installation_ids_and_recv_websocket_updates();
 
@@ -173,7 +168,7 @@ pub fn RepositoryPage(
                                 <Tabs
                                     tabs
                                     active_tab=active_tab
-                                    set_active_tab=move |t| *new_active_tab.write() = t
+                                    set_active_tab=set_active_tab
                                     get_tab_label
                                 />
                                 <div class="flex items-center justify-center">

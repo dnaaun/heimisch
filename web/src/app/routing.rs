@@ -1,6 +1,6 @@
 use crate::app::{
     repository::{
-        issues_tab::{list::IssuesList, one_issue::OneIssue, IssuesTab},
+        issues_tab::{list::IssuesList, one_issue::OneIssue},
         RepositoryPage,
     },
     sidebar::Sidebar,
@@ -14,7 +14,6 @@ use shared::types::repository::RepositoryId;
 
 macros::zwang_routes! {{
     fallback: NotFound,
-    view: Sidebar,
     children: [
         {
             path: "/auth",
@@ -27,7 +26,7 @@ macros::zwang_routes! {{
                 {
                     path: "/{repo_name}",
                     layout: RepositoryPage,
-                    view: IssuesTab,
+                    view: IssuesList,
                     will_pass: Signal<RepositoryId>,
                     children: [
                         {

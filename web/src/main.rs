@@ -1,5 +1,3 @@
-#![feature(unboxed_closures)]
-#![feature(fn_traits)]
 #![feature(async_closure)]
 
 use leptos::mount::mount_to_body;
@@ -10,9 +8,9 @@ mod frontend_error;
 mod idb_signal;
 mod idb_signal_from_sync_engine;
 mod local_storage;
+pub mod signal_ext;
 pub mod typed_transport;
 mod use_unwrapped_context;
-pub mod signal_ext;
 
 // #[cfg(test)]
 // mod tests;

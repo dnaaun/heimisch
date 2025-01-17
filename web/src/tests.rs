@@ -36,6 +36,7 @@ impl std::io::Write for InMemoryWriter {
     }
 }
 
+/// NOTE: I should clean this up into a tracing logger for testing.
 struct MemoryWriterFactory {
     buffer: Arc<Mutex<Vec<u8>>>,
 }
