@@ -1,3 +1,4 @@
+#![feature(result_flattening)]
 #![feature(btree_set_entry)]
 
 extern crate proc_macro;
@@ -8,3 +9,4 @@ mod typesafe_idb;
 
 pub use avail_merge::derive_avail_merge;
 pub use typesafe_idb::derive_typesafe_idb;
+pub use typed_router::zwang_routes;

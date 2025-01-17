@@ -81,7 +81,7 @@ mod part {
     }
 }
 
-fn from_parsing_route(
+pub fn from_parsing_route(
     parsing_part: parsing::Part,
     arg_from_parent_type: Type,
     names_from_higher_levels: Vec<String>,

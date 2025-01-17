@@ -13,3 +13,9 @@ pub fn derive_typesafe_idb(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     macros_impl::derive_typesafe_idb(input)
 }
+
+#[proc_macro]
+pub fn zwang_routes(input: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    macros_impl::zwang_routes(input)
+}
