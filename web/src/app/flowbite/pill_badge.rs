@@ -3,12 +3,12 @@ use leptos::prelude::*;
 /// https://flowbite.com/docs/components/badge/#pills-badge
 #[component]
 pub fn PillBadge(
-    children: Children,
+    #[prop(optional)] children: Option<Children>,
     #[prop(optional)] color: PillBadgeColor,
 ) -> impl IntoView {
     let class = color.get_bg_and_text_classes().join(" ")
         + " text-xs font-medium me-2 px-2.5 py-0.5 rounded-full";
-    view! { <span class=class>{children()}</span> }
+    view! { <span class=class>{children.map(|c| c())}</span> }
 }
 
 #[allow(dead_code)]

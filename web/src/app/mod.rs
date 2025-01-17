@@ -8,7 +8,7 @@ mod not_found;
 mod repository;
 pub mod routing;
 pub mod sidebar;
-mod sync_engine_provider;
+pub mod sync_engine_provider;
 
 use crate::app::sync_engine_provider::sync_engine_provided;
 use std::rc::Rc;

@@ -4903,6 +4903,7 @@ dependencies = [
  "console_error_panic_hook",
  "derive_more",
  "futures",
+ "github_api",
  "gloo-net 0.6.0",
  "gloo-utils 0.2.0",
  "heck",

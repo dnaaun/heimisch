@@ -12,8 +12,8 @@ pub mod signal_ext;
 pub mod typed_transport;
 mod use_unwrapped_context;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 use app::App;
 

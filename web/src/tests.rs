@@ -5,17 +5,14 @@ use leptos::{
     task::{tick, Executor},
 };
 use parking_lot::Mutex;
-use shared::{
-    sync_engine::SyncEngine,
-    types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
-};
+use shared::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus;
 use tracing::Level;
 use tracing_subscriber::fmt::MakeWriter;
 use wasm_bindgen_test::{console_log, wasm_bindgen_test};
 
 use crate::{
-    consts::ENDPOINT_CLIENT, idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
-    typed_websocket_client::TypedWebsocketClient,
+    app::sync_engine_provider::SyncEngine, consts::ENDPOINT_CLIENT,
+    idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
@@ -73,7 +70,7 @@ pub async fn idb_signal_basic_reactivity() {
     tracing::subscriber::set_global_default(subscriber).unwrap();
     _ = Executor::init_wasm_bindgen();
 
-    let sync_engine = SyncEngine::<TypedWebsocketClient>::new(ENDPOINT_CLIENT.with(|e| e.clone()))
+    let sync_engine = SyncEngine::new(ENDPOINT_CLIENT.with(|e| e.clone()))
         .await
         .unwrap();
 
