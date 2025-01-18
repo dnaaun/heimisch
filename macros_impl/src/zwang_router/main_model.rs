@@ -62,7 +62,6 @@ mod part {
         pub non_param_sub_parts: Vec<Part>,
         pub param_sub_part: Option<Box<Part>>,
         pub arg_to_sub_parts: Type,
-        pub is_root_level: bool,
     }
 
     #[derive(Debug, Clone)]
@@ -73,7 +72,6 @@ mod part {
         pub name: Pascal,
         pub short_name: Pascal,
         pub view: Option<Ident>,
-        pub arg_from_parent_type: Type,
         pub params_from_higher_levels: ParamsSet,
         pub span: Span,
         pub param_at_this_level: Option<Ident>,
@@ -207,7 +205,6 @@ pub fn from_parsing_route(
             non_param_sub_parts,
             param_sub_part,
             arg_to_sub_parts,
-            is_root_level,
         })
     } else {
         None
@@ -218,7 +215,6 @@ pub fn from_parsing_route(
         name: name.into(),
         short_name: short_name.into(),
         view: parsing_part.view,
-        arg_from_parent_type,
         params_from_higher_levels,
         non_leaf_details,
         span: parsing_part.span,
@@ -296,7 +292,7 @@ impl TryFrom<parsing::Part> for Parts {
 
 #[cfg(test)]
 mod tests {
-    use crate::typed_router::TEST_STR;
+    use crate::zwang_router::TEST_STR;
 
     use super::*;
 

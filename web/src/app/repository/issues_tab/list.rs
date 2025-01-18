@@ -11,7 +11,7 @@ use itertools::Itertools;
 use zwang_router::{ArgFromParent, RouteParams, A};
 
 use crate::{
-    app::{routing::*, sync_engine_provider::use_sync_engine},
+    app::{flowbite::button::Button, routing::*, sync_engine_provider::use_sync_engine},
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
@@ -63,7 +63,8 @@ pub fn IssuesList(
     });
 
     view! {
-        <>
+        <div>
+            <div class="mb-2 flex flex-row-reverse justify-start"><Button>New Issue</Button></div>
             <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
                 <div class="flex flex-nowrap gap-x-2">
                     <div>Open {move || counts().map(|c| c.0)}</div>
@@ -91,7 +92,7 @@ pub fn IssuesList(
                     )
                 }
             />
-        </>
+        </div>
     }
 }
 

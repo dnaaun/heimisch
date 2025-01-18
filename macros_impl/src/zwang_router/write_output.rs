@@ -786,7 +786,7 @@ fn write_param_struct_construction_at_sub_part(sub_part: &main_model::Part) -> T
 mod tests {
     use main_model::Parts;
 
-    use crate::typed_router::{parsing, TEST_STR};
+    use crate::zwang_router::{parsing, TEST_STR};
 
     use super::*;
 

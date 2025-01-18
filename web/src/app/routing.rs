@@ -14,6 +14,7 @@ use shared::types::repository::RepositoryId;
 
 macros::zwang_routes! {{
     fallback: NotFound,
+    view: Sidebar,
     children: [
         {
             path: "/auth",

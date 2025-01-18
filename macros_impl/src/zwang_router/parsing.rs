@@ -164,7 +164,7 @@ pub fn parse_fallback(input: ParseStream) -> Result<Ident> {
 
 #[cfg(test)]
 mod tests {
-    use crate::typed_router::TEST_STR;
+    use crate::zwang_router::TEST_STR;
 
     use super::*;
     use syn::parse_str;
