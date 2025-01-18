@@ -193,7 +193,7 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                     }}
                 </div>
             </aside>
-            <main class="flex-grow">{outlet.call(())}</main>
+            <main class="flex-grow h-full overflow-y-scroll">{outlet.call(())}</main>
         </div>
     }))
 }
