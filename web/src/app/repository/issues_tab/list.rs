@@ -168,10 +168,7 @@ fn IssueRow(
             class=("rounded-b", is_last)
         >
             <div>
-                <A
-                    class="mb-1.5 font-bold"
-                    href=href
-                >
+                <A class="mb-1.5 font-bold" href=href>
                     {title.to_option()}
                 </A>
                 <div class="flex gap-1.5 text-sm text-gray-500">

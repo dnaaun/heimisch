@@ -20,7 +20,7 @@ github_api = { path = "../github_api" }
 
 wasm-bindgen-futures = "0.4.43"
 
-shared = { path = "../shared" }
+shared = { path = "../shared", features = ["hydrate"] }
 macros = { path = "../macros" }
 zwang_router = { path = "../zwang_router" }
 reqwest = { version = "0.12.8", features = ["json"] }
@@ -37,7 +37,7 @@ derive_more = { version = "1.0.0", features = ["display", "from_str"] }
 strum = "0.26.3"
 send_wrapper = "0.6.0"
 itertools = "0.13.0"
-jiff = { git = "https://github.com/BurntSushi/jiff", default-features = false, features = ["serde", "alloc", "std", "js"] }
+jiff = { version = "*", default-features = false, features = ["serde", "alloc", "std", "js"] }
 codee = "0.2.0"
 icondata = { version = "0.5.0", default-features = false, features = ["heroicons"] }
 icondata_core = "0.1.0"
@@ -47,6 +47,7 @@ gloo-utils = { version = "0.2.0", default-features = false, features = ["serde"]
 wasm-bindgen-test = "0.3.45"
 tracing-wasm = "0.2.1"
 console_error_panic_hook = "0.1.7"
+timeago = "0.4.2"
 
 [dev-dependencies]
 tracing-subscriber = "0.3.19"

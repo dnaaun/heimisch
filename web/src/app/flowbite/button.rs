@@ -42,8 +42,8 @@ pub fn Button(
         )
     };
     view! {
-        <button type="button"
-            class=class
-            >{children.map(|c| c())}</button>
+        <button type="button" class=class>
+            {children.map(|c| c())}
+        </button>
     }
 }

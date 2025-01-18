@@ -163,7 +163,11 @@ pub fn RepositoryPage(
                 Ok(
                     Some(
                         view! {
-                            <TopBar repository_id owner_name=params.owner_name repo_name=params.repo_name />
+                            <TopBar
+                                repository_id
+                                owner_name=params.owner_name
+                                repo_name=params.repo_name
+                            />
                             <div>
                                 <Tabs
                                     tabs

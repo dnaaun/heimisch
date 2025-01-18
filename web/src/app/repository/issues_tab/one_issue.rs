@@ -1,19 +1,32 @@
+use std::future::Future;
+
+use futures::future::{join_all, OptionFuture};
 use github_api::models::milestone::OpenOrClosed;
+use jiff::Timestamp;
 use leptos::prelude::*;
-use shared::types::{
-    issue::{self, Issue},
-    repository::RepositoryId,
+use shared::{
+    avail::Avail,
+    types::{
+        issue::{self, Issue},
+        issue_comment::{IssueComment, IssueIdIndex},
+        repository::RepositoryId,
+        user::User,
+    },
 };
 use zwang_router::{ArgFromParent, RouteParams};
 
 use crate::{
     app::{
-        flowbite::{button::{Button, ButtonColor}, pill_badge::{PillBadge, PillBadgeColor}},
+        flowbite::{
+            button::{Button, ButtonColor},
+            pill_badge::{PillBadge, PillBadgeColor},
+        },
         not_found::NotFound,
         routing::ParamsIssueNumberOwnerNameRepoName,
         sync_engine_provider::use_sync_engine,
     },
     frontend_error::FrontendError,
+    idb_signal::IdbSignal,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
@@ -31,64 +44,162 @@ pub fn OneIssue(
             Ok(i) => i,
             Err(_) => return view! { <NotFound /> }.into_any(),
         };
-        let issue = sync_engine.idb_signal(
-            move |txn| txn.with_store::<Issue>().build(),
+        let issue_and_user: IdbSignal<Result<Option<_>, _>> = sync_engine.idb_signal(
+            move |txn| txn.with_store::<User>().with_store::<Issue>().build(),
             move |txn| async move {
-                Ok(txn
+                let issue = txn
                     .object_store::<Issue>()?
                     .index::<issue::RepositoryIdIndex>()?
                     .get_all(Some(&repository_id.read()))
                     .await?
                     .into_iter()
                     .filter(move |i| i.number == issue_number)
-                    .next())
+                    .next();
+
+                Ok(if let Some(issue) = issue {
+                    let user = if let Avail::Yes(Some(user_id)) = issue.user_id {
+                        txn.object_store::<User>()?.get(&user_id).await?
+                    } else {
+                        None
+                    };
+                    Some((issue, user))
+                } else {
+                    None
+                })
             },
         );
 
-        
-
         (move || {
-            issue.get().map(|issue| {
-                let issue = match issue? {
-                    Some(i) => i,
-                    None => return Ok(view! { <NotFound /> }.into_any()),
+            issue_and_user.get().map(|issue_and_user| {
+                let sync_engine = use_sync_engine();
+                let (issue, user) = match issue_and_user? {
+                    Some((issue, user)) => (StoredValue::new(issue), StoredValue::new(user)),
+                    None => return Ok::<_, FrontendError>(view! { <NotFound /> }.into_any()),
                 };
-                Ok::<_, FrontendError>(
-                    view! {
-                        <div>
-                            <div class="flex justify-between">
+
+                let issue_id = issue.get_value().id;
+                let issue_comment_and_users = sync_engine.idb_signal(|builder| {
+                    builder.with_store::<IssueComment>()
+                        .with_store::<User>()
+                        .build()
+                }, move |txn| async move {
+                    let mut issue_comments = txn.object_store::<IssueComment>()?.index::<IssueIdIndex>()?.get_all(Some(&Some(issue_id))).await?;
+                    issue_comments.sort_by_key(|c| c.created_at.clone());
+                    let user_store = txn.object_store::<User>() ?;
+                    let users = join_all(issue_comments.iter().map(async |ic| {
+                        OptionFuture::from(
+                        ic.user_id.clone().to_option().flatten().map(async |user_id| {
+                            user_store.get(&user_id).await
+                        })).await
+
+                    })).await
+                    .into_iter()
+                        .map(|u| u.transpose())
+                        .collect::<Result<Vec<_>, _>>()?
+                        .into_iter()
+                        .map(Option::flatten)
+                        .collect::<Vec<_>>();
+
+                    Ok(issue_comments.into_iter().zip(users).collect::<Vec<_>>())
+                });
+
+
+
+                Ok(
+                view! {
+                    <div>
+                        <div class="flex justify-between">
                             <div class="flex items-center gap-2">
-                            <div class="text-4xl font-extrabold dark:text-white">{issue.title.to_option()}</div>
-                            <div class="text-4xl font-extrabold dark:text-gray-600 text-gray-400">#{issue.number}</div>
-                            
-                            </div>
-                            <div class="flex gap-2">
-                            <Button color=ButtonColor::Light>Edit</Button>
-                            <Button>New Issue</Button>
-                            </div>
+                                <div class="text-4xl font-extrabold dark:text-white">
+                                    {issue.read_value().title.as_ref().to_option().cloned()}
+                                </div>
+                                <div class="text-4xl font-extrabold dark:text-gray-600 text-gray-400">
+                                    #{issue.read_value().number}
+                                </div>
 
                             </div>
                             <div class="flex gap-2">
-                            {
-                                issue.state.to_option().map(|state| 
-                                    {
-                                        let (text, color) = match state {
+                                <Button color=ButtonColor::Light>Edit</Button>
+                                <Button>New Issue</Button>
+                            </div>
+
+                        </div>
+                        <div class="flex gap-2">
+                            {issue
+                                .read_value()
+                                .state
+                                .as_ref()
+                                .to_option()
+                                .map(|state| {
+                                    let (text, color) = match state {
                                         OpenOrClosed::Open => ("Open", PillBadgeColor::Default),
                                         OpenOrClosed::Closed => ("Closed", PillBadgeColor::Indigo),
                                     };
 
-                            view! { <PillBadge color>{text}</PillBadge> }
-                                    }
-                                )
-                            }
-                            </div>
-                            </div>
-                            <div class="mt-3 border-b border-gray-200 border-solid"></div>
-                    }
-                    .into_any(),
-                )
+                                    view! { <PillBadge color>{text}</PillBadge> }
+                                })}
+                        </div>
+                        <div class="my-3 border-b border-gray-200 border-solid"></div>
+                        <div class= "flex flex-col gap-y-8">
+                        <IssueCommentBox
+                        body=issue.read_value().body.clone().to_option().flatten()
+                        login=user.read_value().as_ref().map(|u| u.login.clone())
+                        created_at=issue.read_value().created_at.clone().to_option()
+                        />
+                        {move || {
+
+                             Ok::<_, FrontendError>(
+                             issue_comment_and_users.get().transpose()?.map(|issue_comment_and_users| {
+
+                        view! { <For
+                            each=move || issue_comment_and_users.clone()
+                            key=|(ic, _)| ic.id
+                            children=|(issue_comment, user)| view! { <IssueCommentBox
+                                body=issue_comment.body.to_option()
+                                created_at=issue_comment.created_at.to_option()
+                                login=user.as_ref().map(|u| u.login.clone())
+
+
+                                /> }
+                        /> }
+                             }))
+                        }}
+                    </div>
+                    </div>
+                }.into_any())
+
             })
         })
         .into_any()
     };
+}
+
+#[component]
+pub fn IssueCommentBox(
+    #[prop(into)] login: Signal<Option<String>>,
+    #[prop(into)] body: Signal<Option<String>>,
+    #[prop(into)] created_at: Signal<Option<Timestamp>>,
+) -> impl IntoView {
+    let ago = move || {
+        created_at.get().map(|c| {
+            let formatter = timeago::Formatter::default();
+            formatter.convert(
+                c.duration_until(Timestamp::now()).unsigned_abs(),
+            )
+        })
+    };
+    view! {
+        <div >
+            <div class="bg-blue-100 border-t border-l border-r border-blue-300 flex flex-between p-2 rounded-t-lg">
+                <div class="flex gap-1">
+                    <div class="font-semibold">{login}</div>
+                    <div class="text-gray-700">{ago}</div>
+                </div>
+                <div></div>
+            </div>
+            <div
+                class="rounded-b-lg border-l border-r border-b border-blue-300 p-4"
+                >{body}</div>
+        </div>
+    }
 }

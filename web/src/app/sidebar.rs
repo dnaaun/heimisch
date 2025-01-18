@@ -88,7 +88,7 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
         },
     );
     Ok::<_, FrontendError>(Some(view! {
-        <div class="flex flex-nowrap w-screen">
+        <div class="flex flex-nowrap w-screen h-screen">
             <button
                 data-drawer-target="sidebar-multi-level-sidebar"
                 data-drawer-toggle="sidebar-multi-level-sidebar"

@@ -13,7 +13,7 @@ serde_json = "1.0"
 serde_repr = "^0.1"
 url = "2.5"
 reqwest = { version = "0.12", features = ["json", "multipart"] }
-jiff = { git = "https://github.com/BurntSushi/jiff", default-features = false, features = ["serde"] }
+jiff = { version = "*", default-features = false, features = ["serde"] }
 reqwest_wiremock = { path = "../reqwest_wiremock" }
 serde_path_to_error = "0.1.16"
 
