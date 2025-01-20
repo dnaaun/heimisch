@@ -102,12 +102,12 @@ pub fn from_parsing_route(
         }
     };
     let short_name = if is_root_level {
-        "Root".into()
+        ROOT.into()
     } else {
         if path.0.is_empty() {
-            "Empty".to_owned()
+            "Empty".into()
         } else {
-            path.0.to_string().to_case(Case::Pascal)
+            path.0.to_case(Case::Pascal)
         }
     };
 
