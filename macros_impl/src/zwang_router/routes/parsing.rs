@@ -122,7 +122,7 @@ impl Parse for Part {
                             .collect(),
                     );
                 }
-                key @ _ => {
+                key => {
                     return Err(input.error(format!("unexpected key found: '{key}'")));
                 }
             }
@@ -153,7 +153,7 @@ impl Parse for Part {
 }
 
 pub fn parse_fallback(input: ParseStream) -> Result<Ident> {
-    if Ident::parse(input)?.to_string() != "fallback" {
+    if Ident::parse(input)? != "fallback" {
         panic!("Expected fallback.");
     }
     let _ = input.parse::<Token![:]>()?;

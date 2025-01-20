@@ -1,6 +1,7 @@
 use futures::future::{join_all, OptionFuture};
 use itertools::Itertools;
 use leptos::prelude::*;
+use macros::zwang_url;
 use shared::types::{repository::Repository, user::User};
 use zwang_router::{Outlet, A};
 
@@ -158,13 +159,7 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                                                                 children=move |(_, name)| {
                                                                     let href = match &user_login {
                                                                         Some(u) => {
-                                                                            Root::OwnerName {
-                                                                                owner_name: u.clone(),
-                                                                                child: RootOwnerName::RepoName {
-                                                                                    repo_name: name.clone(),
-                                                                                    child: RootOwnerNameRepoName::Empty,
-                                                                                },
-                                                                            }
+                                                                            zwang_url!("/owner_name={u.clone()}/repo_name={name.clone()}")
                                                                                 .to_string()
                                                                         }
                                                                         None => todo!(),

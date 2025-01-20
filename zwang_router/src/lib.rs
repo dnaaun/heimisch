@@ -4,7 +4,7 @@ pub use slashed_and_segmented::*;
 
 use leptos::{prelude::*, tachys::html::class::IntoClass};
 use serde::de::DeserializeOwned;
-use std::{ops::Deref, sync::Arc};
+use std::{fmt::Display, ops::Deref, sync::Arc};
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
 pub trait MemoExt<T>
@@ -253,9 +253,9 @@ pub fn use_search() -> ArcMemo<String> {
     PATHNAME_MANAGER.with(|i| i.search.clone())
 }
 
-pub fn use_serde_search<T: DeserializeOwned>() -> Signal<Result<T, serde::de::value::Error>>
+pub fn use_serde_search<T>() -> Signal<Result<T, serde::de::value::Error>>
 where
-    T: Send + Sync + 'static,
+    T: Send + Sync + DeserializeOwned + 'static,
 {
     let search = use_search();
     Signal::derive(move || serde_urlencoded::from_str(search.get().strip_prefix("?").unwrap_or("")))
@@ -290,9 +290,9 @@ impl<'a> TryFrom<Slashed<'a>> for NoPart {
 
     fn try_from(value: Slashed<'a>) -> std::result::Result<Self, Self::Error> {
         if value.non_slash_len() == 0 {
-            return Ok(Self);
+            Ok(Self)
         } else {
-            return Err(format!("non slash length is not 0 in '{value}'"));
+            Err(format!("non slash length is not 0 in '{value}'"))
         }
     }
 }
@@ -306,7 +306,6 @@ impl std::fmt::Display for NoPart {
 }
 
 pub fn empty_component<ArgFromParent>(_: ArgFromParent) -> impl IntoView {
-    ()
 }
 
 pub fn passthrough_component<A, V>(
@@ -331,5 +330,17 @@ impl<T: Sync + Send + 'static> std::ops::Deref for ParsedPath<T> {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct PathAndRest<T: ToString> {
+    pub path: T,
+    pub rest: String,
+}
+
+impl<T: ToString> Display for PathAndRest<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.path.to_string(), self.rest)
     }
 }

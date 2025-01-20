@@ -220,7 +220,7 @@ fn write_from_slashed_impl(part: &main_model::Part) -> TokenStream {
             let path_part = sub_part.as_path_part_literal();
             let variant_name_ident = sub_part.as_variant_ident();
 
-            if !sub_part.non_leaf_details.is_some() {
+            if sub_part.non_leaf_details.is_none() {
                 quote! {
                     #path_part => {
                         ::zwang_router::NoPart::try_from(tail)?;
@@ -556,7 +556,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
         }
     }
 
-    let mut variants = part.non_leaf_details.iter().map(|n| n. non_param_sub_parts.clone()).flatten()
+    let mut variants = part.non_leaf_details.iter().flat_map(|n| n. non_param_sub_parts.clone())
         .map(|p| {
             let variant_ident = p.as_variant_ident();
             Ok(match &p.non_leaf_details {
@@ -655,7 +655,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
         .map(|n| n.param_sub_part.clone())
     {
         let variant_ident = p.as_variant_ident();
-        let params_construction = write_param_struct_construction_at_sub_part(&p);
+        let params_construction = write_param_struct_construction_at_sub_part(p);
         variants.push(
         match &p.non_leaf_details {
             None => {

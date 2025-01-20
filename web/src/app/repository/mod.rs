@@ -44,9 +44,9 @@ impl From<RootOwnerNameRepoName> for Tab {
     }
 }
 
-impl Into<RootOwnerNameRepoName> for Tab {
-    fn into(self) -> RootOwnerNameRepoName {
-        match self {
+impl From<Tab> for RootOwnerNameRepoName {
+    fn from(val: Tab) -> Self {
+        match val {
             Tab::Issues => RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::Empty),
             Tab::Pulls => RootOwnerNameRepoName::Pulls(RootOwnerNameRepoNamePulls::Empty),
         }
@@ -75,7 +75,8 @@ pub fn RepositoryPage(
     let ParamsOwnerNameRepoName { owner_name , repo_name } = params;
 
     let set_active_tab = move |new_active_tab: Tab| {
-        set_pathname(Root::OwnerName {
+        set_pathname(
+            Root::OwnerName {
             owner_name: owner_name.get_untracked(),
             child: RootOwnerName::RepoName {
                 repo_name: repo_name.get_untracked(),

@@ -23,7 +23,7 @@ pub struct Parts {
     derive(Clone, Debug, Deref, PartialEq, Ord, Eq, PartialOrd, Display, From),
     sanitize(with = |s: String| s.to_case(Case::Pascal))
 )]
-struct Pascal(String);
+pub struct Pascal(String);
 
 #[derive(Clone, Debug, Default, derive_more::Deref, Hash, PartialEq, Eq)]
 pub struct ParamsSet(BTreeSet<Ident>);
@@ -103,12 +103,10 @@ pub fn from_parsing_route(
     };
     let short_name = if is_root_level {
         ROOT.into()
+    } else if path.0.is_empty() {
+        "Empty".into()
     } else {
-        if path.0.is_empty() {
-            "Empty".into()
-        } else {
-            path.0.to_case(Case::Pascal)
-        }
+        path.0.to_case(Case::Pascal)
     };
 
     let names_from_higher_levels_to_sub_parts = names_from_higher_levels
@@ -154,7 +152,7 @@ pub fn from_parsing_route(
         .filter_map(|(name, things)| if things.count() > 1 { Some(name) } else { None })
         .collect::<Vec<_>>();
 
-    if duplicated_names.len() > 0 {
+    if !duplicated_names.is_empty() {
         return Err(Error::new(
             parsing_part.span,
             format!(
@@ -213,7 +211,7 @@ fn process_to_add_empty_leaf_parts_when_necessary(
     part: parsing::Part,
     parent_will_pass: Option<Type>,
 ) -> parsing::Part {
-    if part.sub_parts.len() > 0 {
+    if !part.sub_parts.is_empty() {
         parsing::Part {
             sub_parts: part
                 .sub_parts

@@ -29,7 +29,7 @@ impl ToDb for github_api::models::Label {
             node_id,
             url,
         } = self;
-        let id = crate::types::label::LabelId::from(i64::from(id));
+        let id = crate::types::label::LabelId::from(id);
         let label = crate::types::label::Label {
             color,
             default,

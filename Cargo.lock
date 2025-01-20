@@ -2350,6 +2350,7 @@ name = "macros"
 version = "0.0.0"
 dependencies = [
  "macros_impl",
+ "syn",
 ]
 
 [[package]]

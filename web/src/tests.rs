@@ -51,6 +51,7 @@ impl<'a> MakeWriter<'a> for MemoryWriterFactory {
 /// Note the scaffolding to get tracing output to show up in log output? Maybe abstract that out
 /// into it's own crate?
 #[wasm_bindgen_test]
+#[allow(dead_code)]
 pub async fn idb_signal_basic_reactivity() {
     // Create shared buffer
     let buffer = Arc::new(Mutex::new(Vec::new()));
@@ -86,12 +87,12 @@ pub async fn idb_signal_basic_reactivity() {
             Ok(())
         },
     );
-    signal.clone().await.unwrap();
+    signal.await.unwrap();
 
     assert_eq!(num_times_updated.get(), 1);
 
     // Clarify that another .await doesn't actually cause a recomputation.
-    signal.clone().await.unwrap();
+    signal.await.unwrap();
     assert_eq!(num_times_updated.get(), 1);
 
     // But adding a new row should cause a recomputation
@@ -111,7 +112,7 @@ pub async fn idb_signal_basic_reactivity() {
 
     tick().await;
 
-    let _ = signal.clone().await;
+    let _ = signal.await;
     assert_eq!(num_times_updated.get(), 2);
 
     let logged_data = buffer.lock();

@@ -33,9 +33,8 @@ where
     T: Clone + Send + Sync + 'static,
 {
     fn transpose(self) -> Option<Signal<T>> {
-        match *self.read() {
-            Some(_) => Some(Signal::derive(move || self.get().expect(""))),
-            None => None,
-        }
+        self.read()
+            .as_ref()
+            .map(|_| Signal::derive(move || self.get().expect("")))
     }
 }

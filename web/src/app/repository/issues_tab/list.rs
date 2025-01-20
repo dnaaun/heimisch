@@ -1,5 +1,6 @@
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
+use macros::zwang_url;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
@@ -12,8 +13,8 @@ use zwang_router::{ArgFromParent, RouteParams, A};
 
 use crate::{
     app::{
-        flowbite::button::Button, repository::issues_tab::new_issue_button::NewIssueButton,
-        routing::*, sync_engine_provider::use_sync_engine,
+        repository::issues_tab::new_issue_button::NewIssueButton, routing::*,
+        sync_engine_provider::use_sync_engine,
     },
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
@@ -157,17 +158,8 @@ fn IssueRow(
         });
 
     let href = Signal::derive(move || {
-        Root::OwnerName {
-            owner_name: owner_name.get(),
-            child: RootOwnerName::RepoName {
-                repo_name: repo_name.get(),
-                child: RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::IssueNumber {
-                    issue_number: number.to_string(),
-                    child: RootOwnerNameRepoNameIssuesIssueNumber::Empty,
-                }),
-            },
-        }
-        .to_string()
+        zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/issue_number={number.to_string()}")
+            .to_string()
     });
     Ok::<_, FrontendError>(view! {
         <div

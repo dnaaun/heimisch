@@ -1,4 +1,5 @@
 use leptos::prelude::*;
+use macros::zwang_url;
 use zwang_router::set_pathname;
 
 use crate::app::{flowbite::button::Button, routing::*};
@@ -9,16 +10,9 @@ pub fn NewIssueButton(
     #[prop(into)] repo_name: Signal<String>,
 ) -> impl IntoView {
     move || {
+        let url = zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/new");
         let on_click = move |_ev| {
-            set_pathname(Root::OwnerName {
-                owner_name: owner_name.get(),
-                child: RootOwnerName::RepoName {
-                    repo_name: repo_name.get(),
-                    child: RootOwnerNameRepoName::Issues(RootOwnerNameRepoNameIssues::New(
-                        RootOwnerNameRepoNameIssuesNew::Empty,
-                    )),
-                },
-            });
+            set_pathname(url.clone());
         };
         view! { <Button
         on:click=on_click

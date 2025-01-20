@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 macros_impl = { path = "../macros_impl" }
+syn = { version = "2.0.87", default-features = false, features = ["extra-traits", "fold"] }
 
 [lib]
 proc-macro = true

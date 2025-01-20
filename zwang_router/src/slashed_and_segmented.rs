@@ -4,7 +4,7 @@ pub struct Slashed<'a>(&'a str);
 
 impl<'a> Slashed<'a> {
     pub fn new(p: &'a str) -> Result<Slashed<'a>, String> {
-        if p.chars().next() != Some('/') {
+        if !p.starts_with('/') {
             Err("first char not /".into())
         } else {
             Ok(Self(p))
@@ -12,13 +12,13 @@ impl<'a> Slashed<'a> {
     }
 }
 
-impl<'a> std::fmt::Display for Slashed<'a> {
+impl std::fmt::Display for Slashed<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.0)
     }
 }
 
-impl<'a> Slashed<'a> {
+impl Slashed<'_> {
     pub fn non_slash_len(&self) -> usize {
         self.0.len() - 1
     }
@@ -28,7 +28,7 @@ impl<'a> Slashed<'a> {
 /// contained there after.
 pub struct PathSegment<'a>(&'a str);
 
-impl<'a> PathSegment<'a> {
+impl PathSegment<'_> {
     pub fn non_slash(&self) -> &str {
         &self.0[1..]
     }
@@ -65,4 +65,3 @@ pub fn split_path(path: &str) -> Result<(PathSegment, Slashed), DoesNotStartWith
 pub fn split_slashed(slashed: Slashed) -> (PathSegment, Slashed) {
     split_path(slashed.0).expect("should not give us DoesNotStartWithSlashError because Slashed is guaranteed to start with a slash")
 }
-

@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use futures::future::{join_all, OptionFuture};
 use github_api::models::milestone::OpenOrClosed;
 use jiff::Timestamp;
@@ -42,7 +40,7 @@ pub fn OneIssue(
     }): RouteParams<ParamsIssueNumberOwnerNameRepoName>,
 ) -> impl IntoView {
     let issue_number = move || issue_number.get().parse::<i64>();
-    return move || {
+    move || {
         let sync_engine = use_sync_engine();
         let issue_number = match issue_number() {
             Ok(i) => i,
@@ -57,8 +55,7 @@ pub fn OneIssue(
                     .get_all(Some(&repository_id.read()))
                     .await?
                     .into_iter()
-                    .filter(move |i| i.number == issue_number)
-                    .next();
+                    .find(move |i| i.number == issue_number);
 
                 Ok(if let Some(issue) = issue {
                     let user = if let Avail::Yes(Some(user_id)) = issue.user_id {
@@ -175,7 +172,7 @@ pub fn OneIssue(
             })
         })
         .into_any()
-    };
+    }
 }
 
 #[component]
