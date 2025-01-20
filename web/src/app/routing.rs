@@ -14,8 +14,9 @@ use crate::app::auth::Auth;
 
 use leptos::prelude::Signal;
 use shared::types::repository::RepositoryId;
+use zwang_router::zwang_routes;
 
-macros::zwang_routes! {{
+zwang_routes! {{
     fallback: NotFound,
     view: Sidebar,
     children: [

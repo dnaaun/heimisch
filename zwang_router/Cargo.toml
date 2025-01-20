@@ -4,6 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
+macros = { path = "../macros" }
 leptos = "0.7.3"
 serde = "1.0.217"
 serde_urlencoded = "0.7.1"

@@ -5378,6 +5378,7 @@ name = "zwang_router"
 version = "0.0.0"
 dependencies = [
  "leptos",
+ "macros",
  "serde",
  "serde_urlencoded",
  "wasm-bindgen",

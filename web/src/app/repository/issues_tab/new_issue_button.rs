@@ -10,8 +10,9 @@ pub fn NewIssueButton(
     #[prop(into)] repo_name: Signal<String>,
 ) -> impl IntoView {
     move || {
-        let url = zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/new");
         let on_click = move |_ev| {
+            let url =
+                zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/new");
             set_pathname(url.clone());
         };
         view! { <Button
