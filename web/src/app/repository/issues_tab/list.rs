@@ -11,14 +11,20 @@ use itertools::Itertools;
 use zwang_router::{ArgFromParent, RouteParams, A};
 
 use crate::{
-    app::{flowbite::button::Button, routing::*, sync_engine_provider::use_sync_engine},
+    app::{
+        flowbite::button::Button, repository::issues_tab::new_issue_button::NewIssueButton,
+        routing::*, sync_engine_provider::use_sync_engine,
+    },
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
 #[allow(non_snake_case)]
 pub fn IssuesList(
-    params: RouteParams<ParamsOwnerNameRepoName>,
+    RouteParams(ParamsOwnerNameRepoName {
+        owner_name,
+        repo_name,
+    }): RouteParams<ParamsOwnerNameRepoName>,
     ArgFromParent(repository_id): ArgFromParent<Signal<RepositoryId>>,
 ) -> impl IntoView {
     let sync_engine = use_sync_engine();
@@ -64,7 +70,7 @@ pub fn IssuesList(
 
     view! {
         <div>
-            <div class="mb-2 flex flex-row-reverse justify-start"><Button>New Issue</Button></div>
+            <div class="mb-2 flex flex-row-reverse justify-start"><NewIssueButton owner_name repo_name /></div>
             <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
                 <div class="flex flex-nowrap gap-x-2">
                     <div>Open {move || counts().map(|c| c.0)}</div>
@@ -83,8 +89,8 @@ pub fn IssuesList(
                     >(
                         view! {
                             <IssueRow
-                                owner_name=params.owner_name
-                                repo_name=params.repo_name
+                                owner_name
+                                repo_name
                                 issue=issue.clone()
                                 is_last=i == issues_len - 1
                             />

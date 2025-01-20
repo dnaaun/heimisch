@@ -30,12 +30,16 @@ use crate::{
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
+use super::new_issue_button::NewIssueButton;
+
 #[allow(non_snake_case)]
 pub fn OneIssue(
     ArgFromParent(repository_id): ArgFromParent<Signal<RepositoryId>>,
-    RouteParams(ParamsIssueNumberOwnerNameRepoName { issue_number, .. }): RouteParams<
-        ParamsIssueNumberOwnerNameRepoName,
-    >,
+    RouteParams(ParamsIssueNumberOwnerNameRepoName {
+        issue_number,
+        owner_name,
+        repo_name,
+    }): RouteParams<ParamsIssueNumberOwnerNameRepoName>,
 ) -> impl IntoView {
     let issue_number = move || issue_number.get().parse::<i64>();
     return move || {
@@ -120,7 +124,7 @@ pub fn OneIssue(
                             </div>
                             <div class="flex gap-2">
                                 <Button color=ButtonColor::Light>Edit</Button>
-                                <Button>New Issue</Button>
+                                <NewIssueButton owner_name repo_name />
                             </div>
 
                         </div>
@@ -183,9 +187,7 @@ pub fn IssueCommentBox(
     let ago = move || {
         created_at.get().map(|c| {
             let formatter = timeago::Formatter::default();
-            formatter.convert(
-                c.duration_until(Timestamp::now()).unsigned_abs(),
-            )
+            formatter.convert(c.duration_until(Timestamp::now()).unsigned_abs())
         })
     };
     view! {

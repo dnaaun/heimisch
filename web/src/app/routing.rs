@@ -6,7 +6,10 @@ use crate::app::{
     sidebar::Sidebar,
 };
 
-use super::{not_found::NotFound, repository::pull_requests_tab::PullRequestsTab};
+use super::{
+    not_found::NotFound,
+    repository::{issues_tab::new_issue::NewIssue, pull_requests_tab::PullRequestsTab},
+};
 use crate::app::auth::Auth;
 
 use leptos::prelude::Signal;
@@ -38,10 +41,15 @@ macros::zwang_routes! {{
                             path: "/issues",
                             will_pass: Signal<RepositoryId>,
                             view: IssuesList,
-                            children: [ {
+                            children: [
+                                {
+                                    path: "/new",
+                                    view: NewIssue
+                                },
+                                {
                                     path: "/{issue_number}",
                                     view: OneIssue
-                                }
+                                },
                             ]
                         },
                     ]

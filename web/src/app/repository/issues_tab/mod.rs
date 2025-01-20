@@ -1,14 +1,4 @@
 pub mod list;
+pub mod new_issue;
 pub mod one_issue;
-
-use leptos::prelude::*;
-use shared::types::repository::RepositoryId;
-use zwang_router::{ArgFromParent, Outlet};
-
-#[allow(non_snake_case)]
-pub fn IssuesTab(
-    outlet: Outlet<Signal<RepositoryId>, impl IntoView>,
-    ArgFromParent(repository_id): ArgFromParent<Signal<RepositoryId>>,
-) -> impl IntoView {
-    outlet.call(repository_id)
-}
+pub mod new_issue_button;
