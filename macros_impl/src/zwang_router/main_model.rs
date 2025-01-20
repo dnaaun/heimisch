@@ -81,7 +81,6 @@ mod part {
 
 pub fn from_parsing_route(
     parsing_part: parsing::Part,
-    arg_from_parent_type: Type,
     names_from_higher_levels: Vec<String>,
     params_from_higher_levels: ParamsSet,
     is_root_level: bool,
@@ -98,23 +97,8 @@ pub fn from_parsing_route(
             .unwrap_or((parsing::PathSegment::Static("".into()), Span::call_site()))
     } else {
         match parsing_part.path {
-            Some(p) => {
-                // if p.0.is_empty() {
-                // return Err(Error::new(
-                //     parsing_part.span,
-                //     "Empty `path` not allowed anywhere except the top level specified.",
-                // ));
-                // } else {
-                p
-                // }
-            }
-            None => {
-                (parsing::PathSegment::Static("".into()), Span::call_site())
-                // return Err(Error::new(
-                //     parsing_part.span,
-                //     "`path` can be ommitted only at the top-level.",
-                // ))
-            }
+            Some(p) => p,
+            None => (parsing::PathSegment::Static("".into()), Span::call_site()),
         }
     };
     let short_name = if is_root_level {
@@ -151,7 +135,6 @@ pub fn from_parsing_route(
         .map(|sub_part| {
             from_parsing_route(
                 sub_part,
-                arg_to_sub_parts.clone(),
                 names_from_higher_levels_to_sub_parts.clone(),
                 params_from_higher_levels_to_children.clone(),
                 false,
@@ -279,13 +262,7 @@ impl TryFrom<parsing::Part> for Parts {
                 value.span,
                 "`fallback` expected at the top level.",
             ))?,
-            top_part: from_parsing_route(
-                value,
-                parse_quote!(()),
-                vec![],
-                Default::default(),
-                true,
-            )?,
+            top_part: from_parsing_route(value, vec![], Default::default(), true)?,
         })
     }
 }
