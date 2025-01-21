@@ -9,6 +9,7 @@ mod repository;
 pub mod routing;
 pub mod sidebar;
 pub mod sync_engine_provider;
+pub mod thirds;
 
 use crate::app::sync_engine_provider::sync_engine_provided;
 use std::rc::Rc;

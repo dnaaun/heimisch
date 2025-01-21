@@ -22,6 +22,7 @@ use crate::{
         not_found::NotFound,
         routing::ParamsIssueNumberOwnerNameRepoName,
         sync_engine_provider::use_sync_engine,
+        thirds::Thirds,
     },
     frontend_error::FrontendError,
     idb_signal::IdbSignal,
@@ -141,7 +142,8 @@ pub fn OneIssue(
                                 })}
                         </div>
                         <div class="my-3 border-b border-gray-200 border-solid"></div>
-                        <div class="flex gap-6">
+                        <Thirds
+                            two_thirds=view! {
                             <div class="flex flex-col gap-y-8 flex-grow">
                                 <IssueCommentBox
                                     body=issue.read_value().body.clone().to_option().flatten()
@@ -177,9 +179,10 @@ pub fn OneIssue(
                                     )
                                 }}
                             </div>
-                            <div class="w-72"></div>
+                            }
+                            one_third=()
+                                />
                         </div>
-                    </div>
                 }.into_any())
 
             })
