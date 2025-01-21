@@ -20,7 +20,7 @@ pub struct IdbSignalInner<S> {
     /// Is an Option because idb is async, and so on initial render, this will be None
     deregister_notifier: DeregisterNotifierFunc,
 
-    #[allow(unused)]
+    #[allow(dead_code)]
     defined_at: &'static Location<'static>,
 }
 
