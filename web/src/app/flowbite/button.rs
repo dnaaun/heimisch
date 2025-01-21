@@ -15,7 +15,7 @@ pub enum ButtonColor {
 }
 
 impl ButtonColor {
-    fn get_color_classes(&self) -> &'static str {
+    fn get_classes(&self) -> &'static str {
         match self {
             Self::Default => "text-white bg-blue-700 hover:bg-blue-800 focus:ring-blue-300  dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800",
             Self::Alternative => "dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700",
@@ -29,16 +29,41 @@ impl ButtonColor {
     }
 }
 
+#[allow(dead_code)]
+#[derive(Default)]
+pub enum ButtonSize {
+    #[default]
+    ExtraSmall,
+    Small,
+    Base,
+    Large,
+    ExtraLarge,
+}
+
+impl ButtonSize {
+    fn get_classes(&self) -> &'static str {
+        match self {
+            Self::ExtraSmall => "px-3 py-2 text-xs",
+            Self::Small => "px-3 py-2 text-sm",
+            Self::Base => "px-5 py-2.5 text-sm",
+            Self::Large => "px-5 py-3 text-base",
+            Self::ExtraLarge => "px-6 py-3.5 text-base",
+        }
+    }
+}
+
 /// https://flowbite.com/docs/components/buttons/#default-button
 #[component]
 pub fn Button(
     #[prop(optional, into)] color: Signal<ButtonColor>,
     #[prop(optional)] children: Option<Children>,
+    #[prop(optional, into)] size: Signal<ButtonSize>,
 ) -> impl IntoView {
     let class = move || {
         format!(
-            "font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none {}",
-            color.read().get_color_classes()
+            "font-medium rounded-lg me-2 mb-2 focus:outline-none {} {}",
+            size.read().get_classes(),
+            color.read().get_classes()
         )
     };
     view! {
