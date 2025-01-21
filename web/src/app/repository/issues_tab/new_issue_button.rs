@@ -15,9 +15,11 @@ pub fn NewIssueButton(
                 zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/new");
             set_pathname(url.clone());
         };
-        view! { <Button
-        on:click=on_click
+        view! {
+            <Button on:click=on_click>
 
-        >New Issue</Button> }
+                New Issue
+            </Button>
+        }
     }
 }

@@ -158,7 +158,9 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                                                                 children=move |(_, name)| {
                                                                     let href = match &user_login {
                                                                         Some(u) => {
-                                                                            zwang_url!("/owner_name={u.clone()}/repo_name={name.clone()}")
+                                                                            zwang_url!(
+                                                                                "/owner_name={u.clone()}/repo_name={name.clone()}"
+                                                                            )
                                                                                 .to_string()
                                                                         }
                                                                         None => todo!(),

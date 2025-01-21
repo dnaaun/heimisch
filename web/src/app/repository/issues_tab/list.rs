@@ -71,7 +71,9 @@ pub fn IssuesList(
 
     view! {
         <div>
-            <div class="mb-2 flex flex-row-reverse justify-start"><NewIssueButton owner_name repo_name /></div>
+            <div class="mb-2 flex flex-row-reverse justify-start">
+                <NewIssueButton owner_name repo_name />
+            </div>
             <div class="bg-gray-100 border rounded-t-md p-3 flex flex-nowrap justify-between">
                 <div class="flex flex-nowrap gap-x-2">
                     <div>Open {move || counts().map(|c| c.0)}</div>
