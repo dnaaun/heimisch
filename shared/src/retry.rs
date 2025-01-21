@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 
-/// Will panic if passed a non-positive `n`.
+/// # Panics
+///
+/// Panics if `n` = 0.
 pub async fn try_n_times<T, E: Debug>(
     func: impl AsyncFn() -> Result<T, E>,
     mut n: usize,
