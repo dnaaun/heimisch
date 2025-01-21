@@ -1,6 +1,13 @@
 use leptos::prelude::*;
 
-use crate::app::{flowbite::{text_area::TextArea, text_input::TextInput}, thirds::Thirds};
+use crate::app::{
+    flowbite::{
+        button::{Button, ButtonColor},
+        text_area::TextArea,
+        text_input::TextInput,
+    },
+    thirds::Thirds,
+};
 
 #[component]
 pub fn NewIssue() -> impl IntoView {
@@ -28,6 +35,11 @@ pub fn NewIssue() -> impl IntoView {
                             placeholder="Type your description here..."
                             rows=20
                         />
+                        <div
+                        class="flex gap-2 flex-end justify-end flex-end mb-4">
+                        <Button color=ButtonColor::Light>Cancel</Button>
+                        <Button>Create</Button>
+                        </div>
                     </div>
                 </div>
             }
