@@ -141,40 +141,43 @@ pub fn OneIssue(
                                 })}
                         </div>
                         <div class="my-3 border-b border-gray-200 border-solid"></div>
-                        <div class="flex flex-col gap-y-8">
-                            <IssueCommentBox
-                                body=issue.read_value().body.clone().to_option().flatten()
-                                login=user.read_value().as_ref().map(|u| u.login.clone())
-                                created_at=issue.read_value().created_at.clone().to_option()
-                            />
-                            {move || {
-                                Ok::<
-                                    _,
-                                    FrontendError,
-                                >(
-                                    issue_comment_and_users
-                                        .get()
-                                        .transpose()?
-                                        .map(|issue_comment_and_users| {
+                        <div class="flex gap-6">
+                            <div class="flex flex-col gap-y-8 flex-grow">
+                                <IssueCommentBox
+                                    body=issue.read_value().body.clone().to_option().flatten()
+                                    login=user.read_value().as_ref().map(|u| u.login.clone())
+                                    created_at=issue.read_value().created_at.clone().to_option()
+                                />
+                                {move || {
+                                    Ok::<
+                                        _,
+                                        FrontendError,
+                                    >(
+                                        issue_comment_and_users
+                                            .get()
+                                            .transpose()?
+                                            .map(|issue_comment_and_users| {
 
-                                            view! {
-                                                <For
-                                                    each=move || issue_comment_and_users.clone()
-                                                    key=|(ic, _)| ic.id
-                                                    children=|(issue_comment, user)| {
-                                                        view! {
-                                                            <IssueCommentBox
-                                                                body=issue_comment.body.to_option()
-                                                                created_at=issue_comment.created_at.to_option()
-                                                                login=user.as_ref().map(|u| u.login.clone())
-                                                            />
+                                                view! {
+                                                    <For
+                                                        each=move || issue_comment_and_users.clone()
+                                                        key=|(ic, _)| ic.id
+                                                        children=|(issue_comment, user)| {
+                                                            view! {
+                                                                <IssueCommentBox
+                                                                    body=issue_comment.body.to_option()
+                                                                    created_at=issue_comment.created_at.to_option()
+                                                                    login=user.as_ref().map(|u| u.login.clone())
+                                                                />
+                                                            }
                                                         }
-                                                    }
-                                                />
-                                            }
-                                        }),
-                                )
-                            }}
+                                                    />
+                                                }
+                                            }),
+                                    )
+                                }}
+                            </div>
+                            <div class="w-72"></div>
                         </div>
                     </div>
                 }.into_any())
@@ -199,14 +202,14 @@ pub fn IssueCommentBox(
     };
     view! {
         <div>
-            <div class="bg-blue-100 border-t border-l border-r border-blue-300 flex flex-between p-2 rounded-t-lg">
+            <div class="bg-blue-50 border-t border-l border-r border-blue-200 flex flex-between p-2 rounded-t-lg">
                 <div class="flex gap-1">
                     <div class="font-semibold">{login}</div>
                     <div class="text-gray-700">{ago}</div>
                 </div>
                 <div></div>
             </div>
-            <div class="rounded-b-lg border-l border-r border-b border-blue-300 p-4">{body}</div>
+            <div class="rounded-b-lg border-l border-r border-b border-blue-200 p-4 min-h-10">{body}</div>
         </div>
     }
 }
