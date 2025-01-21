@@ -25,7 +25,7 @@ pub struct IdbSignalInner<S> {
 }
 
 /// NOTE: I'm actually not sure if this is ever called due to not understanding totally the life
-/// cycle of a signal, as well as the behavior of teh arena allocation stuff.
+/// cycle of a signal, as well as the behavior of the arena allocation stuff.
 impl<S> Drop for IdbSignalInner<S> {
     fn drop(&mut self) {
         if let Some(deregister_notifier) = self.deregister_notifier.lock().deref() {
