@@ -86,7 +86,7 @@ impl Changes {
     where
         DbStoreMarkers: StoreMarkersForChanges,
     {
-        Txn::builder(db)
+        db.txn()
             .with_store::<GithubApp>()
             .with_store::<Issue>()
             .with_store::<Label>()

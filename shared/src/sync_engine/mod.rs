@@ -15,6 +15,8 @@ mod ensure_initial_sync_issue_comments;
 pub mod error;
 mod registry;
 mod websocket_updates;
+mod optimistic_update;
+pub mod storage;
 
 use std::{cmp::Ordering, rc::Rc};
 
