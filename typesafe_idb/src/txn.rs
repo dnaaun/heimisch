@@ -1,7 +1,7 @@
 use crate::db::CommitListener;
 use crate::object_store::ObjectStore;
 use crate::Store;
-use crate::{chain::Chain, StoreMarker, TypesafeDb};
+use crate::{StoreMarker, TypesafeDb};
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::{
@@ -93,7 +93,7 @@ pub struct Txn<C, Mode> {
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
     reactivity_trackers: RefCell<ReactivityTrackers>,
 
-    commit_listener: Option<CommitListener>
+    commit_listener: Option<CommitListener>,
 }
 
 impl<Markers, Mode> Txn<Markers, Mode> {
@@ -139,10 +139,10 @@ pub struct TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode> {
 impl Txn<(), ()> {
     pub fn builder<DbTableMarkers>(
         db: &TypesafeDb<DbTableMarkers>,
-    ) -> TxnBuilder<'_, DbTableMarkers, Chain<(), ()>, ReadOnly> {
+    ) -> TxnBuilder<'_, DbTableMarkers, (), ReadOnly> {
         TxnBuilder {
             store_names: Default::default(),
-            txn_table_markers: Chain::new(),
+            txn_table_markers: Default::default(),
             db,
             commit_listener: db.listener.clone(),
             mode: PhantomData,
@@ -176,15 +176,17 @@ impl<C, Mode> Drop for Txn<C, Mode> {
 
 impl<'db, DbTableMarkers, TxnTableMarkers, Mode>
     TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode>
+where
+    TxnTableMarkers: Default,
 {
     pub fn with_store<H2>(
         self,
-    ) -> TxnBuilder<'db, DbTableMarkers, Chain<H2::Marker, TxnTableMarkers>, Mode>
+    ) -> TxnBuilder<'db, DbTableMarkers, (H2::Marker, TxnTableMarkers), Mode>
     where
         H2: Store,
         DbTableMarkers: StoreMarker<H2>,
     {
-        let new_markers = Chain::new::<H2::Marker, TxnTableMarkers>();
+        let new_markers = (H2::Marker::default(), TxnTableMarkers::default());
         let mut new_table_names = self.store_names;
         new_table_names.insert(H2::NAME);
 

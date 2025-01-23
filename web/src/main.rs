@@ -14,6 +14,7 @@ mod use_unwrapped_context;
 
 #[cfg(test)]
 mod tests;
+pub mod sync_engine_storage;
 
 use app::App;
 

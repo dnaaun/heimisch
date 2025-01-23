@@ -5,7 +5,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::types::{repository::Repository, user::User};
+use crate::types::{repository::{Repository, RepositoryId}, user::{User, UserId}};
 
 #[marker]
 pub trait TableMarkerFor<Table> {}
@@ -101,9 +101,23 @@ pub trait TableManager<T, Mode> {
 }
 
 pub trait Table: Sized {
-    const NAME: &'static str;
-
     type Id;
 
     fn id(&self) -> &Self::Id;
+}
+
+impl Table for User {
+    type Id = UserId;
+
+    fn id(&self) -> &Self::Id {
+        &self.id
+    }
+}
+
+impl Table for Repository {
+    type Id = RepositoryId;
+
+    fn id(&self) -> &Self::Id {
+        &self.id
+    }
 }

@@ -58,6 +58,7 @@ pub trait StoreMarkersForChanges:
     + StoreMarker<Issue>
     + StoreMarker<IssueComment>
     + StoreMarker<GithubApp>
+    + Default
 {
 }
 
@@ -70,6 +71,7 @@ impl<T> StoreMarkersForChanges for T where
         + StoreMarker<Issue>
         + StoreMarker<IssueComment>
         + StoreMarker<GithubApp>
+        + Default
 {
 }
 

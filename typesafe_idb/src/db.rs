@@ -2,7 +2,7 @@ use std::{any::TypeId, collections::HashMap, marker::PhantomData, rc::Rc};
 
 use idb::builder::ObjectStoreBuilder;
 
-use crate::{chain::Chain, ReactivityTrackers, ReadOnly, Store, Txn, TxnBuilder};
+use crate::{ReactivityTrackers, ReadOnly, Store, Txn, TxnBuilder};
 
 pub type CommitListener = Rc<dyn Fn(&ReactivityTrackers)>;
 
@@ -20,7 +20,7 @@ pub struct TypesafeDbBuilder<TableMarkers> {
 }
 
 impl TypesafeDb<()> {
-    pub fn builder(name: String) -> TypesafeDbBuilder<Chain<(), ()>> {
+    pub fn builder(name: String) -> TypesafeDbBuilder<()> {
         TypesafeDbBuilder {
             name,
             markers: PhantomData,
@@ -31,7 +31,7 @@ impl TypesafeDb<()> {
 }
 
 impl<DbTableMarkers> TypesafeDb<DbTableMarkers> {
-    pub fn txn(&self) -> TxnBuilder<'_, DbTableMarkers, Chain<(), ()>, ReadOnly> {
+    pub fn txn(&self) -> TxnBuilder<'_, DbTableMarkers, (), ReadOnly> {
         Txn::builder(self)
     }
 }
@@ -39,7 +39,7 @@ impl<DbTableMarkers> TypesafeDb<DbTableMarkers> {
 impl<DbTableMarkers> TypesafeDbBuilder<DbTableMarkers> {
     pub fn with_store<S: Store + 'static>(
         mut self,
-    ) -> TypesafeDbBuilder<Chain<S::Marker, DbTableMarkers>> {
+    ) -> TypesafeDbBuilder<(S::Marker, DbTableMarkers)> {
         self.object_store_builders
             .insert(TypeId::of::<S>(), S::object_store_builder());
         TypesafeDbBuilder {

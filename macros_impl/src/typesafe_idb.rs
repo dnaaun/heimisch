@@ -82,6 +82,7 @@ pub fn derive_typesafe_idb(input: proc_macro::TokenStream) -> proc_macro::TokenS
         .collect();
 
     let output = quote! {
+        #[derive(Default)]
         pub struct #store_marker_name {}
 
         impl typesafe_idb::StoreMarker<#struct_name> for #store_marker_name {}

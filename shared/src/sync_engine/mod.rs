@@ -13,10 +13,10 @@ pub mod typed_transport;
 pub mod changes;
 mod ensure_initial_sync_issue_comments;
 pub mod error;
-mod registry;
-mod websocket_updates;
 mod optimistic_update;
+mod registry;
 pub mod storage;
+mod websocket_updates;
 
 use std::{cmp::Ordering, rc::Rc};
 
@@ -104,7 +104,8 @@ mod isolate_db_store_markers_impl_type {
         + StoreMarker<GithubApp>
         + StoreMarker<User>
         + StoreMarker<Issue>
-        + StoreMarker<LastWebhookUpdateAt>;
+        + StoreMarker<LastWebhookUpdateAt>
+        + Default;
 
     impl<W: TypedTransportTrait> SyncEngine<W> {
         pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W> {
