@@ -5,7 +5,10 @@ use std::{
     rc::Rc,
 };
 
-use crate::types::{repository::{Repository, RepositoryId}, user::{User, UserId}};
+use crate::types::{
+    repository::{Repository, RepositoryId},
+    user::{User, UserId},
+};
 
 #[marker]
 pub trait TableMarkerFor<Table> {}
@@ -13,26 +16,20 @@ pub trait TableMarkerFor<Table> {}
 impl<T, M1, M2> TableMarkerFor<T> for (M1, M2) where M1: TableMarkerFor<T> {}
 impl<T, M1, M2> TableMarkerFor<T> for (M1, M2) where M2: TableMarkerFor<T> {}
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
-pub struct StoreName(pub &'static str);
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
-pub struct SerializedId(pub String);
+impl<T: Table> TableMarkerFor<T> for T::Marker {}
 
 pub struct ReactivityTrackers {
-    pub tables_accessed_by_id: HashMap<StoreName, HashSet<SerializedId>>,
-    pub tables_accessed_in_bulk: HashSet<StoreName>,
+    pub tables_accessed_by_id: HashMap<&'static str, HashSet<String>>,
+    pub tables_accessed_in_bulk: HashSet<&'static str>,
 }
 
 pub trait DbBuilder {
     type Error;
-    type Db<DbTableMarkers>: Db<DbTableMarkers, Error = Self::Error>;
+    type Db: Db<Error = Self::Error>;
 
     async fn new() -> Self;
     fn with_commit_listener(self, commit_listener: Rc<dyn Fn(&ReactivityTrackers)>) -> Self;
-    async fn build(
-        self,
-    ) -> Result<Self::Db<impl TableMarkerFor<User> + TableMarkerFor<Repository>>, Self::Error>;
+    async fn build(self) -> Result<Self::Db, Self::Error>;
 }
 
 pub struct ReadOnly;
@@ -46,27 +43,44 @@ pub trait SupportsWrite {}
 impl SupportsRead for ReadOnly {}
 impl SupportsWrite for ReadWrite {}
 
-pub trait Db<TableMarkers> {
+pub trait Db {
     type Error;
-    type TxnBuilder<TableMarkersFromDb, TxnTableMarkers, Mode>: TxnBuilder<
-        TableMarkersFromDb,
-        TxnTableMarkers,
-        Mode,
-    >;
+    type TableMarkers: TableMarkerFor<User> + TableMarkerFor<Repository>;
+    type TxnBuilder<'db, TxnTableMarkers, Mode>
+    where
+        TxnTableMarkers: 'db,
+        Mode: 'db,
+        Self: 'db;
 
-    fn txn_builder(&self) -> Self::TxnBuilder<TableMarkers, (), ReadOnly>;
+    fn txn_builder(&self) -> Self::TxnBuilder<'_, (), ReadOnly>;
 }
 
-pub trait TxnBuilder<TableMarkersFromDb, TableMarkers, Mode> {
-    type Txn<TxnTableMarers>;
-    fn with_table<U>(self) -> (impl TableMarkerFor<U>, TableMarkers)
+pub trait TxnBuilder<'db, TableMarkersFromDb, TableMarkers, Mode>
+where
+    TableMarkersFromDb: Default,
+    TableMarkers: Default,
+{
+    type Marker<U>
+    where
+        U: Table;
+
+    type Myself<S, T, M>: TxnBuilder<'db, S, T, M>
+    where
+        S: 'db + Default,
+        T: 'db + Default,
+        M: 'db;
+
+    type Txn: Txn<TableMarkers, Mode>;
+    fn with_table<U: Table>(
+        self,
+    ) -> Self::Myself<TableMarkersFromDb, (impl TableMarkerFor<U> + Default, TableMarkers), Mode>
     where
         TableMarkersFromDb: TableMarkerFor<U>;
 
-    fn build(self) -> Self::Txn<TableMarkers>;
+    fn build(self) -> Self::Txn;
 
-    fn read_only(self) -> impl TxnBuilder<TableMarkersFromDb, TableMarkers, ReadOnly>;
-    fn read_write(self) -> impl TxnBuilder<TableMarkersFromDb, TableMarkers, ReadWrite>;
+    fn read_only(self) -> impl TxnBuilder<'db, TableMarkersFromDb, TableMarkers, ReadOnly>;
+    fn read_write(self) -> impl TxnBuilder<'db, TableMarkersFromDb, TableMarkers, ReadWrite>;
 }
 
 pub trait Txn<TableMarkers, Mode> {
@@ -102,20 +116,25 @@ pub trait TableManager<T, Mode> {
 
 pub trait Table: Sized {
     type Id;
+    type Marker;
 
     fn id(&self) -> &Self::Id;
 }
 
+pub struct UserMarker;
 impl Table for User {
     type Id = UserId;
+    type Marker = UserMarker;
 
     fn id(&self) -> &Self::Id {
         &self.id
     }
 }
 
+pub struct RepositoryMarker;
 impl Table for Repository {
     type Id = RepositoryId;
+    type Marker = RepositoryMarker;
 
     fn id(&self) -> &Self::Id {
         &self.id

@@ -6,15 +6,15 @@ use crate::{ReactivityTrackers, ReadOnly, Store, Txn, TxnBuilder};
 
 pub type CommitListener = Rc<dyn Fn(&ReactivityTrackers)>;
 
-pub struct TypesafeDb<TableMarkers> {
-    markers: PhantomData<TableMarkers>,
+pub struct TypesafeDb<StoreMarkers> {
+    markers: PhantomData<StoreMarkers>,
     pub(crate) listener: Option<CommitListener>,
     pub(crate) inner: idb::Database,
 }
 
-pub struct TypesafeDbBuilder<TableMarkers> {
+pub struct TypesafeDbBuilder<StoreMarkers> {
     name: String,
-    markers: PhantomData<TableMarkers>,
+    markers: PhantomData<StoreMarkers>,
     object_store_builders: HashMap<TypeId, ObjectStoreBuilder>,
     commit_listener: Option<CommitListener>,
 }
@@ -30,16 +30,16 @@ impl TypesafeDb<()> {
     }
 }
 
-impl<DbTableMarkers> TypesafeDb<DbTableMarkers> {
-    pub fn txn(&self) -> TxnBuilder<'_, DbTableMarkers, (), ReadOnly> {
+impl<DbStoreMarkers> TypesafeDb<DbStoreMarkers> {
+    pub fn txn(&self) -> TxnBuilder<'_, DbStoreMarkers, (), ReadOnly> {
         Txn::builder(self)
     }
 }
 
-impl<DbTableMarkers> TypesafeDbBuilder<DbTableMarkers> {
+impl<DbStoreMarkers> TypesafeDbBuilder<DbStoreMarkers> {
     pub fn with_store<S: Store + 'static>(
         mut self,
-    ) -> TypesafeDbBuilder<(S::Marker, DbTableMarkers)> {
+    ) -> TypesafeDbBuilder<(S::Marker, DbStoreMarkers)> {
         self.object_store_builders
             .insert(TypeId::of::<S>(), S::object_store_builder());
         TypesafeDbBuilder {
@@ -57,7 +57,7 @@ impl<DbTableMarkers> TypesafeDbBuilder<DbTableMarkers> {
         }
     }
 
-    pub async fn build(self) -> Result<TypesafeDb<DbTableMarkers>, crate::Error> {
+    pub async fn build(self) -> Result<TypesafeDb<DbStoreMarkers>, crate::Error> {
         let db = self
             .object_store_builders
             .into_iter()
