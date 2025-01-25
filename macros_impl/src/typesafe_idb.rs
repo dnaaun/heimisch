@@ -60,7 +60,7 @@ pub fn derive_typesafe_idb(input: proc_macro::TokenStream) -> proc_macro::TokenS
 
                 impl typesafe_idb::IndexSpec for #index_name {
                     type Store = #struct_name;
-                    const NAME: &'static str = #field_name;
+                    const NAME: ::typesafe_idb::StoreName = ::typesafe_idb::StoreName(#field_name);
                     type Type = #field_type;
                 }
             }
@@ -87,7 +87,7 @@ pub fn derive_typesafe_idb(input: proc_macro::TokenStream) -> proc_macro::TokenS
 
         impl typesafe_idb::StoreMarker<#struct_name> for #store_marker_name {}
         impl typesafe_idb::Store for #struct_name {
-            const NAME: &'static str = stringify!(#struct_name_lowercase_pluralized);
+            const NAME: ::typesafe_idb::StoreName = ::typesafe_idb::StoreName(stringify!(#struct_name_lowercase_pluralized));
             type Marker = #store_marker_name;
             type Id = #id_field_type;
 
@@ -96,7 +96,7 @@ pub fn derive_typesafe_idb(input: proc_macro::TokenStream) -> proc_macro::TokenS
             }
 
             fn object_store_builder() -> idb::builder::ObjectStoreBuilder {
-                idb::builder::ObjectStoreBuilder::new(Self::NAME)
+                idb::builder::ObjectStoreBuilder::new(<::typesafe_idb::StoreName as ::std::ops::Deref>::deref(&Self::NAME))
                     .key_path(Some(idb::KeyPath::new_single(stringify!(#id_field_name))))
                     #(#index_adds)*
             }

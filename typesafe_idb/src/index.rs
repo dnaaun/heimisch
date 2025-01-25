@@ -10,7 +10,7 @@ use crate::{
 
 pub trait IndexSpec {
     type Store: Store;
-    const NAME: &'static str;
+    const NAME: StoreName;
     type Type: Serialize;
 }
 
@@ -24,7 +24,7 @@ impl<IS: IndexSpec> Index<'_, IS> {
     pub async fn get(&self, value: &IS::Type) -> Result<Option<IS::Store>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(StoreName(IS::Store::NAME));
+            .add_bulk_access(IS::Store::NAME);
 
         Ok(self
             .actual_index
@@ -37,7 +37,7 @@ impl<IS: IndexSpec> Index<'_, IS> {
     pub async fn get_all(&self, value: Option<&IS::Type>) -> Result<Vec<IS::Store>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(StoreName(IS::Store::NAME));
+            .add_bulk_access(IS::Store::NAME);
 
         Ok(self
             .actual_index

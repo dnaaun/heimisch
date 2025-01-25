@@ -33,7 +33,7 @@ pub struct Link {
     pub href: String,
 }
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
+#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Hash)]
 pub struct PullRequestId(i64);
 
 #[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]

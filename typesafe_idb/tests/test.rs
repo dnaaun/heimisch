@@ -4,16 +4,16 @@ use std::collections::{HashMap, HashSet};
 
 use macros::TypesafeIdb;
 use serde::{Deserialize, Serialize};
-use typesafe_idb::{SerializedId, Store, StoreMarker, StoreName, TypesafeDb};
+use typesafe_idb::{SerializedId, Store, StoreMarker, TypesafeDb};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct InstallationId(u64);
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct RepositoryId(u64);
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct UserId(u64);
 
 #[derive(TypesafeIdb, Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
@@ -65,7 +65,7 @@ pub async fn get_by_index_reactivity() {
     let trackers = txn.commit().await.unwrap();
     assert_eq!(
         trackers.stores_accessed_in_bulk,
-        HashSet::from_iter([StoreName(Repository::NAME)])
+        HashSet::from_iter([Repository::NAME])
     );
     assert!(trackers.stores_accessed_by_id.is_empty())
 }
@@ -84,7 +84,7 @@ pub async fn get_all_by_index_reactivity() {
 
     assert_eq!(
         trackers.stores_accessed_in_bulk,
-        HashSet::from_iter([StoreName(Repository::NAME)])
+        HashSet::from_iter([Repository::NAME])
     );
     assert!(trackers.stores_accessed_by_id.is_empty())
 }
@@ -104,8 +104,8 @@ pub async fn get_by_id_reactivity() {
     assert_eq!(
         trackers.stores_accessed_by_id,
         HashMap::from_iter([(
-            StoreName(Repository::NAME),
-            HashSet::from_iter([SerializedId("4".to_owned())])
+            Repository::NAME,
+            HashSet::from_iter([SerializedId::new_from_id::<Repository>(&RepositoryId(4))])
         )])
     );
 }
@@ -118,7 +118,7 @@ pub async fn get_all_reactivity() {
 
     assert_eq!(
         trackers.stores_accessed_in_bulk,
-        HashSet::from_iter([StoreName(Repository::NAME)])
+        HashSet::from_iter([Repository::NAME])
     );
     assert!(trackers.stores_accessed_by_id.is_empty())
 }

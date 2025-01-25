@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::team_organization::TeamOrganizationId;
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
+#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Hash)]
 pub struct TeamId(i64);
 
 #[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]

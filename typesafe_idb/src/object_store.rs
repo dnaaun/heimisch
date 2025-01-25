@@ -1,8 +1,7 @@
 use std::{cell::RefCell, marker::PhantomData};
 
 use crate::{
-    serde_abstraction, Index, IndexSpec, Present, ReactivityTrackers, SerializedId, Store,
-    StoreName, TxnMode,
+    serde_abstraction, Index, IndexSpec, Present, ReactivityTrackers, SerializedId, Store, TxnMode,
 };
 
 #[derive(Clone)]
@@ -21,7 +20,7 @@ where
     pub async fn get(&self, id: &S::Id) -> Result<Option<S>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(StoreName(S::NAME), SerializedId(serde_json::to_string(id)?));
+            .add_by_id_access(S::NAME, SerializedId::new_from_id::<S>(id));
 
         Ok(self
             .actual_object_store
@@ -34,7 +33,7 @@ where
     pub async fn get_all(&self) -> Result<Vec<S>, crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(StoreName(S::NAME));
+            .add_bulk_access(S::NAME);
         Ok(self
             .actual_object_store
             .get_all(None, None)?
@@ -47,7 +46,7 @@ where
     pub fn index<IS: IndexSpec<Store = S>>(&self) -> Result<Index<'_, IS>, crate::Error> {
         Ok(Index {
             reactivity_trackers: self.reactivity_trackers,
-            actual_index: self.actual_object_store.index(IS::NAME)?,
+            actual_index: self.actual_object_store.index(&IS::NAME)?,
             _markers: PhantomData,
         })
     }
@@ -62,7 +61,7 @@ where
     pub async fn delete(&self, id: &S::Id) -> Result<(), crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(StoreName(S::NAME), SerializedId(serde_json::to_string(id)?));
+            .add_by_id_access(S::NAME, SerializedId::new_from_id::<S>(id));
 
         Ok(self
             .actual_object_store
@@ -74,7 +73,7 @@ where
     pub async fn put(&self, item: &S) -> Result<(), crate::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(StoreName(S::NAME), SerializedId(serde_json::to_string(item.id())?));
+            .add_by_id_access(S::NAME, SerializedId::new_from_row(item));
 
         self.actual_object_store
             .put(&serde_abstraction::to_value(item)?, None)?

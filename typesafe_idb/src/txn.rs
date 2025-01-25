@@ -41,8 +41,35 @@ impl TxnMode for ReadWrite {
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub struct StoreName(pub &'static str);
 
+impl Deref for StoreName {
+    type Target = &'static str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-pub struct SerializedId(pub String);
+pub struct SerializedId(String);
+
+impl std::ops::Deref for SerializedId {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl SerializedId {
+    pub fn new_from_row<S: Store>(row: &S) -> Self {
+        Self(serde_json::to_string(&row.id()).unwrap())
+    }
+
+    pub fn new_from_id<S: Store>(id: &S::Id) -> Self {
+        Self(serde_json::to_string(&id).unwrap())
+    }
+
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct ReactivityTrackers {
@@ -102,7 +129,7 @@ impl<Markers, Mode> Txn<Markers, Mode> {
         S: Store,
         Markers: StoreMarker<S>,
     {
-        let actual_object_store = self.actual_txn.as_ref().map(|t| t.object_store(S::NAME))
+        let actual_object_store = self.actual_txn.as_ref().map(|t| t.object_store(&S::NAME))
             .expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")?;
 
         Ok(ObjectStore {
@@ -188,7 +215,7 @@ where
     {
         let new_markers = (H2::Marker::default(), TxnTableMarkers::default());
         let mut new_table_names = self.store_names;
-        new_table_names.insert(H2::NAME);
+        new_table_names.insert(&H2::NAME);
 
         TxnBuilder {
             txn_table_markers: new_markers,

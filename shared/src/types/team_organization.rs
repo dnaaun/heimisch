@@ -2,7 +2,7 @@ use derive_more::derive::{AsRef, Deref, From, Into};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize)]
+#[derive(From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Hash)]
 pub struct TeamOrganizationId(i64);
 
 #[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
