@@ -13,7 +13,7 @@ pub mod typed_transport;
 pub mod changes;
 mod ensure_initial_sync_issue_comments;
 pub mod error;
-mod optimistic_update;
+mod optimistic_changes;
 mod registry;
 pub mod storage;
 mod websocket_updates;
