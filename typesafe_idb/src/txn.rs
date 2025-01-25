@@ -49,7 +49,7 @@ impl Deref for StoreName {
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Ord, PartialOrd, Hash, PartialEq, Eq, Clone)]
 pub struct SerializedId(String);
 
 impl std::ops::Deref for SerializedId {
