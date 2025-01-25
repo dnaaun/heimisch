@@ -129,7 +129,7 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadOnly = Present>,
 {
-    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, typesafe_idb::Error> {
+    pub async fn get(&self, _id: &S::Id) -> Result<Option<S>, typesafe_idb::Error> {
         todo!()
     }
 

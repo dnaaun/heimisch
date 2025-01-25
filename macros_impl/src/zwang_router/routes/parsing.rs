@@ -152,16 +152,6 @@ impl Parse for Part {
     }
 }
 
-pub fn parse_fallback(input: ParseStream) -> Result<Ident> {
-    if Ident::parse(input)? != "fallback" {
-        panic!("Expected fallback.");
-    }
-    let _ = input.parse::<Token![:]>()?;
-    let ident = input.parse();
-    let _ = input.parse::<Token![,]>();
-    ident
-}
-
 #[cfg(test)]
 mod tests {
     use crate::zwang_router::TEST_STR;
