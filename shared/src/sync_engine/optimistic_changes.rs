@@ -3,7 +3,10 @@
 
 use std::{any::Any, future::Future, hash::Hash, rc::Rc, sync::Arc};
 
-use typesafe_idb::{Index, IndexSpec, ObjectStore, Present, Store, StoreMarker, Txn, TxnMode};
+use typesafe_idb::{
+    Index, IndexSpec, ObjectStore, Present, SerializedId, Store, StoreMarker, StoreName, Txn,
+    TxnMode,
+};
 
 use crate::types::user::User;
 
@@ -26,8 +29,20 @@ impl<S: Store> Hash for OptimisticChangeRow<S> {
 
 pub struct OptimisticChanges {
     updates: OptimisticChangeMap<Rc<dyn Any>>,
-    creations: OptimisticChangeMap<Rc<dyn Any>>,
+    creations: OptimisticChangeMap<Rc<dyn Any>, SerializedId>,
     deletes: OptimisticChangeMap<()>,
+}
+
+enum OptimisticConfirmationType {
+    Created,
+    Updated,
+    Removed,
+}
+
+pub struct OptimisticConfirmation {
+    type_: OptimisticConfirmationType,
+    id: SerializedId,
+    store_name: StoreName,
 }
 
 impl OptimisticChanges {
@@ -41,31 +56,36 @@ impl OptimisticChanges {
 
         match update_fut.await {
             Ok(t) => {
-                self.updates.mark_successful::<S>(&id, &now);
+                self.updates.mark_successful::<S>(&id, &now, ());
                 Ok(t)
             }
             Err(e) => {
-                self.updates.remove::<S>(&id, &now);
+                self.updates.remove_pending::<S>(&id, &now);
                 Err(e)
             }
         }
     }
 
-    pub async fn register_create<S: Store + 'static, T, E>(
+    pub async fn register_create<S: Store + 'static, E>(
         &self,
         row: S,
-        delete_fut: impl Future<Output = Result<T, E>>,
-    ) -> Result<T, E> {
+        // The future must resolve to the id of whatever is created.
+        create_fut: impl Future<Output = Result<S::Id, E>>,
+    ) -> Result<(), E> {
         let id = row.id().clone();
         let time = self.creations.insert::<S>(&id, Rc::new(row));
 
-        match delete_fut.await {
-            Ok(t) => {
-                self.deletes.mark_successful::<S>(&id, &time);
-                Ok(t)
+        match create_fut.await {
+            Ok(actual_id) => {
+                self.creations.mark_successful::<S>(
+                    &actual_id,
+                    &time,
+                    SerializedId::new_from_id::<S>(&actual_id),
+                );
+                Ok(())
             }
             Err(e) => {
-                self.deletes.remove::<S>(&id, &time);
+                self.creations.remove_pending::<S>(&id, &time);
                 Err(e)
             }
         }
@@ -80,14 +100,18 @@ impl OptimisticChanges {
 
         match delete_fut.await {
             Ok(t) => {
-                self.deletes.mark_successful::<S>(id, &time);
+                self.deletes.mark_successful::<S>(id, &time, ());
                 Ok(t)
             }
             Err(e) => {
-                self.deletes.remove::<S>(id, &time);
+                self.deletes.remove_pending::<S>(id, &time);
                 Err(e)
             }
         }
+    }
+
+    pub fn remove_obsolete_changes(&self, _confirmations: &[OptimisticConfirmation]) {
+        todo!()
     }
 }
 

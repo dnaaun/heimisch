@@ -21,8 +21,6 @@ impl Display for ReqwestSendError {
 
 impl std::error::Error for ReqwestSendError {}
 
-#[allow(async_fn_in_trait)]
-#[cfg_attr(feature = "ssr", async_trait::async_trait)]
 pub trait ExecuteNicely {
     async fn execute_nicely(
         &self,
@@ -30,7 +28,6 @@ pub trait ExecuteNicely {
     ) -> std::result::Result<reqwest::Response, ReqwestSendError>;
 }
 
-#[cfg_attr(feature = "ssr", async_trait::async_trait)]
 impl ExecuteNicely for reqwest::Client {
     /// Has a nicer error (at the cost of more clones).
     async fn execute_nicely(

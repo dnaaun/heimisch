@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use leptos::mount::mount_to_body;
 use tracing_wasm::WASMLayerConfigBuilder;
 pub mod app;
@@ -12,9 +10,9 @@ pub mod signal_ext;
 pub mod typed_transport;
 mod use_unwrapped_context;
 
+pub mod sync_engine_storage;
 #[cfg(test)]
 mod tests;
-pub mod sync_engine_storage;
 
 use app::App;
 

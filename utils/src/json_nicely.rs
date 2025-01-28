@@ -12,12 +12,10 @@ pub struct ReqwestJsonError {
     pub serde_error: Option<serde_json::error::Error>,
 }
 
-#[cfg_attr(feature = "ssr", async_trait::async_trait)]
 pub trait JsonNicely {
     async fn json_nicely<T: DeserializeOwned>(self) -> std::result::Result<T, ReqwestJsonError>;
 }
 
-#[cfg_attr(feature = "ssr", async_trait::async_trait)]
 impl JsonNicely for reqwest::Response {
     /// Has a nicer error (at the cost of more clones).
     async fn json_nicely<T: DeserializeOwned>(
