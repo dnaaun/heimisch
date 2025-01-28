@@ -4,7 +4,7 @@ use crate::{
     types::{installation::InstallationId, repository::RepositoryId},
 };
 
-use super::{from_license::from_license, from_user2::from_user2};
+use super::{from_license::from_license, InfallibleToDbNoOtherChanges};
 
 pub fn from_repository(
     api_repo: github_api::models::Repository,
@@ -109,7 +109,7 @@ pub fn from_repository(
         web_commit_signoff_required,
     } = api_repo;
 
-    let db_owner = owner.map(|i| from_user2(*i));
+    let db_owner = owner.map(|i| i.to_db_type(()));
     let db_license = license.map(|l| from_license(*l));
 
     let db_repo = crate::types::repository::Repository {

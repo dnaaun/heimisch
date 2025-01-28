@@ -4,7 +4,7 @@ use crate::{
     types::milestone::MilestoneId,
 };
 
-use super::from_user2::from_user2;
+use super::InfallibleToDbNoOtherChanges;
 
 pub fn from_milestone1(
     api_milestone: github_api::models::Milestone1,
@@ -28,7 +28,7 @@ pub fn from_milestone1(
         url,
     } = api_milestone;
 
-    let db_creator = creator.map(|c| from_user2(*c));
+    let db_creator = creator.map(|c| c.to_db_type(()));
 
     let db_milestone = crate::types::milestone::Milestone {
         closed_at: closed_at.into(),

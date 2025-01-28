@@ -3,10 +3,11 @@ use crate::{
     sync_engine::changes::{AddChanges, Changes},
     types::{issue::IssueId, repository::RepositoryId},
 };
+use typesafe_idb::Store;
 
 use super::{
-    from_app10::from_app10, from_milestone1::from_milestone1, from_user::from_user,
-    from_user1::from_user1, from_user2::from_user2, InfallibleToDbNoOtherChanges, ToDb,
+    from_milestone1::from_milestone1, from_user::from_user, from_user1::from_user1,
+    InfallibleToDbNoOtherChanges, ToDb,
 };
 
 impl ToDb for github_api::models::Label {
@@ -81,12 +82,13 @@ pub fn from_issue(
         user,
     } = api_issue;
 
-    let db_assignee = assignee.map(|a| a.map(|a| from_user2(*a)));
+    let db_assignee = assignee.map(|a| a.map(|a| a.to_db_type(())));
     let db_assignees = assignees.into_iter().map(from_user).collect::<Vec<_>>();
     let db_user = user.map(|u| from_user1(*u));
     let db_milestone_info = milestone.map(|m| from_milestone1(*m)).transpose()?;
-    let db_github_app_info = performed_via_github_app.map(|p| p.map(|p| from_app10(*p)));
-    let (db_github_app_id, changes_from_github_app) = match db_github_app_info {
+    let db_github_app_info =
+        performed_via_github_app.map(|p| p.map(|p| p.try_to_db_type_and_other_changes(())));
+    let (db_github_app, changes_from_github_app) = match db_github_app_info {
         Some(db_github_app_info) => {
             if let Some(db_github_app_info) = db_github_app_info {
                 let db_github_app_info = db_github_app_info?;
@@ -97,6 +99,9 @@ pub fn from_issue(
         }
         None => (None, None),
     };
+    let db_github_app_id = db_github_app
+        .as_ref()
+        .map(|d| d.as_ref().map(|d| d.id().clone()));
 
     let db_issue = crate::types::issue::Issue {
         active_lock_reason: active_lock_reason.into(),
@@ -151,6 +156,7 @@ pub fn from_issue(
     if let Some((_, inner_changes)) = db_milestone_info {
         changes.add(inner_changes)?;
     }
+    changes.add(db_github_app)?;
     changes.add(changes_from_github_app)?;
 
     Ok((issue_id, changes))
