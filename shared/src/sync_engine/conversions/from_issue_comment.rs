@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     conversion_error::ConversionError, from_integration::from_nullable_integration,
-    from_user1::from_user1,
+    InfallibleToDbNoOtherChanges,
 };
 
 pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
@@ -31,7 +31,7 @@ pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
         user,
     } = api_issue_comment;
 
-    let db_user = user.map(|u| from_user1(*u));
+    let db_user = user.map(|u| u.to_db_type(()));
     let db_github_app_info = performed_via_github_app
         .map(|p| from_nullable_integration(*p))
         .transpose()?;
@@ -40,7 +40,10 @@ pub async fn from_issue_comment<Fut: Future<Output = Option<IssueId>>>(
         None => (None, None),
     };
 
-    let issue_number: Option<i64> = issue_url.split('/').last().and_then(|i| i.parse().ok());
+    let issue_number: Option<i64> = issue_url
+        .split('/')
+        .next_back()
+        .and_then(|i| i.parse().ok());
 
     let issue_id = match issue_number {
         Some(issue_number) => issue_id_from_number(issue_number).await,

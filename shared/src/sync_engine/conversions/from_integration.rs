@@ -5,7 +5,7 @@ use crate::{
     types::github_app::GithubAppId,
 };
 
-use super::from_nullable_simple_user::from_nullable_simple_user;
+use super::InfallibleToDbNoOtherChanges;
 
 pub fn from_nullable_integration(
     api_integration: github_api::models::NullableIntegration,
@@ -30,7 +30,7 @@ pub fn from_nullable_integration(
         pem,
     } = api_integration;
 
-    let db_owner = owner.map(|i| from_nullable_simple_user(*i));
+    let db_owner = owner.map(|i| i.to_db_type(()));
 
     let db_app = crate::types::github_app::GithubApp {
         client_id: client_id.into(),

@@ -3,12 +3,8 @@ pub mod conversion_error;
 pub mod from_integration;
 pub mod from_issue;
 pub mod from_issue_comment;
-pub mod from_license;
 pub mod from_milestone1;
-pub mod from_nullable_simple_user;
 pub mod from_repository;
-pub mod from_user;
-pub mod from_user1;
 
 pub mod github_api;
 mod to_db;

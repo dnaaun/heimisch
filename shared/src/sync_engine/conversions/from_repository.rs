@@ -4,7 +4,7 @@ use crate::{
     types::{installation::InstallationId, repository::RepositoryId},
 };
 
-use super::{from_license::from_license, InfallibleToDbNoOtherChanges};
+use super::InfallibleToDbNoOtherChanges;
 
 pub fn from_repository(
     api_repo: github_api::models::Repository,
@@ -110,7 +110,7 @@ pub fn from_repository(
     } = api_repo;
 
     let db_owner = owner.map(|i| i.to_db_type(()));
-    let db_license = license.map(|l| from_license(*l));
+    let db_license = license.map(|l| l.to_db_type(()));
 
     let db_repo = crate::types::repository::Repository {
         allow_auto_merge: Avail::from_option(allow_auto_merge),

@@ -5,10 +5,7 @@ use crate::{
 };
 use typesafe_idb::Store;
 
-use super::{
-    from_milestone1::from_milestone1, from_user::from_user, from_user1::from_user1,
-    InfallibleToDbNoOtherChanges, ToDb,
-};
+use super::{from_milestone1::from_milestone1, InfallibleToDbNoOtherChanges, ToDb};
 
 impl ToDb for github_api::models::Label {
     type Args = ();
@@ -83,8 +80,11 @@ pub fn from_issue(
     } = api_issue;
 
     let db_assignee = assignee.map(|a| a.map(|a| a.to_db_type(())));
-    let db_assignees = assignees.into_iter().map(from_user).collect::<Vec<_>>();
-    let db_user = user.map(|u| from_user1(*u));
+    let db_assignees = assignees
+        .into_iter()
+        .map(|x| x.to_db_type(()))
+        .collect::<Vec<_>>();
+    let db_user = user.map(|u| u.to_db_type(()));
     let db_milestone_info = milestone.map(|m| from_milestone1(*m)).transpose()?;
     let db_github_app_info =
         performed_via_github_app.map(|p| p.map(|p| p.try_to_db_type_and_other_changes(())));
@@ -99,9 +99,7 @@ pub fn from_issue(
         }
         None => (None, None),
     };
-    let db_github_app_id = db_github_app
-        .as_ref()
-        .map(|d| d.as_ref().map(|d| d.id().clone()));
+    let db_github_app_id = db_github_app.as_ref().map(|d| d.as_ref().map(|d| *d.id()));
 
     let db_issue = crate::types::issue::Issue {
         active_lock_reason: active_lock_reason.into(),
