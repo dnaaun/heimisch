@@ -38,7 +38,7 @@ impl TxnMode for ReadWrite {
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub struct StoreName(pub &'static str);
 
 impl Deref for StoreName {

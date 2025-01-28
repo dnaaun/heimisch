@@ -22,6 +22,8 @@ use super::user::UserId;
     PartialEq,
     Eq,
     Default,
+    PartialOrd,
+    Ord,
 )]
 pub struct MilestoneId(i64);
 

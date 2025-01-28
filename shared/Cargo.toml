@@ -29,11 +29,20 @@ ewebsock = "0.8.0"
 pin-project = "1.1.7"
 serde_urlencoded = "0.7.1"
 leptos = { version = "*", optional = true }
+web-sys = { version = "*", optional = true, default-features = false, features = ["Performance"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.45"
+
 
 [features]
-hydrate = [ "jiff/js", "leptos" ]
+hydrate = [ "jiff/js", "leptos", "web-sys" ]
 ssr = [
 	"dep:diesel-derive-newtype",
 	"dep:diesel",
 	"github_api/ssr",
 ]
+
+# Otherwise (nightly) rust complains about `[wasm_bindgen_test]`
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test_coverage)'] }

@@ -5,7 +5,20 @@ use serde::{Deserialize, Serialize};
 use crate::avail::Avail;
 
 #[derive(
-    From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Default,
+    From,
+    Into,
+    Deref,
+    AsRef,
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    PartialOrd,
+    Ord,
 )]
 pub struct LicenseId(String);
 

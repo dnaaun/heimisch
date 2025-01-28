@@ -22,6 +22,8 @@ use super::{github_app::GithubAppId, issue::IssueId, repository::RepositoryId, u
     Hash,
     Copy,
     Default,
+    PartialOrd,
+    Ord,
 )]
 pub struct IssueCommentId(i64);
 

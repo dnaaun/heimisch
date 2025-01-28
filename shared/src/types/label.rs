@@ -2,7 +2,20 @@ use derive_more::derive::{AsRef, Deref, From, Into};
 use serde::{Deserialize, Serialize};
 
 #[derive(
-    From, Into, Deref, AsRef, Clone, Debug, Serialize, Deserialize, Copy, Hash, PartialEq, Eq,
+    From,
+    Into,
+    Deref,
+    AsRef,
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
 )]
 pub struct LabelId(i64);
 

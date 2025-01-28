@@ -22,6 +22,8 @@ use super::user::UserId;
     Eq,
     Hash,
     Default,
+    PartialOrd,
+    Ord,
 )]
 pub struct GithubAppId(i64);
 

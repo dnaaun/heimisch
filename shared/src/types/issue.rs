@@ -29,10 +29,14 @@ use super::user::UserId;
     Hash,
     Copy,
     Default,
+    PartialOrd,
+    Ord,
 )]
 pub struct IssueId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Hash)]
+#[derive(
+    macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Hash,
+)]
 pub struct Issue {
     pub active_lock_reason: Avail<Option<ActiveLockReason>>,
     pub assignee_id: Avail<Option<UserId>>,

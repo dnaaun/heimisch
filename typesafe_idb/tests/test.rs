@@ -10,10 +10,10 @@ use wasm_bindgen_test::wasm_bindgen_test;
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct InstallationId(u64);
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Copy)]
 pub struct RepositoryId(u64);
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Copy)]
 pub struct UserId(u64);
 
 #[derive(TypesafeIdb, Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]

@@ -1,24 +1,13 @@
 #![allow(dead_code)]
 #![allow(clippy::type_complexity)]
 
-use std::{
-    any::Any,
-    collections::{HashMap, HashSet},
-    future::Future,
-    hash::Hash,
-    sync::Arc,
-};
+use std::{any::Any, future::Future, hash::Hash, rc::Rc, sync::Arc};
 
-use jiff::Timestamp;
-use parking_lot::RwLock;
-use typesafe_idb::{
-    Index, IndexSpec, ObjectStore, Present, SerializedId, Store, StoreMarker, StoreName, Txn,
-    TxnMode,
-};
+use typesafe_idb::{Index, IndexSpec, ObjectStore, Present, Store, StoreMarker, Txn, TxnMode};
 
 use crate::types::user::User;
 
-use super::non_empty_2d_map::NonEmpty2dMap;
+use super::optimistic_change_map::OptimisticChangeMap;
 
 /// Hashed by store name and hash.
 #[derive(Debug, derive_more::From)]
@@ -35,64 +24,67 @@ impl<S: Store> Hash for OptimisticChangeRow<S> {
     }
 }
 
-/// RTI: In any (key, value) pair,  the `StoreName` in the key determines the right type that
-/// we can downcast `dyn Any` from in the value.
 pub struct OptimisticChanges {
-    updates: RwLock<
-        HashMap<
-            StoreName,
-            NonEmpty2dMap<
-                SerializedId,
-                Timestamp,
-                // The `bool` indicates whether the future that is associated with the optimistic update
-                // succeeded.
-                (bool, Box<dyn Any>),
-            >,
-        >,
-    >,
-
-    creations: RwLock<HashMap<StoreName, HashMap<SerializedId, Box<dyn Any>>>>,
-
-    deletes: RwLock<HashMap<StoreName, HashSet<SerializedId>>>,
+    updates: OptimisticChangeMap<Rc<dyn Any>>,
+    creations: OptimisticChangeMap<Rc<dyn Any>>,
+    deletes: OptimisticChangeMap<()>,
 }
 
 impl OptimisticChanges {
-    /// When `update_fut` is completed, if it's Ok(_), it will mark the optimistic update as having
-    /// been successful The removal of that update from `OptimisticChanges` will happen only when
-    /// we get a webhook that matches the row that the optimistc update pertains to.
-    pub async fn register<S: Store + 'static, T, E>(
+    pub async fn register_update<S: Store + 'static, T, E>(
         &self,
         row: S,
         update_fut: impl Future<Output = Result<T, E>>,
     ) -> Result<T, E> {
-        let serialized_id = SerializedId::new_from_row(&row);
-        let now = Timestamp::now();
-        self.updates.write().entry(S::NAME).or_default().insert(
-            serialized_id.clone(),
-            now,
-            (false, Box::new(row)),
-        );
+        let id = row.id().clone();
+        let now = self.updates.insert::<S>(&id, Rc::new(row));
 
         match update_fut.await {
             Ok(t) => {
-                if let Some((future_completed, _)) = self
-                    .updates
-                    .write()
-                    .get_mut(&S::NAME)
-                    .expect("Should have been inserted when `registered` was run.")
-                    .get_mut(&serialized_id, &now)
-                {
-                    *future_completed = true
-                }
-
+                self.updates.mark_successful::<S>(&id, &now);
                 Ok(t)
             }
             Err(e) => {
-                self.updates
-                    .write()
-                    .get_mut(&S::NAME)
-                    .expect("Should have been inserted when `registered` was run.")
-                    .remove(&serialized_id, &now);
+                self.updates.remove::<S>(&id, &now);
+                Err(e)
+            }
+        }
+    }
+
+    pub async fn register_create<S: Store + 'static, T, E>(
+        &self,
+        row: S,
+        delete_fut: impl Future<Output = Result<T, E>>,
+    ) -> Result<T, E> {
+        let id = row.id().clone();
+        let time = self.creations.insert::<S>(&id, Rc::new(row));
+
+        match delete_fut.await {
+            Ok(t) => {
+                self.deletes.mark_successful::<S>(&id, &time);
+                Ok(t)
+            }
+            Err(e) => {
+                self.deletes.remove::<S>(&id, &time);
+                Err(e)
+            }
+        }
+    }
+
+    pub async fn register_delete<S: Store + 'static, T, E>(
+        &self,
+        id: &S::Id,
+        delete_fut: impl Future<Output = Result<T, E>>,
+    ) -> Result<T, E> {
+        let time = self.deletes.insert::<S>(id, ());
+
+        match delete_fut.await {
+            Ok(t) => {
+                self.deletes.mark_successful::<S>(id, &time);
+                Ok(t)
+            }
+            Err(e) => {
+                self.deletes.remove::<S>(id, &time);
                 Err(e)
             }
         }

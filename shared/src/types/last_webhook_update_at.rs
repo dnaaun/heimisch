@@ -1,7 +1,9 @@
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Default)]
+#[derive(
+    Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Default, PartialOrd, Ord,
+)]
 pub enum LastWebhookUpdateAtId {
     #[default]
     Singleton,

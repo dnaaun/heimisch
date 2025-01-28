@@ -21,6 +21,8 @@ use super::user::UserId;
     Copy,
     Display,
     Default,
+    PartialOrd,
+    Ord,
 )]
 pub struct InstallationId(i64);
 

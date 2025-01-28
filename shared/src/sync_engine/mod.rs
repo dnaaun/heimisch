@@ -17,7 +17,8 @@ mod optimistic_changes;
 mod registry;
 pub mod storage;
 mod websocket_updates;
-pub mod non_empty_2d_map;
+pub mod optimistic_change_map;
+pub mod monotonic_time;
 
 use std::{cmp::Ordering, rc::Rc};
 
