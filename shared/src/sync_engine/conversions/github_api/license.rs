@@ -11,7 +11,7 @@ impl ToDb for github_api::models::License {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {

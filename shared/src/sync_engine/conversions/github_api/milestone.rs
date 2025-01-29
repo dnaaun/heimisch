@@ -2,7 +2,7 @@ use crate::{
     avail::MergeError,
     sync_engine::{
         changes::{AddChanges, Changes},
-        conversions::{InfallibleToDbNoOtherChanges, ToDb},
+        conversions::{InfallibleToDbNoOtherChanges, MapToFuture, ToDb},
     },
 };
 
@@ -15,7 +15,7 @@ impl ToDb for github_api::models::Milestone1 {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -38,7 +38,7 @@ impl ToDb for github_api::models::Milestone1 {
             url,
         } = self;
 
-        let db_creator = creator.map(|c| c.to_db_type(()));
+        let db_creator = creator.map_to_future(|c| c.to_db_type(())).await;
 
         let db_milestone = crate::types::milestone::Milestone {
             closed_at: closed_at.into(),

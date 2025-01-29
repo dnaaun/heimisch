@@ -1,3 +1,5 @@
+use futures::future::try_join_all;
+
 use crate::{avail::MergeError, types::installation::InstallationId};
 
 use super::{
@@ -33,16 +35,18 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             }
         }
 
-        let changes = repos
-            .into_iter()
-            .map(|r| r.try_to_db_type_and_other_changes(*id))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .try_fold(Changes::default(), |mut acc, (repo, other_changes)| {
-                acc.add(repo)?;
-                acc.add(other_changes)?;
-                Ok::<_, MergeError>(acc)
-            })?;
+        let changes = try_join_all(
+            repos
+                .into_iter()
+                .map(|r| r.try_to_db_type_and_other_changes(*id)),
+        )
+        .await?
+        .into_iter()
+        .try_fold(Changes::default(), |mut acc, (repo, other_changes)| {
+            acc.add(repo)?;
+            acc.add(other_changes)?;
+            Ok::<_, MergeError>(acc)
+        })?;
 
         let txn = Changes::txn(&self.db).read_write().build();
         self.merge_and_upsert_changes(&txn, changes).await?;

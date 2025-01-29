@@ -102,13 +102,13 @@ where
         use github_webhook_body::*;
         let changes = match _server_msg.body.clone() {
             WebhookBody::Issues(issues) => {
-                let (issue, mut other_changes) = issues.try_to_db_type_and_other_changes(())?;
+                let (issue, mut other_changes) = issues.try_to_db_type_and_other_changes(()).await?;
                 other_changes.add(issue)?;
                 other_changes
             }
             WebhookBody::IssueComment(issue_comment) => {
                 let (issue, mut other_changes) =
-                    issue_comment.try_to_db_type_and_other_changes(())?;
+                    issue_comment.try_to_db_type_and_other_changes(()).await?;
                 other_changes.add(issue)?;
                 other_changes
             }

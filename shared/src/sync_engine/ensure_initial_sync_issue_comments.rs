@@ -1,15 +1,17 @@
-use futures::future::join_all;
+use std::sync::Arc;
+
+use futures::future::{join_all, LocalBoxFuture};
 
 use super::{
     changes::Changes,
-    conversions::from_issue_comment::from_issue_comment,
+    conversions::ToDb,
     error::{SyncErrorSrc, SyncResult},
     typed_transport::TypedTransportTrait,
     SyncEngine, MAX_PER_PAGE,
 };
 use crate::types::{
     installation::InstallationId,
-    issue::{Issue, NumberIndex},
+    issue::{Issue, IssueId, NumberIndex},
     issue_comment::{IssueComment, RepositoryIdIndex},
     issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
     issues_initial_sync_status::InitialSyncStatusEnum,
@@ -22,7 +24,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
     /// of issue_comment`.
     pub async fn ensure_initial_sync_issue_comments(
         &self,
-        id: &RepositoryId,
+        id: RepositoryId,
         installation_id: &InstallationId,
     ) -> SyncResult<(), W> {
         let mut page = 1;
@@ -34,7 +36,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             .build();
         let initial_sync_status = txn
             .object_store::<IssueCommentsInitialSyncStatus>()?
-            .get(id)
+            .get(&id)
             .await?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
@@ -43,7 +45,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
                     page = (txn
                         .object_store::<IssueComment>()?
                         .index::<RepositoryIdIndex>()?
-                        .get_all(Some(id))
+                        .get_all(Some(&id))
                         .await?
                         .len() as f64
                         / f64::from(MAX_PER_PAGE))
@@ -63,7 +65,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             .build();
         let repo = txn
             .object_store::<Repository>()?
-            .get(id)
+            .get(&id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
@@ -100,10 +102,10 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             let last_fetched_num = issue_comments.len();
 
             let db = self.db.clone();
-            let issue_id_from_number = |number| {
-                let id = *id;
-                let txn = db.txn().with_store::<Issue>().build();
-                async move {
+            let issue_id_from_number = Arc::new(move |number| {
+                let db = db.clone();
+                Box::pin(async move {
+                    let txn = db.clone().txn().with_store::<Issue>().build();
                     txn.object_store::<Issue>()
                         .unwrap()
                         .index::<NumberIndex>()
@@ -114,16 +116,16 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
                         .into_iter()
                         .find(|issue| issue.repository_id == id)
                         .map(|i| i.id)
-                }
-            };
-            let issue_comment_ids_and_changes = join_all(
-                issue_comments
-                    .into_iter()
-                    .map(|r| from_issue_comment(issue_id_from_number, r, id)),
-            )
-            .await
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()?;
+                }) as LocalBoxFuture<'static, Option<IssueId>>
+            })
+                as Arc<dyn Fn(i64) -> LocalBoxFuture<'static, Option<IssueId>> + 'static>;
+            let issue_comment_ids_and_changes =
+                join_all(issue_comments.into_iter().map(|r| {
+                    r.try_to_db_type_and_other_changes((issue_id_from_number.clone(), id))
+                }))
+                .await
+                .into_iter()
+                .collect::<Result<Vec<_>, _>>()?;
             let changes =
                 Changes::try_from_iter(issue_comment_ids_and_changes.into_iter().map(|r| r.1))?;
 
@@ -135,7 +137,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             txn.object_store::<IssueCommentsInitialSyncStatus>()?
                 .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
-                    id: *id,
+                    id,
                 })
                 .await?;
 
@@ -154,7 +156,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
         txn.object_store::<IssueCommentsInitialSyncStatus>()?
             .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
-                id: *id,
+                id,
             })
             .await?;
         Ok(())

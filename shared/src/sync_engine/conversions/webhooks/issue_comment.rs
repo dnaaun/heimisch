@@ -1,5 +1,6 @@
 use std::convert::Infallible;
 
+use futures::future::join_all;
 use github_webhook_body::*;
 use jiff::Timestamp;
 
@@ -8,7 +9,7 @@ use crate::{
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::{
-            conversion_error::ConversionError, InfallibleToDbNoOtherChanges, ToDb,
+            conversion_error::ConversionError, InfallibleToDbNoOtherChanges, MapToFuture, ToDb,
             ToDbNoOtherChanges,
         },
     },
@@ -24,7 +25,7 @@ impl ToDb for IssueCommentCreatedIssueActiveLockReason {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, ()), Self::Error> {
@@ -48,7 +49,7 @@ impl ToDb for IssueCommentCreatedIssuePullRequest {
 
     type Error = jiff::Error;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -79,7 +80,7 @@ impl ToDb for IssueCommentCreatedComment {
 
     type OtherChanges = Changes;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         (repository_id, issue_id): Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -100,10 +101,10 @@ impl ToDb for IssueCommentCreatedComment {
 
         ignore_untyped(performed_via_github_app);
 
-        let user = user.map(|u| u.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
 
         let issue_comment = types::issue_comment::IssueComment {
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             created_at: created_at.parse::<Timestamp>()?.into(),
             html_url: html_url.into(),
@@ -111,7 +112,7 @@ impl ToDb for IssueCommentCreatedComment {
             issue_url: issue_url.into(),
             node_id: node_id.into(),
             performed_via_github_app_id: Avail::No,
-            reactions: reactions.to_db_type(()).into(),
+            reactions: reactions.to_db_type(()).await.into(),
             updated_at: updated_at.parse::<Timestamp>()?.into(),
             url: url.into(),
             user_id: user.as_ref().map(|u| u.id).into(),
@@ -134,7 +135,7 @@ impl ToDb for IssueCommentDeletedComment {
 
     type OtherChanges = Changes;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         (repository_id, issue_id): Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -153,10 +154,10 @@ impl ToDb for IssueCommentDeletedComment {
             user,
         } = self;
 
-        let user = user.map(|u| u.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
 
         let issue_comment = types::issue_comment::IssueComment {
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             created_at: created_at.parse::<Timestamp>()?.into(),
             html_url: html_url.into(),
@@ -164,7 +165,7 @@ impl ToDb for IssueCommentDeletedComment {
             issue_url: issue_url.into(),
             node_id: node_id.into(),
             performed_via_github_app_id: Avail::No,
-            reactions: reactions.to_db_type(()).into(),
+            reactions: reactions.to_db_type(()).await.into(),
             updated_at: updated_at.parse::<Timestamp>()?.into(),
             url: url.into(),
             user_id: user.as_ref().map(|u| u.id).into(),
@@ -186,7 +187,7 @@ impl ToDb for IssueCommentCreatedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -234,16 +235,20 @@ impl ToDb for IssueCommentCreatedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -256,18 +261,23 @@ impl ToDb for IssueCommentCreatedIssue {
             events_url: events_url.into(),
             html_url: html_url.into(),
             id: types::issue::IssueId::from(id),
-            labels: Avail::Yes(labels.into_iter().map(|l| l.to_db_type(())).collect()),
+            labels: Avail::Yes(join_all(labels.into_iter().map(|l| l.to_db_type(()))).await),
             labels_url: labels_url.into(),
             locked: locked.into(),
             milestone_id: Avail::Yes(milestone_and_changes.as_ref().map(|(m, _)| m.id)),
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: state.to_db_type(()).into(),
+            state: state.to_db_type(()).await.into(),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -301,7 +311,7 @@ impl ToDb for IssueComment {
 
     type OtherChanges = Changes;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -318,10 +328,12 @@ impl ToDb for IssueComment {
             } => {
                 ignore_untyped((enterprise, organization, sender));
                 let repository_id = repository.id.into();
-                let (issue, other_changes_from_issue) =
-                    issue.try_to_db_type_and_other_changes(repository_id)?;
-                let (issue_comment, other_changes_from_issue_comment) =
-                    comment.try_to_db_type_and_other_changes((repository_id, issue.id))?;
+                let (issue, other_changes_from_issue) = issue
+                    .try_to_db_type_and_other_changes(repository_id)
+                    .await?;
+                let (issue_comment, other_changes_from_issue_comment) = comment
+                    .try_to_db_type_and_other_changes((repository_id, issue.id))
+                    .await?;
 
                 let mut changes = Changes::default();
                 changes.add(issue)?;
@@ -341,10 +353,12 @@ impl ToDb for IssueComment {
             } => {
                 ignore_untyped((enterprise, organization, sender));
                 let repository_id = repository.id.into();
-                let (issue, other_changes_from_issue) =
-                    issue.try_to_db_type_and_other_changes(repository_id)?;
-                let (issue_comment, other_changes_from_issue_comment) =
-                    comment.try_to_db_type_and_other_changes((repository_id, issue.id))?;
+                let (issue, other_changes_from_issue) = issue
+                    .try_to_db_type_and_other_changes(repository_id)
+                    .await?;
+                let (issue_comment, other_changes_from_issue_comment) = comment
+                    .try_to_db_type_and_other_changes((repository_id, issue.id))
+                    .await?;
 
                 let mut changes = Changes::default();
                 changes.add(issue)?;
@@ -367,10 +381,12 @@ impl ToDb for IssueComment {
                 ignore_untyped(organization);
                 ignore_untyped(sender);
                 let repository_id = repository.id.into();
-                let (issue, other_changes_from_issue) =
-                    issue.try_to_db_type_and_other_changes(repository_id)?;
-                let (issue_comment, other_changes_from_issue_comment) =
-                    comment.try_to_db_type_and_other_changes((repository_id, issue.id))?;
+                let (issue, other_changes_from_issue) = issue
+                    .try_to_db_type_and_other_changes(repository_id)
+                    .await?;
+                let (issue_comment, other_changes_from_issue_comment) = comment
+                    .try_to_db_type_and_other_changes((repository_id, issue.id))
+                    .await?;
 
                 let mut changes = Changes::default();
                 changes.add(issue)?;

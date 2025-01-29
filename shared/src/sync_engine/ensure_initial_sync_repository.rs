@@ -37,7 +37,7 @@ impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
 
         self.ensure_initial_sync_issues(id, &repo.installation_id)
             .await?;
-        self.ensure_initial_sync_issue_comments(id, &repo.installation_id)
+        self.ensure_initial_sync_issue_comments(*id, &repo.installation_id)
             .await?;
         let txn = self
             .db

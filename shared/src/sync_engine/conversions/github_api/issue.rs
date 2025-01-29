@@ -1,4 +1,5 @@
 use crate::avail::Avail;
+use crate::sync_engine::conversions::MapToFuture;
 use crate::{
     avail::MergeError,
     sync_engine::{
@@ -6,7 +7,7 @@ use crate::{
         conversions::{InfallibleToDbNoOtherChanges, ToDb},
     },
 };
-use futures::future::{join_all, try_join_all, OptionFuture};
+use futures::future::{join_all, OptionFuture};
 use typesafe_idb::Store;
 
 impl ToDb for github_api::models::Issue {
@@ -61,7 +62,8 @@ impl ToDb for github_api::models::Issue {
         let db_assignees = join_all(assignees.into_iter().map(|x| x.to_db_type(()))).await;
         let db_user = OptionFuture::from(user.map(|u| u.to_db_type(()))).await;
         let db_milestone_info = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         let db_github_app_info = OptionFuture::from(
             performed_via_github_app
@@ -98,9 +100,9 @@ impl ToDb for github_api::models::Issue {
             events_url: events_url.into(),
             html_url: html_url.into(),
             id: id.into(),
-            labels: Avail::Yes(join_all(
-                labels.into_iter().flatten().map(|l| l.to_db_type(())),
-            )),
+            labels: Avail::Yes(
+                join_all(labels.into_iter().flatten().map(|l| l.to_db_type(()))).await,
+            ),
             labels_url: labels_url.into(),
             locked: Avail::from_option(locked),
             milestone_id: db_milestone_info.as_ref().map(|(m, _)| *m.id()).into(),

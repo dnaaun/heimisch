@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::avail::Avail;
 use crate::sync_engine::conversions::conversion_error::ConversionError;
 use crate::sync_engine::{
@@ -16,7 +18,7 @@ impl ToDb for github_api::models::IssueComment {
     type OtherChanges = Changes;
 
     type Args = (
-        Box<dyn FnOnce(i64) -> LocalBoxFuture<'static, Option<IssueId>>>,
+        Arc<dyn Fn(i64) -> LocalBoxFuture<'static, Option<IssueId>>>,
         crate::types::repository::RepositoryId,
     );
 

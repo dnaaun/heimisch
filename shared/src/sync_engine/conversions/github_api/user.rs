@@ -11,7 +11,7 @@ impl ToDb for github_api::models::User2 {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -100,7 +100,7 @@ impl ToDb for github_api::models::User1 {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -190,7 +190,7 @@ impl ToDb for github_api::models::User {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -278,7 +278,7 @@ impl ToDb for github_api::models::NullableSimpleUser {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {

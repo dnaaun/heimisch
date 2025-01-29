@@ -1152,19 +1152,23 @@ impl ToDb for IssuesUnlockedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
 
         ignore_untyped(labels);
 
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -1184,11 +1188,16 @@ impl ToDb for IssuesUnlockedIssue {
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -1221,7 +1230,7 @@ impl ToDb for MemberAddedChangesPermissionTo {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -1244,7 +1253,7 @@ impl ToDb for IssuesAssignedIssuePerformedViaGithubAppPermissions {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -1287,42 +1296,61 @@ impl ToDb for IssuesAssignedIssuePerformedViaGithubAppPermissions {
         } = self;
         Ok((
             types::github_app::GitHubAppPermissions {
-                actions: actions.map(|a| a.to_db_type(())),
-                administration: administration.map(|a| a.to_db_type(())),
-                checks: checks.map(|a| a.to_db_type(())),
-                content_references: content_references.map(|a| a.to_db_type(())),
-                contents: contents.map(|a| a.to_db_type(())),
-                deployments: deployments.map(|a| a.to_db_type(())),
-                discussions: discussions.map(|a| a.to_db_type(())),
-                emails: emails.map(|a| a.to_db_type(())),
-                environments: environments.map(|a| a.to_db_type(())),
-                issues: issues.map(|a| a.to_db_type(())),
-                keys: keys.map(|a| a.to_db_type(())),
-                members: members.map(|a| a.to_db_type(())),
-                metadata: metadata.map(|a| a.to_db_type(())),
-                organization_administration: organization_administration.map(|a| a.to_db_type(())),
-                organization_hooks: organization_hooks.map(|a| a.to_db_type(())),
-                organization_packages: organization_packages.map(|a| a.to_db_type(())),
-                organization_plan: organization_plan.map(|a| a.to_db_type(())),
-                organization_projects: organization_projects.map(|a| a.to_db_type(())),
-                organization_secrets: organization_secrets.map(|a| a.to_db_type(())),
+                actions: actions.map_to_future(|a| a.to_db_type(())).await,
+                administration: administration.map_to_future(|a| a.to_db_type(())).await,
+                checks: checks.map_to_future(|a| a.to_db_type(())).await,
+                content_references: content_references.map_to_future(|a| a.to_db_type(())).await,
+                contents: contents.map_to_future(|a| a.to_db_type(())).await,
+                deployments: deployments.map_to_future(|a| a.to_db_type(())).await,
+                discussions: discussions.map_to_future(|a| a.to_db_type(())).await,
+                emails: emails.map_to_future(|a| a.to_db_type(())).await,
+                environments: environments.map_to_future(|a| a.to_db_type(())).await,
+                issues: issues.map_to_future(|a| a.to_db_type(())).await,
+                keys: keys.map_to_future(|a| a.to_db_type(())).await,
+                members: members.map_to_future(|a| a.to_db_type(())).await,
+                metadata: metadata.map_to_future(|a| a.to_db_type(())).await,
+                organization_administration: organization_administration
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                organization_hooks: organization_hooks.map_to_future(|a| a.to_db_type(())).await,
+                organization_packages: organization_packages
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                organization_plan: organization_plan.map_to_future(|a| a.to_db_type(())).await,
+                organization_projects: organization_projects
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                organization_secrets: organization_secrets
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
                 organization_self_hosted_runners: organization_self_hosted_runners
-                    .map(|a| a.to_db_type(())),
-                organization_user_blocking: organization_user_blocking.map(|a| a.to_db_type(())),
-                packages: packages.map(|a| a.to_db_type(())),
-                pages: pages.map(|a| a.to_db_type(())),
-                pull_requests: pull_requests.map(|a| a.to_db_type(())),
-                repository_hooks: repository_hooks.map(|a| a.to_db_type(())),
-                repository_projects: repository_projects.map(|a| a.to_db_type(())),
-                secret_scanning_alerts: secret_scanning_alerts.map(|a| a.to_db_type(())),
-                secrets: secrets.map(|a| a.to_db_type(())),
-                security_events: security_events.map(|a| a.to_db_type(())),
-                security_scanning_alert: security_scanning_alert.map(|a| a.to_db_type(())),
-                single_file: single_file.map(|a| a.to_db_type(())),
-                statuses: statuses.map(|a| a.to_db_type(())),
-                team_discussions: team_discussions.map(|a| a.to_db_type(())),
-                vulnerability_alerts: vulnerability_alerts.map(|a| a.to_db_type(())),
-                workflows: workflows.map(|a| a.to_db_type(())),
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                organization_user_blocking: organization_user_blocking
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                packages: packages.map_to_future(|a| a.to_db_type(())).await,
+                pages: pages.map_to_future(|a| a.to_db_type(())).await,
+                pull_requests: pull_requests.map_to_future(|a| a.to_db_type(())).await,
+                repository_hooks: repository_hooks.map_to_future(|a| a.to_db_type(())).await,
+                repository_projects: repository_projects
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                secret_scanning_alerts: secret_scanning_alerts
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                secrets: secrets.map_to_future(|a| a.to_db_type(())).await,
+                security_events: security_events.map_to_future(|a| a.to_db_type(())).await,
+                security_scanning_alert: security_scanning_alert
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                single_file: single_file.map_to_future(|a| a.to_db_type(())).await,
+                statuses: statuses.map_to_future(|a| a.to_db_type(())).await,
+                team_discussions: team_discussions.map_to_future(|a| a.to_db_type(())).await,
+                vulnerability_alerts: vulnerability_alerts
+                    .map_to_future(|a| a.to_db_type(()))
+                    .await,
+                workflows: workflows.map_to_future(|a| a.to_db_type(())).await,
             },
             Default::default(),
         ))
@@ -1337,7 +1365,7 @@ impl ToDb for Issues {
 
     type OtherChanges = Changes;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -1361,11 +1389,12 @@ impl ToDb for Issues {
                 ignore_untyped(organization);
                 ignore_untyped(sender);
 
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 if let Some(assignee) = assignee {
-                    let user = assignee.to_db_type(());
+                    let user = assignee.to_db_type(()).await;
                     other_changes.add(user)?;
                 }
 
@@ -1383,7 +1412,9 @@ impl ToDb for Issues {
                 ignore_untyped(organization);
                 ignore_untyped(sender);
 
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Deleted {
                 enterprise,
@@ -1396,7 +1427,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Demilestoned {
                 enterprise,
@@ -1410,12 +1443,13 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 if let Some(milestone) = milestone {
                     let (milestone, changes_from_milestone) =
-                        milestone.try_to_db_type_and_other_changes(())?;
+                        milestone.try_to_db_type_and_other_changes(()).await?;
 
                     other_changes.add(milestone)?;
                     other_changes.add(changes_from_milestone)?;
@@ -1436,11 +1470,12 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 if let Some(label) = label {
-                    other_changes.add(label.to_db_type(()))?;
+                    other_changes.add(label.to_db_type(()).await)?;
                 };
 
                 (issue, other_changes)
@@ -1457,11 +1492,12 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 if let Some(label) = label {
-                    other_changes.add(label.to_db_type(()))?;
+                    other_changes.add(label.to_db_type(()).await)?;
                 };
 
                 (issue, other_changes)
@@ -1477,7 +1513,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Milestoned {
                 enterprise,
@@ -1492,11 +1530,12 @@ impl ToDb for Issues {
                 ignore_untyped(organization);
                 ignore_untyped(sender);
 
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 let (milestone, changes_from_milestone) =
-                    milestone.try_to_db_type_and_other_changes(())?;
+                    milestone.try_to_db_type_and_other_changes(()).await?;
 
                 other_changes.add(milestone)?;
                 other_changes.add(changes_from_milestone)?;
@@ -1515,7 +1554,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Pinned {
                 enterprise,
@@ -1528,7 +1569,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Reopened {
                 enterprise,
@@ -1541,7 +1584,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Transferred {
                 changes: _, // useless?
@@ -1555,7 +1600,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Unassigned {
                 assignee,
@@ -1569,11 +1616,12 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 if let Some(assignee) = assignee {
-                    let user = assignee.to_db_type(());
+                    let user = assignee.to_db_type(()).await;
                     other_changes.add(user)?;
                 }
 
@@ -1591,11 +1639,12 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                let (issue, mut other_changes) =
-                    issue.try_to_db_type_and_other_changes(repository.id.into())?;
+                let (issue, mut other_changes) = issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?;
 
                 if let Some(label) = label {
-                    other_changes.add(label.to_db_type(()))?;
+                    other_changes.add(label.to_db_type(()).await)?;
                 };
 
                 (issue, other_changes)
@@ -1611,7 +1660,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
             Issues::Unpinned {
                 enterprise,
@@ -1624,7 +1675,9 @@ impl ToDb for Issues {
                 ignore_untyped(enterprise);
                 ignore_untyped(organization);
                 ignore_untyped(sender);
-                issue.try_to_db_type_and_other_changes(repository.id.into())?
+                issue
+                    .try_to_db_type_and_other_changes(repository.id.into())
+                    .await?
             }
         })
     }

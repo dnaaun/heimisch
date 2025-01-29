@@ -1,4 +1,5 @@
 use crate::avail::Avail;
+use crate::sync_engine::conversions::MapToFuture;
 use crate::{
     avail::MergeError,
     sync_engine::{
@@ -16,7 +17,7 @@ impl ToDb for github_api::models::Repository {
 
     type Args = crate::types::installation::InstallationId;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         installation_id: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -119,8 +120,8 @@ impl ToDb for github_api::models::Repository {
             web_commit_signoff_required,
         } = self;
 
-        let db_owner = owner.map(|i| i.to_db_type(()));
-        let db_license = license.map(|l| l.to_db_type(()));
+        let db_owner = owner.map_to_future(|i| i.to_db_type(())).await;
+        let db_license = license.map_to_future(|l| l.to_db_type(())).await;
 
         let db_repo = crate::types::repository::Repository {
             allow_auto_merge: Avail::from_option(allow_auto_merge),

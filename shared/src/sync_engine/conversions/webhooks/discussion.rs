@@ -11,7 +11,7 @@ impl ToDb for DiscussionAnsweredAnswerReactions {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -53,7 +53,7 @@ impl ToDb for DiscussionLabeledLabel {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -69,7 +69,7 @@ impl ToDb for DiscussionAnsweredAnswerAuthorAssociation {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
