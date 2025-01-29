@@ -1,5 +1,6 @@
 use std::convert::Infallible;
 
+use futures::future::join_all;
 use github_webhook_body::*;
 
 use crate::{
@@ -7,7 +8,7 @@ use crate::{
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::{
-            conversion_error::ConversionError, InfallibleToDbNoOtherChanges, ToDb,
+            conversion_error::ConversionError, InfallibleToDbNoOtherChanges, MapToFuture, ToDb,
             ToDbNoOtherChanges,
         },
     },
@@ -23,7 +24,7 @@ impl ToDb for IssuesDemilestonedIssueAssignee {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -92,7 +93,7 @@ impl ToDb for IssuesDemilestonedIssueAssignee {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
+                r#type: Avail::from_option(type_.map_to_future(|t| t.to_db_type(())).await),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 starred_at: Avail::No,
@@ -110,7 +111,7 @@ impl ToDb for IssuesAssignedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -158,16 +159,20 @@ impl ToDb for IssuesAssignedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -180,18 +185,23 @@ impl ToDb for IssuesAssignedIssue {
             events_url: events_url.into(),
             html_url: html_url.into(),
             id: types::issue::IssueId::from(id),
-            labels: Avail::Yes(labels.into_iter().map(|l| l.to_db_type(())).collect()),
+            labels: Avail::Yes(join_all(labels.into_iter().map(|l| l.to_db_type(()))).await),
             labels_url: labels_url.into(),
             locked: Avail::from_option(locked),
             milestone_id: Avail::Yes(milestone_and_changes.as_ref().map(|(m, _)| m.id)),
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -224,7 +234,7 @@ impl ToDb for IssuesClosedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -272,16 +282,20 @@ impl ToDb for IssuesClosedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
         ignore_untyped((assignee, labels));
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: Avail::No,
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -301,11 +315,16 @@ impl ToDb for IssuesClosedIssue {
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: state.to_db_type(()).into(),
+            state: state.to_db_type(()).await.into(),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -336,7 +355,7 @@ impl ToDb for IssuesOpenedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -384,16 +403,20 @@ impl ToDb for IssuesOpenedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -406,18 +429,23 @@ impl ToDb for IssuesOpenedIssue {
             events_url: events_url.into(),
             html_url: html_url.into(),
             id: types::issue::IssueId::from(id),
-            labels: Avail::Yes(labels.into_iter().map(|l| l.to_db_type(())).collect()),
+            labels: Avail::Yes(join_all(labels.into_iter().map(|l| l.to_db_type(()))).await),
             labels_url: labels_url.into(),
             locked: Avail::from_option(locked),
             milestone_id: Avail::Yes(milestone_and_changes.as_ref().map(|(m, _)| m.id)),
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -450,7 +478,7 @@ impl ToDb for IssuesReopenedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -499,18 +527,22 @@ impl ToDb for IssuesReopenedIssue {
             user,
         } = self;
 
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         ignore_untyped(labels);
 
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -530,11 +562,16 @@ impl ToDb for IssuesReopenedIssue {
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: state.to_db_type(()).into(),
+            state: state.to_db_type(()).await.into(),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -566,7 +603,7 @@ impl ToDb for IssuesDeletedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -614,16 +651,20 @@ impl ToDb for IssuesDeletedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -636,18 +677,23 @@ impl ToDb for IssuesDeletedIssue {
             events_url: events_url.into(),
             html_url: html_url.into(),
             id: types::issue::IssueId::from(id),
-            labels: Avail::Yes(labels.into_iter().map(|l| l.to_db_type(())).collect()),
+            labels: Avail::Yes(join_all(labels.into_iter().map(|l| l.to_db_type(()))).await),
             labels_url: labels_url.into(),
             locked: Avail::from_option(locked),
             milestone_id: Avail::Yes(milestone_and_changes.as_ref().map(|(m, _)| m.id)),
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -680,7 +726,7 @@ impl ToDb for IssuesDemilestonedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -728,19 +774,23 @@ impl ToDb for IssuesDemilestonedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
 
         ignore_untyped(labels);
 
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -760,11 +810,16 @@ impl ToDb for IssuesDemilestonedIssue {
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -797,7 +852,7 @@ impl ToDb for IssuesMilestonedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -845,19 +900,23 @@ impl ToDb for IssuesMilestonedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
 
         ignore_untyped(labels);
 
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -877,11 +936,16 @@ impl ToDb for IssuesMilestonedIssue {
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -914,7 +978,7 @@ impl ToDb for IssuesLockedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -962,19 +1026,23 @@ impl ToDb for IssuesLockedIssue {
             url,
             user,
         } = self;
-        let user = user.map(|u| u.to_db_type(()));
-        let assignee = assignee.map(|a| a.to_db_type(()));
+        let user = user.map_to_future(|u| u.to_db_type(())).await;
+        let assignee = assignee.map_to_future(|a| a.to_db_type(())).await;
         let milestone_and_changes = milestone
-            .map(|m| m.try_to_db_type_and_other_changes(()))
+            .map_to_future(|m| m.try_to_db_type_and_other_changes(()))
+            .await
             .transpose()?;
 
         ignore_untyped(labels);
 
         let issue = types::issue::Issue {
-            active_lock_reason: active_lock_reason.map(|a| a.to_db_type(())).into(),
+            active_lock_reason: active_lock_reason
+                .map_to_future(|a| a.to_db_type(()))
+                .await
+                .into(),
             assignee_id: assignee.as_ref().map(|a| a.id).into(),
             assignee_ids: Avail::No,
-            author_association: author_association.to_db_type(()).into(),
+            author_association: author_association.to_db_type(()).await.into(),
             body: body.into(),
             body_html: Avail::No,
             body_text: Avail::No,
@@ -994,11 +1062,16 @@ impl ToDb for IssuesLockedIssue {
             node_id: node_id.into(),
             number,
             performed_via_github_app_id: Avail::No,
-            pull_request: Avail::Yes(pull_request.map(|p| p.try_to_db_type(())).transpose()?),
-            reactions: reactions.to_db_type(()).into(),
+            pull_request: Avail::Yes(
+                pull_request
+                    .map_to_future(|p| p.try_to_db_type(()))
+                    .await
+                    .transpose()?,
+            ),
+            reactions: reactions.to_db_type(()).await.into(),
             repository_id,
             repository_url: repository_url.into(),
-            state: Avail::from_option(state.map(|s| s.to_db_type(()))),
+            state: Avail::from_option(state.map_to_future(|s| s.to_db_type(())).await),
             state_reason: Avail::Yes(
                 // TODO: This bridging between `String` and `StateReason` should be tested.
                 state_reason
@@ -1031,7 +1104,7 @@ impl ToDb for IssuesUnlockedIssue {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         repository_id: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {

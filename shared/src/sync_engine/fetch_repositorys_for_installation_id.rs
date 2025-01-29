@@ -1,8 +1,10 @@
-use crate::types::installation::InstallationId;
+use crate::{avail::MergeError, types::installation::InstallationId};
 
 use super::{
-    changes::Changes, conversions::from_repository::from_repository,
-    typed_transport::TypedTransportTrait, SyncEngine, SyncResult, MAX_PER_PAGE,
+    changes::{AddChanges, Changes},
+    conversions::ToDb,
+    typed_transport::TypedTransportTrait,
+    SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
 impl<W: TypedTransportTrait> SyncEngine<W> {
@@ -33,10 +35,14 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
 
         let changes = repos
             .into_iter()
-            .map(|r| from_repository(r, *id).map(|r| r.1))
+            .map(|r| r.try_to_db_type_and_other_changes(*id))
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
-            .try_fold(Changes::default(), |acc, new| acc.with_added(new))?;
+            .try_fold(Changes::default(), |mut acc, (repo, other_changes)| {
+                acc.add(repo)?;
+                acc.add(other_changes)?;
+                Ok::<_, MergeError>(acc)
+            })?;
 
         let txn = Changes::txn(&self.db).read_write().build();
         self.merge_and_upsert_changes(&txn, changes).await?;

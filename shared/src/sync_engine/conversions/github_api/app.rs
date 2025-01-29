@@ -1,3 +1,5 @@
+use futures::future::OptionFuture;
+
 use crate::avail::Avail;
 use crate::sync_engine::changes::AddChanges;
 use crate::sync_engine::conversions::to_db::*;
@@ -16,7 +18,7 @@ impl ToDb for github_api::models::App10 {
 
     type Args = ();
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
@@ -35,7 +37,7 @@ impl ToDb for github_api::models::App10 {
             updated_at,
         } = self;
 
-        let db_owner = owner.map(|o| (*o).to_db_type(()));
+        let db_owner = OptionFuture::from(owner.map(|o| (*o).to_db_type(()))).await;
 
         let db_app = id.map(|id| crate::types::github_app::GithubApp {
             client_id: Avail::No,

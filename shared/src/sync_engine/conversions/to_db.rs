@@ -8,7 +8,7 @@ pub trait ToDb: Sized {
 
     /// The `OtherChanges` shouldn't include the changes from the main type
     /// returned as first item of the tuple.
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         args: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error>;
@@ -17,8 +17,9 @@ pub trait ToDb: Sized {
 pub trait ToDbNoOtherChanges: ToDb<OtherChanges = ()> {
     /// We define this only for ones where more changes is (), so we don't accidentally forget to
     /// integrate those other changes.
-    fn try_to_db_type(self, args: Self::Args) -> Result<Self::DbType, Self::Error> {
+    async fn try_to_db_type(self, args: Self::Args) -> Result<Self::DbType, Self::Error> {
         self.try_to_db_type_and_other_changes(args)
+            .await
             .map(|(types, _)| types)
     }
 }
@@ -29,14 +30,14 @@ impl<T> ToDbNoOtherChanges for T where T: ToDb<OtherChanges = ()> {}
 pub trait InfallibleToDb: ToDb<Error = Infallible> {
     /// The `OtherChanges` shouldn't include the changes from the main type
     /// returned as first item of the tuple.
-    fn to_db_type_and_other_changes(self, args: Self::Args) -> (Self::DbType, Self::OtherChanges) {
-        self.try_to_db_type_and_other_changes(args).unwrap()
+    async fn to_db_type_and_other_changes(self, args: Self::Args) -> (Self::DbType, Self::OtherChanges) {
+        self.try_to_db_type_and_other_changes(args).await.unwrap()
     }
 }
 
 pub trait InfallibleToDbNoOtherChanges: InfallibleToDb + ToDbNoOtherChanges {
-    fn to_db_type(self, args: Self::Args) -> Self::DbType {
-        self.try_to_db_type(args).unwrap()
+    async fn to_db_type(self, args: Self::Args) -> Self::DbType {
+        self.try_to_db_type(args).await.unwrap()
     }
 }
 

@@ -9,3 +9,5 @@ pkg/
 style/tailwind_output.css
 
 .idea/
+
+.aider.*

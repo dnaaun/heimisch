@@ -4,7 +4,7 @@ use github_webhook_body::*;
 
 use crate::{
     avail::Avail,
-    sync_engine::conversions::{InfallibleToDbNoOtherChanges, ToDb},
+    sync_engine::conversions::{InfallibleToDbNoOtherChanges, MapToFuture, ToDb},
     types,
 };
 
@@ -15,7 +15,7 @@ impl ToDb for DeploymentProtectionRuleRequestedPullRequestsState {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -36,7 +36,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreatorType {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -60,7 +60,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentPerformedViaGithubAppPermissionsA
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -86,7 +86,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreator {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -157,7 +157,7 @@ impl ToDb for DeploymentStatusCreatedDeploymentCreator {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
+                r#type: Avail::from_option(type_.map_to_future(|t| t.to_db_type(())).await),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 user_view_type: user_view_type.into(),
@@ -174,7 +174,7 @@ impl ToDb for DeploymentReviewApprovedReviewersReviewer {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -244,7 +244,7 @@ impl ToDb for DeploymentReviewApprovedReviewersReviewer {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
+                r#type: Avail::from_option(type_.map_to_future(|t| t.to_db_type(())).await),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 user_view_type: Avail::No,

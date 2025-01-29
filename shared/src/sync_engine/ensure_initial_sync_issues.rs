@@ -1,15 +1,20 @@
+use futures::future::{join_all, try_join_all};
+
 use super::{
-    changes::Changes,
-    conversions::from_issue::from_issue,
+    changes::{AddChanges, Changes},
+    conversions::ToDb,
     error::{SyncErrorSrc, SyncResult},
     SyncEngine, TypedTransportTrait, MAX_PER_PAGE,
 };
-use crate::types::{
-    installation::InstallationId,
-    issue::{Issue, RepositoryIdIndex},
-    issues_initial_sync_status::{InitialSyncStatusEnum, IssuesInitialSyncStatus},
-    repository::{Repository, RepositoryId},
-    user::User,
+use crate::{
+    avail::MergeError,
+    types::{
+        installation::InstallationId,
+        issue::{Issue, RepositoryIdIndex},
+        issues_initial_sync_status::{InitialSyncStatusEnum, IssuesInitialSyncStatus},
+        repository::{Repository, RepositoryId},
+        user::User,
+    },
 };
 
 impl<W: TypedTransportTrait> SyncEngine<W> {
@@ -99,7 +104,17 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             .await?;
             let last_fetched_num = issues.len();
             let changes = Changes::try_try_from_iter(
-                issues.into_iter().map(|r| from_issue(r, id).map(|r| r.1)),
+                try_join_all(
+                    issues
+                        .into_iter()
+                        .map(|r| r.try_to_db_type_and_other_changes(*id)),
+                )
+                .await?
+                .into_iter()
+                .map(|(issue, mut other_changes)| {
+                    other_changes.add(issue)?;
+                    Ok::<_, MergeError>(other_changes)
+                }),
             )??;
 
             let txn = Changes::txn(&self.db)

@@ -1,5 +1,6 @@
 use std::convert::Infallible;
 
+use futures::future::OptionFuture;
 use github_webhook_body::*;
 
 use crate::{
@@ -18,7 +19,7 @@ impl ToDb for MilestoneClosedMilestoneCreator {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
 
         _: Self::Args,
@@ -89,7 +90,9 @@ impl ToDb for MilestoneClosedMilestoneCreator {
                 total_private_repos: Avail::No,
                 twitter_username: Avail::No,
                 two_factor_authentication: Avail::No,
-                r#type: Avail::from_option(type_.map(|t| t.to_db_type(()))),
+                r#type: Avail::from_option(
+                    OptionFuture::from(type_.map(|t| t.to_db_type(()))).await,
+                ),
                 updated_at: Avail::No,
                 url: Avail::from_option(url),
                 user_view_type: user_view_type.into(),
@@ -107,7 +110,7 @@ impl ToDb for MilestoneClosedMilestone {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -129,7 +132,7 @@ impl ToDb for MilestoneClosedMilestone {
             updated_at,
             url,
         } = self;
-        let creator = creator.map(|c| c.to_db_type(()));
+        let creator = OptionFuture::from(creator.map(|c| c.to_db_type(()))).await;
 
         let milestone = types::milestone::Milestone {
             closed_at: Avail::Yes(closed_at.map(|d| (d).parse()).transpose()?),
@@ -144,7 +147,7 @@ impl ToDb for MilestoneClosedMilestone {
             node_id: node_id.into(),
             number: number.into(),
             open_issues: open_issues.into(),
-            state: state.to_db_type(()).into(),
+            state: state.to_db_type(()).await.into(),
             title: title.into(),
             updated_at: Avail::Yes((updated_at).parse()?),
             url: url.into(),
@@ -164,7 +167,7 @@ impl ToDb for MilestoneCreatedMilestone {
 
     type Error = ConversionError;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Changes), Self::Error> {
@@ -186,7 +189,7 @@ impl ToDb for MilestoneCreatedMilestone {
             updated_at,
             url,
         } = self;
-        let creator = creator.map(|c| c.to_db_type(()));
+        let creator = OptionFuture::from(creator.map(|c| c.to_db_type(()))).await;
 
         let milestone = types::milestone::Milestone {
             closed_at: Avail::Yes(closed_at.map(|d| (d).parse()).transpose()?),
@@ -201,7 +204,7 @@ impl ToDb for MilestoneCreatedMilestone {
             node_id: node_id.into(),
             number: number.into(),
             open_issues: open_issues.into(),
-            state: state.to_db_type(()).into(),
+            state: state.to_db_type(()).await.into(),
             title: title.into(),
             updated_at: Avail::Yes((updated_at).parse()?),
             url: url.into(),
@@ -221,7 +224,7 @@ impl ToDb for MilestoneClosedMilestoneCreatorType {
 
     type Error = Infallible;
 
-    fn try_to_db_type_and_other_changes(
+    async fn try_to_db_type_and_other_changes(
         self,
         _: Self::Args,
     ) -> Result<(Self::DbType, Self::OtherChanges), Self::Error> {
