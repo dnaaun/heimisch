@@ -1,7 +1,6 @@
 use convert_case::{Case, Casing};
 use darling::{FromDeriveInput, FromField};
-use proc_macro2::Span;
-use quote::{quote, IdentFragment};
+use quote::quote;
 use syn::{self, parse_macro_input, DeriveInput, Ident};
 
 #[derive(FromDeriveInput)]
@@ -48,11 +47,12 @@ pub fn derive_typesafe_idb(input: proc_macro::TokenStream) -> proc_macro::TokenS
         .iter()
         .filter(|f| f.index.is_some())
         .map(|f| {
-            let field_name = f.ident.as_ref().unwrap().to_string();
+            let field_name = f.ident.as_ref().unwrap();
+            let field_name_str = field_name.to_string();
             let field_type = &f.ty;
             let index_name = Ident::new(
-                &(field_name.to_case(Case::Pascal) + "Index"),
-                field_name.span().unwrap_or(Span::call_site()),
+                &(field_name_str.to_case(Case::Pascal) + "Index"),
+                field_name.span(),
             );
 
             quote! {
@@ -60,8 +60,12 @@ pub fn derive_typesafe_idb(input: proc_macro::TokenStream) -> proc_macro::TokenS
 
                 impl typesafe_idb::IndexSpec for #index_name {
                     type Store = #struct_name;
-                    const NAME: ::typesafe_idb::StoreName = ::typesafe_idb::StoreName(#field_name);
+                    const NAME: ::typesafe_idb::StoreName = ::typesafe_idb::StoreName(#field_name_str);
                     type Type = #field_type;
+
+                    fn get_index_value(row: &Self::Store) -> &Self::Type {
+                        &row.#field_name
+                    }
                 }
             }
         })

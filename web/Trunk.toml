@@ -37,7 +37,7 @@ ignore = []
 
 [serve]
 # The address to serve on.
-addresses = ["127.0.0.1"]
+addresses = ["0.0.0.0"]
 # The port to serve on.
 port = 3000
 # Aliases to serve, typically found in an /etc/hosts file.

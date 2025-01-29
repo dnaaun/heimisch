@@ -1,3 +1,4 @@
+use optimistic::db_with_optimistic_changes::DbWithOptimisticChanges;
 use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
@@ -87,6 +88,7 @@ mod isolate_db_store_markers_impl_type {
     use send_wrapper::SendWrapper;
     use typesafe_idb::{StoreMarker, TypesafeDb};
 
+    use super::optimistic::db_with_optimistic_changes::DbWithOptimisticChanges;
     use super::registry::Registry;
     use super::typed_transport::TypedTransportTrait;
     use super::DbSubscription;
@@ -141,7 +143,7 @@ mod isolate_db_store_markers_impl_type {
                 .await?;
 
             Ok(Self {
-                db: Rc::new(db),
+                db: Rc::new(DbWithOptimisticChanges::new(db)),
                 db_subscriptions: SendWrapper::new(db_change_notifiers),
                 endpoint_client,
                 _transport: PhantomData,
@@ -153,7 +155,7 @@ mod isolate_db_store_markers_impl_type {
 pub use isolate_db_store_markers_impl_type::DbStoreMarkers;
 
 pub struct SyncEngine<Transport> {
-    pub db: Rc<TypesafeDb<DbStoreMarkers>>,
+    pub db: Rc<DbWithOptimisticChanges<DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     endpoint_client: EndpointClient,
     _transport: PhantomData<Transport>,

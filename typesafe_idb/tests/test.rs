@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use typesafe_idb::{SerializedId, Store, StoreMarker, TypesafeDb};
 use wasm_bindgen_test::wasm_bindgen_test;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct InstallationId(u64);
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Copy)]

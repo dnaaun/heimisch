@@ -81,7 +81,7 @@ impl<T, S> Clone for OptimisticChangeMap<T, S> {
     }
 }
 
-impl<V: Store> Default for OptimisticChangeMap<V, ()> {
+impl<T, S> Default for OptimisticChangeMap<T, S> {
     fn default() -> Self {
         Self {
             inner: Default::default(),

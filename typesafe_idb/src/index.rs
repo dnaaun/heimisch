@@ -11,7 +11,13 @@ use crate::{
 pub trait IndexSpec {
     type Store: Store;
     const NAME: StoreName;
-    type Type: Serialize;
+
+    // The `Eq` requirement is used when doing optimistic updates, and it's not really
+    // unrealistic at all to expect things that indexed by indexed db have a `Eq` Rust
+    // representation.
+    type Type: Serialize + Eq;
+
+    fn get_index_value(row: &Self::Store) -> &Self::Type;
 }
 
 pub struct Index<'txn, IS> {

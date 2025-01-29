@@ -1,13 +1,16 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use typesafe_idb::{ReadOnly, Store, TypesafeDb};
+use typesafe_idb::{ReadOnly, Store};
 
-use typesafe_idb::{Present, StoreMarker, Txn, TxnBuilder, TxnMode};
+use typesafe_idb::{Present, StoreMarker, TxnMode};
 
 use crate::avail::{MergeError, MergeStructWithAvails};
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
+use super::optimistic::db_with_optimistic_changes::{
+    DbWithOptimisticChanges, TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges,
+};
 use super::TypedTransportTrait;
 use super::{
     super::types::{
@@ -141,8 +144,8 @@ impl Changes {
 
     /// A transaction builder that contains all the stores that `Changes` might interact with.
     pub fn txn<DbStoreMarkers>(
-        db: &TypesafeDb<DbStoreMarkers>,
-    ) -> TxnBuilder<'_, DbStoreMarkers, impl StoreMarkersForChanges, ReadOnly>
+        db: &DbWithOptimisticChanges<DbStoreMarkers>,
+    ) -> TxnBuilderWithOptimisticChanges<'_, DbStoreMarkers, impl StoreMarkersForChanges, ReadOnly>
     where
         DbStoreMarkers: StoreMarkersForChanges,
     {
@@ -430,7 +433,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
     >(
         &self,
-        txn: &Txn<Marker, Mode>,
+        txn: &TxnWithOptimisticChanges<Marker, Mode>,
         changes: impl IntoChanges,
     ) -> SyncResult<(), W> {
         let Changes {
@@ -457,7 +460,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
 }
 
 async fn persist_changes_to_issues<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
 ) -> SyncResult<(), W>
 where
@@ -485,7 +488,7 @@ where
 }
 
 async fn persist_changes_to_issue_comments<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
 ) -> SyncResult<(), W>
 where
@@ -512,7 +515,7 @@ where
 }
 
 async fn persist_changes_to_github_apps<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
 ) -> SyncResult<(), W>
 where
@@ -539,7 +542,7 @@ where
 }
 
 async fn persist_changes_to_users<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     users: HashMap<UserId, ExistingOrDeleted<User>>,
 ) -> SyncResult<(), W>
 where
@@ -567,7 +570,7 @@ where
 }
 
 async fn persist_changes_to_licenses<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
 ) -> SyncResult<(), W>
 where
@@ -595,7 +598,7 @@ where
 }
 
 async fn persist_changes_to_milestones<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
 ) -> SyncResult<(), W>
 where
@@ -623,7 +626,7 @@ where
 }
 
 async fn persist_changes_to_repositorys<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
 ) -> SyncResult<(), W>
 where
@@ -651,7 +654,7 @@ where
 }
 
 async fn upsert_labels<W: TypedTransportTrait, Marker, Mode>(
-    txn: &Txn<Marker, Mode>,
+    txn: &TxnWithOptimisticChanges<Marker, Mode>,
     labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
 ) -> SyncResult<(), W>
 where
