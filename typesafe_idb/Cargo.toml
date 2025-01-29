@@ -10,7 +10,7 @@ serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.133"
 tracing = "0.1.40"
 wasm-bindgen = { version = "0.2.100", default-features = false }
-wasm-bindgen-test = "0.3.45"
+wasm-bindgen-test = "0.3.50"
 
 [dev-dependencies]
 macros = { path = "../macros" }

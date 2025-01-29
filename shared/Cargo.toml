@@ -33,7 +33,7 @@ web-sys = { version = "*", optional = true, default-features = false, features =
 any_spawner = "0.2.0"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.45"
+wasm-bindgen-test = "0.3.50"
 
 
 [features]
