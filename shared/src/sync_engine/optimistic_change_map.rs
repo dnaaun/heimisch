@@ -74,7 +74,7 @@ impl<V: Store> Default for OptimisticChangeMap<V, ()> {
     }
 }
 
-impl<T, SuccessMarker> OptimisticChangeMap<T, SuccessMarker> {
+impl<T, SuccessMarker: Eq> OptimisticChangeMap<T, SuccessMarker> {
     pub fn insert<S: Store>(&self, id: &S::Id, v: T) -> OptimisticTime {
         let id = SerializedId::new_from_id::<S>(id);
         let time = OptimisticTime::new();
@@ -118,7 +118,7 @@ impl<T, SuccessMarker> OptimisticChangeMap<T, SuccessMarker> {
         }
     }
 
-    pub fn remove_all_successful<S: Store>(&self, id: &S::Id) {
+    pub fn remove_all_successful<S: Store>(&self, id: &S::Id, success_marker: &SuccessMarker) {
         let id = SerializedId::new_from_id::<S>(id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
@@ -127,7 +127,10 @@ impl<T, SuccessMarker> OptimisticChangeMap<T, SuccessMarker> {
             if let Some(by_time) = by_id.get_mut(&id) {
                 let to_remove_keys = by_time
                     .iter()
-                    .filter_map(|(time, status)| status.as_successful().map(move |_| time))
+                    .filter_map(|(time, status)| match status {
+                        Status::Successful { marker, .. } if marker == success_marker => Some(time),
+                        _ => None,
+                    })
                     .cloned()
                     .collect::<Vec<_>>();
                 for key in to_remove_keys {

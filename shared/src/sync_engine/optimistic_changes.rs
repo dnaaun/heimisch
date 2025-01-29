@@ -4,13 +4,15 @@
 use std::{any::Any, future::Future, hash::Hash, rc::Rc, sync::Arc};
 
 use typesafe_idb::{
-    Index, IndexSpec, ObjectStore, Present, SerializedId, Store, StoreMarker, StoreName, Txn,
-    TxnMode,
+    Index, IndexSpec, ObjectStore, Present, SerializedId, Store, StoreMarker, Txn, TxnMode,
 };
 
 use crate::types::user::User;
 
-use super::optimistic_change_map::OptimisticChangeMap;
+use super::{
+    changes::{Changes, ExistingOrDeleted},
+    optimistic_change_map::OptimisticChangeMap,
+};
 
 /// Hashed by store name and hash.
 #[derive(Debug, derive_more::From)]
@@ -31,18 +33,6 @@ pub struct OptimisticChanges {
     updates: OptimisticChangeMap<Rc<dyn Any>>,
     creations: OptimisticChangeMap<Rc<dyn Any>, SerializedId>,
     deletes: OptimisticChangeMap<()>,
-}
-
-enum OptimisticConfirmationType {
-    Created,
-    Updated,
-    Removed,
-}
-
-pub struct OptimisticConfirmation {
-    type_: OptimisticConfirmationType,
-    id: SerializedId,
-    store_name: StoreName,
 }
 
 impl OptimisticChanges {
@@ -110,8 +100,41 @@ impl OptimisticChanges {
         }
     }
 
-    pub fn remove_obsolete_changes(&self, _confirmations: &[OptimisticConfirmation]) {
-        todo!()
+    pub fn remove_obsoletes(&self, changes: &Changes) {
+        let Changes {
+            github_apps,
+            issues,
+            issue_comments,
+            users,
+            repositorys,
+            licenses,
+            milestones,
+            labels,
+        } = changes;
+        self.remove_obsoletes_for_store(&mut labels.values());
+        self.remove_obsoletes_for_store(&mut milestones.values());
+        self.remove_obsoletes_for_store(&mut licenses.values());
+        self.remove_obsoletes_for_store(&mut repositorys.values());
+        self.remove_obsoletes_for_store(&mut users.values());
+        self.remove_obsoletes_for_store(&mut issue_comments.values());
+        self.remove_obsoletes_for_store(&mut issues.values());
+        self.remove_obsoletes_for_store(&mut github_apps.values());
+    }
+
+    pub fn remove_obsoletes_for_store<S: Store>(
+        &self,
+        items: &mut dyn Iterator<Item = &ExistingOrDeleted<S>>,
+    ) {
+        for item in items {
+            let id = match item {
+                ExistingOrDeleted::Existing(item) => item.id(),
+                ExistingOrDeleted::Deleted(id) => id,
+            };
+            self.deletes.remove_all_successful::<S>(id, &());
+            self.updates.remove_all_successful::<S>(id, &());
+            self.creations
+                .remove_all_successful::<S>(id, &SerializedId::new_from_id::<S>(id));
+        }
     }
 }
 

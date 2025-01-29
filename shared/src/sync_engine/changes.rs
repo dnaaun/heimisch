@@ -82,14 +82,14 @@ where
 
 #[derive(Default, Debug, Clone)]
 pub struct Changes {
-    github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
-    issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
-    issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
-    users: HashMap<UserId, ExistingOrDeleted<User>>,
-    repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
-    licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
-    milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
-    labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
+    pub github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
+    pub issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
+    pub issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
+    pub users: HashMap<UserId, ExistingOrDeleted<User>>,
+    pub repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
+    pub licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
+    pub milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
+    pub labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
 }
 
 pub trait IntoChanges {
