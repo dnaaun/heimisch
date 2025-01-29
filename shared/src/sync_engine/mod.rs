@@ -13,12 +13,10 @@ pub mod typed_transport;
 pub mod changes;
 mod ensure_initial_sync_issue_comments;
 pub mod error;
-mod optimistic_changes;
+pub mod optimistic;
 mod registry;
 pub mod storage;
 mod websocket_updates;
-pub mod optimistic_change_map;
-pub mod monotonic_time;
 
 use std::{cmp::Ordering, rc::Rc};
 

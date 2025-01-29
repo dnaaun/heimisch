@@ -10,10 +10,7 @@ use typesafe_idb::{
 
 use crate::types::user::User;
 
-use super::{
-    changes::{Changes, ExistingOrDeleted},
-    optimistic_change_map::OptimisticChangeMap,
-};
+use super::optimistic_change_map::OptimisticChangeMap;
 
 #[derive(Debug, derive_more::From)]
 struct OptimisticChangeRow<S: Store>(S);
@@ -104,40 +101,40 @@ impl OptimisticChanges {
         });
     }
 
-    pub fn remove_obsoletes(&self, changes: &Changes) {
-        let Changes {
-            github_apps,
-            issues,
-            issue_comments,
-            users,
-            repositorys,
-            licenses,
-            milestones,
-            labels,
-        } = changes;
-        self.remove_obsoletes_for_store(&mut labels.values());
-        self.remove_obsoletes_for_store(&mut milestones.values());
-        self.remove_obsoletes_for_store(&mut licenses.values());
-        self.remove_obsoletes_for_store(&mut repositorys.values());
-        self.remove_obsoletes_for_store(&mut users.values());
-        self.remove_obsoletes_for_store(&mut issue_comments.values());
-        self.remove_obsoletes_for_store(&mut issues.values());
-        self.remove_obsoletes_for_store(&mut github_apps.values());
-    }
-
-    pub fn remove_obsoletes_for_store<S: Store>(
-        &self,
-        items: &mut dyn Iterator<Item = &ExistingOrDeleted<S>>,
-    ) {
-        for item in items {
-            let id = match item {
-                ExistingOrDeleted::Existing(item) => item.id(),
-                ExistingOrDeleted::Deleted(id) => id,
-            };
-
-            self.remove_obsoletes_for_id::<S>(id);
-        }
-    }
+    // pub fn remove_obsoletes(&self, changes: &Changes) {
+    //     let Changes {
+    //         github_apps,
+    //         issues,
+    //         issue_comments,
+    //         users,
+    //         repositorys,
+    //         licenses,
+    //         milestones,
+    //         labels,
+    //     } = changes;
+    //     self.remove_obsoletes_for_store(&mut labels.values());
+    //     self.remove_obsoletes_for_store(&mut milestones.values());
+    //     self.remove_obsoletes_for_store(&mut licenses.values());
+    //     self.remove_obsoletes_for_store(&mut repositorys.values());
+    //     self.remove_obsoletes_for_store(&mut users.values());
+    //     self.remove_obsoletes_for_store(&mut issue_comments.values());
+    //     self.remove_obsoletes_for_store(&mut issues.values());
+    //     self.remove_obsoletes_for_store(&mut github_apps.values());
+    // }
+    //
+    // pub fn remove_obsoletes_for_store<S: Store>(
+    //     &self,
+    //     items: &mut dyn Iterator<Item = &ExistingOrDeleted<S>>,
+    // ) {
+    //     for item in items {
+    //         let id = match item {
+    //             ExistingOrDeleted::Existing(item) => item.id(),
+    //             ExistingOrDeleted::Deleted(id) => id,
+    //         };
+    //
+    //         self.remove_obsoletes_for_id::<S>(id);
+    //     }
+    // }
 
     pub fn remove_obsoletes_for_id<S: Store>(&self, id: &S::Id) {
         self.deletes.remove_all_successful::<S>(id, &());
@@ -233,8 +230,13 @@ where
         Ok(all)
     }
 
-    pub fn index<IS: IndexSpec<Store = S>>(&self) -> Result<Index<'_, IS>, typesafe_idb::Error> {
-        todo!()
+    pub fn index<IS: IndexSpec<Store = S>>(
+        &self,
+    ) -> Result<IndexWithOptimisticChanges<'_, IS>, typesafe_idb::Error> {
+        Ok(IndexWithOptimisticChanges {
+            inner: self.inner.index::<IS>()?,
+            optimistic_changes: self.optimistic_changes.clone(),
+        })
     }
 }
 
@@ -251,7 +253,25 @@ where
 
     pub async fn put(&self, item: &S) -> Result<(), typesafe_idb::Error> {
         self.inner.put(item).await?;
-        self.optimistic_changes.remove_obsoletes_for_id::<S>(item.id());
+        self.optimistic_changes
+            .remove_obsoletes_for_id::<S>(item.id());
         Ok(())
+    }
+}
+
+pub struct IndexWithOptimisticChanges<'a, IS> {
+    optimistic_changes: Arc<OptimisticChanges>,
+    inner: Index<'a, IS>,
+}
+impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
+    pub async fn get(&self, value: &IS::Type) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+        todo!()
+    }
+
+    pub async fn get_all(
+        &self,
+        value: Option<&IS::Type>,
+    ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
+        todo!()
     }
 }
