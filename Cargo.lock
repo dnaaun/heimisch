@@ -3765,6 +3765,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "any_spawner",
  "codee",
  "derive_more",
  "diesel",

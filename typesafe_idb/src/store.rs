@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::StoreName;
 
 #[allow(async_fn_in_trait)]
-pub trait Store: Serialize + DeserializeOwned {
+pub trait Store: Serialize + DeserializeOwned + Clone {
     const NAME: StoreName;
     type Marker: Default;
 

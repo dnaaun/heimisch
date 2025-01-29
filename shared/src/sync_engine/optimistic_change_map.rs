@@ -1,4 +1,9 @@
-use std::collections::{BTreeMap, HashMap};
+use std::{
+    any::Any,
+    collections::{BTreeMap, HashMap},
+    rc::Rc,
+    sync::Arc,
+};
 
 use parking_lot::RwLock;
 pub use status::Status;
@@ -58,12 +63,22 @@ mod status {
 }
 
 pub struct OptimisticChangeMap<T, SuccessMarker = ()> {
-    inner: RwLock<
-        HashMap<
-            StoreName,
-            HashMap<SerializedId, BTreeMap<OptimisticTime, Status<T, SuccessMarker>>>,
+    inner: Arc<
+        RwLock<
+            HashMap<
+                StoreName,
+                HashMap<SerializedId, BTreeMap<OptimisticTime, Status<T, SuccessMarker>>>,
+            >,
         >,
     >,
+}
+
+impl<T, S> Clone for OptimisticChangeMap<T, S> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
 }
 
 impl<V: Store> Default for OptimisticChangeMap<V, ()> {
@@ -179,5 +194,36 @@ impl<T: Clone, SuccessMarker: Clone> OptimisticChangeMap<T, SuccessMarker> {
                 .1
                 .clone(),
         )
+    }
+}
+
+impl<SuccessMarker> OptimisticChangeMap<Rc<dyn Any>, SuccessMarker> {
+    pub fn latest_downcasted<S: Store + 'static>(&self, id: &S::Id) -> Option<S> {
+        let id = SerializedId::new_from_id::<S>(id);
+        Some(
+            self.inner
+                .read()
+                .get(&S::NAME)?
+                .get(&id)?
+                .last_key_value()?
+                .1
+                .read()
+                .downcast_ref::<S>()
+                .expect("")
+                .clone(),
+        )
+    }
+
+    pub fn all_the_latest_downcasted<S: Store + 'static>(&self) -> Vec<S> {
+        self.inner
+            .read()
+            .get(&S::NAME)
+            .map(|s| s.values())
+            .into_iter()
+            .flatten()
+            .map(|v| v.last_key_value().map(|(_time, thing)| thing))
+            .flatten()
+            .map(|thing| thing.read().downcast_ref::<S>().expect("").clone())
+            .collect()
     }
 }
