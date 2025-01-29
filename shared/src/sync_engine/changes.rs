@@ -1,10 +1,10 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use typesafe_idb::{ReadOnly, TypesafeDb};
+use typesafe_idb::{ReadOnly, Store, TypesafeDb};
 
 use typesafe_idb::{Present, StoreMarker, Txn, TxnBuilder, TxnMode};
 
-use crate::avail::MergeError;
+use crate::avail::{MergeError, MergeStructWithAvails};
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
@@ -22,16 +22,74 @@ use super::{
     SyncEngine,
 };
 
+#[derive(Debug, Clone)]
+pub struct Deleted<S: Store>(pub S::Id);
+
+#[derive(Debug, Clone)]
+pub enum ExistingOrDeleted<S: Store> {
+    Existing(S),
+    Deleted(S::Id),
+}
+
+impl<S: Store + MergeStructWithAvails> MergeStructWithAvails for ExistingOrDeleted<S> {
+    fn merge(&mut self, other: Self) -> Result<(), MergeError> {
+        use ExistingOrDeleted::*;
+        match (self, other) {
+            (Existing(this), Existing(other)) => this.merge(other),
+            (this @ Deleted(_), other @ Existing(_)) | (this @ Existing(_), other @ Deleted(_)) => {
+                *this = other;
+                Ok(())
+            }
+            (Deleted(_), Deleted(_)) => Ok(()),
+        }
+    }
+
+    fn with_merged(self, other: Self) -> Result<Self, MergeError> {
+        use ExistingOrDeleted::*;
+        match (self, other) {
+            (Existing(this), Existing(other)) => Ok(Existing(this.with_merged(other)?)),
+            (Existing(_), other @ Deleted(_)) | (Deleted(_), other @ Existing(_)) => Ok(other),
+            (this @ Deleted(_), Deleted(_)) => Ok(this),
+        }
+    }
+}
+
+impl<S: Store> From<S> for ExistingOrDeleted<S> {
+    fn from(value: S) -> Self {
+        Self::Existing(value)
+    }
+}
+
+impl<S: Store> From<Deleted<S>> for ExistingOrDeleted<S> {
+    fn from(value: Deleted<S>) -> Self {
+        Self::Deleted(value.0)
+    }
+}
+
+impl<S> AddChanges<ExistingOrDeleted<S>> for Changes
+where
+    S: Store,
+    Changes: AddChanges<Deleted<S>>,
+    Changes: AddChanges<S>,
+{
+    fn add(&mut self, change: ExistingOrDeleted<S>) -> Result<&mut Self, MergeError> {
+        match change {
+            ExistingOrDeleted::Existing(item) => self.add(item),
+            ExistingOrDeleted::Deleted(id) => self.add(Deleted::<S>(id)),
+        }
+    }
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct Changes {
-    github_apps: HashMap<GithubAppId, GithubApp>,
-    issues: HashMap<IssueId, Issue>,
-    issue_comments: HashMap<IssueCommentId, IssueComment>,
-    users: HashMap<UserId, User>,
-    repositorys: HashMap<RepositoryId, Repository>,
-    licenses: HashMap<LicenseId, License>,
-    milestones: HashMap<MilestoneId, Milestone>,
-    labels: HashMap<LabelId, Label>,
+    github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
+    issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
+    issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
+    users: HashMap<UserId, ExistingOrDeleted<User>>,
+    repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
+    licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
+    milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
+    labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
 }
 
 pub trait IntoChanges {
@@ -157,14 +215,28 @@ pub trait AddChanges<T> {
     fn add(&mut self, change: T) -> Result<&mut Self, MergeError>;
 }
 
+impl AddChanges<Deleted<GithubApp>> for Changes {
+    fn add(&mut self, change: Deleted<GithubApp>) -> Result<&mut Self, MergeError> {
+        self.github_apps.insert(change.0, change.into());
+        Ok(self)
+    }
+}
+
 impl AddChanges<GithubApp> for Changes {
     fn add(&mut self, change: GithubApp) -> Result<&mut Self, MergeError> {
         if let Entry::Vacant(e) = self.github_apps.entry(change.id) {
-            e.insert(change);
+            e.insert(change.into());
         } else {
             let cur = self.github_apps.get_mut(&change.id).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         }
+        Ok(self)
+    }
+}
+
+impl AddChanges<Deleted<User>> for Changes {
+    fn add(&mut self, change: Deleted<User>) -> Result<&mut Self, MergeError> {
+        self.users.insert(change.0, change.into());
         Ok(self)
     }
 }
@@ -172,11 +244,18 @@ impl AddChanges<GithubApp> for Changes {
 impl AddChanges<User> for Changes {
     fn add(&mut self, change: User) -> Result<&mut Self, MergeError> {
         if let Entry::Vacant(e) = self.users.entry(change.id) {
-            e.insert(change);
+            e.insert(change.into());
         } else {
             let cur = self.users.get_mut(&change.id).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         }
+        Ok(self)
+    }
+}
+
+impl AddChanges<Deleted<Issue>> for Changes {
+    fn add(&mut self, change: Deleted<Issue>) -> Result<&mut Self, MergeError> {
+        self.issues.insert(change.0, change.into());
         Ok(self)
     }
 }
@@ -184,66 +263,96 @@ impl AddChanges<User> for Changes {
 impl AddChanges<Issue> for Changes {
     fn add(&mut self, change: Issue) -> Result<&mut Self, MergeError> {
         if let Entry::Vacant(e) = self.issues.entry(change.id) {
-            e.insert(change);
+            e.insert(change.into());
         } else {
             let cur = self.issues.get_mut(&change.id).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         }
         Ok(self)
     }
 }
 
+impl AddChanges<Deleted<IssueComment>> for Changes {
+    fn add(&mut self, change: Deleted<IssueComment>) -> Result<&mut Self, MergeError> {
+        self.issue_comments.insert(change.0, change.into());
+        Ok(self)
+    }
+}
 impl AddChanges<IssueComment> for Changes {
     fn add(&mut self, change: IssueComment) -> Result<&mut Self, MergeError> {
         if let Entry::Vacant(e) = self.issue_comments.entry(change.id) {
-            e.insert(change);
+            e.insert(change.into());
         } else {
             let cur = self.issue_comments.get_mut(&change.id).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         }
         Ok(self)
     }
 }
 
+impl AddChanges<Deleted<Repository>> for Changes {
+    fn add(&mut self, change: Deleted<Repository>) -> Result<&mut Self, MergeError> {
+        self.repositorys.insert(change.0, change.into());
+        Ok(self)
+    }
+}
 impl AddChanges<Repository> for Changes {
     fn add(&mut self, change: Repository) -> Result<&mut Self, MergeError> {
         if let Entry::Vacant(e) = self.repositorys.entry(change.id) {
-            e.insert(change);
+            e.insert(change.into());
         } else {
             let cur = self.repositorys.get_mut(&change.id).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         }
         Ok(self)
     }
 }
 
+impl AddChanges<Deleted<License>> for Changes {
+    fn add(&mut self, change: Deleted<License>) -> Result<&mut Self, MergeError> {
+        self.licenses.insert(change.0.clone(), change.into());
+        Ok(self)
+    }
+}
 impl AddChanges<License> for Changes {
     fn add(&mut self, change: License) -> Result<&mut Self, MergeError> {
         if self.licenses.contains_key(&change.key) {
             let cur = self.licenses.get_mut(&change.key).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         } else {
-            self.licenses.insert(change.key.clone(), change);
+            self.licenses.insert(change.key.clone(), change.into());
         }
         Ok(self)
     }
 }
 
+impl AddChanges<Deleted<Milestone>> for Changes {
+    fn add(&mut self, change: Deleted<Milestone>) -> Result<&mut Self, MergeError> {
+        self.milestones.insert(change.0, change.into());
+        Ok(self)
+    }
+}
 impl AddChanges<Milestone> for Changes {
     fn add(&mut self, change: Milestone) -> Result<&mut Self, MergeError> {
         if let Entry::Vacant(e) = self.milestones.entry(change.id) {
-            e.insert(change);
+            e.insert(change.into());
         } else {
             let cur = self.milestones.get_mut(&change.id).expect("");
-            cur.merge(change)?;
+            cur.merge(change.into())?;
         }
         Ok(self)
     }
 }
 
+impl AddChanges<Deleted<Label>> for Changes {
+    fn add(&mut self, change: Deleted<Label>) -> Result<&mut Self, MergeError> {
+        self.labels.insert(change.0, change.into());
+        Ok(self)
+    }
+}
 impl AddChanges<Label> for Changes {
     fn add(&mut self, change: Label) -> Result<&mut Self, MergeError> {
-        self.labels.insert(change.id, change);
+        self.labels.insert(change.id, change.into());
         Ok(self)
     }
 }
@@ -316,7 +425,7 @@ where
 }
 
 impl<W: TypedTransportTrait> SyncEngine<W> {
-    pub async fn merge_and_upsert_changes<
+    pub async fn persist_changes<
         Marker: StoreMarkersForChanges,
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
     >(
@@ -334,22 +443,22 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             labels,
             milestones,
         } = changes.into_changes()?;
-        merge_and_upsert_issues::<W, Marker, Mode>(txn, issues).await?;
-        merge_and_upsert_issue_comments::<W, Marker, Mode>(txn, issue_comments).await?;
-        merge_and_upsert_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
-        merge_and_upsert_users::<W, Marker, Mode>(txn, users).await?;
-        merge_and_upsert_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
-        merge_and_upsert_milestones::<W, Marker, Mode>(txn, milestones).await?;
-        merge_and_upsert_licenses::<W, Marker, Mode>(txn, licenses).await?;
+        persist_changes_to_issues::<W, Marker, Mode>(txn, issues).await?;
+        persist_changes_to_issue_comments::<W, Marker, Mode>(txn, issue_comments).await?;
+        persist_changes_to_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
+        persist_changes_to_users::<W, Marker, Mode>(txn, users).await?;
+        persist_changes_to_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
+        persist_changes_to_milestones::<W, Marker, Mode>(txn, milestones).await?;
+        persist_changes_to_licenses::<W, Marker, Mode>(txn, licenses).await?;
         upsert_labels::<W, Marker, Mode>(txn, labels).await?;
 
         Ok(())
     }
 }
 
-async fn merge_and_upsert_issues<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_issues<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    issues: HashMap<IssueId, Issue>,
+    issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Issue>,
@@ -357,20 +466,27 @@ where
 {
     let issue_store = txn.object_store::<Issue>()?;
     for (_, issue) in issues {
-        let existing = issue_store.get(&issue.id).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(issue)?,
-            None => issue,
-        };
-        issue_store.put(&merged).await?;
+        match issue {
+            ExistingOrDeleted::Existing(issue) => {
+                let existing = issue_store.get(&issue.id).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(issue)?,
+                    None => issue,
+                };
+                issue_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                issue_store.delete(&id).await?;
+            }
+        }
     }
 
     Ok(())
 }
 
-async fn merge_and_upsert_issue_comments<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_issue_comments<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    issue_comments: HashMap<IssueCommentId, IssueComment>,
+    issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<IssueComment>,
@@ -378,19 +494,26 @@ where
 {
     let issue_comment_store = txn.object_store::<IssueComment>()?;
     for (_, issue_comment) in issue_comments {
-        let existing = issue_comment_store.get(&issue_comment.id).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(issue_comment)?,
-            None => issue_comment,
-        };
-        issue_comment_store.put(&merged).await?;
+        match issue_comment {
+            ExistingOrDeleted::Existing(issue_comment) => {
+                let existing = issue_comment_store.get(&issue_comment.id).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(issue_comment)?,
+                    None => issue_comment,
+                };
+                issue_comment_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                issue_comment_store.delete(&id).await?;
+            }
+        }
     }
     Ok(())
 }
 
-async fn merge_and_upsert_github_apps<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_github_apps<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    github_apps: HashMap<GithubAppId, GithubApp>,
+    github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<GithubApp>,
@@ -398,19 +521,26 @@ where
 {
     let github_app_store = txn.object_store::<GithubApp>()?;
     for (_, github_app) in github_apps {
-        let existing = github_app_store.get(&github_app.id).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(github_app)?,
-            None => github_app,
-        };
-        github_app_store.put(&merged).await?;
+        match github_app {
+            ExistingOrDeleted::Existing(github_app) => {
+                let existing = github_app_store.get(&github_app.id).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(github_app)?,
+                    None => github_app,
+                };
+                github_app_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                github_app_store.delete(&id).await?;
+            }
+        }
     }
     Ok(())
 }
 
-async fn merge_and_upsert_users<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_users<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    users: HashMap<UserId, User>,
+    users: HashMap<UserId, ExistingOrDeleted<User>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<User>,
@@ -418,20 +548,27 @@ where
 {
     let user_store = txn.object_store::<User>()?;
     for (_, user) in users {
-        let existing = user_store.get(&user.id).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(user)?,
-            None => user,
-        };
-        user_store.put(&merged).await?;
+        match user {
+            ExistingOrDeleted::Existing(user) => {
+                let existing = user_store.get(&user.id).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(user)?,
+                    None => user,
+                };
+                user_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                user_store.delete(&id).await?;
+            }
+        }
     }
 
     Ok(())
 }
 
-async fn merge_and_upsert_licenses<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_licenses<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    licenses: HashMap<LicenseId, License>,
+    licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<License>,
@@ -439,20 +576,27 @@ where
 {
     let license_store = txn.object_store::<License>()?;
     for (_, license) in licenses {
-        let existing = license_store.get(&license.key).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(license)?,
-            None => license,
-        };
-        license_store.put(&merged).await?;
+        match license {
+            ExistingOrDeleted::Existing(license) => {
+                let existing = license_store.get(&license.key).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(license)?,
+                    None => license,
+                };
+                license_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                license_store.delete(&id).await?;
+            }
+        }
     }
 
     Ok(())
 }
 
-async fn merge_and_upsert_milestones<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_milestones<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    milestones: HashMap<MilestoneId, Milestone>,
+    milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Milestone>,
@@ -460,20 +604,27 @@ where
 {
     let milestone_store = txn.object_store::<Milestone>()?;
     for (_, milestone) in milestones {
-        let existing = milestone_store.get(&milestone.id).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(milestone)?,
-            None => milestone,
-        };
-        milestone_store.put(&merged).await?;
+        match milestone {
+            ExistingOrDeleted::Existing(milestone) => {
+                let existing = milestone_store.get(&milestone.id).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(milestone)?,
+                    None => milestone,
+                };
+                milestone_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                milestone_store.delete(&id).await?;
+            }
+        }
     }
 
     Ok(())
 }
 
-async fn merge_and_upsert_repositorys<W: TypedTransportTrait, Marker, Mode>(
+async fn persist_changes_to_repositorys<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    repositorys: HashMap<RepositoryId, Repository>,
+    repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Repository>,
@@ -481,12 +632,19 @@ where
 {
     let repository_store = txn.object_store::<Repository>()?;
     for (_, repository) in repositorys {
-        let existing = repository_store.get(&repository.id).await?;
-        let merged = match existing {
-            Some(existing) => existing.with_merged(repository)?,
-            None => repository,
-        };
-        repository_store.put(&merged).await?;
+        match repository {
+            ExistingOrDeleted::Existing(repository) => {
+                let existing = repository_store.get(&repository.id).await?;
+                let merged = match existing {
+                    Some(existing) => existing.with_merged(repository)?,
+                    None => repository,
+                };
+                repository_store.put(&merged).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                repository_store.delete(&id).await?;
+            }
+        }
     }
 
     Ok(())
@@ -494,7 +652,7 @@ where
 
 async fn upsert_labels<W: TypedTransportTrait, Marker, Mode>(
     txn: &Txn<Marker, Mode>,
-    labels: HashMap<LabelId, Label>,
+    labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
 ) -> SyncResult<(), W>
 where
     Marker: StoreMarker<Label>,
@@ -502,7 +660,14 @@ where
 {
     let label_store = txn.object_store::<Label>()?;
     for (_, label) in labels {
-        label_store.put(&label).await?;
+        match label {
+            ExistingOrDeleted::Existing(label) => {
+                label_store.put(&label).await?;
+            }
+            ExistingOrDeleted::Deleted(id) => {
+                label_store.delete(&id).await?;
+            }
+        }
     }
     Ok(())
 }

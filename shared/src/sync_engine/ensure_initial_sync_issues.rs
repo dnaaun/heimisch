@@ -121,7 +121,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
                 .with_store::<IssuesInitialSyncStatus>()
                 .read_write()
                 .build();
-            self.merge_and_upsert_changes(&txn, changes).await?;
+            self.persist_changes(&txn, changes).await?;
             txn.object_store::<IssuesInitialSyncStatus>()?
                 .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,

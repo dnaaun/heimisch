@@ -133,7 +133,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
                 .with_store::<IssueCommentsInitialSyncStatus>()
                 .read_write()
                 .build();
-            self.merge_and_upsert_changes(&txn, changes).await?;
+            self.persist_changes(&txn, changes).await?;
             txn.object_store::<IssueCommentsInitialSyncStatus>()?
                 .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,

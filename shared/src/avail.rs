@@ -94,6 +94,11 @@ impl<T> Avail<T> {
     }
 }
 
+pub trait MergeStructWithAvails: Sized {
+    fn merge(&mut self, other: Self) -> Result<(), MergeError>;
+    fn with_merged(self, other: Self) -> Result<Self, MergeError>;
+}
+
 pub type AvailIntoIter<T> = impl Iterator<Item = T>;
 
 impl<T> IntoIterator for Avail<T> {

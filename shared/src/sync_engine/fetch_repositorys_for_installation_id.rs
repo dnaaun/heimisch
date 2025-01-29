@@ -49,7 +49,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
         })?;
 
         let txn = Changes::txn(&self.db).read_write().build();
-        self.merge_and_upsert_changes(&txn, changes).await?;
+        self.persist_changes(&txn, changes).await?;
 
         Ok(())
     }

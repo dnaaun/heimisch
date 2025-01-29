@@ -56,8 +56,8 @@ pub fn derive_avail_merge(input: proc_macro::TokenStream) -> TokenStream {
 
     // Expand into a complete implementation
     let expanded = quote! {
-        impl #name {
-            pub fn with_merged(self, other: Self) -> std::result::Result<Self, crate::avail::MergeError> {
+        impl crate::avail::MergeStructWithAvails for #name {
+            fn with_merged(self, other: Self) -> std::result::Result<Self, crate::avail::MergeError> {
                 #(#checks)*
 
                 Ok(Self {
@@ -65,7 +65,7 @@ pub fn derive_avail_merge(input: proc_macro::TokenStream) -> TokenStream {
                 })
             }
 
-            pub fn merge(&mut self, other: Self) -> std::result::Result<(), crate::avail::MergeError> {
+            fn merge(&mut self, other: Self) -> std::result::Result<(), crate::avail::MergeError> {
                 #(#checks)*
 
                 #(#merge_fields)*

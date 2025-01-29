@@ -119,7 +119,7 @@ where
             .with_store::<LastWebhookUpdateAt>()
             .read_write()
             .build();
-        self.merge_and_upsert_changes(&txn, changes).await?;
+        self.persist_changes(&txn, changes).await?;
         txn.object_store::<LastWebhookUpdateAt>()?
             .put(&LastWebhookUpdateAt {
                 at: jiff::Timestamp::now(),
