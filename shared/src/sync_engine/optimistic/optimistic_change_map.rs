@@ -9,7 +9,7 @@ use parking_lot::RwLock;
 pub use status::Status;
 use typesafe_idb::{SerializedId, Store, StoreName};
 
-use super::monotonic_time::OptimisticTime;
+use super::monotonic_time::MonotonicTime;
 
 mod status {
     /// The value inside is never `None`. But having an option is the only way I know of enabling
@@ -67,7 +67,7 @@ pub struct OptimisticChangeMap<T, SuccessMarker = ()> {
         RwLock<
             HashMap<
                 StoreName,
-                HashMap<SerializedId, BTreeMap<OptimisticTime, Status<T, SuccessMarker>>>,
+                HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, SuccessMarker>>>,
             >,
         >,
     >,
@@ -90,9 +90,9 @@ impl<V: Store> Default for OptimisticChangeMap<V, ()> {
 }
 
 impl<T, SuccessMarker: Eq> OptimisticChangeMap<T, SuccessMarker> {
-    pub fn insert<S: Store>(&self, id: &S::Id, v: T) -> OptimisticTime {
+    pub fn insert<S: Store>(&self, id: &S::Id, v: T) -> MonotonicTime {
         let id = SerializedId::new_from_id::<S>(id);
-        let time = OptimisticTime::new();
+        let time = MonotonicTime::new();
         self.inner
             .write()
             .entry(S::NAME)
@@ -104,7 +104,7 @@ impl<T, SuccessMarker: Eq> OptimisticChangeMap<T, SuccessMarker> {
     }
 
     /// Will panic if the thing is not pending, or if it doesn't exist.
-    pub fn remove_pending<S: Store>(&self, id: &S::Id, time: &OptimisticTime) {
+    pub fn remove_pending<S: Store>(&self, id: &S::Id, time: &MonotonicTime) {
         let id = SerializedId::new_from_id::<S>(id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
@@ -166,7 +166,7 @@ impl<T, SuccessMarker: Eq> OptimisticChangeMap<T, SuccessMarker> {
     pub fn mark_successful<S: Store>(
         &self,
         id: &S::Id,
-        time: &OptimisticTime,
+        time: &MonotonicTime,
         marker: SuccessMarker,
     ) {
         let id = SerializedId::new_from_id::<S>(id);

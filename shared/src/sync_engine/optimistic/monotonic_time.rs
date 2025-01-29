@@ -1,9 +1,9 @@
 #[derive(Debug, PartialEq, PartialOrd, Ord, Clone, Copy, Eq)]
-pub struct OptimisticTime {
+pub struct MonotonicTime {
     inner: i64,
 }
 
-impl OptimisticTime {
+impl MonotonicTime {
     #[cfg(not(feature = "hydrate"))]
     pub fn new() -> Self {
         todo!()
