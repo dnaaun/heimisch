@@ -121,7 +121,7 @@ where
             .build();
         self.persist_changes(&txn, changes).await?;
         txn.object_store::<LastWebhookUpdateAt>()?
-            .put(&LastWebhookUpdateAt {
+            .no_optimism_put(&LastWebhookUpdateAt {
                 at: jiff::Timestamp::now(),
                 id: Default::default(),
             })

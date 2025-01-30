@@ -119,13 +119,13 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    pub async fn delete(&self, id: &S::Id) -> Result<(), typesafe_idb::Error> {
+    pub async fn no_optimism_delete(&self, id: &S::Id) -> Result<(), typesafe_idb::Error> {
         self.inner.delete(id).await?;
         self.optimistic_changes.remove_obsoletes_for_id::<S>(id);
         Ok(())
     }
 
-    pub async fn put(&self, item: &S) -> Result<(), typesafe_idb::Error> {
+    pub async fn no_optimism_put(&self, item: &S) -> Result<(), typesafe_idb::Error> {
         self.inner.put(item).await?;
         self.optimistic_changes
             .remove_obsoletes_for_id::<S>(item.id());
@@ -138,10 +138,7 @@ pub struct IndexWithOptimisticChanges<'a, IS> {
     inner: Index<'a, IS>,
 }
 impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
-    pub async fn get(
-        &self,
-        id: &IS::Type,
-    ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+    pub async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, typesafe_idb::Error> {
         let row = match self.no_optimism_get(id).await? {
             Some(r) => r,
             None => return Ok(None),

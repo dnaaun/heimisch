@@ -476,10 +476,10 @@ where
                     Some(existing) => existing.with_merged(issue)?,
                     None => issue,
                 };
-                issue_store.put(&merged).await?;
+                issue_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                issue_store.delete(&id).await?;
+                issue_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -499,15 +499,17 @@ where
     for (_, issue_comment) in issue_comments {
         match issue_comment {
             ExistingOrDeleted::Existing(issue_comment) => {
-                let existing = issue_comment_store.no_optimism_get(&issue_comment.id).await?;
+                let existing = issue_comment_store
+                    .no_optimism_get(&issue_comment.id)
+                    .await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(issue_comment)?,
                     None => issue_comment,
                 };
-                issue_comment_store.put(&merged).await?;
+                issue_comment_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                issue_comment_store.delete(&id).await?;
+                issue_comment_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -531,10 +533,10 @@ where
                     Some(existing) => existing.with_merged(github_app)?,
                     None => github_app,
                 };
-                github_app_store.put(&merged).await?;
+                github_app_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                github_app_store.delete(&id).await?;
+                github_app_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -558,10 +560,10 @@ where
                     Some(existing) => existing.with_merged(user)?,
                     None => user,
                 };
-                user_store.put(&merged).await?;
+                user_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                user_store.delete(&id).await?;
+                user_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -586,10 +588,10 @@ where
                     Some(existing) => existing.with_merged(license)?,
                     None => license,
                 };
-                license_store.put(&merged).await?;
+                license_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                license_store.delete(&id).await?;
+                license_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -614,10 +616,10 @@ where
                     Some(existing) => existing.with_merged(milestone)?,
                     None => milestone,
                 };
-                milestone_store.put(&merged).await?;
+                milestone_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                milestone_store.delete(&id).await?;
+                milestone_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -642,10 +644,10 @@ where
                     Some(existing) => existing.with_merged(repository)?,
                     None => repository,
                 };
-                repository_store.put(&merged).await?;
+                repository_store.no_optimism_put(&merged).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                repository_store.delete(&id).await?;
+                repository_store.no_optimism_delete(&id).await?;
             }
         }
     }
@@ -665,10 +667,10 @@ where
     for (_, label) in labels {
         match label {
             ExistingOrDeleted::Existing(label) => {
-                label_store.put(&label).await?;
+                label_store.no_optimism_put(&label).await?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                label_store.delete(&id).await?;
+                label_store.no_optimism_delete(&id).await?;
             }
         }
     }

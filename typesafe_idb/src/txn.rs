@@ -68,7 +68,6 @@ impl SerializedId {
     pub fn new_from_id<S: Store>(id: &S::Id) -> Self {
         Self(serde_json::to_string(&id).unwrap())
     }
-
 }
 
 #[derive(Debug, Clone, Default)]

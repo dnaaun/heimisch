@@ -46,7 +46,7 @@ impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
             .read_write()
             .build();
         txn.object_store::<RepositoryInitialSyncStatus>()?
-            .put(&RepositoryInitialSyncStatus {
+            .no_optimism_put(&RepositoryInitialSyncStatus {
                 status: RepoSyncStatus::Full,
                 id: *id,
             })

@@ -135,7 +135,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
                 .build();
             self.persist_changes(&txn, changes).await?;
             txn.object_store::<IssueCommentsInitialSyncStatus>()?
-                .put(&IssueCommentsInitialSyncStatus {
+                .no_optimism_put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id,
                 })
@@ -154,7 +154,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             .read_write()
             .build();
         txn.object_store::<IssueCommentsInitialSyncStatus>()?
-            .put(&IssueCommentsInitialSyncStatus {
+            .no_optimism_put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id,
             })

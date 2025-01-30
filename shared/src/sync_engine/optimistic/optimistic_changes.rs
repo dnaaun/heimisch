@@ -32,10 +32,10 @@ pub struct OptimisticChanges {
 }
 
 impl OptimisticChanges {
-    pub fn register_update<S: Store + 'static, T, E>(
+    pub fn update<S: Store + 'static>(
         &self,
         row: S,
-        update_fut: impl Future<Output = Result<T, E>> + 'static,
+        update_fut: impl Future<Output = Result<(), ()>> + 'static,
     ) {
         let updates = self.updates.clone();
         let id = row.id().clone();
@@ -53,11 +53,11 @@ impl OptimisticChanges {
         });
     }
 
-    pub async fn register_create<S: Store + 'static, E>(
+    pub fn create<S: Store + 'static>(
         &self,
         row: S,
         // The future must resolve to the id of whatever is created.
-        create_fut: impl Future<Output = Result<S::Id, E>> + 'static,
+        create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
     ) {
         let id = row.id().clone();
         let creations = self.creations.clone();
@@ -79,10 +79,10 @@ impl OptimisticChanges {
         });
     }
 
-    pub async fn register_delete<S: Store + 'static, T, E>(
+    pub fn delete<S: Store>(
         &self,
         id: &S::Id,
-        delete_fut: impl Future<Output = Result<T, E>> + 'static,
+        delete_fut: impl Future<Output = Result<(), ()>> + 'static,
     ) {
         let deletes = self.deletes.clone();
         let time = deletes.insert::<S>(id, ());

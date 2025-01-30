@@ -222,7 +222,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
                     .read_write()
                     .build();
                 txn.object_store::<InstallationAccessTokenRow>()?
-                    .put(&InstallationAccessTokenRow {
+                    .no_optimism_put(&InstallationAccessTokenRow {
                         token: resp.clone(),
                         installation_id: *id,
                     })
