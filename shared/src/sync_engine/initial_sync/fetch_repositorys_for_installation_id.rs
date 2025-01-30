@@ -2,7 +2,7 @@ use futures::future::try_join_all;
 
 use crate::{avail::MergeError, types::installation::InstallationId};
 
-use super::{
+use super::super::{
     changes::{AddChanges, Changes},
     conversions::ToDb,
     typed_transport::TypedTransportTrait,

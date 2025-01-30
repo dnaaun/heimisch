@@ -3,7 +3,7 @@ use crate::types::{
     repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
 };
 
-use super::{error::SyncResult, typed_transport, SyncEngine};
+use super::super::{error::SyncResult, typed_transport, SyncEngine};
 
 impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
     /// `force_initial_sync` means we ignore the RepositoryInitialSyncStatus. This will come into

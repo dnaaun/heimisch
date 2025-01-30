@@ -4,14 +4,11 @@ use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
 use typed_transport::TypedTransportTrait;
 mod conversions;
-mod ensure_initial_sync_issues;
-mod ensure_initial_sync_repository;
-mod fetch_repositorys_for_installation_id;
+mod initial_sync;
 
 pub mod typed_transport;
 
 pub mod changes;
-mod ensure_initial_sync_issue_comments;
 pub mod error;
 pub mod optimistic;
 mod registry;
