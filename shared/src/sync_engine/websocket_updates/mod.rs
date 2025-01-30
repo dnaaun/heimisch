@@ -35,7 +35,7 @@ where
             .with_store::<LastWebhookUpdateAt>()
             .build()
             .object_store::<LastWebhookUpdateAt>()?
-            .get(&LastWebhookUpdateAtId::Singleton)
+            .no_optimism_get(&LastWebhookUpdateAtId::Singleton)
             .await?;
         url.set_query(Some(
             &serde_urlencoded::to_string(&WebsocketUpdatesQueryParams {

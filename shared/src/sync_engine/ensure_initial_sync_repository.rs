@@ -21,7 +21,7 @@ impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
                 .with_store::<RepositoryInitialSyncStatus>()
                 .build();
             let store = txn.object_store::<RepositoryInitialSyncStatus>()?;
-            if let Some(RepoSyncStatus::Full) = store.get(id).await?.map(|r| r.status) {
+            if let Some(RepoSyncStatus::Full) = store.no_optimism_get(id).await?.map(|r| r.status) {
                 return Ok(());
             }
         }
@@ -31,7 +31,7 @@ impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
             .with_store::<Repository>()
             .build()
             .object_store::<Repository>()?
-            .get(id)
+            .no_optimism_get(id)
             .await?
             .expect("expected repo to be present if an id is passed");
 

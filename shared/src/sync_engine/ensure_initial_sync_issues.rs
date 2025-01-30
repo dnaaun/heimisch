@@ -32,7 +32,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             .build();
         let initial_sync_status = txn
             .object_store::<IssuesInitialSyncStatus>()?
-            .get(id)
+            .no_optimism_get(id)
             .await?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
@@ -61,7 +61,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
             .build();
         let repo = txn
             .object_store::<Repository>()?
-            .get(id)
+            .no_optimism_get(id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
@@ -73,7 +73,7 @@ impl<W: TypedTransportTrait> SyncEngine<W> {
         })?;
         let repo_owner = txn
             .object_store::<User>()?
-            .get(&repo_owner_id)
+            .no_optimism_get(&repo_owner_id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("user with id {repo_owner_id:?}: doesn't exist"))

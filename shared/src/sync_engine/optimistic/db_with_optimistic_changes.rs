@@ -63,13 +63,20 @@ where
             return Ok(Some(o));
         };
 
+        self.no_optimism_get(id).await
+    }
+
+    pub(crate) async fn no_optimism_get(
+        &self,
+        id: &S::Id,
+    ) -> Result<Option<S>, typesafe_idb::Error> {
         self.inner.get(id).await
     }
 
     pub async fn get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
-        let from_db = self.inner.get_all().await?;
-
-        let from_db_filtered = from_db
+        let from_db_filtered = self
+            .no_optimism_get_all()
+            .await?
             .into_iter()
             .filter(|r| {
                 self.optimistic_changes
@@ -91,6 +98,10 @@ where
         );
 
         Ok(all)
+    }
+
+    pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
+        self.inner.get_all().await
     }
 
     pub fn index<IS: IndexSpec<Store = S>>(
@@ -127,8 +138,11 @@ pub struct IndexWithOptimisticChanges<'a, IS> {
     inner: Index<'a, IS>,
 }
 impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
-    pub async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, typesafe_idb::Error> {
-        let row = match self.inner.get(id).await? {
+    pub async fn get(
+        &self,
+        id: &IS::Type,
+    ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+        let row = match self.no_optimism_get(id).await? {
             Some(r) => r,
             None => return Ok(None),
         };
@@ -148,12 +162,20 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
             .or(Some(row)))
     }
 
+    pub(crate) async fn no_optimism_get(
+        &self,
+        id: &IS::Type,
+    ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+        self.inner.get(id).await
+    }
+
     pub async fn get_all(
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
-        let from_db = self.inner.get_all(value).await?;
-        let from_db_filtered = from_db
+        let from_db_filtered = self
+            .no_optimism_get_all(value)
+            .await?
             .into_iter()
             .filter(|r| {
                 self.optimistic_changes
@@ -183,6 +205,13 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
             all.extend(optimistic_creations)
         }
         Ok(all)
+    }
+
+    pub(crate) async fn no_optimism_get_all(
+        &self,
+        value: Option<&IS::Type>,
+    ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
+        self.inner.get_all(value).await
     }
 }
 
