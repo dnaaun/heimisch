@@ -3,7 +3,6 @@ use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
 use typed_transport::TypedTransportTrait;
-use typesafe_idb::TypesafeDb;
 mod conversions;
 mod ensure_initial_sync_issues;
 mod ensure_initial_sync_repository;
@@ -136,7 +135,7 @@ mod isolate_db_store_markers_impl_type {
                         .iter()
                         .filter(|sub| {
                             sub.original_reactivity_trackers
-                                .overlaps(reactivity_trackers)
+                                .is_affected_by_writes_in(reactivity_trackers)
                         })
                         .for_each(|sub| (sub.func)());
                 }),

@@ -108,7 +108,7 @@ where
     pub async fn no_optimism_delete(&self, id: &S::Id) -> Result<(), typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(S::NAME, SerializedId::new_from_id::<S>(id));
+            .add_modification(S::NAME, SerializedId::new_from_id::<S>(id));
 
         self.inner.delete(id).await?;
         self.optimistic_changes.remove_obsoletes_for_id::<S>(id);
@@ -118,7 +118,7 @@ where
     pub async fn no_optimism_put(&self, item: &S) -> Result<(), typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(S::NAME, SerializedId::new_from_row(item));
+            .add_modification(S::NAME, SerializedId::new_from_row(item));
 
         self.inner.put(item).await?;
         self.optimistic_changes

@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use macros::TypesafeIdb;
 use serde::{Deserialize, Serialize};
-use typesafe_idb::{SerializedId, Store, StoreMarker, TypesafeDb};
+use typesafe_idb::{Store, StoreMarker, TypesafeDb};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash)]

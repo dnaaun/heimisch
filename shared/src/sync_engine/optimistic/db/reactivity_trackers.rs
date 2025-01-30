@@ -25,42 +25,47 @@ impl SerializedId {
         Self(serde_json::to_string(&id).unwrap())
     }
 }
+
 #[derive(Debug, Clone, Default)]
 pub struct ReactivityTrackers {
     /// The value of the hasmap is the serde serialized value of the id.
-    pub stores_accessed_by_id: HashMap<StoreName, HashSet<SerializedId>>,
+    pub stores_read_by_id: HashMap<StoreName, HashSet<SerializedId>>,
+    /// This will include get_all() accesses and also access through indices.
+    pub stores_read_in_bulk: HashSet<StoreName>,
 
-    /// This will include get_all() accesses and also index accesses.
-    /// It maybe good
-    pub stores_accessed_in_bulk: HashSet<StoreName>,
+    pub stores_modified: HashMap<StoreName, HashSet<SerializedId>>,
 }
+
 impl ReactivityTrackers {
-    pub fn overlaps(&self, other: &ReactivityTrackers) -> bool {
-        self.stores_accessed_by_id
+    pub fn is_affected_by_writes_in(&self, other: &ReactivityTrackers) -> bool {
+        self.stores_read_by_id.iter().any(|(store_name_a, ids_a)| {
+            other
+                .stores_modified
+                .get(store_name_a)
+                .map(|ids_b| ids_a.intersection(ids_b).count() > 0)
+                .unwrap_or(false)
+        }) || self
+            .stores_read_in_bulk
             .iter()
-            .any(|(store_name_a, ids_a)| {
-                other.stores_accessed_in_bulk.contains(store_name_a)
-                    || other
-                        .stores_accessed_by_id
-                        .get(store_name_a)
-                        .map(|ids_b| ids_a.intersection(ids_b).count() > 0)
-                        .unwrap_or(false)
-            })
-            || self.stores_accessed_in_bulk.iter().any(|store_name_a| {
-                other.stores_accessed_in_bulk.contains(store_name_a)
-                    || other.stores_accessed_by_id.contains_key(store_name_a)
-            })
+            .any(|store_name_a| other.stores_modified.contains_key(store_name_a))
     }
 
     pub fn add_by_id_access(&mut self, store_name: StoreName, serialized_id: SerializedId) {
-        self.stores_accessed_by_id
+        self.stores_read_by_id
             .entry(store_name)
             .or_default()
             .insert(serialized_id);
     }
 
     pub fn add_bulk_access(&mut self, store_name: StoreName) {
-        self.stores_accessed_in_bulk.insert(store_name);
+        self.stores_read_in_bulk.insert(store_name);
+    }
+
+    pub fn add_modification(&mut self, store_name: StoreName, serialized_id: SerializedId) {
+        self.stores_modified
+            .entry(store_name)
+            .or_default()
+            .insert(serialized_id);
     }
 }
 
