@@ -42,14 +42,14 @@ pub fn IssuesList(
     );
 
     let issues = Signal::derive(move || {
-        Ok::<_, FrontendError>(
-            issues
-                .get()
-                .transpose()?
-                .into_iter()
-                .flatten()
-                .collect::<Vec<_>>(),
-        )
+        let mut issues = issues
+            .get()
+            .transpose()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+        issues.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        Ok::<_, FrontendError>(issues)
     });
 
     let issues_len = Memo::new(move |_| {
