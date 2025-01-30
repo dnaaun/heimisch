@@ -2,11 +2,9 @@ use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
 use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
-use typed_transport::TypedTransportTrait;
+pub use websocket_updates::typed_transport::*;
 mod conversions;
 mod initial_sync;
-
-pub mod typed_transport;
 
 pub mod changes;
 pub mod error;
@@ -31,31 +29,6 @@ use crate::{
 };
 use error::SyncResult;
 use jiff::{Timestamp, ToSpan};
-
-/// Why? Because `JsonSerdeCodec` from `codee` encodes to / decodes from str, and I want to be able
-/// to be able to interpret web socket messages that are in "binary frames" (or whatever the
-/// correct terminology) to also be decoded as JSON.
-pub struct JsonSerdeToBinaryCodec;
-
-impl<T: serde::de::DeserializeOwned> codee::Decoder<T> for JsonSerdeToBinaryCodec {
-    type Error = serde_json::Error;
-
-    type Encoded = [u8];
-
-    fn decode(val: &Self::Encoded) -> Result<T, Self::Error> {
-        serde_json::from_slice(val)
-    }
-}
-
-impl<T: serde::Serialize> codee::Encoder<T> for JsonSerdeToBinaryCodec {
-    type Error = serde_json::Error;
-
-    type Encoded = Vec<u8>;
-
-    fn encode(val: &T) -> Result<Self::Encoded, Self::Error> {
-        serde_json::to_vec(val)
-    }
-}
 
 #[derive(Clone)]
 pub struct DbSubscription {
@@ -86,7 +59,7 @@ mod isolate_db_store_markers_impl_type {
 
     use super::optimistic::db::DbWithOptimisticChanges;
     use super::registry::Registry;
-    use super::typed_transport::TypedTransportTrait;
+    use super::websocket_updates::typed_transport::TypedTransportTrait;
     use super::DbSubscription;
     use super::{error::SyncResult, SyncEngine};
 

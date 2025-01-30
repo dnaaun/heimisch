@@ -1,9 +1,9 @@
-use crate::types::{
+use crate::{sync_engine::websocket_updates::typed_transport, types::{
     repository::{Repository, RepositoryId},
     repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
-};
+}};
 
-use super::super::{error::SyncResult, typed_transport, SyncEngine};
+use super::super::{error::SyncResult, SyncEngine};
 
 impl<T: typed_transport::TypedTransportTrait> SyncEngine<T> {
     /// `force_initial_sync` means we ignore the RepositoryInitialSyncStatus. This will come into

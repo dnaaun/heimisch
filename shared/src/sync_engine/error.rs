@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use super::{
     conversions::conversion_error::ConversionError,
-    typed_transport::{TypedTransportError, TypedTransportTrait},
+    websocket_updates::typed_transport::{TypedTransportError, TypedTransportTrait},
 };
 
 pub enum SyncErrorSrc<T: TypedTransportTrait> {

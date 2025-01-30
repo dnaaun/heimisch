@@ -9,8 +9,30 @@ use url::Url;
 
 use crate::endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg};
 
-use super::JsonSerdeToBinaryCodec;
+/// Why? Because `JsonSerdeCodec` from `codee` encodes to / decodes from str, and I want to be able
+/// to be able to interpret web socket messages that are in "binary frames" (or whatever the
+/// correct terminology) to also be decoded as JSON.
+pub struct JsonSerdeToBinaryCodec;
 
+impl<T: serde::de::DeserializeOwned> codee::Decoder<T> for JsonSerdeToBinaryCodec {
+    type Error = serde_json::Error;
+
+    type Encoded = [u8];
+
+    fn decode(val: &Self::Encoded) -> Result<T, Self::Error> {
+        serde_json::from_slice(val)
+    }
+}
+
+impl<T: serde::Serialize> codee::Encoder<T> for JsonSerdeToBinaryCodec {
+    type Error = serde_json::Error;
+
+    type Encoded = Vec<u8>;
+
+    fn encode(val: &T) -> Result<Self::Encoded, Self::Error> {
+        serde_json::to_vec(val)
+    }
+}
 pub enum TypedTransportError<Conn> {
     Closed,
     Conn(Conn),
@@ -85,8 +107,7 @@ where
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: ClientMsg) -> Result<(), Self::Error> {
         let this = self.project();
-        let encoded =
-            JsonSerdeToBinaryCodec::encode(&item).map_err(TypedTransportError::Encode)?;
+        let encoded = JsonSerdeToBinaryCodec::encode(&item).map_err(TypedTransportError::Encode)?;
         this.inner
             .start_send(encoded)
             .map_err(TypedTransportError::Conn)

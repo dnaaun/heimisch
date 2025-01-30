@@ -3,7 +3,7 @@ use std::task::{ready, Poll};
 use futures::{Sink, Stream};
 use gloo_utils::errors::JsError;
 use pin_project::pin_project;
-use shared::sync_engine::{self, typed_transport::ConnOrClosedError};
+use shared::sync_engine::{ConnOrClosedError, TypedTransportTrait};
 use url::Url;
 
 #[derive(Debug)]
@@ -17,7 +17,7 @@ pub enum ConnError {
 #[pin_project]
 pub struct MyWebSocket(#[pin] gloo_net::websocket::futures::WebSocket);
 
-impl sync_engine::typed_transport::TypedTransportTrait for MyWebSocket {
+impl TypedTransportTrait for MyWebSocket {
     type ConnError = ConnError;
 
     async fn establish_conn(url: &Url) -> Result<Self, Self::ConnError> {

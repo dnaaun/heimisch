@@ -1,5 +1,7 @@
-use crate::sync_engine::{error::SyncError, typed_transport::TypedTransportTrait};
+use crate::sync_engine::error::SyncError;
 use std::fmt::Debug;
+
+use super::typed_transport::TypedTransportTrait;
 
 #[derive(Debug)]
 pub enum ApplyingError<W: TypedTransportTrait> {

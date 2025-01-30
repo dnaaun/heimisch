@@ -1,7 +1,9 @@
 pub mod applying_error;
+pub mod typed_transport;
 
 use applying_error::{ApplyingError, ApplyingResult};
 use futures::{pin_mut, StreamExt};
+use typed_transport::{establish, TypedTransportError, TypedTransportTrait};
 
 use crate::{
     endpoints::defns::api::websocket_updates::{
@@ -11,12 +13,11 @@ use crate::{
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::ToDb,
-        typed_transport::{establish, TypedTransportError},
     },
     types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtId},
 };
 
-use super::{error::SyncErrorSrc, typed_transport::TypedTransportTrait, SyncEngine, SyncResult};
+use super::{error::SyncErrorSrc, SyncEngine, SyncResult};
 
 impl<W> SyncEngine<W>
 where
@@ -102,7 +103,8 @@ where
         use github_webhook_body::*;
         let changes = match _server_msg.body.clone() {
             WebhookBody::Issues(issues) => {
-                let (issue, mut other_changes) = issues.try_to_db_type_and_other_changes(()).await?;
+                let (issue, mut other_changes) =
+                    issues.try_to_db_type_and_other_changes(()).await?;
                 other_changes.add(issue)?;
                 other_changes
             }

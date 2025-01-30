@@ -1,11 +1,13 @@
 use futures::future::try_join_all;
 
-use crate::{avail::MergeError, types::installation::InstallationId};
+use crate::{
+    avail::MergeError, sync_engine::websocket_updates::typed_transport::TypedTransportTrait,
+    types::installation::InstallationId,
+};
 
 use super::super::{
     changes::{AddChanges, Changes},
     conversions::ToDb,
-    typed_transport::TypedTransportTrait,
     SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 

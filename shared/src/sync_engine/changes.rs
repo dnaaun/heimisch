@@ -1,3 +1,4 @@
+use crate::sync_engine::websocket_updates::typed_transport::TypedTransportTrait;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use typesafe_idb::{ReadOnly, Store};
@@ -9,7 +10,6 @@ use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
 use super::optimistic::db::{DbWithOptimisticChanges, TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
-use super::TypedTransportTrait;
 use super::{
     super::types::{
         github_app::{GithubApp, GithubAppId},

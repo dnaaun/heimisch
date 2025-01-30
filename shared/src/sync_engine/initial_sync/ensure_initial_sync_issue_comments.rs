@@ -6,17 +6,19 @@ use super::super::{
     changes::Changes,
     conversions::ToDb,
     error::{SyncErrorSrc, SyncResult},
-    typed_transport::TypedTransportTrait,
     SyncEngine, MAX_PER_PAGE,
 };
-use crate::types::{
-    installation::InstallationId,
-    issue::{Issue, IssueId, NumberIndex},
-    issue_comment::{IssueComment, RepositoryIdIndex},
-    issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
-    issues_initial_sync_status::InitialSyncStatusEnum,
-    repository::{Repository, RepositoryId},
-    user::User,
+use crate::{
+    sync_engine::websocket_updates::typed_transport::TypedTransportTrait,
+    types::{
+        installation::InstallationId,
+        issue::{Issue, IssueId, NumberIndex},
+        issue_comment::{IssueComment, RepositoryIdIndex},
+        issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
+        issues_initial_sync_status::InitialSyncStatusEnum,
+        repository::{Repository, RepositoryId},
+        user::User,
+    },
 };
 
 impl<W: TypedTransportTrait> SyncEngine<W> {
