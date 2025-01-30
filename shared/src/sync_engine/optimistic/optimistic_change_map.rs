@@ -7,9 +7,9 @@ use std::{
 
 use parking_lot::RwLock;
 pub use status::Status;
-use typesafe_idb::{SerializedId, Store, StoreName};
+use typesafe_idb::{Store, StoreName};
 
-use super::monotonic_time::MonotonicTime;
+use super::{db::SerializedId, monotonic_time::MonotonicTime};
 
 mod status {
     /// The value inside is never `None`. But having an option is the only way I know of enabling

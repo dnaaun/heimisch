@@ -108,7 +108,7 @@ pub async fn idb_signal_basic_reactivity() {
         .no_optimism_put(&Default::default())
         .await
         .unwrap();
-    txn.commit().await.unwrap();
+    txn.commit().unwrap();
 
     tick().await;
 

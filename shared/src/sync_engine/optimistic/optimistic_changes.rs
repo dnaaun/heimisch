@@ -4,11 +4,11 @@
 use std::{any::Any, future::Future, hash::Hash, rc::Rc};
 
 use any_spawner::Executor;
-use typesafe_idb::{SerializedId, Store};
+use typesafe_idb::Store;
 
 use crate::types::user::User;
 
-use super::optimistic_change_map::OptimisticChangeMap;
+use super::{db::SerializedId, optimistic_change_map::OptimisticChangeMap};
 
 #[derive(Debug, derive_more::From)]
 struct OptimisticChangeRow<S: Store>(S);

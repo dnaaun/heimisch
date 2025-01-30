@@ -1,9 +1,9 @@
-use optimistic::db::DbWithOptimisticChanges;
+use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
 use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
 use typed_transport::TypedTransportTrait;
-use typesafe_idb::{ReactivityTrackers, TypesafeDb};
+use typesafe_idb::TypesafeDb;
 mod conversions;
 mod ensure_initial_sync_issues;
 mod ensure_initial_sync_repository;
@@ -128,8 +128,9 @@ mod isolate_db_store_markers_impl_type {
 
             let db_change_notifiers: Rc<Registry<DbSubscription>> = Default::default();
             let db_change_notifiers2 = db_change_notifiers.clone();
-            let db = db
-                .with_commit_listener(Rc::new(move |reactivity_trackers| {
+            let db = DbWithOptimisticChanges::new(
+                db.build().await?,
+                Rc::new(move |reactivity_trackers| {
                     let orig_trackers = db_change_notifiers2.get();
                     orig_trackers
                         .iter()
@@ -138,12 +139,11 @@ mod isolate_db_store_markers_impl_type {
                                 .overlaps(reactivity_trackers)
                         })
                         .for_each(|sub| (sub.func)());
-                }))
-                .build()
-                .await?;
+                }),
+            );
 
             Ok(Self {
-                db: Rc::new(DbWithOptimisticChanges::new(db)),
+                db: Rc::new(db),
                 db_subscriptions: SendWrapper::new(db_change_notifiers),
                 endpoint_client,
                 _transport: PhantomData,

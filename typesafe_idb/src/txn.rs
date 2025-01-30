@@ -1,13 +1,8 @@
-use crate::db::CommitListener;
 use crate::object_store::ObjectStore;
 use crate::Store;
 use crate::{StoreMarker, TypesafeDb};
-use std::cell::RefCell;
 use std::ops::Deref;
-use std::{
-    collections::{HashMap, HashSet},
-    marker::PhantomData,
-};
+use std::{collections::HashSet, marker::PhantomData};
 
 #[derive(Clone)]
 pub struct Present;
@@ -49,81 +44,16 @@ impl Deref for StoreName {
     }
 }
 
-#[derive(Debug, Ord, PartialOrd, Hash, PartialEq, Eq, Clone)]
-pub struct SerializedId(String);
-
-impl std::ops::Deref for SerializedId {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl SerializedId {
-    pub fn new_from_row<S: Store>(row: &S) -> Self {
-        Self(serde_json::to_string(&row.id()).unwrap())
-    }
-
-    pub fn new_from_id<S: Store>(id: &S::Id) -> Self {
-        Self(serde_json::to_string(&id).unwrap())
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct ReactivityTrackers {
-    /// The value of the hasmap is the serde serialized value of the id.
-    pub stores_accessed_by_id: HashMap<StoreName, HashSet<SerializedId>>,
-
-    /// This will include get_all() accesses and also index accesses.
-    /// It maybe good
-    pub stores_accessed_in_bulk: HashSet<StoreName>,
-}
-impl ReactivityTrackers {
-    pub fn overlaps(&self, other: &ReactivityTrackers) -> bool {
-        self.stores_accessed_by_id
-            .iter()
-            .any(|(store_name_a, ids_a)| {
-                other.stores_accessed_in_bulk.contains(store_name_a)
-                    || other
-                        .stores_accessed_by_id
-                        .get(store_name_a)
-                        .map(|ids_b| ids_a.intersection(ids_b).count() > 0)
-                        .unwrap_or(false)
-            })
-            || self.stores_accessed_in_bulk.iter().any(|store_name_a| {
-                other.stores_accessed_in_bulk.contains(store_name_a)
-                    || other.stores_accessed_by_id.contains_key(store_name_a)
-            })
-    }
-
-    pub fn add_by_id_access(&mut self, store_name: StoreName, serialized_id: SerializedId) {
-        self.stores_accessed_by_id
-            .entry(store_name)
-            .or_default()
-            .insert(serialized_id);
-    }
-
-    pub fn add_bulk_access(&mut self, store_name: StoreName) {
-        self.stores_accessed_in_bulk.insert(store_name);
-    }
-}
-
 pub struct Txn<C, Mode> {
     #[allow(unused)]
     markers: C,
-    /// RTI: Will be None if the transaction is committed or aborted.
+    /// RTI: Will be None if and only if the transaction is committed or aborted.
     actual_txn: Option<idb::Transaction>,
     mode: PhantomData<Mode>,
-
-    /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
-    reactivity_trackers: RefCell<ReactivityTrackers>,
-
-    commit_listener: Option<CommitListener>,
 }
 
 impl<Markers, Mode> Txn<Markers, Mode> {
-    pub fn object_store<S>(&self) -> Result<ObjectStore<'_, S, Mode>, crate::Error>
+    pub fn object_store<S>(&self) -> Result<ObjectStore<S, Mode>, crate::Error>
     where
         S: Store,
         Markers: StoreMarker<S>,
@@ -132,22 +62,20 @@ impl<Markers, Mode> Txn<Markers, Mode> {
             .expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")?;
 
         Ok(ObjectStore {
-            reactivity_trackers: &self.reactivity_trackers,
             actual_object_store,
             _markers: PhantomData,
         })
     }
 
-    pub async fn commit(mut self) -> Result<ReactivityTrackers, idb::Error> {
-        commit_logic(self.actual_txn.take().expect("Should not be None if not committed/aborted before, which should ahve required a mut self"), &self.reactivity_trackers, &self.commit_listener)?;
-        Ok(self.reactivity_trackers.take())
+    pub fn commit(mut self) -> Result<(), idb::Error> {
+        if let Some(actual_txn) = self.actual_txn.take() {
+            actual_txn.commit()?;
+        }
+
+        Ok(())
     }
 
-    pub fn reactivity_trackers(&self) -> ReactivityTrackers {
-        self.reactivity_trackers.borrow().clone()
-    }
-
-    pub async fn abort(mut self) -> Result<(), idb::Error> {
+    pub fn abort(mut self) -> Result<(), idb::Error> {
         self.actual_txn.take().expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")
             .abort()?;
         Ok(())
@@ -158,7 +86,6 @@ pub struct TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode> {
     db: &'db TypesafeDb<DbTableMarkers>,
     txn_table_markers: TxnTableMarkers,
     store_names: HashSet<&'static str>,
-    commit_listener: Option<CommitListener>,
     mode: PhantomData<Mode>,
 }
 
@@ -170,32 +97,16 @@ impl Txn<(), ()> {
             store_names: Default::default(),
             txn_table_markers: Default::default(),
             db,
-            commit_listener: db.listener.clone(),
             mode: PhantomData,
         }
     }
-}
-
-fn commit_logic(
-    actual_txn: idb::Transaction,
-    reactivity_trackers: &RefCell<ReactivityTrackers>,
-    commit_listener: &Option<CommitListener>,
-) -> Result<(), idb::Error> {
-    let _ = actual_txn.commit()?;
-    if let Some(listener) = commit_listener {
-        // tracing::trace!("Invoking listener for txn commit");
-        listener(reactivity_trackers.borrow().deref());
-    } else {
-        // tracing::trace!("No listener to invoke for txn commit.");
-    };
-    Ok(())
 }
 
 impl<C, Mode> Drop for Txn<C, Mode> {
     fn drop(&mut self) {
         // If it's still Some(), means one hasn't called .commit() or .abort()
         if let Some(actual_txn) = self.actual_txn.take() {
-            _ = commit_logic(actual_txn, &self.reactivity_trackers, &self.commit_listener);
+            actual_txn.commit().expect("Couldnt' commit indexeddb txn.");
         }
     }
 }
@@ -220,7 +131,6 @@ where
             txn_table_markers: new_markers,
             store_names: new_table_names,
             db: self.db,
-            commit_listener: self.commit_listener,
             mode: self.mode,
         }
     }
@@ -230,7 +140,6 @@ where
             txn_table_markers: self.txn_table_markers,
             store_names: self.store_names,
             db: self.db,
-            commit_listener: self.commit_listener,
             mode: PhantomData,
         }
     }
@@ -240,15 +149,7 @@ where
             txn_table_markers: self.txn_table_markers,
             store_names: self.store_names,
             db: self.db,
-            commit_listener: self.commit_listener,
             mode: PhantomData,
-        }
-    }
-
-    pub fn with_no_commit_listener(self) -> Self {
-        Self {
-            commit_listener: None,
-            ..self
         }
     }
 }
@@ -268,8 +169,6 @@ where
                     .expect(""),
             ),
             mode: PhantomData,
-            reactivity_trackers: Default::default(),
-            commit_listener: self.commit_listener,
         }
     }
 }

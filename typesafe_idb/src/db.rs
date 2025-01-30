@@ -1,14 +1,11 @@
-use std::{any::TypeId, collections::HashMap, marker::PhantomData, rc::Rc};
+use std::{any::TypeId, collections::HashMap, marker::PhantomData};
 
 use idb::builder::ObjectStoreBuilder;
 
-use crate::{ReactivityTrackers, ReadOnly, Store, Txn, TxnBuilder};
-
-pub type CommitListener = Rc<dyn Fn(&ReactivityTrackers)>;
+use crate::{ReadOnly, Store, Txn, TxnBuilder};
 
 pub struct TypesafeDb<StoreMarkers> {
     markers: PhantomData<StoreMarkers>,
-    pub(crate) listener: Option<CommitListener>,
     pub(crate) inner: idb::Database,
 }
 
@@ -16,7 +13,6 @@ pub struct TypesafeDbBuilder<StoreMarkers> {
     name: String,
     markers: PhantomData<StoreMarkers>,
     object_store_builders: HashMap<TypeId, ObjectStoreBuilder>,
-    commit_listener: Option<CommitListener>,
 }
 
 impl TypesafeDb<()> {
@@ -25,7 +21,6 @@ impl TypesafeDb<()> {
             name,
             markers: PhantomData,
             object_store_builders: Default::default(),
-            commit_listener: Default::default(),
         }
     }
 }
@@ -46,14 +41,6 @@ impl<DbStoreMarkers> TypesafeDbBuilder<DbStoreMarkers> {
             markers: PhantomData,
             object_store_builders: self.object_store_builders,
             name: self.name,
-            commit_listener: self.commit_listener,
-        }
-    }
-
-    pub fn with_commit_listener(self, commit_listener: Rc<dyn Fn(&ReactivityTrackers)>) -> Self {
-        TypesafeDbBuilder {
-            commit_listener: Some(commit_listener),
-            ..self
         }
     }
 
@@ -71,7 +58,6 @@ impl<DbStoreMarkers> TypesafeDbBuilder<DbStoreMarkers> {
         Ok(TypesafeDb {
             markers: PhantomData,
             inner: db,
-            listener: self.commit_listener,
         })
     }
 }

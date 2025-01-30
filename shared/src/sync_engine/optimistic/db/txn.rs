@@ -1,14 +1,28 @@
-use std::sync::Arc;
+use std::{cell::RefCell, sync::Arc};
 
 use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TxnBuilder, TxnMode};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
-use super::object_store::ObjectStoreWithOptimisticChanges;
+use super::{
+    object_store::ObjectStoreWithOptimisticChanges,
+    reactivity_trackers::{CommitListener, ReactivityTrackers},
+};
+
+#[derive(derive_more::From)]
+struct TxnWithOptimisticChangesInner<C, Mode> {
+    idb_txn: Txn<C, Mode>,
+    commit_listener: Option<CommitListener>,
+}
 
 pub struct TxnWithOptimisticChanges<C, Mode> {
     optimistic_updates: Arc<OptimisticChanges>,
-    inner: Txn<C, Mode>,
+    /// RTI: Will be None if and only if the transaction is committed or aborted.
+    /// RTI upkeep: `.commit()` and `.abort()` take a `self`.
+    inner: Option<TxnWithOptimisticChangesInner<C, Mode>>,
+
+    /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
+    reactivity_trackers: RefCell<ReactivityTrackers>,
 }
 
 impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
@@ -21,20 +35,47 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
     {
         Ok(ObjectStoreWithOptimisticChanges::new(
             self.optimistic_updates.clone(),
-            self.inner.object_store::<S>()?,
+            self.inner.as_ref().expect("").idb_txn.object_store::<S>()?,
+            &self.reactivity_trackers,
         ))
     }
 
-    pub async fn commit(self) -> Result<typesafe_idb::ReactivityTrackers, idb::Error> {
-        self.inner.commit().await
+    pub fn commit(mut self) -> Result<ReactivityTrackers, idb::Error> {
+        self.commit_impl()
     }
 
-    pub fn reactivity_trackers(&self) -> typesafe_idb::ReactivityTrackers {
-        self.inner.reactivity_trackers()
+    fn commit_impl(&mut self) -> Result<ReactivityTrackers, idb::Error> {
+        // Note how we `.take()` this? That's how we make sure that, in the Drop impl, we don't
+        //   (1) commit the inner transaction, and
+        //   (2) invoke the commit listener twice.
+        let TxnWithOptimisticChangesInner {
+            idb_txn,
+            commit_listener,
+        } = self.inner.take().expect("");
+        idb_txn.commit()?;
+        if let Some(listener) = commit_listener {
+            // tracing::trace!("Invoking listener for txn commit");
+            listener(&self.reactivity_trackers.borrow());
+        } else {
+            // tracing::trace!("No listener to invoke for txn commit.");
+        };
+        Ok(self.reactivity_trackers.take())
     }
 
-    pub async fn abort(self) -> Result<(), idb::Error> {
-        self.inner.abort().await
+    pub fn reactivity_trackers(&self) -> ReactivityTrackers {
+        self.reactivity_trackers.borrow().clone()
+    }
+
+    pub fn abort(mut self) -> Result<(), idb::Error> {
+        self.inner.take().expect("").idb_txn.abort()
+    }
+}
+
+impl<Markers, Mode> Drop for TxnWithOptimisticChanges<Markers, Mode> {
+    fn drop(&mut self) {
+        let _ = self
+            .commit_impl()
+            .expect("Couldn't commit a transaction in the Drop impl.");
     }
 }
 
@@ -42,6 +83,7 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
 pub struct TxnBuilderWithOptimisticChanges<'db, DbTableMarkers, TxnTableMarkers, Mode> {
     inner: TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode>,
     optimistic_updates: Arc<OptimisticChanges>,
+    commit_listener: Option<CommitListener>,
 }
 
 impl<'db, DbTableMarkers, TxnTableMarkers, Mode>
@@ -59,6 +101,7 @@ where
         TxnBuilderWithOptimisticChanges {
             inner: self.inner.with_store::<H2>(),
             optimistic_updates: self.optimistic_updates,
+            commit_listener: self.commit_listener,
         }
     }
 
@@ -68,6 +111,7 @@ where
         TxnBuilderWithOptimisticChanges {
             inner: self.inner.read_write(),
             optimistic_updates: self.optimistic_updates,
+            commit_listener: self.commit_listener,
         }
     }
 
@@ -77,13 +121,15 @@ where
         TxnBuilderWithOptimisticChanges {
             inner: self.inner.read_only(),
             optimistic_updates: self.optimistic_updates,
+            commit_listener: self.commit_listener,
         }
     }
 
     pub fn with_no_commit_listener(self) -> Self {
         Self {
-            inner: self.inner.with_no_commit_listener(),
+            inner: self.inner,
             optimistic_updates: self.optimistic_updates,
+            commit_listener: None,
         }
     }
 }
@@ -96,7 +142,8 @@ where
     pub fn build(self) -> TxnWithOptimisticChanges<TxnTableMarkers, Mode> {
         TxnWithOptimisticChanges {
             optimistic_updates: self.optimistic_updates.clone(),
-            inner: self.inner.build(),
+            inner: Some((self.inner.build(), self.commit_listener).into()),
+            reactivity_trackers: Default::default(),
         }
     }
 }

@@ -1,17 +1,24 @@
+use std::{cell::RefCell, sync::Arc};
 use typesafe_idb::Store;
-use std::sync::Arc;
 
 use typesafe_idb::{Index, IndexSpec};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
+use super::reactivity_trackers::ReactivityTrackers;
+
 #[derive(derive_more::Constructor)]
-pub struct IndexWithOptimisticChanges<'a, IS> {
-     optimistic_changes: Arc<OptimisticChanges>,
-     inner: Index<'a, IS>,
+pub struct IndexWithOptimisticChanges<'txn, IS> {
+    optimistic_changes: Arc<OptimisticChanges>,
+    inner: Index<IS>,
+    pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
 }
 impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     pub async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_bulk_access(IS::Store::NAME);
+
         let row = match self.no_optimism_get(id).await? {
             Some(r) => r,
             None => return Ok(None),
@@ -36,6 +43,10 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         &self,
         id: &IS::Type,
     ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_bulk_access(IS::Store::NAME);
+
         self.inner.get(id).await
     }
 
@@ -43,8 +54,13 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_bulk_access(IS::Store::NAME);
+
         let from_db_filtered = self
-            .no_optimism_get_all(value)
+            .inner
+            .get_all(value)
             .await?
             .into_iter()
             .filter(|r| {
@@ -81,6 +97,10 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_bulk_access(IS::Store::NAME);
+
         self.inner.get_all(value).await
     }
 }
