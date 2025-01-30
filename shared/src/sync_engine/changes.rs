@@ -8,9 +8,7 @@ use crate::avail::{MergeError, MergeStructWithAvails};
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
-use super::optimistic::db_with_optimistic_changes::{
-    DbWithOptimisticChanges, TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges,
-};
+use super::optimistic::db::{DbWithOptimisticChanges, TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 use super::TypedTransportTrait;
 use super::{
     super::types::{

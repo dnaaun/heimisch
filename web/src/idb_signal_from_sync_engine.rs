@@ -3,9 +3,7 @@ use std::{future::Future, sync::Arc};
 
 use send_wrapper::SendWrapper;
 use shared::sync_engine::{
-    optimistic::db_with_optimistic_changes::{
-        TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges,
-    },
+    optimistic::db::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges},
     DbStoreMarkers, SyncEngine,
 };
 use typesafe_idb::{ReadOnly, TxnMode};

@@ -1,4 +1,4 @@
-use optimistic::db_with_optimistic_changes::DbWithOptimisticChanges;
+use optimistic::db::DbWithOptimisticChanges;
 use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
@@ -88,7 +88,7 @@ mod isolate_db_store_markers_impl_type {
     use send_wrapper::SendWrapper;
     use typesafe_idb::{StoreMarker, TypesafeDb};
 
-    use super::optimistic::db_with_optimistic_changes::DbWithOptimisticChanges;
+    use super::optimistic::db::DbWithOptimisticChanges;
     use super::registry::Registry;
     use super::typed_transport::TypedTransportTrait;
     use super::DbSubscription;

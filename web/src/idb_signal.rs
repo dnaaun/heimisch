@@ -7,8 +7,7 @@ use std::{
 
 use leptos::prelude::*;
 use parking_lot::Mutex;
-use shared::sync_engine::{optimistic::db_with_optimistic_changes::TxnWithOptimisticChanges, DbSubscription};
-use typesafe_idb::Txn;
+use shared::sync_engine::{optimistic::db::TxnWithOptimisticChanges, DbSubscription};
 
 type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
 
