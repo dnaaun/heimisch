@@ -3760,6 +3760,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "any_spawner",
+ "bon",
  "codee",
  "derive_more",
  "diesel",
@@ -4940,6 +4941,7 @@ version = "0.0.0"
 dependencies = [
  "tracing",
  "tracing-subscriber",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

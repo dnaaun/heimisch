@@ -38,6 +38,12 @@ pub struct ReactivityTrackers {
 
 impl ReactivityTrackers {
     pub fn is_affected_by_writes_in(&self, other: &ReactivityTrackers) -> bool {
+        tracing::info!(
+            "self.read_by_id={:?}, self.read_in_bulk={:?}, stores_modified={:?}",
+            self.stores_read_by_id,
+            self.stores_read_in_bulk,
+            other.stores_modified
+        );
         self.stores_read_by_id.iter().any(|(store_name_a, ids_a)| {
             other
                 .stores_modified

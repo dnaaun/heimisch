@@ -1,15 +1,30 @@
-pub struct MemoryWriterFactory {
-    pub buffer: std::sync::Arc<std::sync::Mutex<Vec<u8>>>,
-}
+use std::sync::{Arc, Mutex};
 
-impl std::io::Write for MemoryWriterFactory {
-    fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
-        let mut buffer = self.buffer.lock().unwrap();
-        buffer.extend_from_slice(buf);
+use tracing_subscriber::fmt::MakeWriter;
+use wasm_bindgen_test::console_log;
+
+pub struct InMemoryWriter {}
+
+impl std::io::Write for InMemoryWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let buf_str = String::from_utf8(buf.to_vec()).unwrap();
+        console_log!("{}", buf_str);
         Ok(buf.len())
     }
 
-    fn flush(&mut self) -> Result<(), std::io::Error> {
+    fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
+    }
+}
+
+pub struct MemoryWriterFactory {
+    pub buffer: Arc<Mutex<Vec<u8>>>,
+}
+
+impl<'a> MakeWriter<'a> for MemoryWriterFactory {
+    type Writer = InMemoryWriter;
+
+    fn make_writer(&'a self) -> Self::Writer {
+        InMemoryWriter {}
     }
 }

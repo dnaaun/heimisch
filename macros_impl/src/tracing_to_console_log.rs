@@ -2,6 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, ItemFn};
 
+/// NOTE: Should probably name this "leptos test setup"
 pub fn tracing_to_console_log(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
@@ -13,29 +14,22 @@ pub fn tracing_to_console_log(item: TokenStream) -> TokenStream {
     let output = &input.sig.output;
 
     let expanded = quote! {
-        #[::wasm_bindgen_test::wasm_bindgen_test]
         #fn_vis #asyncness fn #fn_name(#input_args) #output {
-            let buffer = ::std::sync::Arc::new(::std::sync::Mutex::new(Vec::new()));
-
-            let writer_factory = ::wasm_testing_utils::tracing_to_console_log::MemoryWriterFactory {
-                buffer: ::std::sync::Arc::clone(&buffer),
+            {
+                _ = ::leptos::task::Executor::init_wasm_bindgen();
+                let buffer = ::std::sync::Arc::new(::std::sync::Mutex::new(Vec::new()));
+                let writer_factory = ::wasm_testing_utils::tracing_to_console_log::MemoryWriterFactory {
+                    buffer: ::std::sync::Arc::clone(&buffer),
+                };
+                let subscriber = ::tracing_subscriber::fmt()
+                    .without_time()
+                    .with_writer(writer_factory)
+                    .with_max_level(::tracing::Level::TRACE)
+                    .finish();
+                let _ = ::tracing::subscriber::set_global_default(subscriber);
             };
 
-            let subscriber = ::tracing_subscriber::FmtSubscriber::builder()
-                .without_time()
-                .with_writer(writer_factory)
-                .with_max_level(::tracing::Level::TRACE)
-                .finish();
-
-            ::tracing::subscriber::set_global_default(subscriber)
-                .expect("Unable to set global subscriber");
-
-            // The body of the function
-            #fn_body
-
-            let logged_data = buffer.lock().unwrap();
-            let logged_data_str = String::from_utf8(logged_data.clone()).unwrap();
-            ::wasm_bindgen_test::console_log!("{}", logged_data_str);
+             #fn_body
         }
     };
 
