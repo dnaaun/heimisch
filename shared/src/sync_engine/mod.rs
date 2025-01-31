@@ -12,6 +12,7 @@ pub mod optimistic;
 mod registry;
 pub mod storage;
 mod websocket_updates;
+pub mod mutations;
 
 use std::{cmp::Ordering, rc::Rc};
 

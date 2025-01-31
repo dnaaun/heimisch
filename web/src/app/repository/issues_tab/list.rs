@@ -4,7 +4,6 @@ use macros::zwang_url;
 use shared::types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
-    repository::RepositoryId,
     user::User,
 };
 
@@ -13,7 +12,8 @@ use zwang_router::{ArgFromParent, RouteParams, A};
 
 use crate::{
     app::{
-        repository::issues_tab::new_issue_button::NewIssueButton, routing::*,
+        repository::{issues_tab::new_issue_button::NewIssueButton, RepositoryPageWillPass},
+        routing::*,
         sync_engine_provider::use_sync_engine,
     },
     frontend_error::FrontendError,
@@ -26,7 +26,7 @@ pub fn IssuesList(
         owner_name,
         repo_name,
     }): RouteParams<ParamsOwnerNameRepoName>,
-    ArgFromParent(repository_id): ArgFromParent<Signal<RepositoryId>>,
+    ArgFromParent(ids): ArgFromParent<RepositoryPageWillPass>,
 ) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
@@ -36,7 +36,7 @@ pub fn IssuesList(
             Ok(txn
                 .object_store::<Issue>()?
                 .index::<RepositoryIdIndex>()?
-                .get_all(Some(&repository_id.read()))
+                .get_all(Some(&ids.read().id))
                 .await?)
         },
     );

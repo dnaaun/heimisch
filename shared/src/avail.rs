@@ -8,6 +8,9 @@ pub enum Avail<T> {
     No,
 }
 
+#[derive(Debug)]
+pub struct NotAvailableError;
+
 impl<T> Avail<T> {
     pub fn from_option(opt: Option<T>) -> Self {
         match opt {
@@ -66,6 +69,14 @@ impl<T> Avail<T> {
             Avail::No => None,
         }
     }
+
+    pub fn to_result(self) -> Result<T, NotAvailableError> {
+        match self {
+            Avail::Yes(i) => Ok(i),
+            Avail::No => Err(NotAvailableError),
+        }
+    }
+
 
     pub fn ok_or_else<E>(self, func: impl Fn() -> E) -> Result<T, E> {
         match self {

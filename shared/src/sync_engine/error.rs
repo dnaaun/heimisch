@@ -1,4 +1,4 @@
-use crate::{avail::MergeError, endpoints::endpoint_client::OwnApiError};
+use crate::{avail::{MergeError, NotAvailableError}, endpoints::endpoint_client::OwnApiError};
 use std::fmt::Debug;
 
 use super::{
@@ -18,6 +18,7 @@ pub enum SyncErrorSrc<T: TypedTransportTrait> {
     /// These are things like: the user that owns a repository in our db not existing in our db.
     DataModel(String),
     WebSocket(TypedTransportError<T::ConnError>),
+    NotAvailable(NotAvailableError)
 }
 
 impl<T: TypedTransportTrait> Debug for SyncErrorSrc<T> {
@@ -33,6 +34,7 @@ impl<T: TypedTransportTrait> Debug for SyncErrorSrc<T> {
             SyncErrorSrc::Ewebsock(err) => write!(f, "SyncErrorSrc::Ewebsock({:?})", err),
             SyncErrorSrc::DataModel(msg) => write!(f, "SyncErrorSrc::DataModel({})", msg),
             SyncErrorSrc::WebSocket(err) => write!(f, "SyncErrorSrc::WebSocket({:?})", err),
+            SyncErrorSrc::NotAvailable(err) => write!(f, "SyncErrorSrc::NotAvailable({:?})", err),
         }
     }
 }
@@ -125,5 +127,11 @@ impl<W: TypedTransportTrait> From<typesafe_idb::Error> for SyncError<W> {
 impl<W: TypedTransportTrait> From<MergeError> for SyncError<W> {
     fn from(value: MergeError) -> Self {
         SyncErrorSrc::Merge(value).into()
+    }
+}
+
+impl<W: TypedTransportTrait> From<NotAvailableError> for SyncError<W> {
+    fn from(value: NotAvailableError) -> Self {
+        SyncErrorSrc::NotAvailable(value).into()
     }
 }

@@ -3,7 +3,7 @@ use leptos::{prelude::*, task::spawn_local};
 use shared::{
     types::{
         self,
-        repository::{Repository, RepositoryId},
+        repository::Repository,
         user::{self, User},
     },
     utils::LogErr,
@@ -53,9 +53,11 @@ impl From<Tab> for RootOwnerNameRepoName {
     }
 }
 
+pub type RepositoryPageWillPass = Signal<Repository>;
+
 #[allow(non_snake_case)]
 pub fn RepositoryPage(
-    outlet: Outlet<Signal<RepositoryId>, impl IntoView + 'static>,
+    outlet: Outlet<RepositoryPageWillPass, impl IntoView + 'static>,
     RouteParams(params): RouteParams<ParamsOwnerNameRepoName>,
 ) -> impl IntoView {
     let parsed_path = use_context::<ParsedPath<Root>>().expect("");
@@ -72,11 +74,13 @@ pub fn RepositoryPage(
         })
     });
 
-    let ParamsOwnerNameRepoName { owner_name , repo_name } = params;
+    let ParamsOwnerNameRepoName {
+        owner_name,
+        repo_name,
+    } = params;
 
     let set_active_tab = move |new_active_tab: Tab| {
-        set_pathname(
-            Root::OwnerName {
+        set_pathname(Root::OwnerName {
             owner_name: owner_name.get_untracked(),
             child: RootOwnerName::RepoName {
                 repo_name: repo_name.get_untracked(),
@@ -89,7 +93,7 @@ pub fn RepositoryPage(
 
     let sync_engine = use_sync_engine();
 
-    let repository_id = sync_engine.idb_signal(
+    let repository = sync_engine.idb_signal(
         |builder| {
             builder
                 .with_store::<User>()
@@ -115,7 +119,7 @@ pub fn RepositoryPage(
                         .into_iter()
                         .find(|r| r.owner_id.map_ref(|o| o == &user_id).assume(false));
 
-                    Ok(repo.map(|r| r.id))
+                    Ok(repo)
                 }
                 None => Ok(None),
             }
@@ -123,14 +127,14 @@ pub fn RepositoryPage(
     );
 
     // Memo is necessary to make sure effect runs once for each repo
-    let repository_id = Memo::new(move |_| repository_id.get());
+    let repository = Memo::new(move |_| repository.get());
 
     Effect::new(move || {
         let sync_engine = sync_engine.clone();
-        if let Some(Ok(Some(repository_id))) = repository_id.get() {
+        if let Some(Ok(Some(repo))) = repository.get() {
             spawn_local(async move {
                 let _ = sync_engine
-                    .ensure_initial_sync_repository(&repository_id, false)
+                    .ensure_initial_sync_repository(&repo.id, false)
                     .await
                     .log_err();
             })
@@ -142,17 +146,18 @@ pub fn RepositoryPage(
             view! { <div class="min-w-min h-screen">asdfasdf <Spinner /></div> }
         }>
             {move || {
-                let repository_id = Signal::derive(move || repository_id.get());
-                let repository_id = match repository_id.transpose() {
+                let repository = Signal::derive(move || repository.get());
+                let repository = match repository.transpose() {
                     Some(r) => r.transpose().map_err(|s| s.get())?,
                     None => return Ok::<_, FrontendError>(None),
                 };
-                let repository_id = match repository_id.transpose() {
+                let repository = match repository.transpose() {
                     Some(r) => r,
                     None => {
                         return Ok(Some(view! { <NotFound /> }.into_any()));
                     }
                 };
+                let repository_id = Signal::derive(move || repository.get().id);
                 let tabs = vec![Tab::Issues, Tab::Pulls];
                 let get_tab_label = |key: &Tab| {
                     match key {
@@ -178,7 +183,7 @@ pub fn RepositoryPage(
                                 />
                                 <div class="flex items-center justify-center">
                                     <div class="m-5 max-w-screen-xl w-full">
-                                        {outlet.call(repository_id)}
+                                        {outlet.call(repository)}
                                     </div>
                                 </div>
                             </div>

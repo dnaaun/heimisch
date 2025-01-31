@@ -8,12 +8,10 @@ use crate::app::{
 
 use super::{
     not_found::NotFound,
-    repository::{issues_tab::new_issue::NewIssue, pull_requests_tab::PullRequestsTab},
+    repository::{issues_tab::new_issue::NewIssue, pull_requests_tab::PullRequestsTab, RepositoryPageWillPass},
 };
 use crate::app::auth::Auth;
 
-use leptos::prelude::Signal;
-use shared::types::repository::RepositoryId;
 use zwang_router::zwang_routes;
 
 zwang_routes! {{
@@ -32,7 +30,7 @@ zwang_routes! {{
                     path: "/{repo_name}",
                     layout: RepositoryPage,
                     view: IssuesList,
-                    will_pass: Signal<RepositoryId>,
+                    will_pass: RepositoryPageWillPass,
                     children: [
                         {
                             path: "/pulls",
@@ -40,7 +38,7 @@ zwang_routes! {{
                         },
                         {
                             path: "/issues",
-                            will_pass: Signal<RepositoryId>,
+                            will_pass: RepositoryPageWillPass,
                             view: IssuesList,
                             children: [
                                 {

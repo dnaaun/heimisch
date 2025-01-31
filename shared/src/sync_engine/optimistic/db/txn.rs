@@ -37,6 +37,10 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
             self.optimistic_updates.clone(),
             self.inner.as_ref().expect("").idb_txn.object_store::<S>()?,
             &self.reactivity_trackers,
+            self.inner
+                .as_ref()
+                .map(|i| i.commit_listener.clone())
+                .unwrap(),
         ))
     }
 
@@ -73,9 +77,7 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
 
 impl<Markers, Mode> Drop for TxnWithOptimisticChanges<Markers, Mode> {
     fn drop(&mut self) {
-        let _ = self
-            .commit_impl()
-            .expect("Couldn't commit a transaction in the Drop impl.");
+        let _ = self.commit_impl();
     }
 }
 

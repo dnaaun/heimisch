@@ -1,16 +1,20 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, future::Future, sync::Arc};
 
 use typesafe_idb::{IndexSpec, ObjectStore, Present, Store, TxnMode};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
-use super::{index::IndexWithOptimisticChanges, reactivity_trackers::ReactivityTrackers, SerializedId};
+use super::{
+    index::IndexWithOptimisticChanges, reactivity_trackers::ReactivityTrackers, CommitListener,
+    SerializedId,
+};
 
 #[derive(Clone, derive_more::Constructor)]
 pub struct ObjectStoreWithOptimisticChanges<'txn, S, Mode> {
     optimistic_changes: Arc<OptimisticChanges>,
     inner: ObjectStore<S, Mode>,
-    pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
+    pub reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
+    pub commit_listener: Option<CommitListener>,
 }
 
 impl<S, Mode> ObjectStoreWithOptimisticChanges<'_, S, Mode>
@@ -124,5 +128,26 @@ where
         self.optimistic_changes
             .remove_obsoletes_for_id::<S>(item.id());
         Ok(())
+    }
+    pub fn update(&self, row: S, update_fut: impl Future<Output = Result<(), ()>> + 'static) {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_modification(S::NAME, SerializedId::new_from_row(&row));
+        self.optimistic_changes.update(row, update_fut);
+
+        if let Some(commit_listener) = self.commit_listener.as_ref() {
+            commit_listener(&self.reactivity_trackers.borrow());
+        }
+    }
+
+    pub fn create(&self, row: S, create_fut: impl Future<Output = Result<S::Id, ()>> + 'static) {
+        self.reactivity_trackers
+            .borrow_mut()
+            .add_modification(S::NAME, SerializedId::new_from_row(&row));
+        self.optimistic_changes.create(row, create_fut);
+
+        if let Some(commit_listener) = self.commit_listener.as_ref() {
+            commit_listener(&self.reactivity_trackers.borrow());
+        }
     }
 }

@@ -46,18 +46,18 @@ use serde::{Deserialize, Serialize};
 //     UnknownValue(serde_json::Value),
 // }
 //
-// /// struct for typed errors of method [`issues_slash_create`]
-// #[derive(Debug, Clone, Serialize, Deserialize)]
-// #[serde(untagged)]
-// pub enum IssuesSlashCreateError {
-//     Status400(models::BasicError),
-//     Status403(models::BasicError),
-//     Status422(models::ValidationError),
-//     Status503(models::SecretScanningListAlertsForEnterprise503Response),
-//     Status404(models::BasicError),
-//     Status410(models::BasicError),
-//     UnknownValue(serde_json::Value),
-// }
+/// struct for typed errors of method [`issues_slash_create`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum IssuesSlashCreateError {
+    Status400(models::BasicError),
+    Status403(models::BasicError),
+    Status422(models::ValidationError),
+    Status503(models::SecretScanningListAlertsForEnterprise503Response),
+    Status404(models::BasicError),
+    Status410(models::BasicError),
+    UnknownValue(serde_json::Value),
+}
 //
 // /// struct for typed errors of method [`issues_slash_create_comment`]
 // #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -569,56 +569,60 @@ pub enum IssuesSlashListForRepoError {
 //     }
 // }
 //
-// /// Any user with pull access to a repository can create an issue. If [issues are disabled in the repository](https://docs.github.com/articles/disabling-issues/), the API returns a `410 Gone` status.  This endpoint triggers [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications). Creating content too quickly using this endpoint may result in secondary rate limiting. For more information, see \"[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)\" and \"[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api).\"  This endpoint supports the following custom media types. For more information, see \"[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types).\"  - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response will include `body`. This is the default if you do not pass any specific media type. - **`application/vnd.github.text+json`**: Returns a text only representation of the markdown body. Response will include `body_text`. - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's markdown. Response will include `body_html`. - **`application/vnd.github.full+json`**: Returns raw, text, and HTML representations. Response will include `body`, `body_text`, and `body_html`.
-// pub async fn issues_slash_create(
-//     configuration: &configuration::Configuration,
-//     owner: &str,
-//     repo: &str,
-//     issues_create_request: models::IssuesCreateRequest,
-// ) -> Result<models::Issue, Error<IssuesSlashCreateError>> {
-//     let local_var_configuration = configuration;
-//
-//     let local_var_client = &local_var_configuration.client;
-//
-//     let local_var_uri_str = format!(
-//         "{}/repos/{owner}/{repo}/issues",
-//         local_var_configuration.base_path,
-//         owner = crate::apis::urlencode(owner),
-//         repo = crate::apis::urlencode(repo)
-//     );
-//     let mut local_var_req_builder =
-//         local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
-//
-//     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-//         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-//     }
-//     local_var_req_builder = local_var_req_builder.json(&issues_create_request);
-//
-//     if let Some(ref bearer_access_token) = configuration.bearer_access_token {
-//         local_var_req_builder =
-//             local_var_req_builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {bearer_access_token}"));
-//     }
-//
-//     let local_var_req = local_var_req_builder.build()?;
-//     let local_var_resp = local_var_client.execute(local_var_req).await?;
-//
-//     let local_var_status = local_var_resp.status();
-//     let local_var_content = local_var_resp.text().await?;
-//
-//     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-//         serde_json::from_str(&local_var_content).map_err(Error::from)
-//     } else {
-//         let local_var_entity: Option<IssuesSlashCreateError> =
-//             serde_json::from_str(&local_var_content).ok();
-//         let local_var_error = ResponseContent {
-//             status: local_var_status,
-//             content: local_var_content,
-//             entity: local_var_entity,
-//         };
-//         Err(Error::ResponseError(local_var_error))
-//     }
-// }
+/// Any user with pull access to a repository can create an issue. If [issues are disabled in the repository](https://docs.github.com/articles/disabling-issues/), the API returns a `410 Gone` status.  This endpoint triggers [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications). Creating content too quickly using this endpoint may result in secondary rate limiting. For more information, see \"[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)\" and \"[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api).\"  This endpoint supports the following custom media types. For more information, see \"[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types).\"  - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response will include `body`. This is the default if you do not pass any specific media type. - **`application/vnd.github.text+json`**: Returns a text only representation of the markdown body. Response will include `body_text`. - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's markdown. Response will include `body_html`. - **`application/vnd.github.full+json`**: Returns raw, text, and HTML representations. Response will include `body`, `body_text`, and `body_html`.
+pub async fn issues_slash_create(
+    configuration: &configuration::Configuration,
+    owner: &str,
+    repo: &str,
+    issues_create_request: models::IssuesCreateRequest,
+) -> Result<models::Issue, Error<IssuesSlashCreateError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = local_var_configuration
+        .base_path
+        .join(&format!(
+            "repos/{owner}/{repo}/issues",
+            owner = crate::apis::urlencode(owner),
+            repo = crate::apis::urlencode(repo)
+        ))
+        .expect("");
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    local_var_req_builder = local_var_req_builder.json(&issues_create_request);
+
+    if let Some(ref bearer_access_token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.header(
+            reqwest::header::AUTHORIZATION,
+            format!("Bearer {bearer_access_token}"),
+        );
+    }
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        from_str_with_path_to_err(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<IssuesSlashCreateError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
 //
 // /// You can use the REST API to create comments on issues and pull requests. Every pull request is an issue, but not every issue is a pull request.  This endpoint triggers [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications). Creating content too quickly using this endpoint may result in secondary rate limiting. For more information, see \"[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)\" and \"[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api).\"  This endpoint supports the following custom media types. For more information, see \"[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types).\"  - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response will include `body`. This is the default if you do not pass any specific media type. - **`application/vnd.github.text+json`**: Returns a text only representation of the markdown body. Response will include `body_text`. - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's markdown. Response will include `body_html`. - **`application/vnd.github.full+json`**: Returns raw, text, and HTML representations. Response will include `body`, `body_text`, and `body_html`.
 // pub async fn issues_slash_create_comment(

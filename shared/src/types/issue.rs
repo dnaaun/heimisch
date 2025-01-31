@@ -8,6 +8,7 @@ use macros::AvailMerge;
 use serde::{Deserialize, Serialize};
 
 use crate::avail::Avail;
+use crate::random::random;
 
 use super::github_app::GithubAppId;
 use super::label::Label;
@@ -28,11 +29,16 @@ use super::user::UserId;
     Eq,
     Hash,
     Copy,
-    Default,
     PartialOrd,
     Ord,
 )]
 pub struct IssueId(i64);
+
+impl std::default::Default for IssueId {
+    fn default() -> Self {
+        Self(-(random() as i64))
+    }
+}
 
 #[derive(
     macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Hash,

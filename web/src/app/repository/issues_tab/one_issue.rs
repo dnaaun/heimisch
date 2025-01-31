@@ -7,7 +7,6 @@ use shared::{
     types::{
         issue::{self, Issue},
         issue_comment::{IssueComment, IssueIdIndex},
-        repository::RepositoryId,
         user::User,
     },
 };
@@ -20,6 +19,7 @@ use crate::{
             pill_badge::{PillBadge, PillBadgeColor},
         },
         not_found::NotFound,
+        repository::RepositoryPageWillPass,
         routing::ParamsIssueNumberOwnerNameRepoName,
         sync_engine_provider::use_sync_engine,
         thirds::Thirds,
@@ -33,7 +33,7 @@ use super::new_issue_button::NewIssueButton;
 
 #[allow(non_snake_case)]
 pub fn OneIssue(
-    ArgFromParent(repository_id): ArgFromParent<Signal<RepositoryId>>,
+    ArgFromParent(repo): ArgFromParent<RepositoryPageWillPass>,
     RouteParams(ParamsIssueNumberOwnerNameRepoName {
         issue_number,
         owner_name,
@@ -53,7 +53,7 @@ pub fn OneIssue(
                 let issue = txn
                     .object_store::<Issue>()?
                     .index::<issue::RepositoryIdIndex>()?
-                    .get_all(Some(&repository_id.read()))
+                    .get_all(Some(&repo.read().id))
                     .await?
                     .into_iter()
                     .find(move |i| i.number == issue_number);
