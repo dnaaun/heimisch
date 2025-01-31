@@ -1,6 +1,9 @@
 pub mod applying_error;
 pub mod typed_transport;
 
+#[cfg(test)]
+pub mod tests;
+
 use applying_error::{ApplyingError, ApplyingResult};
 use futures::{pin_mut, StreamExt};
 use typed_transport::{establish, TypedTransportError, TypedTransportTrait};

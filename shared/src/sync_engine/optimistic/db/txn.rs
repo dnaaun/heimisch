@@ -45,25 +45,29 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
     }
 
     pub fn commit(mut self) -> Result<ReactivityTrackers, idb::Error> {
-        self.commit_impl()
+        self.commit_impl()?;
+        Ok(self.reactivity_trackers.clone().into_inner())
     }
 
-    fn commit_impl(&mut self) -> Result<ReactivityTrackers, idb::Error> {
+    fn commit_impl(&mut self) -> Result<(), idb::Error> {
         // Note how we `.take()` this? That's how we make sure that, in the Drop impl, we don't
         //   (1) commit the inner transaction, and
         //   (2) invoke the commit listener twice.
-        let TxnWithOptimisticChangesInner {
+        if let Some(TxnWithOptimisticChangesInner {
             idb_txn,
             commit_listener,
-        } = self.inner.take().expect("");
-        idb_txn.commit()?;
-        if let Some(listener) = commit_listener {
-            // tracing::trace!("Invoking listener for txn commit");
-            listener(&self.reactivity_trackers.borrow());
-        } else {
-            // tracing::trace!("No listener to invoke for txn commit.");
+        }) = self.inner.take()
+        {
+            idb_txn.commit()?;
+            if let Some(listener) = commit_listener {
+                // tracing::trace!("Invoking listener for txn commit");
+                listener(&self.reactivity_trackers.borrow());
+            } else {
+                // tracing::trace!("No listener to invoke for txn commit.");
+            };
         };
-        Ok(self.reactivity_trackers.take())
+
+        Ok(())
     }
 
     pub fn reactivity_trackers(&self) -> ReactivityTrackers {
