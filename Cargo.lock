@@ -3782,10 +3782,12 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "tracing",
+ "tracing-subscriber",
  "typesafe_idb",
  "url",
  "utils",
  "wasm-bindgen-test",
+ "wasm_testing_utils",
  "web-sys",
 ]
 
@@ -4930,6 +4932,14 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "wasm_testing_utils"
+version = "0.0.0"
+dependencies = [
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

@@ -50,14 +50,14 @@ impl ReactivityTrackers {
             .any(|store_name_a| other.stores_modified.contains_key(store_name_a))
     }
 
-    pub fn add_by_id_access(&mut self, store_name: StoreName, serialized_id: SerializedId) {
+    pub fn add_by_id_read(&mut self, store_name: StoreName, serialized_id: SerializedId) {
         self.stores_read_by_id
             .entry(store_name)
             .or_default()
             .insert(serialized_id);
     }
 
-    pub fn add_bulk_access(&mut self, store_name: StoreName) {
+    pub fn add_bulk_read(&mut self, store_name: StoreName) {
         self.stores_read_in_bulk.insert(store_name);
     }
 

@@ -25,7 +25,7 @@ where
     pub async fn get(&self, id: &S::Id) -> Result<Option<S>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(S::NAME, SerializedId::new_from_id::<S>(id));
+            .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
 
         if self.optimistic_changes.deletes.latest::<S>(id).is_some() {
             return Ok(None);
@@ -48,7 +48,7 @@ where
     ) -> Result<Option<S>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_by_id_access(S::NAME, SerializedId::new_from_id::<S>(id));
+            .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
 
         self.inner.get(id).await
     }
@@ -56,7 +56,7 @@ where
     pub async fn get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(S::NAME);
+            .add_bulk_read(S::NAME);
 
         let from_db_filtered = self
             .inner
@@ -88,7 +88,7 @@ where
     pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(S::NAME);
+            .add_bulk_read(S::NAME);
 
         self.inner.get_all().await
     }

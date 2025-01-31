@@ -17,7 +17,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     pub async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(IS::Store::NAME);
+            .add_bulk_read(IS::Store::NAME);
 
         let row = match self.no_optimism_get(id).await? {
             Some(r) => r,
@@ -45,7 +45,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(IS::Store::NAME);
+            .add_bulk_read(IS::Store::NAME);
 
         self.inner.get(id).await
     }
@@ -56,7 +56,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(IS::Store::NAME);
+            .add_bulk_read(IS::Store::NAME);
 
         let from_db_filtered = self
             .inner
@@ -99,7 +99,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
         self.reactivity_trackers
             .borrow_mut()
-            .add_bulk_access(IS::Store::NAME);
+            .add_bulk_read(IS::Store::NAME);
 
         self.inner.get_all(value).await
     }
