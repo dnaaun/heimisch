@@ -1,4 +1,4 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TxnBuilder, TxnMode};
 
@@ -22,13 +22,13 @@ pub struct TxnWithOptimisticChanges<C, Mode> {
     inner: Option<TxnWithOptimisticChangesInner<C, Mode>>,
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
-    reactivity_trackers: RefCell<ReactivityTrackers>,
+    reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
 }
 
 impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
     pub fn object_store<S>(
         &self,
-    ) -> Result<ObjectStoreWithOptimisticChanges<'_, S, Mode>, typesafe_idb::Error>
+    ) -> Result<ObjectStoreWithOptimisticChanges<S, Mode>, typesafe_idb::Error>
     where
         S: Store,
         Markers: StoreMarker<S>,
@@ -36,14 +36,14 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
         Ok(ObjectStoreWithOptimisticChanges::new(
             self.optimistic_updates.clone(),
             self.inner.as_ref().expect("").idb_txn.object_store::<S>()?,
-            &self.reactivity_trackers,
+            self.reactivity_trackers.clone(),
             self.inner.as_ref().unwrap().commit_listener.clone(),
         ))
     }
 
     pub fn commit(mut self) -> Result<ReactivityTrackers, idb::Error> {
         self.commit_impl()?;
-        Ok(self.reactivity_trackers.clone().into_inner())
+        Ok(RefCell::clone(&self.reactivity_trackers).into_inner())
     }
 
     fn commit_impl(&mut self) -> Result<(), idb::Error> {

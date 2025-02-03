@@ -23,9 +23,6 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
     ) -> Result<(), SyncError<T>> {
         let owner = self
             .db
-            .txn()
-            .with_store::<User>()
-            .build()
             .object_store::<User>()?
             .no_optimism_get(owner_id)
             .await?
@@ -33,9 +30,6 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
             .login;
         let repo = self
             .db
-            .txn()
-            .with_store::<Repository>()
-            .build()
             .object_store::<Repository>()?
             .no_optimism_get(repo_id)
             .await?
@@ -57,11 +51,7 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
         .into();
 
         self.db
-            .txn()
-            .with_store::<Issue>()
-            .read_write()
-            .build()
-            .object_store::<Issue>()?
+            .object_store_rw::<Issue>()?
             .create(optimistic_issue, async move {
                 issues_slash_create(&conf, &owner, &repo, issues_create_request)
                     .await

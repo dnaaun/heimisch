@@ -31,27 +31,27 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
         )
     }
 
-    // /// Shortcut
-    // pub fn object_store<S: Store>(
-    //     &self,
-    // ) -> Result<super::ObjectStoreWithOptimisticChanges<'_, S, ReadOnly>, typesafe_idb::Error>
-    // where
-    //     DbStoreMarkers: StoreMarker<S>,
-    // {
-    //     self.txn().with_store::<S>().build().object_store::<S>()
-    // }
+    /// Shortcut
+    pub fn object_store<S: Store>(
+        &self,
+    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadOnly>, typesafe_idb::Error>
+    where
+        DbStoreMarkers: StoreMarker<S>,
+    {
+        self.txn().with_store::<S>().build().object_store::<S>()
+    }
 
-    // /// Shortcut
-    // pub fn object_store_rw<S: Store>(
-    //     &self,
-    // ) -> Result<super::ObjectStoreWithOptimisticChanges<'_, S, ReadWrite>, typesafe_idb::Error>
-    // where
-    //     DbStoreMarkers: StoreMarker<S>,
-    // {
-    //     self.txn()
-    //         .with_store::<S>()
-    //         .read_write()
-    //         .build()
-    //         .object_store::<S>()
-    // }
+    /// Shortcut
+    pub fn object_store_rw<S: Store>(
+        &self,
+    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadWrite>, typesafe_idb::Error>
+    where
+        DbStoreMarkers: StoreMarker<S>,
+    {
+        self.txn()
+            .with_store::<S>()
+            .read_write()
+            .build()
+            .object_store::<S>()
+    }
 }
