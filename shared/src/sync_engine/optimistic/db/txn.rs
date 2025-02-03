@@ -37,10 +37,7 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
             self.optimistic_updates.clone(),
             self.inner.as_ref().expect("").idb_txn.object_store::<S>()?,
             &self.reactivity_trackers,
-            self.inner
-                .as_ref()
-                .map(|i| i.commit_listener.clone())
-                .unwrap(),
+            self.inner.as_ref().unwrap().commit_listener.clone(),
         ))
     }
 

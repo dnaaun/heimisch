@@ -22,7 +22,7 @@ impl SerializedId {
     }
 
     pub fn new_from_id<S: Store>(id: &S::Id) -> Self {
-        Self(serde_json::to_string(&id).unwrap())
+        Self(serde_json::to_string(&id).expect("did not expect ids not to be json serializable?"))
     }
 }
 
@@ -38,12 +38,6 @@ pub struct ReactivityTrackers {
 
 impl ReactivityTrackers {
     pub fn is_affected_by_writes_in(&self, other: &ReactivityTrackers) -> bool {
-        tracing::info!(
-            "self.read_by_id={:?}, self.read_in_bulk={:?}, stores_modified={:?}",
-            self.stores_read_by_id,
-            self.stores_read_in_bulk,
-            other.stores_modified
-        );
         self.stores_read_by_id.iter().any(|(store_name_a, ids_a)| {
             other
                 .stores_modified

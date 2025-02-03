@@ -1,4 +1,7 @@
-use axum::{extract::State, routing::post, Json, Router};
+use std::io::Bytes;
+
+use axum::{body::Body, extract::State, routing::post, Json, Router};
+use github_api::simple_error::{from_slice_with_path_to_err, from_str_with_path_to_err};
 use github_webhook_body::WebhookBody;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -62,7 +65,10 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
 
                 // The `Webhook` enum is structured in this way.
                 let value = Value::Object([(x_github_event.clone(), value)].into_iter().collect());
-                let body = serde_json::from_value::<WebhookBody>(value)
+
+                // Re-serialize cuz I want to get better errors via serde_path_to_error
+                let bytes = serde_json::to_vec(&value).unwrap();
+                let body = from_slice_with_path_to_err::<WebhookBody>(&bytes)
                     .map_err(ErrorSource::GithubWebhookBodyDeser)?;
 
                 let installation_id = match body.get_installation_id() {

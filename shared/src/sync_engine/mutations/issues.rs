@@ -21,21 +21,21 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
         repo_id: &RepositoryId,
         issues_create_request: IssuesCreateRequest,
     ) -> Result<(), SyncError<T>> {
-        let txn = self
+        let owner = self
             .db
             .txn()
-            .read_write()
             .with_store::<User>()
-            .with_store::<Repository>()
-            .with_store::<Issue>()
-            .build();
-        let owner = txn
+            .build()
             .object_store::<User>()?
             .no_optimism_get(owner_id)
             .await?
             .ok_or_else(|| SyncErrorSrc::<T>::DataModel("no user".into()))?
             .login;
-        let repo = txn
+        let repo = self
+            .db
+            .txn()
+            .with_store::<Repository>()
+            .build()
             .object_store::<Repository>()?
             .no_optimism_get(repo_id)
             .await?
@@ -56,7 +56,12 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
         })
         .into();
 
-        txn.object_store::<Issue>()?
+        self.db
+            .txn()
+            .with_store::<Issue>()
+            .read_write()
+            .build()
+            .object_store::<Issue>()?
             .create(optimistic_issue, async move {
                 issues_slash_create(&conf, &owner, &repo, issues_create_request)
                     .await

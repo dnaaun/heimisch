@@ -56,7 +56,7 @@ pub enum ErrorSource {
     InstallationIdNotFound(InstallationId),
     GithubWebhookNoInstallationId { body: WebhookBody },
     GithubWebhookHeaderError { message: String },
-    GithubWebhookBodyDeser(serde_json::Error),
+    GithubWebhookBodyDeser(serde_path_to_error::Error<serde_json::Error>),
     // Db integrity errors
     DbIntegrity(DbIntegrityError),
     Session(tower_sessions::session::Error),

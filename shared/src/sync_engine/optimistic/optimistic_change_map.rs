@@ -89,7 +89,7 @@ impl<T, S> Default for OptimisticChangeMap<T, S> {
     }
 }
 
-impl<T, SuccessMarker: Eq> OptimisticChangeMap<T, SuccessMarker> {
+impl<T, SuccessMarker: Eq + std::fmt::Debug> OptimisticChangeMap<T, SuccessMarker> {
     pub fn insert<S: Store>(&self, id: &S::Id, v: T) -> MonotonicTime {
         let id = SerializedId::new_from_id::<S>(id);
         let time = MonotonicTime::new();
@@ -169,15 +169,16 @@ impl<T, SuccessMarker: Eq> OptimisticChangeMap<T, SuccessMarker> {
         time: &MonotonicTime,
         marker: SuccessMarker,
     ) {
+        tracing::info!("Marking succesful id={id:?}, and marker={marker:?}");
         let id = SerializedId::new_from_id::<S>(id);
         self.inner
             .write()
             .get_mut(&S::NAME)
             .unwrap()
             .get_mut(&id)
-            .unwrap()
+            .expect("id to mark successful not found")
             .get_mut(time)
-            .unwrap()
+            .expect("could not find the monotonic time to mark succesful")
             .mark_successful(marker);
     }
 }

@@ -40,3 +40,10 @@ pub fn from_str_with_path_to_err<'a, T: Deserialize<'a>>(
     let ds = &mut serde_json::Deserializer::from_str(input);
     serde_path_to_error::deserialize(ds)
 }
+
+pub fn from_slice_with_path_to_err<'a, T: Deserialize<'a>>(
+    input: &'a [u8],
+) -> Result<T, serde_path_to_error::Error<serde_json::Error>> {
+    let ds = &mut serde_json::Deserializer::from_slice(input);
+    serde_path_to_error::deserialize(ds)
+}

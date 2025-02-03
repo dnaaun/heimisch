@@ -67,7 +67,7 @@ impl OptimisticChanges {
             match create_fut.await {
                 Ok(actual_id) => {
                     creations.mark_successful::<S>(
-                        &actual_id,
+                        &id,
                         &time,
                         SerializedId::new_from_id::<S>(&actual_id),
                     );

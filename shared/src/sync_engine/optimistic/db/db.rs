@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use typesafe_idb::{ReadOnly, Txn, TypesafeDb};
+use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TypesafeDb};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
@@ -27,7 +27,31 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
         TxnBuilderWithOptimisticChanges::new(
             Txn::builder(&self.inner),
             self.optimistic_updates.clone(),
-            Some(self.listener.clone())
+            Some(self.listener.clone()),
         )
     }
+
+    // /// Shortcut
+    // pub fn object_store<S: Store>(
+    //     &self,
+    // ) -> Result<super::ObjectStoreWithOptimisticChanges<'_, S, ReadOnly>, typesafe_idb::Error>
+    // where
+    //     DbStoreMarkers: StoreMarker<S>,
+    // {
+    //     self.txn().with_store::<S>().build().object_store::<S>()
+    // }
+
+    // /// Shortcut
+    // pub fn object_store_rw<S: Store>(
+    //     &self,
+    // ) -> Result<super::ObjectStoreWithOptimisticChanges<'_, S, ReadWrite>, typesafe_idb::Error>
+    // where
+    //     DbStoreMarkers: StoreMarker<S>,
+    // {
+    //     self.txn()
+    //         .with_store::<S>()
+    //         .read_write()
+    //         .build()
+    //         .object_store::<S>()
+    // }
 }
