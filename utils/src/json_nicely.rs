@@ -12,15 +12,14 @@ pub struct ReqwestJsonError {
     pub serde_error: Option<serde_json::error::Error>,
 }
 
+#[allow(async_fn_in_trait)]
 pub trait JsonNicely {
     async fn json_nicely<T: DeserializeOwned>(self) -> std::result::Result<T, ReqwestJsonError>;
 }
 
 impl JsonNicely for reqwest::Response {
     /// Has a nicer error (at the cost of more clones).
-    async fn json_nicely<T: DeserializeOwned>(
-        self: Self,
-    ) -> std::result::Result<T, ReqwestJsonError> {
+    async fn json_nicely<T: DeserializeOwned>(self) -> std::result::Result<T, ReqwestJsonError> {
         let body_bytes = match self.bytes().await {
             Ok(bytes) => bytes,
             Err(err) => {

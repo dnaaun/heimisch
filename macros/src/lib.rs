@@ -29,5 +29,5 @@ pub fn zwang_url(input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn tracing_to_console_log(_: TokenStream, input: TokenStream) -> TokenStream {
-    macros_impl::tracing_to_console_log::tracing_to_console_log(input).into()
+    macros_impl::tracing_to_console_log::tracing_to_console_log(input)
 }

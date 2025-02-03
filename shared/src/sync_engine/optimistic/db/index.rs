@@ -1,4 +1,5 @@
-use std::{cell::RefCell, sync::Arc};
+use std::cell::RefCell;
+use std::rc::Rc;
 use typesafe_idb::Store;
 
 use typesafe_idb::{Index, IndexSpec};
@@ -9,7 +10,7 @@ use super::reactivity_trackers::ReactivityTrackers;
 
 #[derive(derive_more::Constructor)]
 pub struct IndexWithOptimisticChanges<'txn, IS> {
-    optimistic_changes: Arc<OptimisticChanges>,
+    optimistic_changes: Rc<OptimisticChanges>,
     inner: Index<IS>,
     pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
 }
@@ -93,6 +94,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         Ok(all)
     }
 
+    #[allow(dead_code)]
     pub(crate) async fn no_optimism_get_all(
         &self,
         value: Option<&IS::Type>,

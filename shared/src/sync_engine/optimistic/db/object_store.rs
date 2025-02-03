@@ -1,4 +1,4 @@
-use std::{cell::RefCell, future::Future, rc::Rc, sync::Arc};
+use std::{cell::RefCell, future::Future, rc::Rc};
 
 use typesafe_idb::{IndexSpec, ObjectStore, Present, Store, TxnMode};
 
@@ -11,7 +11,7 @@ use super::{
 
 #[derive(Clone, derive_more::Constructor)]
 pub struct ObjectStoreWithOptimisticChanges<S, Mode> {
-    optimistic_changes: Arc<OptimisticChanges>,
+    optimistic_changes: Rc<OptimisticChanges>,
     inner: ObjectStore<S, Mode>,
     pub reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
     pub commit_listener: Option<CommitListener>,
@@ -83,6 +83,7 @@ where
         Ok(all)
     }
 
+    #[allow(dead_code)]
     pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 

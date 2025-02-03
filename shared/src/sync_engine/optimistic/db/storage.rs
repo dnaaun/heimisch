@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TypesafeDb};
 
@@ -8,7 +8,7 @@ use super::{reactivity_trackers::CommitListener, TxnBuilderWithOptimisticChanges
 
 pub struct DbWithOptimisticChanges<StoreMarkers> {
     inner: TypesafeDb<StoreMarkers>,
-    optimistic_updates: Arc<OptimisticChanges>,
+    optimistic_updates: Rc<OptimisticChanges>,
     pub(crate) listener: CommitListener,
 }
 
@@ -16,7 +16,7 @@ impl<StoreMarkers> DbWithOptimisticChanges<StoreMarkers> {
     pub fn new(inner: TypesafeDb<StoreMarkers>, listener: CommitListener) -> Self {
         Self {
             inner,
-            optimistic_updates: Arc::new(Default::default()),
+            optimistic_updates: Rc::new(Default::default()),
             listener,
         }
     }

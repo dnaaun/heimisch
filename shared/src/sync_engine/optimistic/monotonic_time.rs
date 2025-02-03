@@ -16,3 +16,9 @@ impl MonotonicTime {
         }
     }
 }
+
+impl Default for MonotonicTime {
+    fn default() -> Self {
+        Self::new()
+    }
+}

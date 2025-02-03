@@ -1,7 +1,5 @@
-use std::io::Bytes;
-
-use axum::{body::Body, extract::State, routing::post, Json, Router};
-use github_api::simple_error::{from_slice_with_path_to_err, from_str_with_path_to_err};
+use axum::{extract::State, routing::post, Json, Router};
+use github_api::simple_error::from_slice_with_path_to_err;
 use github_webhook_body::WebhookBody;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

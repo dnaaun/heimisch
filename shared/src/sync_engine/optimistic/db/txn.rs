@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc};
 
 use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TxnBuilder, TxnMode};
 
@@ -16,7 +16,7 @@ struct TxnWithOptimisticChangesInner<C, Mode> {
 }
 
 pub struct TxnWithOptimisticChanges<C, Mode> {
-    optimistic_updates: Arc<OptimisticChanges>,
+    optimistic_updates: Rc<OptimisticChanges>,
     /// RTI: Will be None if and only if the transaction is committed or aborted.
     /// RTI upkeep: `.commit()` and `.abort()` take a `self`.
     inner: Option<TxnWithOptimisticChangesInner<C, Mode>>,
@@ -85,7 +85,7 @@ impl<Markers, Mode> Drop for TxnWithOptimisticChanges<Markers, Mode> {
 #[derive(derive_more::Constructor)]
 pub struct TxnBuilderWithOptimisticChanges<'db, DbTableMarkers, TxnTableMarkers, Mode> {
     inner: TxnBuilder<'db, DbTableMarkers, TxnTableMarkers, Mode>,
-    optimistic_updates: Arc<OptimisticChanges>,
+    optimistic_updates: Rc<OptimisticChanges>,
     commit_listener: Option<CommitListener>,
 }
 

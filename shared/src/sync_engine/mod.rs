@@ -10,7 +10,7 @@ pub mod changes;
 pub mod error;
 pub mod optimistic;
 mod registry;
-pub mod storage;
+pub mod storage_traits;
 mod websocket_updates;
 pub mod mutations;
 

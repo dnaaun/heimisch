@@ -1,4 +1,5 @@
 use github_api::{apis::issues_api::issues_slash_create, models::IssuesCreateRequest};
+use jiff::Timestamp;
 
 use crate::{
     sync_engine::{
@@ -38,17 +39,22 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
 
         let conf = self.get_api_conf(installation_id).await?;
 
-        let mut optimistic_issue = Issue::default();
-        optimistic_issue.repository_id = repo_id.clone();
-        optimistic_issue.user_id = Some(owner_id.clone()).into();
-        optimistic_issue.body = issues_create_request.body.clone().into();
-        optimistic_issue.body_text = issues_create_request.body.clone().into();
-        optimistic_issue.body_html = issues_create_request.body.clone().into();
-        optimistic_issue.title = (match &issues_create_request.title {
-            github_api::models::IssuesCreateRequestTitle::String(t) => t.clone(),
-            github_api::models::IssuesCreateRequestTitle::Integer(i) => i.to_string(),
-        })
-        .into();
+        let now = Timestamp::now();
+        let optimistic_issue = Issue {
+            repository_id: *repo_id,
+            user_id: Some(*owner_id).into(),
+            body: issues_create_request.body.clone().into(),
+            body_text: issues_create_request.body.clone().into(),
+            body_html: issues_create_request.body.clone().into(),
+            title: (match &issues_create_request.title {
+                github_api::models::IssuesCreateRequestTitle::String(t) => t.clone(),
+                github_api::models::IssuesCreateRequestTitle::Integer(i) => i.to_string(),
+            })
+            .into(),
+            created_at: now.into(),
+            updated_at: now.into(),
+            ..Default::default()
+        };
 
         self.db
             .object_store_rw::<Issue>()?

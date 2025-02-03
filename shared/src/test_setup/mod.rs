@@ -13,7 +13,3 @@ impl fmt::Write for MemoryWriterFactory {
         Ok(())
     }
 }
-
-async fn idb_signal_basic_reactivity() {
-    // Your test code here
-}

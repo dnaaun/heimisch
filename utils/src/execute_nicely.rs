@@ -21,6 +21,7 @@ impl Display for ReqwestSendError {
 
 impl std::error::Error for ReqwestSendError {}
 
+#[allow(async_fn_in_trait)]
 pub trait ExecuteNicely {
     async fn execute_nicely(
         &self,

@@ -62,15 +62,11 @@ mod status {
     }
 }
 
+type OptimisticChangeMapInner<T, SuccessMarker> =
+    HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, SuccessMarker>>>>;
+
 pub struct OptimisticChangeMap<T, SuccessMarker = ()> {
-    inner: Arc<
-        RwLock<
-            HashMap<
-                StoreName,
-                HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, SuccessMarker>>>,
-            >,
-        >,
-    >,
+    inner: Arc<RwLock<OptimisticChangeMapInner<T, SuccessMarker>>>,
 }
 
 impl<T, S> Clone for OptimisticChangeMap<T, S> {
@@ -222,8 +218,7 @@ impl<SuccessMarker> OptimisticChangeMap<Rc<dyn Any>, SuccessMarker> {
             .map(|s| s.values())
             .into_iter()
             .flatten()
-            .map(|v| v.last_key_value().map(|(_time, thing)| thing))
-            .flatten()
+            .filter_map(|v| v.last_key_value().map(|(_time, thing)| thing))
             .map(|thing| thing.read().downcast_ref::<S>().expect("").clone())
             .collect()
     }
