@@ -15,7 +15,7 @@ use super::parsing;
 
 #[derive(Debug)]
 pub struct Parts {
-    pub fallback: Ident,
+    // pub fallback: Ident,
     pub top_part: Part,
 }
 
@@ -85,12 +85,12 @@ pub fn from_parsing_route(
     params_from_higher_levels: ParamsSet,
     is_root_level: bool,
 ) -> Result<Part> {
-    if !is_root_level && parsing_part.fallback.is_some() {
-        return Err(Error::new(
-            parsing_part.span,
-            "`fallback` should be specified only at top level.",
-        ));
-    }
+    // if !is_root_level && parsing_part.fallback.is_some() {
+    //     return Err(Error::new(
+    //         parsing_part.span,
+    //         "`fallback` should be specified only at top level.",
+    //     ));
+    // }
     let path = if is_root_level {
         parsing_part
             .path
@@ -224,7 +224,7 @@ fn process_to_add_empty_leaf_parts_when_necessary(
         // If the leaf node is already empty, no need to add anything here.
         let leaf_is_empty = match &part.path {
             None => true,
-            Some(p) if p.0.len() == 0 => true,
+            Some(p) if p.0.is_empty() => true,
             _ => false,
         };
         if leaf_is_empty {
@@ -239,7 +239,7 @@ fn process_to_add_empty_leaf_parts_when_necessary(
             parsing::Part {
                 path: part.path,
                 view: None,
-                fallback: None,
+                // fallback: None,
                 layout: None,
                 sub_parts: vec![new_empty_part],
                 will_pass: parent_will_pass,
@@ -253,13 +253,13 @@ impl TryFrom<parsing::Part> for Parts {
     type Error = Error;
 
     fn try_from(value: parsing::Part) -> std::result::Result<Self, Self::Error> {
-        let fallback = value.fallback.clone();
+        // let fallback = value.fallback.clone();
         let value = process_to_add_empty_leaf_parts_when_necessary(value, None);
         Ok(Self {
-            fallback: fallback.ok_or(Error::new(
-                value.span,
-                "`fallback` expected at the top level.",
-            ))?,
+            // fallback: fallback.ok_or(Error::new(
+            //     value.span,
+            //     "`fallback` expected at the top level.",
+            // ))?,
             top_part: from_parsing_route(value, vec![], Default::default(), true)?,
         })
     }

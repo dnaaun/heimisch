@@ -7,7 +7,7 @@ use syn::*;
 pub struct Part {
     pub path: Option<(PathSegment, Span)>,
     pub view: Option<Ident>,
-    pub fallback: Option<Ident>,
+    // pub fallback: Option<Ident>,
     pub layout: Option<Ident>,
     pub sub_parts: Vec<Part>,
     pub will_pass: Option<Type>,
@@ -71,7 +71,7 @@ impl Parse for Part {
         let mut layout = None;
         let mut will_pass = None;
         let mut children = None;
-        let mut fallback = None;
+        // let mut fallback = None;
 
         let inside_braces;
         braced!(inside_braces in input);
@@ -85,12 +85,12 @@ impl Parse for Part {
                     }
                     path = Some(parse_path(&inside_braces)?);
                 }
-                "fallback" => {
-                    if fallback.is_some() {
-                        return Err(input.error("Found `fallback` specified twice."));
-                    }
-                    fallback = inside_braces.parse()?;
-                }
+                // "fallback" => {
+                //     if fallback.is_some() {
+                //         return Err(input.error("Found `fallback` specified twice."));
+                //     }
+                //     fallback = inside_braces.parse()?;
+                // }
                 "view" => {
                     if view.is_some() {
                         return Err(input.error("Found `view` specified twice."));
@@ -143,7 +143,7 @@ impl Parse for Part {
         Ok(Part {
             path,
             view,
-            fallback,
+            // fallback,
             layout,
             sub_parts: children.unwrap_or_default(),
             will_pass,

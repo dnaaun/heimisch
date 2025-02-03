@@ -15,7 +15,6 @@ use crate::app::auth::Auth;
 use zwang_router::zwang_routes;
 
 zwang_routes! {{
-    fallback: NotFound,
     view: Sidebar,
     children: [
         {

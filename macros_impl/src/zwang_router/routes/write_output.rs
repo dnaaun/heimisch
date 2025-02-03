@@ -68,7 +68,7 @@ fn flatten_parts_and_params(
                 params1
                     .union(&params2)
                     .cloned()
-                    .chain(if available_params.len() > 0 {
+                    .chain(if !available_params.is_empty() {
                         Some(available_params)
                     } else {
                         None
@@ -716,7 +716,7 @@ fn write_route_to_view_impl(part: &main_model::Part) -> Result<TokenStream> {
     }
 
     let params_available_at_this_level = part.params_available_at_this_level()?;
-    let prev_params_type = if params_available_at_this_level.len() > 0 {
+    let prev_params_type = if !params_available_at_this_level.is_empty() {
         params_available_at_this_level.as_ident().to_token_stream()
     } else {
         parse_quote!(())
