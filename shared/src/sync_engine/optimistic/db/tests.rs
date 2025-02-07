@@ -19,8 +19,8 @@ use crate::{
 
 use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
-async fn get_sync_engine() -> SyncEngine<MockTypedTransport> {
-    SyncEngine::new(EndpointClient::new(
+async fn get_sync_engine() -> SyncEngine<MockTypedTransport, ()> {
+    SyncEngine::<MockTypedTransport, ()>::new(EndpointClient::new(
         |_| (),
         Url::parse("https://www.example.com/").unwrap(),
     ))

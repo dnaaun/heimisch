@@ -40,16 +40,16 @@ mod new_defn;
 
 pub use new_defn::DbStoreMarkers;
 
-pub struct SyncEngine<Transport> {
+pub struct SyncEngine<Transport, GithubApi> {
     pub db: Rc<DbWithOptimisticChanges<DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     endpoint_client: EndpointClient,
-    _transport: PhantomData<Transport>,
+    _transport: PhantomData<(Transport, GithubApi)>,
 }
 
 const MAX_PER_PAGE: i32 = 100;
 
-impl<W: TypedTransportTrait> SyncEngine<W> {
+impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     async fn get_api_conf(
         &self,
         id: &InstallationId,

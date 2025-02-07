@@ -1,4 +1,4 @@
-use github_api::{apis::issues_api::issues_slash_create, models::IssuesCreateRequest};
+use github_api::{github_api_trait::GithubApiTrait, models::IssuesCreateRequest};
 use jiff::Timestamp;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-impl<T: TypedTransportTrait> SyncEngine<T> {
+impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
     pub async fn create_issue(
         &self,
         installation_id: &InstallationId,
@@ -59,7 +59,7 @@ impl<T: TypedTransportTrait> SyncEngine<T> {
         self.db
             .object_store_rw::<Issue>()?
             .create(optimistic_issue, async move {
-                issues_slash_create(&conf, &owner, &repo, issues_create_request)
+                GithubApi::issues_slash_create(&conf, &owner, &repo, issues_create_request)
                     .await
                     .map(|i| IssueId::from(i.id))
                     .map_err(|_| ())

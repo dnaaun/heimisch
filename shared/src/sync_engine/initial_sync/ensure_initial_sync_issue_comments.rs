@@ -21,7 +21,7 @@ use crate::{
     },
 };
 
-impl<W: TypedTransportTrait> SyncEngine<W> {
+impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.
     pub async fn ensure_initial_sync_issue_comments(

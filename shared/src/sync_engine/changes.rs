@@ -425,7 +425,7 @@ where
     }
 }
 
-impl<W: TypedTransportTrait> SyncEngine<W> {
+impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     pub async fn persist_changes<
         Marker: StoreMarkersForChanges,
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,

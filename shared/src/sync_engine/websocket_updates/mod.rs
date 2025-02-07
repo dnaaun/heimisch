@@ -22,7 +22,7 @@ use crate::{
 
 use super::{error::SyncErrorSrc, SyncEngine, SyncResult};
 
-impl<W> SyncEngine<W>
+impl<W, GithubApi> SyncEngine<W, GithubApi>
 where
     W: TypedTransportTrait,
 {

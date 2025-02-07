@@ -11,7 +11,7 @@ use super::super::{
     SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
-impl<W: TypedTransportTrait> SyncEngine<W> {
+impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     pub async fn fetch_repositorys_for_installation_id(
         &self,
         id: &InstallationId,

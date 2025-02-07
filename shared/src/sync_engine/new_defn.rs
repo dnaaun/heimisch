@@ -41,7 +41,7 @@ pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
     + StoreMarker<LastWebhookUpdateAt>
     + Default;
 
-impl<W: TypedTransportTrait> SyncEngine<W> {
+impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W> {
         let db = TypesafeDb::builder("heimisch".into())
             .with_store::<Issue>()

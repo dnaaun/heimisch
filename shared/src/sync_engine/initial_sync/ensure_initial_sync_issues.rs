@@ -17,7 +17,7 @@ use crate::{
     },
 };
 
-impl<W: TypedTransportTrait> SyncEngine<W> {
+impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     pub async fn ensure_initial_sync_issues(
         &self,
         id: &RepositoryId,

@@ -11,7 +11,7 @@ use crate::{
     utils::gen_rand_string,
 };
 use axum::{extract::State, response::Redirect, routing::get, Router};
-use github_api::apis::users_api::users_slash_get_authenticated;
+use github_api::github_api_trait::{GithubApi, GithubApiTrait};
 use http::StatusCode;
 use shared::{
     consts::HEIMISCH_FRONTEND_DOMAIN,
@@ -53,7 +53,7 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
             )
             .await?;
 
-            let resp = users_slash_get_authenticated(
+            let resp = GithubApi::users_slash_get_authenticated(
                 &state
                     .config
                     .get_gh_api_conf_with_access_token(access_token.deref().clone()),
@@ -91,10 +91,7 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
                 })
                 .await?;
 
-            Ok::<_, Error>((
-                StatusCode::OK,
-                AuthFinishResponse::Success(access_token),
-            ))
+            Ok::<_, Error>((StatusCode::OK, AuthFinishResponse::Success(access_token)))
         },
     )
 }
