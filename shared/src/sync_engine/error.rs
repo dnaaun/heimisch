@@ -3,13 +3,14 @@ use std::fmt::Debug;
 
 use super::{
     conversions::conversion_error::ConversionError,
+    optimistic::db::Error,
     websocket_updates::typed_transport::{TypedTransportError, TypedTransportTrait},
 };
 
 pub enum SyncErrorSrc<T: TypedTransportTrait> {
     OwnApi(OwnApiError),
     Github(github_api::simple_error::SimpleError),
-    Db(idb::Error),
+    Db(Error),
     SerdeToObject(typesafe_idb::serde_abstraction::Error),
     SerdeToString(serde_json::Error),
     Jiff(jiff::Error),
@@ -102,8 +103,8 @@ impl<W: TypedTransportTrait> From<OwnApiError> for SyncError<W> {
     }
 }
 
-impl<W: TypedTransportTrait> From<idb::Error> for SyncError<W> {
-    fn from(value: idb::Error) -> Self {
+impl<W: TypedTransportTrait> From<Error> for SyncError<W> {
+    fn from(value: Error) -> Self {
         SyncErrorSrc::Db(value).into()
     }
 }
@@ -113,17 +114,6 @@ impl<W: TypedTransportTrait> From<serde_json::Error> for SyncError<W> {
         SyncErrorSrc::SerdeToString(value).into()
     }
 }
-
-impl<W: TypedTransportTrait> From<typesafe_idb::Error> for SyncError<W> {
-    fn from(value: typesafe_idb::Error) -> Self {
-        match value {
-            typesafe_idb::Error::Idb(error) => SyncErrorSrc::Db(error).into(),
-            typesafe_idb::Error::SerdeToObject(error) => SyncErrorSrc::SerdeToObject(error).into(),
-            typesafe_idb::Error::SerdeToString(error) => SyncErrorSrc::SerdeToString(error).into(),
-        }
-    }
-}
-
 impl<W: TypedTransportTrait> From<MergeError> for SyncError<W> {
     fn from(value: MergeError) -> Self {
         SyncErrorSrc::Merge(value).into()

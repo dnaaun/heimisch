@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::panic::Location;
 use std::rc::Rc;
 use typesafe_idb::Store;
 
@@ -7,20 +8,26 @@ use typesafe_idb::{Index, IndexSpec};
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
 use super::reactivity_trackers::ReactivityTrackers;
+use super::Error;
 
 #[derive(derive_more::Constructor)]
 pub struct IndexWithOptimisticChanges<'txn, IS> {
     optimistic_changes: Rc<OptimisticChanges>,
     inner: Index<IS>,
     pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
+    txn_location: &'static Location<'static>,
 }
 impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
-    pub async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+    pub async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, super::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
 
-        let row = match self.no_optimism_get(id).await? {
+        let row = match self
+            .no_optimism_get(id)
+            .await
+            .map_err(|e| super::Error::new(e, self.txn_location))?
+        {
             Some(r) => r,
             None => return Ok(None),
         };
@@ -51,10 +58,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         self.inner.get(id).await
     }
 
-    pub async fn get_all(
-        &self,
-        value: Option<&IS::Type>,
-    ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
+    pub async fn get_all(&self, value: Option<&IS::Type>) -> Result<Vec<IS::Store>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
@@ -62,7 +66,8 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         let from_db_filtered = self
             .inner
             .get_all(value)
-            .await?
+            .await
+            .map_err(|e| Error::new(e, self.txn_location))?
             .into_iter()
             .filter(|r| {
                 self.optimistic_changes

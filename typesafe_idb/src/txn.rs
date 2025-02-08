@@ -1,5 +1,5 @@
 use crate::object_store::ObjectStore;
-use crate::Store;
+use crate::{Error, Store};
 use crate::{StoreMarker, TypesafeDb};
 use std::ops::Deref;
 use std::{collections::HashSet, marker::PhantomData};
@@ -67,7 +67,7 @@ impl<Markers, Mode> Txn<Markers, Mode> {
         })
     }
 
-    pub fn commit(mut self) -> Result<(), idb::Error> {
+    pub fn commit(mut self) -> Result<(), Error> {
         if let Some(actual_txn) = self.actual_txn.take() {
             actual_txn.commit()?;
         }
@@ -75,8 +75,10 @@ impl<Markers, Mode> Txn<Markers, Mode> {
         Ok(())
     }
 
-    pub fn abort(mut self) -> Result<(), idb::Error> {
-        self.actual_txn.take().expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")
+    pub fn abort(mut self) -> Result<(), Error> {
+        self.actual_txn
+            .take()
+            .expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")
             .abort()?;
         Ok(())
     }

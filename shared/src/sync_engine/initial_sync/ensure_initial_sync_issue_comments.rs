@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures::future::{join_all, LocalBoxFuture};
+use github_api::github_api_trait::GithubApiTrait;
 
 use super::super::{
     changes::Changes,
@@ -21,7 +22,7 @@ use crate::{
     },
 };
 
-impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<W: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.
     pub async fn ensure_initial_sync_issue_comments(
@@ -90,7 +91,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
 
         // NOTE: Maybe abstract away dealing with pagination.
         loop {
-            let issue_comments = github_api::apis::issues_api::issues_slash_list_comments_for_repo(
+            let issue_comments = GithubApi::issues_slash_list_comments_for_repo(
                 &conf,
                 &owner_name,
                 &repo_name,

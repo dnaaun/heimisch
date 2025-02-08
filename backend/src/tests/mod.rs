@@ -28,10 +28,8 @@ use diesel_test::{
     DieselTestConfig,
 };
 use endpoint_test_client::PostEndpointTestClient;
-use github_api::{
-    apis::users_api::users_slash_get_authenticated_request,
-    models::{PrivateUser, UsersGetAuthenticated200Response},
-};
+use github_api::github_api_trait::{GithubApi, GithubApiTrait};
+use github_api::models::{PrivateUser, UsersGetAuthenticated200Response};
 use github_webhook_body::WebhookBody;
 use http::StatusCode;
 use parking_lot::Mutex;
@@ -235,7 +233,7 @@ async fn with_logged_in_user<Fut: Future>(
             id: *user_id.as_ref(),
             ..Default::default()
         };
-        users_slash_get_authenticated_request(
+        GithubApi::users_slash_get_authenticated_request(
             &config.get_gh_api_conf_with_access_token(Some(access_token.as_str().to_owned())),
         )
         .respond_with(ResponseTemplate::new(200).set_body_json(

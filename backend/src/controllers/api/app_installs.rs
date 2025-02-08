@@ -5,7 +5,7 @@ use crate::hookup_endpoint::hookup_post_authenticated;
 use axum::Router;
 use diesel::prelude::*;
 use diesel::{QueryDsl, RunQueryDsl};
-use github_api::apis::apps_api::apps_slash_get_installation;
+use github_api::github_api_trait::{GithubApi, GithubApiTrait};
 use http::StatusCode;
 use shared::endpoints::defns::api::app_installs::create::{
     CreateAppInstallEndpoint, CreateAppInstallPayload, CreateAppInstallResponse,
@@ -36,7 +36,7 @@ pub fn create(router: Router<AppState>) -> Router<AppState> {
                 .interact(|c| stmt.first::<UserId>(c))
                 .await??;
 
-            apps_slash_get_installation(
+            GithubApi::apps_slash_get_installation(
                 &state.config.get_gh_api_conf_with_app_auth(),
                 *installation_id as i32,
             )

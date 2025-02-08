@@ -1,10 +1,10 @@
-use std::rc::Rc;
+use std::{panic::Location, rc::Rc};
 
-use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TypesafeDb};
+use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TypesafeDb, TypesafeDbBuilder};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
-use super::{reactivity_trackers::CommitListener, TxnBuilderWithOptimisticChanges};
+use super::{reactivity_trackers::CommitListener, Error, TxnBuilderWithOptimisticChanges};
 
 pub struct DbWithOptimisticChanges<StoreMarkers> {
     inner: TypesafeDb<StoreMarkers>,
@@ -13,28 +13,37 @@ pub struct DbWithOptimisticChanges<StoreMarkers> {
 }
 
 impl<StoreMarkers> DbWithOptimisticChanges<StoreMarkers> {
-    pub fn new(inner: TypesafeDb<StoreMarkers>, listener: CommitListener) -> Self {
-        Self {
-            inner,
+    #[track_caller]
+    pub async fn new(
+        inner: TypesafeDbBuilder<StoreMarkers>,
+        listener: CommitListener,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            inner: inner
+                .build()
+                .await
+                .map_err(|e| Error::new(e, Location::caller()))?,
             optimistic_updates: Rc::new(Default::default()),
             listener,
-        }
+        })
     }
 }
 
 impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
+    #[track_caller]
     pub fn txn(&self) -> TxnBuilderWithOptimisticChanges<'_, DbStoreMarkers, (), ReadOnly> {
         TxnBuilderWithOptimisticChanges::new(
             Txn::builder(&self.inner),
             self.optimistic_updates.clone(),
             Some(self.listener.clone()),
+            Location::caller(),
         )
     }
 
     /// Shortcut
     pub fn object_store<S: Store>(
         &self,
-    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadOnly>, typesafe_idb::Error>
+    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadOnly>, Error>
     where
         DbStoreMarkers: StoreMarker<S>,
     {
@@ -44,7 +53,7 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
     /// Shortcut
     pub fn object_store_rw<S: Store>(
         &self,
-    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadWrite>, typesafe_idb::Error>
+    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadWrite>, Error>
     where
         DbStoreMarkers: StoreMarker<S>,
     {

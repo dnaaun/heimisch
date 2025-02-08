@@ -16,8 +16,9 @@ use crate::{
         user::User,
     },
 };
+use github_api::github_api_trait::GithubApiTrait;
 
-impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<W: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
     pub async fn ensure_initial_sync_issues(
         &self,
         id: &RepositoryId,
@@ -85,7 +86,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
 
         // NOTE: Maybe abstract away dealing with pagination.
         loop {
-            let issues = github_api::apis::issues_api::issues_slash_list_for_repo(
+            let issues = GithubApi::issues_slash_list_for_repo(
                 &conf,
                 &owner_name,
                 &repo_name,

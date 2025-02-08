@@ -1,4 +1,4 @@
-use std::{cell::RefCell, future::Future, rc::Rc};
+use std::{cell::RefCell, future::Future, panic::Location, rc::Rc};
 
 use typesafe_idb::{IndexSpec, ObjectStore, Present, Store, TxnMode};
 
@@ -6,7 +6,7 @@ use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
 use super::{
     index::IndexWithOptimisticChanges, reactivity_trackers::ReactivityTrackers, CommitListener,
-    SerializedId,
+    Error, SerializedId,
 };
 
 #[derive(Clone, derive_more::Constructor)]
@@ -15,6 +15,7 @@ pub struct ObjectStoreWithOptimisticChanges<S, Mode> {
     inner: ObjectStore<S, Mode>,
     pub reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
     pub commit_listener: Option<CommitListener>,
+    location: &'static Location<'static>,
 }
 
 impl<S, Mode> ObjectStoreWithOptimisticChanges<S, Mode>
@@ -22,7 +23,7 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadOnly = Present>,
 {
-    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, typesafe_idb::Error> {
+    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -39,27 +40,31 @@ where
             return Ok(Some(o));
         };
 
-        self.inner.get(id).await
+        self.inner
+            .get(id)
+            .await
+            .map_err(|e| Error::new(e, self.location))
     }
 
-    pub(crate) async fn no_optimism_get(
-        &self,
-        id: &S::Id,
-    ) -> Result<Option<S>, typesafe_idb::Error> {
+    pub(crate) async fn no_optimism_get(&self, id: &S::Id) -> Result<Option<S>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
 
-        self.inner.get(id).await
+        self.inner
+            .get(id)
+            .await
+            .map_err(|e| super::Error::new(e, self.location))
     }
 
-    pub async fn get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
+    pub async fn get_all(&self) -> Result<Vec<S>, super::Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
         let from_db_filtered = self
             .inner
             .get_all()
-            .await?
+            .await
+            .map_err(|e| super::Error::new(e, self.location))?
             .into_iter()
             .filter(|r| {
                 self.optimistic_changes
@@ -92,11 +97,14 @@ where
 
     pub fn index<IS: IndexSpec<Store = S>>(
         &self,
-    ) -> Result<IndexWithOptimisticChanges<'_, IS>, typesafe_idb::Error> {
+    ) -> Result<IndexWithOptimisticChanges<'_, IS>, Error> {
         Ok(IndexWithOptimisticChanges::new(
             self.optimistic_changes.clone(),
-            self.inner.index::<IS>()?,
+            self.inner
+                .index::<IS>()
+                .map_err(|e| Error::new(e, self.location))?,
             &self.reactivity_trackers,
+            self.location,
         ))
     }
 }
@@ -106,22 +114,28 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    pub async fn no_optimism_delete(&self, id: &S::Id) -> Result<(), typesafe_idb::Error> {
+    pub async fn no_optimism_delete(&self, id: &S::Id) -> Result<(), Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_id::<S>(id));
 
-        self.inner.delete(id).await?;
+        self.inner
+            .delete(id)
+            .await
+            .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes.remove_obsoletes_for_id::<S>(id);
         Ok(())
     }
 
-    pub async fn no_optimism_put(&self, item: &S) -> Result<(), typesafe_idb::Error> {
+    pub async fn no_optimism_put(&self, item: &S) -> Result<(), Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_row(item));
 
-        self.inner.put(item).await?;
+        self.inner
+            .put(item)
+            .await
+            .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes
             .remove_obsoletes_for_id::<S>(item.id());
         Ok(())
@@ -148,3 +162,4 @@ where
         }
     }
 }
+

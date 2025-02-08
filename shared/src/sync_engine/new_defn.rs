@@ -61,7 +61,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
         let db_change_notifiers: Rc<Registry<DbSubscription>> = Default::default();
         let db_change_notifiers2 = db_change_notifiers.clone();
         let db = DbWithOptimisticChanges::new(
-            db.build().await?,
+            db,
             Rc::new(move |reactivity_trackers| {
                 let orig_trackers = db_change_notifiers2.get();
                 orig_trackers
@@ -72,7 +72,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
                     })
                     .for_each(|sub| (sub.func)());
             }),
-        );
+        ).await?;
 
         Ok(Self {
             db: Rc::new(db),

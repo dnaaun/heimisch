@@ -1,4 +1,5 @@
 use futures::future::try_join_all;
+use github_api::github_api_trait::GithubApiTrait;
 
 use crate::{
     avail::MergeError, sync_engine::websocket_updates::typed_transport::TypedTransportTrait,
@@ -11,7 +12,7 @@ use super::super::{
     SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
-impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<W: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
     pub async fn fetch_repositorys_for_installation_id(
         &self,
         id: &InstallationId,
@@ -22,7 +23,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
         let mut page = 1;
         loop {
             let repos_in_page =
-                github_api::apis::apps_api::apps_slash_list_repos_accessible_to_installation(
+                GithubApi::apps_slash_list_repos_accessible_to_installation(
                     &conf,
                     Some(MAX_PER_PAGE),
                     Some(page),
