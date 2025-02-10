@@ -41,6 +41,7 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
     }
 
     /// Shortcut
+    #[track_caller]
     pub fn object_store<S: Store>(
         &self,
     ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadOnly>, Error>
@@ -51,6 +52,7 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
     }
 
     /// Shortcut
+    #[track_caller]
     pub fn object_store_rw<S: Store>(
         &self,
     ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadWrite>, Error>

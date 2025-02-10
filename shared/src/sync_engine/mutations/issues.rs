@@ -22,15 +22,25 @@ impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi>
         repo_id: &RepositoryId,
         issues_create_request: IssuesCreateRequest,
     ) -> Result<(), SyncError<T>> {
-        let owner = self
+        // Just leaving a note for myself that when I did
+        // self.db.object_store::<User/Repository>(), I got the "transaction is already closed"
+        // issue of indexeddb (probgably caused by the fact that indexeddb transactions commit as
+        // soon as one returns to the event loop if a callback (or the chain of callbacks, look at
+        // MDN/etc for more details) isn't open).
+        let txn = self
             .db
-            .object_store::<User>()?
+            .txn()
+            .with_store::<User>()
+            .with_store::<Repository>()
+            .build();
+        let owner = txn
+            .object_store::<User>()
+            .unwrap()
             .no_optimism_get(owner_id)
             .await?
             .ok_or_else(|| SyncErrorSrc::<T>::DataModel("no user".into()))?
             .login;
-        let repo = self
-            .db
+        let repo = txn
             .object_store::<Repository>()?
             .no_optimism_get(repo_id)
             .await?

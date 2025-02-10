@@ -1,6 +1,7 @@
 #![recursion_limit = "256"]
 #![feature(type_alias_impl_trait)]
 #![feature(marker_trait_attr)]
+#![feature(async_fn_track_caller)]
 
 pub mod avail;
 pub mod endpoints;

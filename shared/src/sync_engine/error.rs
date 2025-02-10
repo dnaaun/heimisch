@@ -1,5 +1,5 @@
 use crate::{avail::{MergeError, NotAvailableError}, endpoints::endpoint_client::OwnApiError};
-use std::fmt::Debug;
+use std::{fmt::Debug, panic::Location};
 
 use super::{
     conversions::conversion_error::ConversionError,
@@ -41,10 +41,11 @@ impl<T: TypedTransportTrait> Debug for SyncErrorSrc<T> {
 }
 
 impl<T: TypedTransportTrait> From<SyncErrorSrc<T>> for SyncError<T> {
+    #[track_caller]
     fn from(value: SyncErrorSrc<T>) -> Self {
         Self {
             source: value,
-            backtrace: std::backtrace::Backtrace::force_capture(),
+            location: Location::caller(),
         }
     }
 }
@@ -52,14 +53,14 @@ impl<T: TypedTransportTrait> From<SyncErrorSrc<T>> for SyncError<T> {
 #[allow(dead_code)]
 pub struct SyncError<T: TypedTransportTrait> {
     source: SyncErrorSrc<T>,
-    backtrace: std::backtrace::Backtrace,
+    location: &'static Location<'static>
 }
 
 impl<T: TypedTransportTrait> Debug for SyncError<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SyncError")
             .field("source", &self.source)
-            .field("backtrace", &self.backtrace)
+            .field("backtrace", &self.location)
             .finish()
     }
 }
@@ -86,41 +87,48 @@ impl<T: TypedTransportTrait> SyncError<T> {
 pub type SyncResult<T, W> = Result<T, SyncError<W>>;
 
 impl<W: TypedTransportTrait, T> From<github_api::apis::Error<T>> for SyncError<W> {
+    #[track_caller]
     fn from(value: github_api::apis::Error<T>) -> Self {
         SyncErrorSrc::Github(value.into()).into()
     }
 }
 
 impl<W: TypedTransportTrait> From<TypedTransportError<W::ConnError>> for SyncError<W> {
+    #[track_caller]
     fn from(value: TypedTransportError<W::ConnError>) -> Self {
         SyncErrorSrc::WebSocket(value).into()
     }
 }
 
 impl<W: TypedTransportTrait> From<OwnApiError> for SyncError<W> {
+    #[track_caller]
     fn from(value: OwnApiError) -> Self {
         SyncErrorSrc::OwnApi(value).into()
     }
 }
 
 impl<W: TypedTransportTrait> From<Error> for SyncError<W> {
+    #[track_caller]
     fn from(value: Error) -> Self {
         SyncErrorSrc::Db(value).into()
     }
 }
 
 impl<W: TypedTransportTrait> From<serde_json::Error> for SyncError<W> {
+    #[track_caller]
     fn from(value: serde_json::Error) -> Self {
         SyncErrorSrc::SerdeToString(value).into()
     }
 }
 impl<W: TypedTransportTrait> From<MergeError> for SyncError<W> {
+    #[track_caller]
     fn from(value: MergeError) -> Self {
         SyncErrorSrc::Merge(value).into()
     }
 }
 
 impl<W: TypedTransportTrait> From<NotAvailableError> for SyncError<W> {
+    #[track_caller]
     fn from(value: NotAvailableError) -> Self {
         SyncErrorSrc::NotAvailable(value).into()
     }
