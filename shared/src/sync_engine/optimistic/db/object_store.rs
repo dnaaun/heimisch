@@ -18,12 +18,19 @@ pub struct ObjectStoreWithOptimisticChanges<S, Mode> {
     location: &'static Location<'static>,
 }
 
+#[derive(Clone, derive_more::Constructor, derive_more::Deref, Debug, PartialEq, Eq, Hash)]
+pub struct MaybeOptimistic<S> {
+    #[deref]
+    inner: S,
+    is_optimistic: bool,
+}
+
 impl<S, Mode> ObjectStoreWithOptimisticChanges<S, Mode>
 where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadOnly = Present>,
 {
-    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, Error> {
+    pub async fn get(&self, id: &S::Id) -> Result<Option<MaybeOptimistic<S>>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -33,20 +40,21 @@ where
         }
         let optimistically_updated = self.optimistic_changes.updates.latest_downcasted::<S>(id);
         if let Some(o) = optimistically_updated {
-            return Ok(Some(o));
+            return Ok(Some(MaybeOptimistic::new(o, true)));
         }
         let optimistically_created = self.optimistic_changes.creations.latest_downcasted::<S>(id);
         if let Some(o) = optimistically_created {
-            return Ok(Some(o));
+            return Ok(Some(MaybeOptimistic::new(o, true)));
         };
 
         self.inner
             .get(id)
             .await
             .map_err(|e| Error::new(e, self.location))
+            .map(|o| o.map(|o| MaybeOptimistic::new(o, false)))
     }
 
-    pub(crate) async fn no_optimism_get(&self, id: &S::Id) -> Result<Option<S>, Error> {
+    pub async fn no_optimism_get(&self, id: &S::Id) -> Result<Option<S>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -57,7 +65,7 @@ where
             .map_err(|e| super::Error::new(e, self.location))
     }
 
-    pub async fn get_all(&self) -> Result<Vec<S>, super::Error> {
+    pub async fn get_all(&self) -> Result<Vec<MaybeOptimistic<S>>, super::Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
         let from_db_filtered = self
@@ -76,23 +84,27 @@ where
                 self.optimistic_changes
                     .updates
                     .latest_downcasted(r.id())
-                    .unwrap_or(r)
+                    .map(|o| MaybeOptimistic::new(o, true))
+                    .unwrap_or(MaybeOptimistic::new(r, false))
             });
         let mut all = Vec::from_iter(from_db_filtered);
         all.extend(
             self.optimistic_changes
                 .creations
-                .all_the_latest_downcasted(),
+                .all_the_latest_downcasted()
+                .into_iter()
+                .map(|o| MaybeOptimistic::new(o, true))
+                
         );
 
         Ok(all)
     }
 
     #[allow(dead_code)]
-    pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, typesafe_idb::Error> {
+    pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
-        self.inner.get_all().await
+        self.inner.get_all().await.map_err(|e| Error::new(e, self.location))
     }
 
     pub fn index<IS: IndexSpec<Store = S>>(
@@ -151,15 +163,19 @@ where
         }
     }
 
-    pub fn create(&self, row: S, create_fut: impl Future<Output = Result<S::Id, ()>> + 'static) {
+    pub fn create(
+        &self,
+        row: S,
+        create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
+        callback: impl FnOnce(S::Id) + 'static,
+    ) {
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_row(&row));
-        self.optimistic_changes.create(row, create_fut);
+        self.optimistic_changes.create(row, create_fut, callback);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
             commit_listener(&self.reactivity_trackers.borrow());
         }
     }
 }
-

@@ -75,7 +75,7 @@ pub fn OneIssue(
             issue_and_user.get().map(|issue_and_user| {
                 let sync_engine = use_sync_engine();
                 let (issue, user) = match issue_and_user? {
-                    Some((issue, user)) => (StoredValue::new(issue), StoredValue::<Option<User>>::new(user)),
+                    Some((issue, user)) => (StoredValue::new(issue), StoredValue::<_>::new(user)),
                     None => return Ok::<_, FrontendError>(view! { <NotFound /> }.into_any()),
                 };
 

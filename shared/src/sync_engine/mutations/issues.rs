@@ -15,13 +15,14 @@ use crate::{
 };
 
 impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
+    /// Returns the optimistic id of the issue.
     pub async fn create_issue(
         &self,
         installation_id: &InstallationId,
         owner_id: &UserId,
         repo_id: &RepositoryId,
         issues_create_request: IssuesCreateRequest,
-    ) -> Result<(), SyncError<T>> {
+    ) -> Result<IssueId, SyncError<T>> {
         // Just leaving a note for myself that when I did
         // self.db.object_store::<User/Repository>(), I got the "transaction is already closed"
         // issue of indexeddb (probgably caused by the fact that indexeddb transactions commit as
@@ -50,7 +51,9 @@ impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi>
         let conf = self.get_api_conf(installation_id).await?;
 
         let now = Timestamp::now();
+        let issue_id = IssueId::default();
         let optimistic_issue = Issue {
+            id: issue_id,
             repository_id: *repo_id,
             user_id: Some(*owner_id).into(),
             body: issues_create_request.body.clone().into(),
@@ -73,8 +76,12 @@ impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi>
                     .await
                     .map(|i| IssueId::from(i.id))
                     .map_err(|_| ())
-            });
+            },
+            |id| {
+                tracing::info!("issue created: {:?}", id);
+            },
+        );
 
-        Ok(())
+        Ok(issue_id)
     }
 }

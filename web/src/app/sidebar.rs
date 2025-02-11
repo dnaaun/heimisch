@@ -73,9 +73,9 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                 let user = iter.peek().expect("").1.clone();
                 let repos = iter
                     .sorted_by_key(|(r, _)| r.name.to_lowercase())
-                    .map(|(repo, _)| (repo.id, repo.name))
+                    .map(|(repo, _)| (repo.id, repo.name.clone()))
                     .collect::<Vec<_>>();
-                (user.map(|u| u.login), repos)
+                (user.map(|u| u.login.clone()), repos)
             })
             .sorted_by_key(|(u, _)| u.clone())
             .collect::<Vec<_>>()))

@@ -1,7 +1,9 @@
 use github_api::models::IssuesCreateRequestTitle;
 use leptos::{prelude::*, task::spawn_local};
-use shared::{avail::Avail, utils::LogErr};
-use zwang_router::ArgFromParent;
+use macros::zwang_url;
+use shared::{avail::Avail, utils::LogErr, types::issue::Issue};
+use zwang_router::{set_pathname, ArgFromParent};
+use crate::app::routing::*;
 
 use crate::app::{
     flowbite::{
@@ -30,7 +32,7 @@ pub fn NewIssue(ArgFromParent(repository): ArgFromParent<RepositoryPageWillPass>
                 };
                 let sync_engine = sync_engine.clone();
                 spawn_local(async move {
-                    let _ = sync_engine
+                    let issue_id = sync_engine
                         .create_issue(
                             &repository.installation_id,
                             &owner_id,
@@ -39,6 +41,14 @@ pub fn NewIssue(ArgFromParent(repository): ArgFromParent<RepositoryPageWillPass>
                         )
                         .await
                         .log_err();
+
+                    if let Ok(issue_id) = issue_id {
+                        let issue_number = sync_engine.db.object_store::<Issue>().unwrap().get(&issue_id).await.unwrap().unwrap().number;
+                        let owner_name = owner_id.to_string();
+                        let repo_name = repository.id.to_string();
+                        let issue_number = issue_number.to_string();
+                        set_pathname(zwang_url!("/owner_name={owner_name}/repo_name={repo_name}/issues/issue_number={issue_number}"));
+                    }
                 });
             } else {
                 tracing::info!(".owner_id not Avail-able");

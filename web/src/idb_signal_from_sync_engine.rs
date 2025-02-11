@@ -35,7 +35,7 @@ where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
     Mode: TxnMode + 'static,
-    T: 'static + std::fmt::Debug,
+    T: 'static
 {
     #[track_caller]
     fn idb_signal(

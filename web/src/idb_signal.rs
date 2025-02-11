@@ -80,7 +80,7 @@ where
 
 impl<T> IdbSignal<T>
 where
-    T: std::fmt::Debug + 'static,
+    T: 'static,
 {
     #[track_caller]
     pub fn new<Markers, Mode, Fut, Deregister>(

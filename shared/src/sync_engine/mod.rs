@@ -72,7 +72,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
             .build();
         let iac = txn
             .object_store::<InstallationAccessTokenRow>()?
-            .get_all()
+            .no_optimism_get_all()
             .await?
             .into_iter()
             .filter(|iac| {
