@@ -1,10 +1,10 @@
 use crate::sync_engine::error::SyncError;
 use std::fmt::Debug;
 
-use super::typed_transport::TypedTransportTrait;
+use super::transport::TransportTrait;
 
 #[derive(Debug)]
-pub enum ApplyingError<W: TypedTransportTrait> {
+pub enum ApplyingError<W: TransportTrait> {
     Sync(SyncError<W>),
 
     /// It's gonna take us a while to implement how all the github webhook update variants
@@ -14,7 +14,7 @@ pub enum ApplyingError<W: TypedTransportTrait> {
 
 pub type ApplyingResult<T, W> = Result<T, ApplyingError<W>>;
 
-impl<W: TypedTransportTrait, T: Into<SyncError<W>>> From<T> for ApplyingError<W> {
+impl<W: TransportTrait, T: Into<SyncError<W>>> From<T> for ApplyingError<W> {
     fn from(value: T) -> Self {
         Self::Sync(value.into())
     }

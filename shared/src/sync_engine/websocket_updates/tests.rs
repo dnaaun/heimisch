@@ -6,11 +6,13 @@ use std::{
 };
 use url::Url;
 
-use crate::sync_engine::{ConnOrClosedError, TypedTransportTrait};
+use crate::endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg};
+
+use super::transport::TransportTrait;
 
 /// Mock implementation of `TypedTransportTrait`.
 #[derive(Debug)]
-pub struct MockTypedTransport {
+pub struct MockTransport {
     // This marker ensures we follow the TypedTransportTrait.
     marker: std::marker::PhantomData<()>,
 }
@@ -20,18 +22,18 @@ pub struct MockTypedTransport {
 pub struct MockConnError;
 
 /// Implement TypedTransportTrait for MockTypedTransport
-impl TypedTransportTrait for MockTypedTransport {
-    type ConnError = MockConnError;
+impl TransportTrait for MockTransport {
+    type TransportError = MockConnError;
 
-    async fn establish_conn(_url: &Url) -> Result<Self, Self::ConnError> {
-        Ok(MockTypedTransport {
+    async fn establish(_url: &Url) -> Result<Self, Self::TransportError> {
+        Ok(MockTransport {
             marker: std::marker::PhantomData,
         })
     }
 }
 
 /// Implement Sink for MockTypedTransport
-impl Sink<Vec<u8>> for MockTypedTransport {
+impl Sink<ClientMsg> for MockTransport {
     type Error = MockConnError;
 
     fn poll_ready(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -39,7 +41,7 @@ impl Sink<Vec<u8>> for MockTypedTransport {
         Poll::Ready(Ok(()))
     }
 
-    fn start_send(self: Pin<&mut Self>, _item: Vec<u8>) -> Result<(), Self::Error> {
+    fn start_send(self: Pin<&mut Self>, _item: ClientMsg) -> Result<(), Self::Error> {
         // Do nothing with the incoming message
         Ok(())
     }
@@ -56,8 +58,8 @@ impl Sink<Vec<u8>> for MockTypedTransport {
 }
 
 /// Implement Stream for MockTypedTransport
-impl Stream for MockTypedTransport {
-    type Item = Result<Vec<u8>, ConnOrClosedError<MockConnError>>;
+impl Stream for MockTransport {
+    type Item = Result<ServerMsg, MockConnError>;
 
     fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         // Never provides any items

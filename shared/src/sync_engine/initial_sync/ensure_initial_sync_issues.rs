@@ -4,7 +4,7 @@ use super::super::{
     changes::{AddChanges, Changes},
     conversions::ToDb,
     error::{SyncErrorSrc, SyncResult},
-    SyncEngine, TypedTransportTrait, MAX_PER_PAGE,
+    SyncEngine, MAX_PER_PAGE,
 };
 use crate::{
     avail::MergeError,
@@ -17,8 +17,9 @@ use crate::{
     },
 };
 use github_api::github_api_trait::GithubApiTrait;
+use crate::sync_engine::websocket_updates::transport::TransportTrait;
 
-impl<W: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
+impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
     pub async fn ensure_initial_sync_issues(
         &self,
         id: &RepositoryId,

@@ -1,12 +1,13 @@
 pub mod applying_error;
-pub mod typed_transport;
+pub mod binary_transport;
 
 #[cfg(test)]
 pub mod tests;
+pub mod transport;
 
 use applying_error::{ApplyingError, ApplyingResult};
 use futures::{pin_mut, StreamExt};
-use typed_transport::{establish, TypedTransportError, TypedTransportTrait};
+use transport::TransportTrait;
 
 use crate::{
     endpoints::defns::api::websocket_updates::{
@@ -22,11 +23,11 @@ use crate::{
 
 use super::{error::SyncErrorSrc, SyncEngine, SyncResult};
 
-impl<W, GithubApi> SyncEngine<W, GithubApi>
+impl<Transport, GithubApi> SyncEngine<Transport, GithubApi>
 where
-    W: TypedTransportTrait,
+    Transport: TransportTrait,
 {
-    pub async fn recv_websocket_updates(&self) -> SyncResult<(), W> {
+    pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport> {
         let mut url = self
             .endpoint_client
             .domain
@@ -47,9 +48,9 @@ where
             })
             .expect(""),
         ));
-        let websocket_conn = try_n_times(async || establish::<W>(&url).await, 3)
+        let websocket_conn = try_n_times(async || Transport::establish(&url).await, 3)
             .await
-            .map_err(|e| SyncErrorSrc::WebSocket(e))?;
+            .map_err(|e| SyncErrorSrc::Transport(e))?;
         pin_mut!(websocket_conn);
         loop {
             let fut = websocket_conn.next();
@@ -83,18 +84,7 @@ where
                         }
                     },
                     Err(err) => {
-                        match err {
-                            TypedTransportError::Closed => (),
-                            TypedTransportError::Conn(err) => {
-                                tracing::error!("{:?}", err)
-                            }
-                            TypedTransportError::Encode(err) => {
-                                tracing::error!("{:?}", err)
-                            }
-                            TypedTransportError::Decode(err) => {
-                                tracing::error!("{:?}", err)
-                            }
-                        };
+                        tracing::error!("Error receiving websocket update: {:?}", err);
                     }
                 },
                 None => return Ok(()),
@@ -102,7 +92,7 @@ where
         }
     }
 
-    async fn apply_update_to_db(&self, _server_msg: &ServerMsg) -> ApplyingResult<(), W> {
+    async fn apply_update_to_db(&self, _server_msg: &ServerMsg) -> ApplyingResult<(), Transport> {
         use github_webhook_body::*;
         let changes = match _server_msg.body.clone() {
             WebhookBody::Issues(issues) => {

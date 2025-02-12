@@ -2,7 +2,7 @@ use futures::future::try_join_all;
 use github_api::github_api_trait::GithubApiTrait;
 
 use crate::{
-    avail::MergeError, sync_engine::websocket_updates::typed_transport::TypedTransportTrait,
+    avail::MergeError, sync_engine::websocket_updates::transport::TransportTrait,
     types::installation::InstallationId,
 };
 
@@ -12,7 +12,7 @@ use super::super::{
     SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
-impl<W: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
+impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
     pub async fn fetch_repositorys_for_installation_id(
         &self,
         id: &InstallationId,

@@ -10,7 +10,7 @@ use super::super::{
     SyncEngine, MAX_PER_PAGE,
 };
 use crate::{
-    sync_engine::websocket_updates::typed_transport::TypedTransportTrait,
+    sync_engine::websocket_updates::transport::TransportTrait,
     types::{
         installation::InstallationId,
         issue::{Issue, IssueId, NumberIndex},
@@ -22,7 +22,7 @@ use crate::{
     },
 };
 
-impl<W: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
+impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.
     pub async fn ensure_initial_sync_issue_comments(

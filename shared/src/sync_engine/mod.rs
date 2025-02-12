@@ -2,7 +2,7 @@ use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
 use registry::Registry;
 use send_wrapper::SendWrapper;
 use std::{marker::PhantomData, sync::Arc};
-pub use websocket_updates::typed_transport::*;
+pub use websocket_updates::transport::*;
 mod conversions;
 mod initial_sync;
 
@@ -12,7 +12,7 @@ pub mod mutations;
 pub mod optimistic;
 mod registry;
 pub mod storage_traits;
-mod websocket_updates;
+pub mod websocket_updates;
 
 use std::{cmp::Ordering, rc::Rc};
 
@@ -49,7 +49,7 @@ pub struct SyncEngine<Transport, GithubApi> {
 
 const MAX_PER_PAGE: i32 = 100;
 
-impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     async fn get_api_conf(
         &self,
         id: &InstallationId,

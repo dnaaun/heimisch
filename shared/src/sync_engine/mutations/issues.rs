@@ -4,16 +4,16 @@ use jiff::Timestamp;
 use crate::{
     random::random, sync_engine::{
         error::{SyncError, SyncErrorSrc},
-        SyncEngine, TypedTransportTrait,
+        SyncEngine, 
     }, types::{
         installation::InstallationId,
         issue::{Issue, IssueId},
         repository::{Repository, RepositoryId},
         user::{User, UserId},
-    }
+    }, sync_engine::websocket_updates::transport::TransportTrait,
 };
 
-impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
+impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
     /// Returns the optimistic id of the issue.
     /// 
     /// Invariant upheld: The issue number and id will be a negative number for the optimistic issue.

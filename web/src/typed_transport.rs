@@ -3,7 +3,7 @@ use std::task::{ready, Poll};
 use futures::{Sink, Stream};
 use gloo_utils::errors::JsError;
 use pin_project::pin_project;
-use shared::sync_engine::{ConnOrClosedError, TypedTransportTrait};
+use shared::sync_engine::websocket_updates::binary_transport::{BinaryTransportTrait, ConnOrClosedError};
 use url::Url;
 
 #[derive(Debug)]
@@ -15,20 +15,20 @@ pub enum ConnError {
 }
 
 #[pin_project]
-pub struct MyWebSocket(#[pin] gloo_net::websocket::futures::WebSocket);
+pub struct BinaryTransport(#[pin] gloo_net::websocket::futures::WebSocket);
 
-impl TypedTransportTrait for MyWebSocket {
+impl BinaryTransportTrait for BinaryTransport {
     type ConnError = ConnError;
 
     async fn establish_conn(url: &Url) -> Result<Self, Self::ConnError> {
-        Ok(MyWebSocket(
+        Ok(BinaryTransport(
             gloo_net::websocket::futures::WebSocket::open(url.as_str())
                 .map_err(ConnError::GlooJs)?,
         ))
     }
 }
 
-impl Stream for MyWebSocket {
+impl Stream for BinaryTransport {
     type Item = Result<Vec<u8>, ConnOrClosedError<ConnError>>;
 
     fn poll_next(
@@ -59,7 +59,7 @@ impl Stream for MyWebSocket {
     }
 }
 
-impl Sink<Vec<u8>> for MyWebSocket {
+impl Sink<Vec<u8>> for BinaryTransport {
     type Error = ConnError;
 
     fn poll_ready(

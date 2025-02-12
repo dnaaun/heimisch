@@ -22,7 +22,7 @@ use typesafe_idb::{StoreMarker, TypesafeDb};
 
 use super::optimistic::db::DbWithOptimisticChanges;
 use super::registry::Registry;
-use super::websocket_updates::typed_transport::TypedTransportTrait;
+use super::websocket_updates::transport::TransportTrait;
 use super::DbSubscription;
 use super::{error::SyncResult, SyncEngine};
 
@@ -41,7 +41,7 @@ pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
     + StoreMarker<LastWebhookUpdateAt>
     + Default;
 
-impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
     pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W> {
         let db = TypesafeDb::builder("heimisch".into())
             .with_store::<Issue>()

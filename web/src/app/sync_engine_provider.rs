@@ -3,9 +3,10 @@ use std::rc::Rc;
 use github_api::github_api_trait::GithubApi;
 use leptos::prelude::*;
 use send_wrapper::SendWrapper;
+use shared::sync_engine::Transport;
 
-use crate::typed_transport::MyWebSocket;
-pub type SyncEngine = shared::sync_engine::SyncEngine<MyWebSocket, GithubApi>;
+use crate::typed_transport::BinaryTransport;
+pub type SyncEngine = shared::sync_engine::SyncEngine<Transport<BinaryTransport>, GithubApi>;
 pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
 
 pub fn sync_engine_provided<V>(

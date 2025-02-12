@@ -9,7 +9,7 @@ use wasm_bindgen_test::wasm_bindgen_test;
 use crate::{
     endpoints::endpoint_client::EndpointClient,
     sync_engine::{
-        websocket_updates::tests::MockTypedTransport, DbStoreMarkers, DbSubscription, SyncEngine,
+        websocket_updates::tests::MockTransport, DbStoreMarkers, DbSubscription, SyncEngine,
     },
     types::{
         issue::{Issue, RepositoryIdIndex},
@@ -19,8 +19,8 @@ use crate::{
 
 use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
-async fn get_sync_engine() -> SyncEngine<MockTypedTransport, ()> {
-    SyncEngine::<MockTypedTransport, ()>::new(EndpointClient::new(
+async fn get_sync_engine() -> SyncEngine<MockTransport, ()> {
+    SyncEngine::<MockTransport, ()>::new(EndpointClient::new(
         |_| (),
         Url::parse("https://www.example.com/").unwrap(),
     ))
