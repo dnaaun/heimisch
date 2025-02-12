@@ -1,0 +1,85 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  non-wasm-tests:
+    name: Non-WASM Tests - ${{ matrix.crate }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - shared
+          - backend
+          - cli
+          - utils
+          - diesel-test
+          - meta_tools
+          - github_webhook_body
+          - macros
+          - macros_impl
+          - github_api
+          - reqwest_wiremock
+          - zwang_router
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests for ${{ matrix.crate }}
+        run: cargo test -p ${{ matrix.crate }}
+
+  wasm-tests:
+    name: WASM Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run WASM tests for web
+        run: wasm-pack test --headless --chrome web
+
+      - name: Run WASM tests for typesafe_idb
+        run: wasm-pack test --headless --chrome typesafe_idb
+
+      - name: Run WASM tests for wasm_testing_utils
+        run: wasm-pack test --headless --chrome wasm_testing_utils
+
+  web-tests:
+    name: Web Tests (Non-WASM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run non-WASM tests for web crate
+        run: cargo test -p web --lib --bins --tests 
