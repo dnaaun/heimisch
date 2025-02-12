@@ -2,20 +2,21 @@ use github_api::{github_api_trait::GithubApiTrait, models::IssuesCreateRequest};
 use jiff::Timestamp;
 
 use crate::{
-    sync_engine::{
+    random::random, sync_engine::{
         error::{SyncError, SyncErrorSrc},
         SyncEngine, TypedTransportTrait,
-    },
-    types::{
+    }, types::{
         installation::InstallationId,
         issue::{Issue, IssueId},
         repository::{Repository, RepositoryId},
         user::{User, UserId},
-    },
+    }
 };
 
 impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
     /// Returns the optimistic id of the issue.
+    /// 
+    /// Invariant upheld: The issue number and id will be a negative number for the optimistic issue.
     pub async fn create_issue(
         &self,
         installation_id: &InstallationId,
@@ -66,6 +67,7 @@ impl<T: TypedTransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi>
             .into(),
             created_at: now.into(),
             updated_at: now.into(),
+            number: -i64::from(random()), // Negative because the number will never be negative in the real/non-optimistic world.
             ..Default::default()
         };
 
