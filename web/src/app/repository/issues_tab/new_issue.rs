@@ -1,7 +1,6 @@
 use github_api::models::IssuesCreateRequestTitle;
 use leptos::{prelude::*, task::spawn_local};
 use macros::zwang_url;
-use shared::types::user::User;
 use shared::{avail::Avail, utils::LogErr, types::issue::Issue};
 use zwang_router::{set_pathname, ArgFromParent};
 use crate::app::routing::*;
@@ -45,10 +44,9 @@ pub fn NewIssue(ArgFromParent(repository_page_context): ArgFromParent<Repository
                         .log_err();
 
                     if let Ok(issue_id) = issue_id {
-                        let txn = sync_engine.db.txn().with_store::<Issue>().with_store::<User>().build();
+                        let txn = sync_engine.db.txn().with_store::<Issue>().build();
                         let issue_number = txn.object_store::<Issue>().unwrap().get(&issue_id).await.unwrap().unwrap().number;
-                        let owner = txn.object_store::<User>().unwrap().get(&owner_id).await.unwrap().unwrap();
-                        let owner_login = &owner.login;
+                        let owner_login = &repository_page_context.get().user.login;
                         let issue_number = issue_number.to_string();
                         set_pathname(zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
                     }
