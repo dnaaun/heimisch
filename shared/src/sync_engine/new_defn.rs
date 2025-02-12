@@ -58,12 +58,12 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
             .with_store::<IssueCommentsInitialSyncStatus>()
             .with_store::<RepositoryInitialSyncStatus>();
 
-        let db_change_notifiers: Rc<Registry<DbSubscription>> = Default::default();
-        let db_change_notifiers2 = db_change_notifiers.clone();
+        let db_subscriptions: Rc<Registry<DbSubscription>> = Default::default();
+        let db_subscriptions2 = db_subscriptions.clone();
         let db = DbWithOptimisticChanges::new(
             db,
             Rc::new(move |reactivity_trackers| {
-                let orig_trackers = db_change_notifiers2.get();
+                let orig_trackers = db_subscriptions2.get();
                 orig_trackers
                     .iter()
                     .filter(|sub| {
@@ -76,7 +76,7 @@ impl<W: TypedTransportTrait, GithubApi> SyncEngine<W, GithubApi> {
 
         Ok(Self {
             db: Rc::new(db),
-            db_subscriptions: SendWrapper::new(db_change_notifiers),
+            db_subscriptions: SendWrapper::new(db_subscriptions),
             endpoint_client,
             _transport: PhantomData,
         })

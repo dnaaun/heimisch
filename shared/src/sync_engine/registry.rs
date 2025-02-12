@@ -8,6 +8,9 @@ struct Inner<T> {
     map: HashMap<u32, T>,
 }
 
+/// The idea is that one calls `.add()` to add an object to the registry, and it
+/// will return a function that will remove it from the registry when called.
+/// And then one can do `registry.get()` to get all the objects in the registry.
 pub struct Registry<T> {
     inner: SendWrapper<Rc<RefCell<Inner<T>>>>,
 }
