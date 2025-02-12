@@ -53,11 +53,17 @@ impl From<Tab> for RootOwnerNameRepoName {
     }
 }
 
-pub type RepositoryPageWillPass = Signal<Repository>;
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryPageContextInner {
+    repository: Repository,
+    user: User
+}
+
+pub type RepositoryPageContext = Signal<RepositoryPageContextInner>;
 
 #[allow(non_snake_case)]
 pub fn RepositoryPage(
-    outlet: Outlet<RepositoryPageWillPass, impl IntoView + 'static>,
+    outlet: Outlet<RepositoryPageContext, impl IntoView + 'static>,
     RouteParams(params): RouteParams<ParamsOwnerNameRepoName>,
 ) -> impl IntoView {
     let parsed_path = use_context::<ParsedPath<Root>>().expect("");
@@ -93,7 +99,7 @@ pub fn RepositoryPage(
 
     let sync_engine = use_sync_engine();
 
-    let repository = sync_engine.idb_signal(
+    let repository_page_context = sync_engine.idb_signal(
         |builder| {
             builder
                 .with_store::<User>()
@@ -115,11 +121,18 @@ pub fn RepositoryPage(
                         .get_all(Some(&params.repo_name.read()))
                         .await?;
 
-                    let repo = repos
+                    let repository = repos
                         .into_iter()
                         .find(|r| r.owner_id.map_ref(|o| o == &user_id).assume(false));
 
-                    Ok(repo)
+                    Ok( 
+                        repository.map(|repository| {
+                            RepositoryPageContextInner {
+                                repository,
+                                user,
+                            }
+                        })
+                    )
                 }
                 None => Ok(None),
             }
@@ -127,14 +140,14 @@ pub fn RepositoryPage(
     );
 
     // Memo is necessary to make sure effect runs once for each repo
-    let repository = Memo::new(move |_| repository.get());
+    let repository_page_context = Memo::new(move |_| repository_page_context.get());
 
     Effect::new(move || {
         let sync_engine = sync_engine.clone();
-        if let Some(Ok(Some(repo))) = repository.get() {
+        if let Some(Ok(Some(context))) = repository_page_context.get() {
             spawn_local(async move {
                 let _ = sync_engine
-                    .ensure_initial_sync_repository(&repo.id, false)
+                    .ensure_initial_sync_repository(&context.repository.id, false)
                     .await
                     .log_err();
             })
@@ -146,18 +159,18 @@ pub fn RepositoryPage(
             view! { <div class="min-w-min h-screen">asdfasdf <Spinner /></div> }
         }>
             {move || {
-                let repository = Signal::derive(move || repository.get());
-                let repository = match repository.transpose() {
+                let repository_page_context = Signal::derive(move || repository_page_context.get());
+                let repository_page_context = match repository_page_context.transpose() {
                     Some(r) => r.transpose().map_err(|s| s.get())?,
                     None => return Ok::<_, FrontendError>(None),
                 };
-                let repository = match repository.transpose() {
+                let repository_page_context = match repository_page_context.transpose() {
                     Some(r) => r,
                     None => {
                         return Ok(Some(view! { <NotFound /> }.into_any()));
                     }
                 };
-                let repository_id = Signal::derive(move || repository.get().id);
+                let repository_id = Signal::derive(move || repository_page_context.get().repository.id);
                 let tabs = vec![Tab::Issues, Tab::Pulls];
                 let get_tab_label = |key: &Tab| {
                     match key {
@@ -183,7 +196,7 @@ pub fn RepositoryPage(
                                 />
                                 <div class="flex items-center justify-center">
                                     <div class="m-5 max-w-screen-xl w-full">
-                                        {outlet.call(repository)}
+                                        {outlet.call(repository_page_context)}
                                     </div>
                                 </div>
                             </div>

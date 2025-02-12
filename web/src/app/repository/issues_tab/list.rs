@@ -12,7 +12,7 @@ use zwang_router::{ArgFromParent, RouteParams, A};
 
 use crate::{
     app::{
-        repository::{issues_tab::new_issue_button::NewIssueButton, RepositoryPageWillPass},
+        repository::{issues_tab::new_issue_button::NewIssueButton, RepositoryPageContext},
         routing::*,
         sync_engine_provider::use_sync_engine,
     },
@@ -26,7 +26,7 @@ pub fn IssuesList(
         owner_name,
         repo_name,
     }): RouteParams<ParamsOwnerNameRepoName>,
-    ArgFromParent(ids): ArgFromParent<RepositoryPageWillPass>,
+    ArgFromParent(repository_page_context): ArgFromParent<RepositoryPageContext>,
 ) -> impl IntoView {
     let sync_engine = use_sync_engine();
 
@@ -36,7 +36,7 @@ pub fn IssuesList(
             Ok(txn
                 .object_store::<Issue>()?
                 .index::<RepositoryIdIndex>()?
-                .get_all(Some(&ids.read().id))
+                .get_all(Some(&repository_page_context.read().repository.id))
                 .await?)
         },
     );

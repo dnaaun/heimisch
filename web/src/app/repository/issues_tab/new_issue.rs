@@ -1,6 +1,7 @@
 use github_api::models::IssuesCreateRequestTitle;
 use leptos::{prelude::*, task::spawn_local};
 use macros::zwang_url;
+use shared::types::user::User;
 use shared::{avail::Avail, utils::LogErr, types::issue::Issue};
 use zwang_router::{set_pathname, ArgFromParent};
 use crate::app::routing::*;
@@ -11,17 +12,17 @@ use crate::app::{
         text_area::TextArea,
         text_input::TextInput,
     },
-    repository::RepositoryPageWillPass,
+    repository::RepositoryPageContext,
     sync_engine_provider::use_sync_engine,
     thirds::Thirds,
 };
 
 #[allow(non_snake_case)]
-pub fn NewIssue(ArgFromParent(repository): ArgFromParent<RepositoryPageWillPass>) -> impl IntoView {
+pub fn NewIssue(ArgFromParent(repository_page_context): ArgFromParent<RepositoryPageContext>) -> impl IntoView {
     let title = RwSignal::new(Default::default());
     let body = RwSignal::new(Default::default());
     move || {
-        let repository = repository.get();
+        let repository = repository_page_context.get().repository;
         let sync_engine = use_sync_engine();
         let on_create = move |_| {
             if let Avail::Yes(owner_id) = repository.owner_id {
@@ -31,6 +32,7 @@ pub fn NewIssue(ArgFromParent(repository): ArgFromParent<RepositoryPageWillPass>
                     ..Default::default()
                 };
                 let sync_engine = sync_engine.clone();
+                let repo_name = repository.name.clone();
                 spawn_local(async move {
                     let issue_id = sync_engine
                         .create_issue(
@@ -43,11 +45,12 @@ pub fn NewIssue(ArgFromParent(repository): ArgFromParent<RepositoryPageWillPass>
                         .log_err();
 
                     if let Ok(issue_id) = issue_id {
-                        let issue_number = sync_engine.db.object_store::<Issue>().unwrap().get(&issue_id).await.unwrap().unwrap().number;
-                        let owner_name = owner_id.to_string();
-                        let repo_name = repository.id.to_string();
+                        let txn = sync_engine.db.txn().with_store::<Issue>().with_store::<User>().build();
+                        let issue_number = txn.object_store::<Issue>().unwrap().get(&issue_id).await.unwrap().unwrap().number;
+                        let owner = txn.object_store::<User>().unwrap().get(&owner_id).await.unwrap().unwrap();
+                        let owner_login = &owner.login;
                         let issue_number = issue_number.to_string();
-                        set_pathname(zwang_url!("/owner_name={owner_name}/repo_name={repo_name}/issues/issue_number={issue_number}"));
+                        set_pathname(zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
                     }
                 });
             } else {

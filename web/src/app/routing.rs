@@ -8,7 +8,7 @@ use crate::app::{
 
 use super::{
     not_found::NotFound,
-    repository::{issues_tab::new_issue::NewIssue, pull_requests_tab::PullRequestsTab, RepositoryPageWillPass},
+    repository::{issues_tab::new_issue::NewIssue, pull_requests_tab::PullRequestsTab, RepositoryPageContext},
 };
 use crate::app::auth::Auth;
 
@@ -29,7 +29,7 @@ zwang_routes! {{
                     path: "/{repo_name}",
                     layout: RepositoryPage,
                     view: IssuesList,
-                    will_pass: RepositoryPageWillPass,
+                    will_pass: RepositoryPageContext,
                     children: [
                         {
                             path: "/pulls",
@@ -37,7 +37,7 @@ zwang_routes! {{
                         },
                         {
                             path: "/issues",
-                            will_pass: RepositoryPageWillPass,
+                            will_pass: RepositoryPageContext,
                             view: IssuesList,
                             children: [
                                 {
