@@ -26,6 +26,7 @@ pub fn NewIssue(
     move || {
         let sync_engine = use_sync_engine();
         let on_create = move |_| {
+            let sync_engine = sync_engine.clone();
             let RepositoryPageContextInner {
                 user: owner,
                 repository,
@@ -35,10 +36,10 @@ pub fn NewIssue(
                 body: Some(body.get()),
                 ..Default::default()
             };
-            let sync_engine = sync_engine.clone();
-            let repo_name = repository.name.clone();
+
+            let owner_login = owner.login.clone();
             spawn_local(async move {
-                let issue_id = sync_engine
+                let optimistic_issue_id = sync_engine
                     .create_issue(
                         &repository.installation_id,
                         &owner,
@@ -48,18 +49,19 @@ pub fn NewIssue(
                     .await
                     .log_err();
 
-                if let Ok(issue_id) = issue_id {
+                if let Ok(optimistic_issue_id) = optimistic_issue_id {
                     let txn = sync_engine.db.txn().with_store::<Issue>().build();
                     let issue_number = txn
                         .object_store::<Issue>()
                         .unwrap()
-                        .get(&issue_id)
+                        .get(&optimistic_issue_id)
                         .await
                         .unwrap()
                         .unwrap()
                         .number;
-                    let owner_login = &repository_page_context.get().user.login;
+                    let owner_login = owner_login.clone();
                     let issue_number = issue_number.to_string();
+                    let repo_name = repository.name.clone();
                     set_pathname(zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
                 }
             });

@@ -263,7 +263,7 @@ pub async fn get_all_no_optimisim_create_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .create(Default::default(), async {Ok( Default::default()) }, |_| ());
+                .create(Default::default(), async {Ok( Default::default()) });
         })
         .should_overlap(true)
         .call()
@@ -286,7 +286,7 @@ pub async fn get_all_no_optimisim_create_non_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Repository>()
                 .unwrap()
-                .create(Default::default(), async { Ok(Default::default()) }, |_| ());
+                .create(Default::default(), async { Ok(Default::default()) });
         })
         .should_overlap(false)
         .call()

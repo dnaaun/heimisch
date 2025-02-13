@@ -167,13 +167,12 @@ where
         &self,
         row: S,
         create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
-        callback: impl FnOnce(S::Id) + 'static,
     ) {
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_row(&row));
         let id = row.id().clone();
-        self.optimistic_changes.create(row, create_fut, callback);
+        self.optimistic_changes.create(row, create_fut);
 
         tracing::info!("did self.optimistic_changes.create for row with id: {:?}", id);
         if let Some(commit_listener) = self.commit_listener.as_ref() {

@@ -57,9 +57,6 @@ impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
                     .map(|i| IssueId::from(i.id))
                     .map_err(|_| ())
             },
-            |id| {
-                tracing::info!("issue created: {:?}", id);
-            },
         );
 
         Ok(issue_id)

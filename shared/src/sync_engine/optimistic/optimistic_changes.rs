@@ -58,8 +58,6 @@ impl OptimisticChanges {
         row: S,
         // The future must resolve to the id of whatever is created.
         create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
-        callback: impl FnOnce(S::Id) + 'static,
-
     ) {
         let id = row.id().clone();
         let creations = self.creations.clone();
@@ -73,7 +71,6 @@ impl OptimisticChanges {
                         &time,
                         SerializedId::new_from_id::<S>(&actual_id),
                     );
-                    callback(actual_id);
                 }
                 Err(_) => {
                     creations.remove_pending::<S>(&id, &time);
