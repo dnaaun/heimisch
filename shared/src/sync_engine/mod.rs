@@ -1,7 +1,8 @@
 use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
 use registry::Registry;
 use send_wrapper::SendWrapper;
-use std::{marker::PhantomData, sync::Arc};
+use url::Url;
+use std::{future::Future, pin::Pin, sync::Arc};
 pub use websocket_updates::transport::*;
 mod conversions;
 mod initial_sync;
@@ -40,11 +41,12 @@ mod new_defn;
 
 pub use new_defn::DbStoreMarkers;
 
-pub struct SyncEngine<Transport, GithubApi> {
+pub struct SyncEngine<Transport: TransportTrait, GithubApi> {
     pub db: Rc<DbWithOptimisticChanges<DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     endpoint_client: EndpointClient,
-    _transport: PhantomData<(Transport, GithubApi)>,
+    _github_api: GithubApi,
+    make_transport: Rc<dyn Fn(Url) -> Pin<Box<dyn Future<Output = Result<Transport, Transport::TransportError>>>>>,
 }
 
 const MAX_PER_PAGE: i32 = 100;

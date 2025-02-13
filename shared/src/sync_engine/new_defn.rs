@@ -1,7 +1,7 @@
+use std::future::Future;
+use std::pin::Pin;
 /// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
 /// "defining use."
-
-use std::marker::PhantomData;
 use std::rc::Rc;
 
 use crate::types::label::Label;
@@ -19,6 +19,7 @@ use crate::{
 };
 use send_wrapper::SendWrapper;
 use typesafe_idb::{StoreMarker, TypesafeDb};
+use url::Url;
 
 use super::optimistic::db::DbWithOptimisticChanges;
 use super::registry::Registry;
@@ -41,8 +42,19 @@ pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
     + StoreMarker<LastWebhookUpdateAt>
     + Default;
 
-impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
-    pub async fn new(endpoint_client: EndpointClient) -> SyncResult<Self, W> {
+impl<Transport: TransportTrait, GithubApi> SyncEngine<Transport, GithubApi> {
+    pub async fn new<F, Fut>(
+        endpoint_client: EndpointClient,
+        make_transport: F,
+        github_api: GithubApi,
+    ) -> SyncResult<Self, Transport>
+    where
+        F: Fn(Url) -> Fut + 'static,
+        Fut: Future<Output = Result<Transport, Transport::TransportError>> + 'static,
+    {
+        // Convert the nice generic function into the boxed version we need internally
+        let make_transport = Rc::new(move |url| Box::pin(make_transport(url)) as Pin<Box<dyn Future<Output = _>>>);
+
         let db = TypesafeDb::builder("heimisch".into())
             .with_store::<Issue>()
             .with_store::<User>()
@@ -72,14 +84,15 @@ impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
                     })
                     .for_each(|sub| (sub.func)());
             }),
-        ).await?;
+        )
+        .await?;
 
         Ok(Self {
             db: Rc::new(db),
             db_subscriptions: SendWrapper::new(db_subscriptions),
             endpoint_client,
-            _transport: PhantomData,
+            _github_api: github_api,
+            make_transport,
         })
     }
 }
-

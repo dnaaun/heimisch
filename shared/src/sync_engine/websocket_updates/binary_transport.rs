@@ -67,5 +67,5 @@ pub trait BinaryTransportTrait:
     type ConnError: Debug;
 
     #[allow(async_fn_in_trait)]
-    async fn establish_conn(url: &Url) -> Result<Self, Self::ConnError>;
+    async fn establish_conn(url: Url) -> Result<Self, Self::ConnError>;
 }

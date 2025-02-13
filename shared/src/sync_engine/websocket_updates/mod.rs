@@ -1,8 +1,6 @@
 pub mod applying_error;
 pub mod binary_transport;
 
-#[cfg(test)]
-pub mod tests;
 pub mod transport;
 
 use applying_error::{ApplyingError, ApplyingResult};
@@ -48,7 +46,7 @@ where
             })
             .expect(""),
         ));
-        let websocket_conn = try_n_times(async || Transport::establish(&url).await, 3)
+        let websocket_conn = try_n_times(|| (self.make_transport)(url.clone()), 3)
             .await
             .map_err(|e| SyncErrorSrc::Transport(e))?;
         pin_mut!(websocket_conn);

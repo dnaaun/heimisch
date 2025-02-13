@@ -17,6 +17,7 @@ use std::rc::Rc;
 use leptos::prelude::*;
 
 use routing::Routed;
+use shared::sync_engine::Transport;
 use sync_engine_provider::SyncEngine;
 
 use crate::consts::ENDPOINT_CLIENT;
@@ -25,9 +26,13 @@ use crate::consts::ENDPOINT_CLIENT;
 pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         Rc::new(
-            SyncEngine::new(ENDPOINT_CLIENT.with(|e| e.clone()))
-                .await
-                .unwrap(),
+            SyncEngine::new(
+                ENDPOINT_CLIENT.with(|e| e.clone()),
+                |url| async { Transport::new(url).await },
+                github_api::github_api_trait::GithubApi,
+            )
+            .await
+            .unwrap(),
         )
     });
 

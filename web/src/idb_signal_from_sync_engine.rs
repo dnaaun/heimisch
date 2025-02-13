@@ -4,7 +4,7 @@ use std::{future::Future, sync::Arc};
 use send_wrapper::SendWrapper;
 use shared::sync_engine::{
     optimistic::db::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges},
-    DbStoreMarkers, SyncEngine,
+    DbStoreMarkers, SyncEngine, TransportTrait,
 };
 use typesafe_idb::{ReadOnly, TxnMode};
 
@@ -35,7 +35,8 @@ where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
     Mode: TxnMode + 'static,
-    T: 'static
+    T: 'static,
+    TT: TransportTrait
 {
     #[track_caller]
     fn idb_signal(

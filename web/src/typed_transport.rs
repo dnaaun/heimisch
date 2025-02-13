@@ -3,7 +3,9 @@ use std::task::{ready, Poll};
 use futures::{Sink, Stream};
 use gloo_utils::errors::JsError;
 use pin_project::pin_project;
-use shared::sync_engine::websocket_updates::binary_transport::{BinaryTransportTrait, ConnOrClosedError};
+use shared::sync_engine::websocket_updates::binary_transport::{
+    BinaryTransportTrait, ConnOrClosedError,
+};
 use url::Url;
 
 #[derive(Debug)]
@@ -20,7 +22,7 @@ pub struct BinaryTransport(#[pin] gloo_net::websocket::futures::WebSocket);
 impl BinaryTransportTrait for BinaryTransport {
     type ConnError = ConnError;
 
-    async fn establish_conn(url: &Url) -> Result<Self, Self::ConnError> {
+    async fn establish_conn(url: Url) -> Result<Self, Self::ConnError> {
         Ok(BinaryTransport(
             gloo_net::websocket::futures::WebSocket::open(url.as_str())
                 .map_err(ConnError::GlooJs)?,

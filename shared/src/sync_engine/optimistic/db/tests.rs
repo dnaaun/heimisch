@@ -8,9 +8,7 @@ use wasm_bindgen_test::wasm_bindgen_test;
 
 use crate::{
     endpoints::endpoint_client::EndpointClient,
-    sync_engine::{
-        websocket_updates::tests::MockTransport, DbStoreMarkers, DbSubscription, SyncEngine,
-    },
+    sync_engine::{tests::MockTransport, DbStoreMarkers, DbSubscription, SyncEngine},
     types::{
         issue::{Issue, RepositoryIdIndex},
         repository::Repository,
@@ -20,10 +18,11 @@ use crate::{
 use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
 async fn get_sync_engine() -> SyncEngine<MockTransport, ()> {
-    SyncEngine::<MockTransport, ()>::new(EndpointClient::new(
-        |_| (),
-        Url::parse("https://www.example.com/").unwrap(),
-    ))
+    SyncEngine::<MockTransport, ()>::new(
+        EndpointClient::new(|_| (), Url::parse("https://www.example.com/").unwrap()),
+        |_| async { Ok(MockTransport::new().0) },
+        (),
+    )
     .await
     .unwrap()
 }
@@ -263,7 +262,7 @@ pub async fn get_all_no_optimisim_create_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .create(Default::default(), async {Ok( Default::default()) });
+                .create(Default::default(), async { Ok(Default::default()) });
         })
         .should_overlap(true)
         .call()

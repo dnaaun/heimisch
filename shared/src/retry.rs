@@ -1,12 +1,13 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, future::Future};
 
 /// # Panics
 ///
 /// Panics if `n` = 0.
-pub async fn try_n_times<T, E: Debug>(
-    func: impl AsyncFn() -> Result<T, E>,
-    mut n: usize,
-) -> Result<T, E> {
+pub async fn try_n_times<Fut, T, E>(func: impl Fn() -> Fut, mut n: usize) -> Result<T, E>
+where
+    Fut: Future<Output = Result<T, E>>,
+    E: Debug,
+{
     if n == 0 {
         panic!("try_n_times() received a non-positive integer.");
     }

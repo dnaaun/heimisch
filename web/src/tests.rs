@@ -5,7 +5,10 @@ use leptos::{
     task::{tick, Executor},
 };
 use parking_lot::Mutex;
-use shared::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus;
+use shared::{
+    sync_engine::Transport,
+    types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
+};
 use tracing::Level;
 use tracing_subscriber::fmt::MakeWriter;
 use wasm_bindgen_test::{console_log, wasm_bindgen_test};
@@ -71,9 +74,13 @@ pub async fn idb_signal_basic_reactivity() {
     tracing::subscriber::set_global_default(subscriber).unwrap();
     _ = Executor::init_wasm_bindgen();
 
-    let sync_engine = SyncEngine::new(ENDPOINT_CLIENT.with(|e| e.clone()))
-        .await
-        .unwrap();
+    let sync_engine = SyncEngine::new(
+        ENDPOINT_CLIENT.with(|e| e.clone()),
+        async |url| Transport::new(url).await,
+        github_api::github_api_trait::GithubApi,
+    )
+    .await
+    .unwrap();
 
     let num_times_updated = RwSignal::new(0);
 
