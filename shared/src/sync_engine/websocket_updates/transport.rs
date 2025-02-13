@@ -1,16 +1,16 @@
-use std::fmt::Debug;
 use codee::{Decoder, Encoder};
 use futures::{Sink, Stream};
 use pin_project::pin_project;
+use std::fmt::Debug;
 use std::task::{ready, Poll};
 use url::Url;
 
 use crate::{
     endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg},
-    sync_engine::websocket_updates::binary_transport::{BinaryTransportError, BinaryTransportTrait, ConnOrClosedError, JsonSerdeToBinaryCodec},
+    sync_engine::websocket_updates::binary_transport::{
+        BinaryTransportError, BinaryTransportTrait, ConnOrClosedError, JsonSerdeToBinaryCodec,
+    },
 };
-
-
 
 #[pin_project]
 pub struct Transport<I> {
@@ -34,7 +34,8 @@ where
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: ClientMsg) -> Result<(), Self::Error> {
         let this = self.project();
-        let encoded = JsonSerdeToBinaryCodec::encode(&item).map_err(BinaryTransportError::Encode)?;
+        let encoded =
+            JsonSerdeToBinaryCodec::encode(&item).map_err(BinaryTransportError::Encode)?;
         this.inner
             .start_send(encoded)
             .map_err(BinaryTransportError::Conn)
@@ -95,13 +96,14 @@ where
     }
 }
 
-pub trait TransportTrait: Sized + Sink<ClientMsg> + Stream<Item = Result<ServerMsg, Self::TransportError>> {
+pub trait TransportTrait:
+    Sized + Sink<ClientMsg> + Stream<Item = Result<ServerMsg, Self::TransportError>>
+{
     type TransportError: Debug;
 
     #[allow(async_fn_in_trait)]
     async fn establish(url: &Url) -> Result<Self, Self::TransportError>;
 }
-
 
 impl<T> TransportTrait for Transport<T>
 where
@@ -115,5 +117,73 @@ where
             .map_err(BinaryTransportError::Conn)?;
 
         Ok(Transport { inner })
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use std::{pin::Pin, task::{Context, Poll}};
+
+    use futures::{channel::mpsc, Sink, Stream};
+
+    use crate::endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg};
+
+    pub struct MockTransportHandler {
+        send: mpsc::Sender<ServerMsg>,
+        recv: mpsc::Receiver<ClientMsg>,
+    }
+
+    pub struct TestTransport {
+        recv: mpsc::Receiver<ServerMsg>,
+        send: mpsc::Sender<ClientMsg>,
+    }
+
+    impl TestTransport {
+        pub fn new() -> (Self, MockTransportHandler) {
+            let (server_msg_sender, server_msg_receiver) = mpsc::channel(100);
+            let (client_msg_sender, client_msg_receiver) = mpsc::channel(100);
+
+            (
+                Self { recv: server_msg_receiver, send: client_msg_sender },
+                MockTransportHandler { send: server_msg_sender, recv: client_msg_receiver },
+            )
+        }
+    }
+
+    impl Stream for TestTransport {
+        type Item = Result<ServerMsg, mpsc::SendError>;
+
+        fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+            Pin::new(&mut self.recv).poll_next(cx).map(|opt| opt.map(Ok))
+        }
+    }
+
+    impl Sink<ClientMsg> for TestTransport {
+        type Error = mpsc::SendError;
+
+        fn poll_ready(
+            mut self: Pin<&mut Self>,
+            cx: &mut Context<'_>,
+        ) -> Poll<Result<(), Self::Error>> {
+            Pin::new(&mut self.send).poll_ready(cx)
+        }
+
+        fn start_send(mut self: Pin<&mut Self>, item: ClientMsg) -> Result<(), Self::Error> {
+            Pin::new(&mut self.send).start_send(item)
+        }
+
+        fn poll_flush(
+            mut self: Pin<&mut Self>,
+            cx: &mut Context<'_>,
+        ) -> Poll<Result<(), Self::Error>> {
+            Pin::new(&mut self.send).poll_flush(cx)
+        }
+
+        fn poll_close(
+            mut self: Pin<&mut Self>,
+            cx: &mut Context<'_>,
+        ) -> Poll<Result<(), Self::Error>> {
+            Pin::new(&mut self.send).poll_close(cx)
+        }
     }
 }

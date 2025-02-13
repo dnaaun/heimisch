@@ -25,7 +25,6 @@ use crate::{
         thirds::Thirds,
     },
     frontend_error::FrontendError,
-    idb_signal::IdbSignal,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
@@ -47,7 +46,7 @@ pub fn OneIssue(
             Ok(i) => i,
             Err(_) => return view! { <NotFound /> }.into_any(),
         };
-        let issue_and_user: IdbSignal<Result<Option<_>, _>> = sync_engine.idb_signal(
+        let issue_and_user = sync_engine.idb_signal(
             move |txn| txn.with_store::<User>().with_store::<Issue>().build(),
             move |txn| async move {
                 let issue = txn
@@ -70,6 +69,10 @@ pub fn OneIssue(
                 })
             },
         );
+
+        Effect::new(move || {
+            tracing::info!("issue_and_user: {:?}", issue_and_user.get());
+        });
 
         (move || {
             issue_and_user.get().map(|issue_and_user| {
@@ -104,8 +107,6 @@ pub fn OneIssue(
 
                     Ok(issue_comments.into_iter().zip(users).collect::<Vec<_>>())
                 });
-
-
 
                 Ok(
                 view! {
@@ -165,6 +166,7 @@ pub fn OneIssue(
                                                             each=move || issue_comment_and_users.clone()
                                                             key=|(ic, _)| ic.id
                                                             children=|(issue_comment, user)| {
+                                                                let issue_comment = issue_comment.into_inner();
                                                                 view! {
                                                                     <IssueCommentBox
                                                                         body=issue_comment.body.to_option()

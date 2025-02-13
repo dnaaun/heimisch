@@ -101,6 +101,7 @@ impl OptimisticChanges {
     }
 
     pub fn remove_obsoletes_for_id<S: Store>(&self, id: &S::Id) {
+        tracing::info!("Called remove obseletes_for_id: {id:?}");
         self.deletes.remove_all_successful::<S>(id, &());
         self.updates.remove_all_successful::<S>(id, &());
         self.creations

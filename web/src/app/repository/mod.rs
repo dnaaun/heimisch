@@ -1,12 +1,11 @@
 use crate::signal_ext::*;
 use leptos::{prelude::*, task::spawn_local};
 use shared::{
-    types::{
+    sync_engine::optimistic::db::MaybeOptimistic, types::{
         self,
         repository::Repository,
         user::{self, User},
-    },
-    utils::LogErr,
+    }, utils::LogErr
 };
 use top_bar::TopBar;
 use zwang_router::{set_pathname, Outlet, ParsedPath, RouteParams};
@@ -55,8 +54,8 @@ impl From<Tab> for RootOwnerNameRepoName {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RepositoryPageContextInner {
-    repository: Repository,
-    user: User
+    repository: MaybeOptimistic<Repository>,
+    user: MaybeOptimistic<User>
 }
 
 pub type RepositoryPageContext = Memo<RepositoryPageContextInner>;

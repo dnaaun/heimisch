@@ -25,6 +25,26 @@ pub struct MaybeOptimistic<S> {
     is_optimistic: bool,
 }
 
+impl<S> MaybeOptimistic<S> { 
+    pub fn into_inner(self) -> S {
+        self.inner
+    }
+
+    pub fn map<T>(self, f: impl FnOnce(S) -> T) -> MaybeOptimistic<T> {
+        MaybeOptimistic {
+            inner: f(self.inner),
+            is_optimistic: self.is_optimistic,
+        }
+    }
+
+    pub fn map_ref<T>(&self, f: impl FnOnce(&S) -> T) -> MaybeOptimistic<T> {
+        MaybeOptimistic {
+            inner: f(&self.inner),
+            is_optimistic: self.is_optimistic,
+        }
+    }
+}
+
 impl<S, Mode> ObjectStoreWithOptimisticChanges<S, Mode>
 where
     S: Store + 'static,
@@ -150,6 +170,11 @@ where
             .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes
             .remove_obsoletes_for_id::<S>(item.id());
+
+        if let Some(commit_listener) = self.commit_listener.as_ref() {
+            commit_listener(&self.reactivity_trackers.borrow());
+        }
+
         Ok(())
     }
     pub fn update(&self, row: S, update_fut: impl Future<Output = Result<(), ()>> + 'static) {

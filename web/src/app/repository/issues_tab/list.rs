@@ -1,11 +1,11 @@
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use macros::zwang_url;
-use shared::types::{
+use shared::{sync_engine::optimistic::db::MaybeOptimistic, types::{
     issue::{Issue, RepositoryIdIndex},
     issue_comment::{IssueComment, IssueIdIndex},
     user::User,
-};
+}};
 
 use itertools::Itertools;
 use zwang_router::{ArgFromParent, RouteParams, A};
@@ -107,7 +107,7 @@ pub fn IssuesList(
 
 #[component]
 fn IssueRow(
-    issue: Issue,
+    issue: MaybeOptimistic<Issue>,
     #[prop(into)] owner_name: Signal<String>,
     #[prop(into)] repo_name: Signal<String>,
     #[prop(optional)] is_last: bool,
