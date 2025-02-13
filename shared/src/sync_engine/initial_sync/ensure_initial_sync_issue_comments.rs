@@ -138,7 +138,7 @@ impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
                 .build();
             self.persist_changes(&txn, changes).await?;
             txn.object_store::<IssueCommentsInitialSyncStatus>()?
-                .no_optimism_put(&IssueCommentsInitialSyncStatus {
+                .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id,
                 })
@@ -157,7 +157,7 @@ impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
             .read_write()
             .build();
         txn.object_store::<IssueCommentsInitialSyncStatus>()?
-            .no_optimism_put(&IssueCommentsInitialSyncStatus {
+            .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id,
             })

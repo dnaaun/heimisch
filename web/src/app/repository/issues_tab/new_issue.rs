@@ -1,9 +1,10 @@
+use crate::app::repository::RepositoryPageContextInner;
+use crate::app::routing::*;
 use github_api::models::IssuesCreateRequestTitle;
 use leptos::{prelude::*, task::spawn_local};
 use macros::zwang_url;
-use shared::{avail::Avail, utils::LogErr, types::issue::Issue};
+use shared::{types::issue::Issue, utils::LogErr};
 use zwang_router::{set_pathname, ArgFromParent};
-use crate::app::routing::*;
 
 use crate::app::{
     flowbite::{
@@ -17,43 +18,51 @@ use crate::app::{
 };
 
 #[allow(non_snake_case)]
-pub fn NewIssue(ArgFromParent(repository_page_context): ArgFromParent<RepositoryPageContext>) -> impl IntoView {
+pub fn NewIssue(
+    ArgFromParent(repository_page_context): ArgFromParent<RepositoryPageContext>,
+) -> impl IntoView {
     let title = RwSignal::new(Default::default());
     let body = RwSignal::new(Default::default());
     move || {
-        let repository = repository_page_context.get().repository;
         let sync_engine = use_sync_engine();
         let on_create = move |_| {
-            if let Avail::Yes(owner_id) = repository.owner_id {
-                let issues_create_request = github_api::models::IssuesCreateRequest {
-                    title: IssuesCreateRequestTitle::String(title.get()),
-                    body: Some(body.get()),
-                    ..Default::default()
-                };
-                let sync_engine = sync_engine.clone();
-                let repo_name = repository.name.clone();
-                spawn_local(async move {
-                    let issue_id = sync_engine
-                        .create_issue(
-                            &repository.installation_id,
-                            &owner_id,
-                            &repository.id,
-                            issues_create_request,
-                        )
-                        .await
-                        .log_err();
+            let RepositoryPageContextInner {
+                user: owner,
+                repository,
+            } = repository_page_context.get();
+            let issues_create_request = github_api::models::IssuesCreateRequest {
+                title: IssuesCreateRequestTitle::String(title.get()),
+                body: Some(body.get()),
+                ..Default::default()
+            };
+            let sync_engine = sync_engine.clone();
+            let repo_name = repository.name.clone();
+            spawn_local(async move {
+                let issue_id = sync_engine
+                    .create_issue(
+                        &repository.installation_id,
+                        &owner,
+                        &repository,
+                        issues_create_request,
+                    )
+                    .await
+                    .log_err();
 
-                    if let Ok(issue_id) = issue_id {
-                        let txn = sync_engine.db.txn().with_store::<Issue>().build();
-                        let issue_number = txn.object_store::<Issue>().unwrap().get(&issue_id).await.unwrap().unwrap().number;
-                        let owner_login = &repository_page_context.get().user.login;
-                        let issue_number = issue_number.to_string();
-                        set_pathname(zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
-                    }
-                });
-            } else {
-                tracing::info!(".owner_id not Avail-able");
-            }
+                if let Ok(issue_id) = issue_id {
+                    let txn = sync_engine.db.txn().with_store::<Issue>().build();
+                    let issue_number = txn
+                        .object_store::<Issue>()
+                        .unwrap()
+                        .get(&issue_id)
+                        .await
+                        .unwrap()
+                        .unwrap()
+                        .number;
+                    let owner_login = &repository_page_context.get().user.login;
+                    let issue_number = issue_number.to_string();
+                    set_pathname(zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
+                }
+            });
         };
         view! {
             <Thirds

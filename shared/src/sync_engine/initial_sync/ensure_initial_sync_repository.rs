@@ -48,7 +48,7 @@ impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
             .read_write()
             .build();
         txn.object_store::<RepositoryInitialSyncStatus>()?
-            .no_optimism_put(&RepositoryInitialSyncStatus {
+            .put(&RepositoryInitialSyncStatus {
                 status: RepoSyncStatus::Full,
                 id: *id,
             })

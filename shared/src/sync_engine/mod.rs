@@ -108,7 +108,7 @@ impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
                     .read_write()
                     .build();
                 txn.object_store::<InstallationAccessTokenRow>()?
-                    .no_optimism_put(&InstallationAccessTokenRow {
+                    .put(&InstallationAccessTokenRow {
                         token: resp.clone(),
                         installation_id: *id,
                     })

@@ -59,7 +59,7 @@ pub struct RepositoryPageContextInner {
     user: User
 }
 
-pub type RepositoryPageContext = Signal<RepositoryPageContextInner>;
+pub type RepositoryPageContext = Memo<RepositoryPageContextInner>;
 
 #[allow(non_snake_case)]
 pub fn RepositoryPage(
@@ -159,7 +159,6 @@ pub fn RepositoryPage(
             view! { <div class="min-w-min h-screen">asdfasdf <Spinner /></div> }
         }>
             {move || {
-                let repository_page_context = Signal::derive(move || repository_page_context.get());
                 let repository_page_context = match repository_page_context.transpose() {
                     Some(r) => r.transpose().map_err(|s| s.get())?,
                     None => return Ok::<_, FrontendError>(None),

@@ -126,7 +126,7 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    pub async fn no_optimism_delete(&self, id: &S::Id) -> Result<(), Error> {
+    pub async fn delete(&self, id: &S::Id) -> Result<(), Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -139,7 +139,7 @@ where
         Ok(())
     }
 
-    pub async fn no_optimism_put(&self, item: &S) -> Result<(), Error> {
+    pub async fn put(&self, item: &S) -> Result<(), Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_row(item));
@@ -172,10 +172,13 @@ where
         self.reactivity_trackers
             .borrow_mut()
             .add_modification(S::NAME, SerializedId::new_from_row(&row));
+        let id = row.id().clone();
         self.optimistic_changes.create(row, create_fut, callback);
 
+        tracing::info!("did self.optimistic_changes.create for row with id: {:?}", id);
         if let Some(commit_listener) = self.commit_listener.as_ref() {
             commit_listener(&self.reactivity_trackers.borrow());
+            tracing::info!("invoked commit_listener() from within ObjectStore::create()");
         }
     }
 }

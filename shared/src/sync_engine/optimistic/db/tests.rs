@@ -90,7 +90,7 @@ pub async fn index_get_no_optimisim_put_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .no_optimism_put(&Default::default())
+                .put(&Default::default())
                 .await
                 .unwrap();
         })
@@ -117,7 +117,7 @@ pub async fn index_get_no_optimisim_put_non_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Repository>()
                 .unwrap()
-                .no_optimism_put(&Default::default())
+                .put(&Default::default())
                 .await
                 .unwrap();
         })
@@ -143,7 +143,7 @@ pub async fn get_no_optimisim_put_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .no_optimism_put(&Issue {
+                .put(&Issue {
                     id: some_issue_id,
                     ..Default::default()
                 })
@@ -172,7 +172,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .no_optimism_put(&Issue {
+                .put(&Issue {
                     id: (*some_issue_id + 1).into(),
                     ..Default::default()
                 })
@@ -196,7 +196,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Repository>()
                 .unwrap()
-                .no_optimism_put(&Default::default())
+                .put(&Default::default())
                 .await
                 .unwrap();
         })
@@ -217,7 +217,7 @@ pub async fn get_all_no_optimisim_put_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .no_optimism_put(&Default::default())
+                .put(&Default::default())
                 .await
                 .unwrap();
         })
@@ -242,7 +242,7 @@ pub async fn get_all_no_optimisim_put_non_overlapping() {
         .with_txn_2(async |txn| {
             txn.object_store::<Repository>()
                 .unwrap()
-                .no_optimism_put(&Default::default())
+                .put(&Default::default())
                 .await
                 .unwrap();
         })

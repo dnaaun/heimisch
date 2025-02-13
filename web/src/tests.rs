@@ -105,7 +105,7 @@ pub async fn idb_signal_basic_reactivity() {
 
     txn.object_store::<IssueCommentsInitialSyncStatus>()
         .unwrap()
-        .no_optimism_put(&Default::default())
+        .put(&Default::default())
         .await
         .unwrap();
     txn.commit().unwrap();
