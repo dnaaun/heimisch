@@ -15,6 +15,9 @@ mod registry;
 pub mod storage_traits;
 pub mod websocket_updates;
 
+#[cfg(test)]
+pub mod tests;
+
 use std::{cmp::Ordering, rc::Rc};
 
 use crate::{
@@ -45,8 +48,20 @@ pub struct SyncEngine<Transport: TransportTrait, GithubApi> {
     pub db: Rc<DbWithOptimisticChanges<DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     endpoint_client: EndpointClient,
-    _github_api: GithubApi,
+    github_api: Rc<GithubApi>,
     make_transport: Rc<dyn Fn(Url) -> Pin<Box<dyn Future<Output = Result<Transport, Transport::TransportError>>>>>,
+}
+
+impl<Transport: TransportTrait, GithubApi> Clone for SyncEngine<Transport, GithubApi> {
+    fn clone(&self) -> Self {
+        Self {
+            db: self.db.clone(),
+            db_subscriptions: self.db_subscriptions.clone(),
+            endpoint_client: self.endpoint_client.clone(),
+            github_api: self.github_api.clone(),
+            make_transport: self.make_transport.clone(),
+        }
+    }
 }
 
 const MAX_PER_PAGE: i32 = 100;

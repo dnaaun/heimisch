@@ -97,7 +97,9 @@ where
 }
 
 pub trait TransportTrait:
+
     Sized + Sink<ClientMsg> + Stream<Item = Result<ServerMsg, Self::TransportError>>
+    + 'static
 {
     type TransportError: Debug;
 }

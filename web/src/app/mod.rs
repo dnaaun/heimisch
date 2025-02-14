@@ -29,7 +29,7 @@ pub fn App() -> impl IntoView {
             SyncEngine::new(
                 ENDPOINT_CLIENT.with(|e| e.clone()),
                 |url| async { Transport::new(url).await },
-                github_api::github_api_trait::GithubApi,
+                shared::github_api_trait::GithubApi,
             )
             .await
             .unwrap(),

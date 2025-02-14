@@ -7,16 +7,14 @@ use super::super::{
     SyncEngine, MAX_PER_PAGE,
 };
 use crate::{
-    avail::MergeError,
-    types::{
+    avail::MergeError, github_api_trait::GithubApiTrait, types::{
         installation::InstallationId,
         issue::{Issue, RepositoryIdIndex},
         issues_initial_sync_status::{InitialSyncStatusEnum, IssuesInitialSyncStatus},
         repository::{Repository, RepositoryId},
         user::User,
-    },
+    }
 };
-use github_api::github_api_trait::GithubApiTrait;
 use crate::sync_engine::websocket_updates::transport::TransportTrait;
 
 impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
@@ -87,7 +85,7 @@ impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
 
         // NOTE: Maybe abstract away dealing with pagination.
         loop {
-            let issues = GithubApi::issues_slash_list_for_repo(
+            let issues = self.github_api.issues_slash_list_for_repo(
                 &conf,
                 &owner_name,
                 &repo_name,

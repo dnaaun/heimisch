@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use futures::future::{join_all, LocalBoxFuture};
-use github_api::github_api_trait::GithubApiTrait;
 
 use super::super::{
     changes::Changes,
@@ -10,6 +9,7 @@ use super::super::{
     SyncEngine, MAX_PER_PAGE,
 };
 use crate::{
+    github_api_trait::GithubApiTrait,
     sync_engine::websocket_updates::transport::TransportTrait,
     types::{
         installation::InstallationId,
@@ -91,17 +91,19 @@ impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
 
         // NOTE: Maybe abstract away dealing with pagination.
         loop {
-            let issue_comments = GithubApi::issues_slash_list_comments_for_repo(
-                &conf,
-                &owner_name,
-                &repo_name,
-                "created".into(),
-                "asc".into(),
-                None,
-                MAX_PER_PAGE.into(),
-                page.into(),
-            )
-            .await?;
+            let issue_comments = self
+                .github_api
+                .issues_slash_list_comments_for_repo(
+                    &conf,
+                    &owner_name,
+                    &repo_name,
+                    "created".into(),
+                    "asc".into(),
+                    None,
+                    MAX_PER_PAGE.into(),
+                    page.into(),
+                )
+                .await?;
             let last_fetched_num = issue_comments.len();
 
             let db = self.db.clone();

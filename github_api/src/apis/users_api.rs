@@ -1125,7 +1125,7 @@ pub enum UsersSlashGetAuthenticatedError {
 // }
 //
 /// OAuth app tokens and personal access tokens (classic) need the `user` scope in order for the response to include private profile information.
-pub(crate) async fn users_slash_get_authenticated(
+pub async fn users_slash_get_authenticated(
     configuration: &configuration::Configuration,
 ) -> Result<models::UsersGetAuthenticated200Response, Error<UsersSlashGetAuthenticatedError>> {
     let local_var_resp = users_slash_get_authenticated_request(configuration)

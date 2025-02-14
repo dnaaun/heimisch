@@ -1,9 +1,9 @@
-use github_api::github_api_trait::GithubApiTrait;
-
-use crate::{sync_engine::websocket_updates::transport::TransportTrait, types::{
-    repository::{Repository, RepositoryId},
-    repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
-}};
+use crate::{
+    github_api_trait::GithubApiTrait, sync_engine::websocket_updates::transport::TransportTrait, types::{
+        repository::{Repository, RepositoryId},
+        repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
+    }
+};
 
 use super::super::{error::SyncResult, SyncEngine};
 

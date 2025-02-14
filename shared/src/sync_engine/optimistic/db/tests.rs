@@ -8,7 +8,10 @@ use wasm_bindgen_test::wasm_bindgen_test;
 
 use crate::{
     endpoints::endpoint_client::EndpointClient,
-    sync_engine::{tests::MockTransport, DbStoreMarkers, DbSubscription, SyncEngine},
+    sync_engine::{
+        websocket_updates::transport::tests::MockTransport, DbStoreMarkers, DbSubscription,
+        SyncEngine,
+    },
     types::{
         issue::{Issue, RepositoryIdIndex},
         repository::Repository,

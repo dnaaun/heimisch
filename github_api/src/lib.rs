@@ -10,4 +10,3 @@ extern crate url;
 pub mod apis;
 pub mod models;
 pub mod simple_error;
-pub mod github_api_trait;

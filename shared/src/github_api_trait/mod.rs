@@ -1,6 +1,7 @@
+pub mod tests;
 use std::future::Future;
 
-use crate::{
+use github_api::{
     apis::{
         apps_api::{
             AppsSlashGetInstallationError, AppsSlashListReposAccessibleToInstallationError,
@@ -17,8 +18,9 @@ use crate::{
 };
 
 /// This is how we do dependency injection / mocking.
-pub trait GithubApiTrait {
+pub trait GithubApiTrait: 'static {
     fn users_slash_get_authenticated(
+        &self,
         configuration: &configuration::Configuration,
     ) -> impl Future<
         Output = Result<
@@ -27,12 +29,14 @@ pub trait GithubApiTrait {
         >,
     >;
     fn issues_slash_create(
+        &self,
         configuration: &configuration::Configuration,
         owner: &str,
         repo: &str,
         issues_create_request: models::IssuesCreateRequest,
     ) -> impl std::future::Future<Output = Result<models::Issue, Error<IssuesSlashCreateError>>>;
     fn apps_slash_list_repos_accessible_to_installation(
+        &self,
         configuration: &configuration::Configuration,
         per_page: Option<i32>,
         page: Option<i32>,
@@ -43,6 +47,7 @@ pub trait GithubApiTrait {
         >,
     >;
     fn issues_slash_list_comments_for_repo(
+        &self,
         configuration: &configuration::Configuration,
         owner: &str,
         repo: &str,
@@ -55,10 +60,12 @@ pub trait GithubApiTrait {
         Output = Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>>,
     >;
     fn apps_slash_get_installation(
+        &self,
         configuration: &configuration::Configuration,
         installation_id: i32,
     ) -> impl Future<Output = Result<models::Installation, Error<AppsSlashGetInstallationError>>>;
     fn issues_slash_list_for_repo(
+        &self,
         configuration: &configuration::Configuration,
         owner: &str,
         repo: &str,
@@ -74,15 +81,13 @@ pub trait GithubApiTrait {
         per_page: Option<i32>,
         page: Option<i32>,
     ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>>;
-    fn users_slash_get_authenticated_request(
-        configuration: &configuration::Configuration,
-    ) -> reqwest_wiremock::Builder;
 }
 
 pub struct GithubApi;
 
 impl GithubApiTrait for GithubApi {
     fn users_slash_get_authenticated(
+        &self,
         configuration: &configuration::Configuration,
     ) -> impl Future<
         Output = Result<
@@ -90,23 +95,27 @@ impl GithubApiTrait for GithubApi {
             Error<UsersSlashGetAuthenticatedError>,
         >,
     > {
-        crate::apis::users_api::users_slash_get_authenticated(configuration)
+        github_api::apis::users_api::users_slash_get_authenticated(configuration)
     }
-    async fn issues_slash_create(
+
+    fn issues_slash_create(
+        &self,
         configuration: &configuration::Configuration,
         owner: &str,
         repo: &str,
         issues_create_request: models::IssuesCreateRequest,
-    ) -> Result<models::Issue, Error<IssuesSlashCreateError>> {
-        crate::apis::issues_api::issues_slash_create(
+    ) -> impl std::future::Future<Output = Result<models::Issue, Error<IssuesSlashCreateError>>>
+    {
+        github_api::apis::issues_api::issues_slash_create(
             configuration,
             owner,
             repo,
             issues_create_request,
         )
-        .await
     }
+
     fn apps_slash_list_repos_accessible_to_installation(
+        &self,
         configuration: &configuration::Configuration,
         per_page: Option<i32>,
         page: Option<i32>,
@@ -116,13 +125,15 @@ impl GithubApiTrait for GithubApi {
             Error<AppsSlashListReposAccessibleToInstallationError>,
         >,
     > {
-        crate::apis::apps_api::apps_slash_list_repos_accessible_to_installation(
+        github_api::apis::apps_api::apps_slash_list_repos_accessible_to_installation(
             configuration,
             per_page,
             page,
         )
     }
+
     fn issues_slash_list_comments_for_repo(
+        &self,
         configuration: &configuration::Configuration,
         owner: &str,
         repo: &str,
@@ -134,7 +145,7 @@ impl GithubApiTrait for GithubApi {
     ) -> impl Future<
         Output = Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>>,
     > {
-        crate::apis::issues_api::issues_slash_list_comments_for_repo(
+        github_api::apis::issues_api::issues_slash_list_comments_for_repo(
             configuration,
             owner,
             repo,
@@ -145,14 +156,18 @@ impl GithubApiTrait for GithubApi {
             page,
         )
     }
+
     fn apps_slash_get_installation(
+        &self,
         configuration: &configuration::Configuration,
         installation_id: i32,
     ) -> impl Future<Output = Result<models::Installation, Error<AppsSlashGetInstallationError>>>
     {
-        crate::apis::apps_api::apps_slash_get_installation(configuration, installation_id)
+        github_api::apis::apps_api::apps_slash_get_installation(configuration, installation_id)
     }
+
     fn issues_slash_list_for_repo(
+        &self,
         configuration: &configuration::Configuration,
         owner: &str,
         repo: &str,
@@ -168,7 +183,7 @@ impl GithubApiTrait for GithubApi {
         per_page: Option<i32>,
         page: Option<i32>,
     ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> {
-        crate::apis::issues_api::issues_slash_list_for_repo(
+        github_api::apis::issues_api::issues_slash_list_for_repo(
             configuration,
             owner,
             repo,
@@ -184,10 +199,5 @@ impl GithubApiTrait for GithubApi {
             per_page,
             page,
         )
-    }
-    fn users_slash_get_authenticated_request(
-        configuration: &configuration::Configuration,
-    ) -> reqwest_wiremock::Builder {
-        crate::apis::users_api::users_slash_get_authenticated_request(configuration)
     }
 }

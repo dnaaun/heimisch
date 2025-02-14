@@ -63,6 +63,7 @@ pub trait BinaryTransportTrait:
     Sized
     + Sink<Vec<u8>, Error = Self::ConnError>
     + Stream<Item = Result<Vec<u8>, ConnOrClosedError<Self::ConnError>>>
+    + 'static
 {
     type ConnError: Debug;
 

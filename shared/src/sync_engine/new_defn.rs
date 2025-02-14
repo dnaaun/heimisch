@@ -91,7 +91,7 @@ impl<Transport: TransportTrait, GithubApi> SyncEngine<Transport, GithubApi> {
             db: Rc::new(db),
             db_subscriptions: SendWrapper::new(db_subscriptions),
             endpoint_client,
-            _github_api: github_api,
+            github_api: Rc::new(github_api),
             make_transport,
         })
     }

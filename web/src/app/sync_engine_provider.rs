@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use github_api::github_api_trait::GithubApi;
+use shared::github_api_trait::GithubApi;
 use leptos::prelude::*;
 use send_wrapper::SendWrapper;
 use shared::sync_engine::Transport;

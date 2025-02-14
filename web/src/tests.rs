@@ -77,7 +77,7 @@ pub async fn idb_signal_basic_reactivity() {
     let sync_engine = SyncEngine::new(
         ENDPOINT_CLIENT.with(|e| e.clone()),
         async |url| Transport::new(url).await,
-        github_api::github_api_trait::GithubApi,
+        shared::github_api_trait::GithubApi,
     )
     .await
     .unwrap();

@@ -46,7 +46,6 @@ pub fn NewIssue(
                         &repository,
                         issues_create_request,
                     )
-                    .await
                     .log_err();
 
                 if let Ok(optimistic_issue_id) = optimistic_issue_id {

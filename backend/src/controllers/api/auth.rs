@@ -11,7 +11,6 @@ use crate::{
     utils::gen_rand_string,
 };
 use axum::{extract::State, response::Redirect, routing::get, Router};
-use github_api::github_api_trait::{GithubApi, GithubApiTrait};
 use http::StatusCode;
 use shared::{
     consts::HEIMISCH_FRONTEND_DOMAIN,
@@ -19,6 +18,7 @@ use shared::{
         finish::{AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse},
         initiate::AuthInitiateEndpoint,
     },
+    github_api_trait::{GithubApi, GithubApiTrait},
     types::user::UserId,
 };
 
@@ -53,12 +53,13 @@ pub fn finish(router: Router<AppState>) -> Router<AppState> {
             )
             .await?;
 
-            let resp = GithubApi::users_slash_get_authenticated(
-                &state
-                    .config
-                    .get_gh_api_conf_with_access_token(access_token.deref().clone()),
-            )
-            .await?;
+            let resp = GithubApi {}
+                .users_slash_get_authenticated(
+                    &state
+                        .config
+                        .get_gh_api_conf_with_access_token(access_token.deref().clone()),
+                )
+                .await?;
 
             let (id, login, email) = match resp {
                 github_api::models::UsersGetAuthenticated200Response::Private(private_user) => {

@@ -1,31 +1,26 @@
-use github_api::{github_api_trait::GithubApiTrait, models::IssuesCreateRequest};
+use github_api::models::IssuesCreateRequest;
 use jiff::Timestamp;
 
 use crate::{
-    random::random, sync_engine::{
-        error::SyncError,
-        SyncEngine, 
-    }, types::{
+    github_api_trait::GithubApiTrait, random::random, sync_engine::{error::SyncError, websocket_updates::transport::TransportTrait, SyncEngine}, types::{
         installation::InstallationId,
         issue::{Issue, IssueId},
         repository::Repository,
         user::User,
-    }, sync_engine::websocket_updates::transport::TransportTrait,
+    }
 };
 
 impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
     /// Returns the optimistic id of the issue.
-    /// 
+    ///
     /// Invariant upheld: The issue number and id will be a negative number for the optimistic issue.
-    pub async fn create_issue(
+    pub fn create_issue(
         &self,
         installation_id: &InstallationId,
         owner: &User,
-         repo: &Repository,
+        repo: &Repository,
         issues_create_request: IssuesCreateRequest,
     ) -> Result<IssueId, SyncError<T>> {
-        let conf = self.get_api_conf(installation_id).await?;
-
         let now = Timestamp::now();
         let issue_id = IssueId::default();
         let optimistic_issue = Issue {
@@ -48,16 +43,19 @@ impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
 
         let owner_login = owner.login.clone();
         let repo_name = repo.name.clone();
-        
+
+        let this = SyncEngine::clone(self);
+        let installation_id = *installation_id;
         self.db
             .object_store_rw::<Issue>()?
             .create(optimistic_issue, async move {
-                GithubApi::issues_slash_create(&conf, &owner_login, &repo_name, issues_create_request)
+                let conf = this.get_api_conf(&installation_id).await.map_err(|_| ())?;
+                this.github_api
+                    .issues_slash_create(&conf, &owner_login, &repo_name, issues_create_request)
                     .await
                     .map(|i| IssueId::from(i.id))
                     .map_err(|_| ())
-            },
-        );
+            });
 
         Ok(issue_id)
     }

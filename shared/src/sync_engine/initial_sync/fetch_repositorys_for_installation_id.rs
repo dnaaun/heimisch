@@ -1,9 +1,8 @@
 use futures::future::try_join_all;
-use github_api::github_api_trait::GithubApiTrait;
 
 use crate::{
-    avail::MergeError, sync_engine::websocket_updates::transport::TransportTrait,
-    types::installation::InstallationId,
+    avail::MergeError, github_api_trait::GithubApiTrait,
+    sync_engine::websocket_updates::transport::TransportTrait, types::installation::InstallationId,
 };
 
 use super::super::{
@@ -22,8 +21,9 @@ impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
         let mut repos = vec![];
         let mut page = 1;
         loop {
-            let repos_in_page =
-                GithubApi::apps_slash_list_repos_accessible_to_installation(
+            let repos_in_page = self
+                .github_api
+                .apps_slash_list_repos_accessible_to_installation(
                     &conf,
                     Some(MAX_PER_PAGE),
                     Some(page),
