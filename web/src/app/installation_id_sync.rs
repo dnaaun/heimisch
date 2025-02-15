@@ -1,9 +1,10 @@
-use crate::consts::ENDPOINT_CLIENT;
+use crate::consts::BACKEND_API;
 use crate::local_storage::{
     add_installation_ids_to_local_storage, get_installation_ids_from_local_storage,
 };
 use leptos::prelude::*;
 
+use shared::backend_api_trait::BackendApiTrait;
 use shared::endpoints::defns::api::installations::GetInstallationsEndpoint;
 use shared::utils::LogErr;
 use std::collections::HashSet;
@@ -26,9 +27,9 @@ pub fn use_sync_installation_ids_and_recv_websocket_updates() {
         let sync_engine2 = sync_engine.clone();
         spawn_local(async move {
             let sync_engine = sync_engine2.clone();
-            if let Ok(get_installations_resp) = ENDPOINT_CLIENT
+            if let Ok(get_installations_resp) = BACKEND_API
                 .with(|e| e.clone())
-                .make_get_request(GetInstallationsEndpoint, ())
+                .get_installations()
                 .await
                 .log_err()
             {

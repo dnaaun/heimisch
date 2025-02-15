@@ -14,7 +14,7 @@ use tracing_subscriber::fmt::MakeWriter;
 use wasm_bindgen_test::{console_log, wasm_bindgen_test};
 
 use crate::{
-    app::sync_engine_provider::SyncEngine, consts::ENDPOINT_CLIENT,
+    app::sync_engine_provider::SyncEngine, consts::BACKEND_API,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
@@ -75,7 +75,7 @@ pub async fn idb_signal_basic_reactivity() {
     _ = Executor::init_wasm_bindgen();
 
     let sync_engine = SyncEngine::new(
-        ENDPOINT_CLIENT.with(|e| e.clone()),
+        BACKEND_API.with(|e| e.clone()),
         async |url| Transport::new(url).await,
         shared::github_api_trait::GithubApi,
     )

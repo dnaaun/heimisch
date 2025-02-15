@@ -7,6 +7,7 @@ use url::Url;
 use wasm_bindgen_test::wasm_bindgen_test;
 
 use crate::{
+    backend_api_trait::BackendApi,
     endpoints::endpoint_client::EndpointClient,
     sync_engine::{
         websocket_updates::transport::tests::MockTransport, DbStoreMarkers, DbSubscription,
@@ -20,9 +21,12 @@ use crate::{
 
 use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
-async fn get_sync_engine() -> SyncEngine<MockTransport, ()> {
-    SyncEngine::<MockTransport, ()>::new(
-        EndpointClient::new(|_| (), Url::parse("https://www.example.com/").unwrap()),
+async fn get_sync_engine() -> SyncEngine<BackendApi, MockTransport, ()> {
+    SyncEngine::<BackendApi, MockTransport, ()>::new(
+        BackendApi::new(EndpointClient::new(
+            |_| (),
+            Url::parse("https://www.example.com/").unwrap(),
+        )),
         |_| async { Ok(MockTransport::new().0) },
         (),
     )

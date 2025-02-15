@@ -16,13 +16,16 @@ use crate::{
     }
 };
 use crate::sync_engine::websocket_updates::transport::TransportTrait;
+use crate::backend_api_trait::BackendApiTrait;
 
-impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait> 
+    SyncEngine<BackendApi, Transport, GithubApi> 
+{
     pub async fn ensure_initial_sync_issues(
         &self,
         id: &RepositoryId,
         installation_id: &InstallationId,
-    ) -> SyncResult<(), W> {
+    ) -> SyncResult<(), Transport> {
         let mut page = 1;
         let txn = self
             .db

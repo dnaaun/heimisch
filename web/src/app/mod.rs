@@ -11,7 +11,7 @@ pub mod sidebar;
 pub mod sync_engine_provider;
 pub mod thirds;
 
-use crate::app::sync_engine_provider::sync_engine_provided;
+use crate::{app::sync_engine_provider::sync_engine_provided, consts::BACKEND_API};
 use std::rc::Rc;
 
 use leptos::prelude::*;
@@ -20,14 +20,12 @@ use routing::Routed;
 use shared::sync_engine::Transport;
 use sync_engine_provider::SyncEngine;
 
-use crate::consts::ENDPOINT_CLIENT;
-
 #[component]
 pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         Rc::new(
             SyncEngine::new(
-                ENDPOINT_CLIENT.with(|e| e.clone()),
+                BACKEND_API.with(|e| e.clone()),
                 |url| async { Transport::new(url).await },
                 shared::github_api_trait::GithubApi,
             )

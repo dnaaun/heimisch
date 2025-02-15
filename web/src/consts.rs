@@ -1,4 +1,4 @@
-use shared::endpoints::endpoint_client::EndpointClient;
+use shared::{backend_api_trait::BackendApi, endpoints::endpoint_client::EndpointClient};
 use url::Url;
 
 pub fn redirect_handler(url: Url) {
@@ -6,8 +6,8 @@ pub fn redirect_handler(url: Url) {
 }
 
 thread_local! {
-    pub static ENDPOINT_CLIENT: EndpointClient = {
+    pub static BACKEND_API: BackendApi = {
         let domain_name = Url::parse(env!("HEIMISCH_API_DOMAIN")).expect("");
-        EndpointClient::new(redirect_handler, domain_name)
+        BackendApi::new(EndpointClient::new(redirect_handler, domain_name))
     };
 }

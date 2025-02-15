@@ -1,13 +1,18 @@
 use crate::{
-    github_api_trait::GithubApiTrait, sync_engine::websocket_updates::transport::TransportTrait, types::{
+    backend_api_trait::BackendApiTrait,
+    github_api_trait::GithubApiTrait,
+    sync_engine::websocket_updates::transport::TransportTrait,
+    types::{
         repository::{Repository, RepositoryId},
         repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
-    }
+    },
 };
 
 use super::super::{error::SyncResult, SyncEngine};
 
-impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
+    SyncEngine<BackendApi, Transport, GithubApi>
+{
     /// `force_initial_sync` means we ignore the RepositoryInitialSyncStatus. This will come into
     /// play when we implement the "if the last time we were in touch is less than 7 days, do a
     /// full resync."
@@ -15,7 +20,7 @@ impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
         &self,
         id: &RepositoryId,
         force_initial_sync: bool,
-    ) -> SyncResult<(), T> {
+    ) -> SyncResult<(), Transport> {
         if !force_initial_sync {
             let txn = self
                 .db

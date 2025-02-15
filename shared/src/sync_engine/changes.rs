@@ -5,6 +5,7 @@ use typesafe_idb::{ReadOnly, Store};
 use typesafe_idb::{Present, StoreMarker, TxnMode};
 
 use crate::avail::{MergeError, MergeStructWithAvails};
+use crate::backend_api_trait::BackendApiTrait;
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
@@ -425,7 +426,7 @@ where
     }
 }
 
-impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> SyncEngine<BackendApi, Transport, GithubApi> {
     pub async fn persist_changes<
         Marker: StoreMarkersForChanges,
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -433,7 +434,7 @@ impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
         &self,
         txn: &TxnWithOptimisticChanges<Marker, Mode>,
         changes: impl IntoChanges,
-    ) -> SyncResult<(), W> {
+    ) -> SyncResult<(), Transport> {
         let Changes {
             github_apps,
             issues,
@@ -444,14 +445,14 @@ impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
             labels,
             milestones,
         } = changes.into_changes()?;
-        persist_changes_to_issues::<W, Marker, Mode>(txn, issues).await?;
-        persist_changes_to_issue_comments::<W, Marker, Mode>(txn, issue_comments).await?;
-        persist_changes_to_github_apps::<W, Marker, Mode>(txn, github_apps).await?;
-        persist_changes_to_users::<W, Marker, Mode>(txn, users).await?;
-        persist_changes_to_repositorys::<W, Marker, Mode>(txn, repositorys).await?;
-        persist_changes_to_milestones::<W, Marker, Mode>(txn, milestones).await?;
-        persist_changes_to_licenses::<W, Marker, Mode>(txn, licenses).await?;
-        upsert_labels::<W, Marker, Mode>(txn, labels).await?;
+        persist_changes_to_issues::<Transport, Marker, Mode>(txn, issues).await?;
+        persist_changes_to_issue_comments::<Transport, Marker, Mode>(txn, issue_comments).await?;
+        persist_changes_to_github_apps::<Transport, Marker, Mode>(txn, github_apps).await?;
+        persist_changes_to_users::<Transport, Marker, Mode>(txn, users).await?;
+        persist_changes_to_repositorys::<Transport, Marker, Mode>(txn, repositorys).await?;
+        persist_changes_to_milestones::<Transport, Marker, Mode>(txn, milestones).await?;
+        persist_changes_to_licenses::<Transport, Marker, Mode>(txn, licenses).await?;
+        upsert_labels::<Transport, Marker, Mode>(txn, labels).await?;
 
         Ok(())
     }

@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
-use shared::github_api_trait::GithubApi;
+use shared::{backend_api_trait::BackendApi, github_api_trait::GithubApi};
 use leptos::prelude::*;
 use send_wrapper::SendWrapper;
 use shared::sync_engine::Transport;
 
 use crate::typed_transport::BinaryTransport;
-pub type SyncEngine = shared::sync_engine::SyncEngine<Transport<BinaryTransport>, GithubApi>;
+pub type SyncEngine = shared::sync_engine::SyncEngine<BackendApi, Transport<BinaryTransport>, GithubApi>;
 pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
 
 pub fn sync_engine_provided<V>(

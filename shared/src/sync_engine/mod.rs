@@ -1,8 +1,8 @@
 use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
 use registry::Registry;
 use send_wrapper::SendWrapper;
-use url::Url;
 use std::{future::Future, pin::Pin, sync::Arc};
+use url::Url;
 pub use websocket_updates::transport::*;
 mod conversions;
 mod initial_sync;
@@ -21,12 +21,8 @@ pub mod tests;
 use std::{cmp::Ordering, rc::Rc};
 
 use crate::{
-    endpoints::{
-        defns::api::installations::{
-            GetInstallationAccessTokenEndpoint, GetInstallationAccessTokenQueryParams,
-        },
-        endpoint_client::EndpointClient,
-    },
+    backend_api_trait::BackendApiTrait,
+    endpoints::defns::api::installations::GetInstallationAccessTokenQueryParams,
     types::{
         installation::InstallationId,
         installation_access_token_row::{InstallationAccessToken, InstallationAccessTokenRow},
@@ -44,20 +40,24 @@ mod new_defn;
 
 pub use new_defn::DbStoreMarkers;
 
-pub struct SyncEngine<Transport: TransportTrait, GithubApi> {
+pub struct SyncEngine<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> {
     pub db: Rc<DbWithOptimisticChanges<DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
-    endpoint_client: EndpointClient,
+    backend_api: Rc<BackendApi>,
     github_api: Rc<GithubApi>,
-    make_transport: Rc<dyn Fn(Url) -> Pin<Box<dyn Future<Output = Result<Transport, Transport::TransportError>>>>>,
+    make_transport: Rc<
+        dyn Fn(Url) -> Pin<Box<dyn Future<Output = Result<Transport, Transport::TransportError>>>>,
+    >,
 }
 
-impl<Transport: TransportTrait, GithubApi> Clone for SyncEngine<Transport, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> Clone
+    for SyncEngine<BackendApi, Transport, GithubApi>
+{
     fn clone(&self) -> Self {
         Self {
             db: self.db.clone(),
             db_subscriptions: self.db_subscriptions.clone(),
-            endpoint_client: self.endpoint_client.clone(),
+            backend_api: self.backend_api.clone(),
             github_api: self.github_api.clone(),
             make_transport: self.make_transport.clone(),
         }
@@ -66,22 +66,27 @@ impl<Transport: TransportTrait, GithubApi> Clone for SyncEngine<Transport, Githu
 
 const MAX_PER_PAGE: i32 = 100;
 
-impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<BackendApi, Transport, GithubApi>
+{
     async fn get_api_conf(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<github_api::apis::configuration::Configuration, W> {
+    ) -> SyncResult<github_api::apis::configuration::Configuration, Transport> {
         let bearer_access_token = Some(self.get_valid_iac(id).await?.token);
         let conf = github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
-            client: self.endpoint_client.client.clone(),
+            client: Default::default(),
             bearer_access_token,
             base_path: "https://api.github.com".parse().expect(""),
         };
         Ok(conf)
     }
 
-    async fn get_valid_iac(&self, id: &InstallationId) -> SyncResult<InstallationAccessToken, W> {
+    async fn get_valid_iac(
+        &self,
+        id: &InstallationId,
+    ) -> SyncResult<InstallationAccessToken, Transport> {
         let txn = self
             .db
             .txn()
@@ -114,8 +119,8 @@ impl<W: TransportTrait, GithubApi> SyncEngine<W, GithubApi> {
                     installation_id: *id,
                 };
                 let resp = self
-                    .endpoint_client
-                    .make_get_request(GetInstallationAccessTokenEndpoint, query_params)
+                    .backend_api
+                    .get_installation_access_token(query_params)
                     .await?;
 
                 let txn = self

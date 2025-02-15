@@ -1,7 +1,7 @@
 use futures::future::try_join_all;
 
 use crate::{
-    avail::MergeError, github_api_trait::GithubApiTrait,
+    avail::MergeError, backend_api_trait::BackendApiTrait, github_api_trait::GithubApiTrait,
     sync_engine::websocket_updates::transport::TransportTrait, types::installation::InstallationId,
 };
 
@@ -11,11 +11,13 @@ use super::super::{
     SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
-impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
+    SyncEngine<BackendApi, Transport, GithubApi>
+{
     pub async fn fetch_repositorys_for_installation_id(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<(), W> {
+    ) -> SyncResult<(), Transport> {
         let conf = self.get_api_conf(id).await?;
 
         let mut repos = vec![];

@@ -4,18 +4,16 @@ use std::pin::Pin;
 /// "defining use."
 use std::rc::Rc;
 
+use crate::backend_api_trait::BackendApiTrait;
 use crate::types::label::Label;
 use crate::types::last_webhook_update_at::LastWebhookUpdateAt;
-use crate::{
-    endpoints::endpoint_client::EndpointClient,
-    types::{
-        github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
-        issue::Issue, issue_comment::IssueComment,
-        issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
-        issues_initial_sync_status::IssuesInitialSyncStatus, license::License,
-        milestone::Milestone, repository::Repository,
-        repository_initial_sync_status::RepositoryInitialSyncStatus, user::User,
-    },
+use crate::types::{
+    github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
+    issue::Issue, issue_comment::IssueComment,
+    issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
+    issues_initial_sync_status::IssuesInitialSyncStatus, license::License,
+    milestone::Milestone, repository::Repository,
+    repository_initial_sync_status::RepositoryInitialSyncStatus, user::User,
 };
 use send_wrapper::SendWrapper;
 use typesafe_idb::{StoreMarker, TypesafeDb};
@@ -42,9 +40,11 @@ pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
     + StoreMarker<LastWebhookUpdateAt>
     + Default;
 
-impl<Transport: TransportTrait, GithubApi> SyncEngine<Transport, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<BackendApi, Transport, GithubApi>
+{
     pub async fn new<F, Fut>(
-        endpoint_client: EndpointClient,
+        backend_api: BackendApi,
         make_transport: F,
         github_api: GithubApi,
     ) -> SyncResult<Self, Transport>
@@ -53,7 +53,8 @@ impl<Transport: TransportTrait, GithubApi> SyncEngine<Transport, GithubApi> {
         Fut: Future<Output = Result<Transport, Transport::TransportError>> + 'static,
     {
         // Convert the nice generic function into the boxed version we need internally
-        let make_transport = Rc::new(move |url| Box::pin(make_transport(url)) as Pin<Box<dyn Future<Output = _>>>);
+        let make_transport =
+            Rc::new(move |url| Box::pin(make_transport(url)) as Pin<Box<dyn Future<Output = _>>>);
 
         let db = TypesafeDb::builder("heimisch".into())
             .with_store::<Issue>()
@@ -90,7 +91,7 @@ impl<Transport: TransportTrait, GithubApi> SyncEngine<Transport, GithubApi> {
         Ok(Self {
             db: Rc::new(db),
             db_subscriptions: SendWrapper::new(db_subscriptions),
-            endpoint_client,
+            backend_api: Rc::new(backend_api),
             github_api: Rc::new(github_api),
             make_transport,
         })

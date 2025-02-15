@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use shared::{
+    backend_api_trait::BackendApiTrait,
     endpoints::{
         defns::api::{
             app_installs::create::{
@@ -11,8 +12,8 @@ use shared::{
     },
     types::installation::InstallationId,
 };
-use zwang_router::use_serde_search;
 use std::{collections::HashSet, ops::Deref};
+use zwang_router::use_serde_search;
 
 use leptos::{
     prelude::*,
@@ -25,7 +26,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::{
     app::{flowbite::Spinner, sync_engine_provider::use_sync_engine},
-    consts::ENDPOINT_CLIENT,
+    consts::BACKEND_API,
     local_storage::add_installation_ids_to_local_storage,
 };
 
@@ -91,13 +92,9 @@ fn AppInstallationAuth(params: AppInstallationQParams) -> impl IntoView {
 pub fn AppInstallationAttempt(installation_id: InstallationId) -> impl IntoView {
     let installation_rsrc: LocalResource<Result<CreateAppInstallResponse, OwnApiError>> =
         LocalResource::new(move || async move {
-            ENDPOINT_CLIENT
+            BACKEND_API
                 .with(|e| e.clone())
-                .make_post_request(
-                    CreateAppInstallEndpoint,
-                    CreateAppInstallPayload { installation_id },
-                    (),
-                )
+                .create_app_install(CreateAppInstallPayload { installation_id })
                 .await
         });
 
@@ -144,9 +141,9 @@ pub fn UserAuth(params: UserAuthQParams) -> impl IntoView {
             let code = code.clone();
             let state = state.clone();
             async move {
-                ENDPOINT_CLIENT
+                BACKEND_API
                     .with(|e| e.clone())
-                    .make_post_request(AuthFinishEndpoint, AuthFinishPayload { state, code }, ())
+                    .auth_finish(AuthFinishPayload { state, code })
                     .await
             }
         });

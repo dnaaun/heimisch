@@ -2,10 +2,10 @@ use leptos::prelude::*;
 use std::{future::Future, sync::Arc};
 
 use send_wrapper::SendWrapper;
-use shared::sync_engine::{
+use shared::{backend_api_trait::BackendApiTrait, sync_engine::{
     optimistic::db::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges},
     DbStoreMarkers, SyncEngine, TransportTrait,
-};
+}};
 use typesafe_idb::{ReadOnly, TxnMode};
 
 use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
@@ -29,14 +29,15 @@ where
     ) -> IdbSignal<Result<T, FrontendError>>;
 }
 
-impl<TT, GH, TxnStoreMarkers, Mode, Fut, T>
-    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T> for SyncEngine<TT, GH>
+impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
+    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T> for SyncEngine<BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
     Mode: TxnMode + 'static,
     T: 'static,
-    TT: TransportTrait
+    TT: TransportTrait,
+    BA: BackendApiTrait,
 {
     #[track_caller]
     fn idb_signal(

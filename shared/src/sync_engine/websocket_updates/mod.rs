@@ -8,6 +8,7 @@ use futures::{pin_mut, StreamExt};
 use transport::TransportTrait;
 
 use crate::{
+    backend_api_trait::BackendApiTrait,
     endpoints::defns::api::websocket_updates::{
         ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
     },
@@ -21,14 +22,15 @@ use crate::{
 
 use super::{error::SyncErrorSrc, SyncEngine, SyncResult};
 
-impl<Transport, GithubApi> SyncEngine<Transport, GithubApi>
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<BackendApi, Transport, GithubApi>
 where
     Transport: TransportTrait,
 {
     pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport> {
         let mut url = self
-            .endpoint_client
-            .domain
+            .backend_api
+            .get_domain()
             .join(WEBSOCKET_UPDATES_ENDPOINT)
             .expect("");
 

@@ -9,6 +9,7 @@ use super::super::{
     SyncEngine, MAX_PER_PAGE,
 };
 use crate::{
+    backend_api_trait::BackendApiTrait,
     github_api_trait::GithubApiTrait,
     sync_engine::websocket_updates::transport::TransportTrait,
     types::{
@@ -22,14 +23,16 @@ use crate::{
     },
 };
 
-impl<W: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<W, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
+    SyncEngine<BackendApi, Transport, GithubApi>
+{
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.
     pub async fn ensure_initial_sync_issue_comments(
         &self,
         id: RepositoryId,
         installation_id: &InstallationId,
-    ) -> SyncResult<(), W> {
+    ) -> SyncResult<(), Transport> {
         let mut page = 1;
         let txn = self
             .db

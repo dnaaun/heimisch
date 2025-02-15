@@ -2,7 +2,7 @@ use github_api::models::IssuesCreateRequest;
 use jiff::Timestamp;
 
 use crate::{
-    github_api_trait::GithubApiTrait, random::random, sync_engine::{error::SyncError, websocket_updates::transport::TransportTrait, SyncEngine}, types::{
+    backend_api_trait::BackendApiTrait, github_api_trait::GithubApiTrait, random::random, sync_engine::{error::SyncError, websocket_updates::transport::TransportTrait, SyncEngine}, types::{
         installation::InstallationId,
         issue::{Issue, IssueId},
         repository::Repository,
@@ -10,7 +10,9 @@ use crate::{
     }
 };
 
-impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait> 
+    SyncEngine<BackendApi, Transport, GithubApi> 
+{
     /// Returns the optimistic id of the issue.
     ///
     /// Invariant upheld: The issue number and id will be a negative number for the optimistic issue.
@@ -20,7 +22,7 @@ impl<T: TransportTrait, GithubApi: GithubApiTrait> SyncEngine<T, GithubApi> {
         owner: &User,
         repo: &Repository,
         issues_create_request: IssuesCreateRequest,
-    ) -> Result<IssueId, SyncError<T>> {
+    ) -> Result<IssueId, SyncError<Transport>> {
         let now = Timestamp::now();
         let issue_id = IssueId::default();
         let optimistic_issue = Issue {
