@@ -51,7 +51,7 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadOnly = Present>,
 {
-    pub async fn get(&self, id: &S::Id) -> Result<Option<MaybeOptimistic<S>>, Error> {
+    pub async fn get_optimistically(&self, id: &S::Id) -> Result<Option<MaybeOptimistic<S>>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -75,7 +75,7 @@ where
             .map(|o| o.map(|o| MaybeOptimistic::new(o, false)))
     }
 
-    pub async fn no_optimism_get(&self, id: &S::Id) -> Result<Option<S>, Error> {
+    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -86,7 +86,7 @@ where
             .map_err(|e| super::Error::new(e, self.location))
     }
 
-    pub async fn get_all(&self) -> Result<Vec<MaybeOptimistic<S>>, super::Error> {
+    pub async fn get_all_optimistically(&self) -> Result<Vec<MaybeOptimistic<S>>, super::Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
         let from_db_filtered = self
@@ -121,7 +121,7 @@ where
     }
 
     #[allow(dead_code)]
-    pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, Error> {
+    pub(crate) async fn get_all(&self) -> Result<Vec<S>, Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
         self.inner
@@ -207,7 +207,8 @@ where
 
         Ok(())
     }
-    pub fn update(&self, row: S, update_fut: impl Future<Output = Result<(), ()>> + 'static) {
+
+    pub fn update_optimistically(&self, row: S, update_fut: impl Future<Output = Result<(), ()>> + 'static) {
         let reactivity_trackers = ReactivityTrackers {
             stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
             ..Default::default()
@@ -223,7 +224,7 @@ where
         }
     }
 
-    pub fn create(&self, row: S, create_fut: impl Future<Output = Result<S::Id, ()>> + 'static) {
+    pub fn create_optimistically(&self, row: S, create_fut: impl Future<Output = Result<S::Id, ()>> + 'static) {
         let reactivity_trackers = ReactivityTrackers {
             stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
             ..Default::default()

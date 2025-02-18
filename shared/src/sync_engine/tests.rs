@@ -187,7 +187,7 @@ async fn testing_optimistic_create() {
     let issues = txn
         .object_store::<Issue>()
         .unwrap()
-        .get_all()
+        .get_all_optimistically()
         .await
         .unwrap();
     drop(txn);
@@ -203,7 +203,7 @@ async fn testing_optimistic_create() {
     let single_issue = txn
         .object_store::<Issue>()
         .unwrap()
-        .get(&optimistic_issue_id)
+        .get_optimistically(&optimistic_issue_id)
         .await
         .unwrap()
         .unwrap();

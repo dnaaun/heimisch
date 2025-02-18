@@ -35,7 +35,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
             .build();
         let initial_sync_status = txn
             .object_store::<IssuesInitialSyncStatus>()?
-            .no_optimism_get(id)
+            .get(id)
             .await?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
@@ -44,7 +44,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
                     page = (txn
                         .object_store::<Issue>()?
                         .index::<RepositoryIdIndex>()?
-                        .get_all(Some(id))
+                        .get_all_optimistically(Some(id))
                         .await?
                         .len() as f64
                         / f64::from(MAX_PER_PAGE))
@@ -64,7 +64,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
             .build();
         let repo = txn
             .object_store::<Repository>()?
-            .no_optimism_get(id)
+            .get(id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
@@ -76,7 +76,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         })?;
         let repo_owner = txn
             .object_store::<User>()?
-            .no_optimism_get(&repo_owner_id)
+            .get(&repo_owner_id)
             .await?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("user with id {repo_owner_id:?}: doesn't exist"))

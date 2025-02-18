@@ -88,7 +88,7 @@ pub async fn idb_signal_basic_reactivity() {
         move |b| b.with_store::<IssueCommentsInitialSyncStatus>().build(),
         move |txn| async move {
             txn.object_store::<IssueCommentsInitialSyncStatus>()?
-                .get_all()
+                .get_all_optimistically()
                 .await?;
             *num_times_updated.write() += 1;
             Ok(())

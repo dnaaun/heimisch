@@ -18,13 +18,16 @@ pub struct IndexWithOptimisticChanges<'txn, IS> {
     txn_location: &'static Location<'static>,
 }
 impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
-    pub async fn get(&self, id: &IS::Type) -> Result<Option<MaybeOptimistic<IS::Store>>, super::Error> {
+    pub async fn get_optimistically(
+        &self,
+        id: &IS::Type,
+    ) -> Result<Option<MaybeOptimistic<IS::Store>>, super::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
 
         let row = match self
-            .no_optimism_get(id)
+            .get(id)
             .await
             .map_err(|e| super::Error::new(e, self.txn_location))?
         {
@@ -48,7 +51,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
             .or(Some(MaybeOptimistic::new(row, false))))
     }
 
-    pub(crate) async fn no_optimism_get(
+    pub(crate) async fn get(
         &self,
         id: &IS::Type,
     ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
@@ -59,7 +62,10 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         self.inner.get(id).await
     }
 
-    pub async fn get_all(&self, value: Option<&IS::Type>) -> Result<Vec<MaybeOptimistic<IS::Store>>, Error> {
+    pub async fn get_all_optimistically(
+        &self,
+        value: Option<&IS::Type>,
+    ) -> Result<Vec<MaybeOptimistic<IS::Store>>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
@@ -88,22 +94,26 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         let optimistic_creations = self
             .optimistic_changes
             .creations
-            .all_the_latest_downcasted() ;
+            .all_the_latest_downcasted();
         if let Some(value) = value {
             all.extend(
                 optimistic_creations
                     .into_iter()
                     .filter(|row| IS::get_index_value(row) == value)
-                    .map(|o| MaybeOptimistic::new(o, true))
+                    .map(|o| MaybeOptimistic::new(o, true)),
             );
         } else {
-            all.extend(optimistic_creations.into_iter().map(|o| MaybeOptimistic::new(o, true)));
+            all.extend(
+                optimistic_creations
+                    .into_iter()
+                    .map(|o| MaybeOptimistic::new(o, true)),
+            );
         }
         Ok(all)
     }
 
     #[allow(dead_code)]
-    pub(crate) async fn no_optimism_get_all(
+    pub(crate) async fn get_all(
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {

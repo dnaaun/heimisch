@@ -88,7 +88,7 @@ pub async fn index_get_no_optimisim_put_overlapping() {
                 .unwrap()
                 .index::<RepositoryIdIndex>()
                 .unwrap()
-                .get(&4.into())
+                .get_optimistically(&4.into())
                 .await;
         })
         .with_txn_2(async |txn| {
@@ -114,7 +114,7 @@ pub async fn index_get_no_optimisim_put_non_overlapping() {
                 .unwrap()
                 .index::<RepositoryIdIndex>()
                 .unwrap()
-                .get(&4.into())
+                .get_optimistically(&4.into())
                 .await;
         })
         .with_txn_2(async |txn| {
@@ -139,7 +139,7 @@ pub async fn get_no_optimisim_put_overlapping() {
             let _ = txn
                 .object_store::<Issue>()
                 .unwrap()
-                .get(&some_issue_id)
+                .get_optimistically(&some_issue_id)
                 .await;
         })
         .with_txn_2(async |txn| {
@@ -167,7 +167,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
             let _ = txn
                 .object_store::<Issue>()
                 .unwrap()
-                .get(&some_issue_id)
+                .get_optimistically(&some_issue_id)
                 .await;
         })
         .with_txn_2(async |txn| {
@@ -191,7 +191,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
             let _ = txn
                 .object_store::<Issue>()
                 .unwrap()
-                .get(&some_issue_id)
+                .get_optimistically(&some_issue_id)
                 .await;
         })
         .with_txn_2(async |txn| {
@@ -212,7 +212,7 @@ pub async fn get_all_no_optimisim_put_overlapping() {
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
         .make_txn_2(|txn| txn.with_store::<Issue>().build())
         .with_txn_1(async |txn| {
-            let _ = txn.object_store::<Issue>().unwrap().get_all().await;
+            let _ = txn.object_store::<Issue>().unwrap().get_all_optimistically().await;
         })
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
@@ -235,7 +235,7 @@ pub async fn get_all_no_optimisim_put_non_overlapping() {
             let _ = txn
                 .object_store::<Issue>()
                 .unwrap()
-                .get(&Default::default())
+                .get_optimistically(&Default::default())
                 .await;
         })
         .with_txn_2(async |txn| {
@@ -256,12 +256,12 @@ pub async fn get_all_no_optimisim_create_overlapping() {
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
         .make_txn_2(|txn| txn.with_store::<Issue>().build())
         .with_txn_1(async |txn| {
-            let _ = txn.object_store::<Issue>().unwrap().get_all().await;
+            let _ = txn.object_store::<Issue>().unwrap().get_all_optimistically().await;
         })
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
                 .unwrap()
-                .create(Default::default(), async { Ok(Default::default()) });
+                .create_optimistically(Default::default(), async { Ok(Default::default()) });
         })
         .should_overlap(true)
         .call()
@@ -277,13 +277,13 @@ pub async fn get_all_no_optimisim_create_non_overlapping() {
             let _ = txn
                 .object_store::<Issue>()
                 .unwrap()
-                .get(&Default::default())
+                .get_optimistically(&Default::default())
                 .await;
         })
         .with_txn_2(async |txn| {
             txn.object_store::<Repository>()
                 .unwrap()
-                .create(Default::default(), async { Ok(Default::default()) });
+                .create_optimistically(Default::default(), async { Ok(Default::default()) });
         })
         .should_overlap(false)
         .call()

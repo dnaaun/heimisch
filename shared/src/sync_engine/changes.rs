@@ -470,7 +470,7 @@ where
     for (_, issue) in issues {
         match issue {
             ExistingOrDeleted::Existing(issue) => {
-                let existing = issue_store.no_optimism_get(&issue.id).await?;
+                let existing = issue_store.get(&issue.id).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(issue)?,
                     None => issue,
@@ -499,7 +499,7 @@ where
         match issue_comment {
             ExistingOrDeleted::Existing(issue_comment) => {
                 let existing = issue_comment_store
-                    .no_optimism_get(&issue_comment.id)
+                    .get(&issue_comment.id)
                     .await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(issue_comment)?,
@@ -527,7 +527,7 @@ where
     for (_, github_app) in github_apps {
         match github_app {
             ExistingOrDeleted::Existing(github_app) => {
-                let existing = github_app_store.no_optimism_get(&github_app.id).await?;
+                let existing = github_app_store.get(&github_app.id).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(github_app)?,
                     None => github_app,
@@ -554,7 +554,7 @@ where
     for (_, user) in users {
         match user {
             ExistingOrDeleted::Existing(user) => {
-                let existing = user_store.no_optimism_get(&user.id).await?;
+                let existing = user_store.get(&user.id).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(user)?,
                     None => user,
@@ -582,7 +582,7 @@ where
     for (_, license) in licenses {
         match license {
             ExistingOrDeleted::Existing(license) => {
-                let existing = license_store.no_optimism_get(&license.key).await?;
+                let existing = license_store.get(&license.key).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(license)?,
                     None => license,
@@ -610,7 +610,7 @@ where
     for (_, milestone) in milestones {
         match milestone {
             ExistingOrDeleted::Existing(milestone) => {
-                let existing = milestone_store.no_optimism_get(&milestone.id).await?;
+                let existing = milestone_store.get(&milestone.id).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(milestone)?,
                     None => milestone,
@@ -638,7 +638,7 @@ where
     for (_, repository) in repositorys {
         match repository {
             ExistingOrDeleted::Existing(repository) => {
-                let existing = repository_store.no_optimism_get(&repository.id).await?;
+                let existing = repository_store.get(&repository.id).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(repository)?,
                     None => repository,

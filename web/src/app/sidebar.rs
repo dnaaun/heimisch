@@ -25,12 +25,12 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                 .build()
         },
         |txn| async move {
-            let repositorys = txn.object_store::<Repository>()?.get_all().await?;
+            let repositorys = txn.object_store::<Repository>()?.get_all_optimistically().await?;
             let user_store = txn.object_store::<User>()?;
             let users = join_all(repositorys.iter().map(|r| {
                 OptionFuture::from(r.owner_id.clone().to_option().map(|user_id| {
                     let user_store = user_store.clone();
-                    async move { user_store.get(&user_id).await }
+                    async move { user_store.get_optimistically(&user_id).await }
                 }))
             }))
             .await

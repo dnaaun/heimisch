@@ -52,14 +52,14 @@ pub fn OneIssue(
                 let issue = txn
                     .object_store::<Issue>()?
                     .index::<issue::RepositoryIdIndex>()?
-                    .get_all(Some(&repository_page_context.read().repository.id))
+                    .get_all_optimistically(Some(&repository_page_context.read().repository.id))
                     .await?
                     .into_iter()
                     .find(move |i| i.number == issue_number);
 
                 Ok(if let Some(issue) = issue {
                     let user = if let Avail::Yes(Some(user_id)) = issue.user_id {
-                        txn.object_store::<User>()?.get(&user_id).await?
+                        txn.object_store::<User>()?.get_optimistically(&user_id).await?
                     } else {
                         None
                     };
@@ -88,13 +88,13 @@ pub fn OneIssue(
                         .with_store::<User>()
                         .build()
                 }, move |txn| async move {
-                    let mut issue_comments = txn.object_store::<IssueComment>()?.index::<IssueIdIndex>()?.get_all(Some(&Some(issue_id))).await?;
+                    let mut issue_comments = txn.object_store::<IssueComment>()?.index::<IssueIdIndex>()?.get_all_optimistically(Some(&Some(issue_id))).await?;
                     issue_comments.sort_by_key(|c| c.created_at.clone());
                     let user_store = txn.object_store::<User>() ?;
                     let users = join_all(issue_comments.iter().map(async |ic| {
                         OptionFuture::from(
                         ic.user_id.clone().to_option().flatten().map(async |user_id| {
-                            user_store.get(&user_id).await
+                            user_store.get_optimistically(&user_id).await
                         })).await
 
                     })).await

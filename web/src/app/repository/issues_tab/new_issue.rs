@@ -53,7 +53,7 @@ pub fn NewIssue(
                     let issue_number = txn
                         .object_store::<Issue>()
                         .unwrap()
-                        .get(&optimistic_issue_id)
+                        .get_optimistically(&optimistic_issue_id)
                         .await
                         .unwrap()
                         .unwrap()

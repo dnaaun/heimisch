@@ -36,7 +36,7 @@ pub fn IssuesList(
             Ok(txn
                 .object_store::<Issue>()?
                 .index::<RepositoryIdIndex>()?
-                .get_all(Some(&repository_page_context.read().repository.id))
+                .get_all_optimistically(Some(&repository_page_context.read().repository.id))
                 .await?)
         },
     );
@@ -123,7 +123,7 @@ fn IssueRow(
                     Some(u) => u,
                     None => return Ok(None),
                 };
-                Ok(txn.object_store::<User>()?.get(&user_id).await?)
+                Ok(txn.object_store::<User>()?.get_optimistically(&user_id).await?)
             }
         },
     );
@@ -134,7 +134,7 @@ fn IssueRow(
             Ok(txn
                 .object_store::<IssueComment>()?
                 .index::<IssueIdIndex>()?
-                .get_all(Some(&Some(id)))
+                .get_all_optimistically(Some(&Some(id)))
                 .await?
                 .len())
         },

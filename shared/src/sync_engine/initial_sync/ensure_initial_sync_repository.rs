@@ -28,7 +28,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
                 .with_store::<RepositoryInitialSyncStatus>()
                 .build();
             let store = txn.object_store::<RepositoryInitialSyncStatus>()?;
-            if let Some(RepoSyncStatus::Full) = store.no_optimism_get(id).await?.map(|r| r.status) {
+            if let Some(RepoSyncStatus::Full) = store.get(id).await?.map(|r| r.status) {
                 return Ok(());
             }
         }
@@ -38,7 +38,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
             .with_store::<Repository>()
             .build()
             .object_store::<Repository>()?
-            .no_optimism_get(id)
+            .get(id)
             .await?
             .expect("expected repo to be present if an id is passed");
 

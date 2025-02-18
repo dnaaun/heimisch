@@ -109,7 +109,7 @@ pub fn RepositoryPage(
             let user = txn
                 .object_store::<User>()?
                 .index::<user::LoginIndex>()?
-                .get(&params.owner_name.read())
+                .get_optimistically(&params.owner_name.read())
                 .await?;
             match user {
                 Some(user) => {
@@ -117,7 +117,7 @@ pub fn RepositoryPage(
                     let repos = txn
                         .object_store::<Repository>()?
                         .index::<types::repository::NameIndex>()?
-                        .get_all(Some(&params.repo_name.read()))
+                        .get_all_optimistically(Some(&params.repo_name.read()))
                         .await?;
 
                     let repository = repos

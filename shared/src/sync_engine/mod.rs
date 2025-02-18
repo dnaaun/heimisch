@@ -95,7 +95,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
 
         let iac = txn
             .object_store::<InstallationAccessTokenRow>()?
-            .no_optimism_get_all()
+            .get_all()
             .await?
             .into_iter()
             .filter(|iac| {

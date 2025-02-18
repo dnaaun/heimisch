@@ -51,7 +51,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
 
         self.db
             .object_store_rw::<Issue>()?
-            .create(optimistic_issue, async move {
+            .create_optimistically(optimistic_issue, async move {
                 let conf = this.get_api_conf(&installation_id).await.map_err(|_| ())?;
                 let id = this.github_api
                     .issues_slash_create(&conf, &owner_login, &repo_name, issues_create_request)
