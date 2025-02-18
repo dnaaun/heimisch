@@ -6,7 +6,7 @@ extern crate proc_macro;
 mod avail_merge;
 mod zwang_router;
 mod typesafe_idb;
-pub mod tracing_to_console_log;
+pub mod leptos_test_setup;
 
 pub use avail_merge::derive_avail_merge;
 pub use typesafe_idb::derive_typesafe_idb;

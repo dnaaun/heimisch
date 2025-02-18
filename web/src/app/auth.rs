@@ -3,9 +3,7 @@ use shared::{
     backend_api_trait::BackendApiTrait,
     endpoints::{
         defns::api::{
-            app_installs::create::{
-                CreateAppInstallEndpoint, CreateAppInstallPayload, CreateAppInstallResponse,
-            },
+            app_installs::create::{CreateAppInstallPayload, CreateAppInstallResponse},
             auth::finish::GithubAccessToken,
         },
         endpoint_client::OwnApiError,
@@ -19,9 +17,7 @@ use leptos::{
     prelude::*,
     task::{spawn_local, spawn_local_scoped},
 };
-use shared::endpoints::defns::api::auth::finish::{
-    AuthFinishEndpoint, AuthFinishPayload, AuthFinishResponse,
-};
+use shared::endpoints::defns::api::auth::finish::{AuthFinishPayload, AuthFinishResponse};
 use wasm_bindgen_futures::JsFuture;
 
 use crate::{

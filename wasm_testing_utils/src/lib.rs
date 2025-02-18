@@ -1,1 +1,1 @@
-pub mod tracing_to_console_log;
+pub mod leptos_test_setup;

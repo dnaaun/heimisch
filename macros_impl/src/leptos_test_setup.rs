@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{parse_macro_input, ItemFn};
 
 /// NOTE: Should probably name this "leptos test setup"
-pub fn tracing_to_console_log(item: TokenStream) -> TokenStream {
+pub fn leptos_test_setup(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let fn_vis = &input.vis;
@@ -14,11 +14,12 @@ pub fn tracing_to_console_log(item: TokenStream) -> TokenStream {
     let output = &input.sig.output;
 
     let expanded = quote! {
+        #[::wasm_bindgen_test::wasm_bindgen_test]
         #fn_vis #asyncness fn #fn_name(#input_args) #output {
             {
                 _ = ::leptos::task::Executor::init_wasm_bindgen();
                 let buffer = ::std::sync::Arc::new(::std::sync::Mutex::new(Vec::new()));
-                let writer_factory = ::wasm_testing_utils::tracing_to_console_log::MemoryWriterFactory {
+                let writer_factory = ::wasm_testing_utils::leptos_test_setup::MemoryWriterFactory {
                     buffer: ::std::sync::Arc::clone(&buffer),
                 };
                 let subscriber = ::tracing_subscriber::fmt()

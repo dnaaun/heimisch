@@ -5,7 +5,6 @@ use crate::local_storage::{
 use leptos::prelude::*;
 
 use shared::backend_api_trait::BackendApiTrait;
-use shared::endpoints::defns::api::installations::GetInstallationsEndpoint;
 use shared::utils::LogErr;
 use std::collections::HashSet;
 use wasm_bindgen_futures::spawn_local;

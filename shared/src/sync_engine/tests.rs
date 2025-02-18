@@ -1,12 +1,10 @@
 use any_spawner::Executor;
 use futures::SinkExt;
 use github_api::models::{IssuesCreateRequest, IssuesCreateRequestTitle};
-use github_webhook_body::{
-    Issues, IssuesOpenedChanges, IssuesOpenedIssue, SomethingWithAnId, WebhookBody,
-};
+use github_webhook_body::{Issues, IssuesOpenedIssue, SomethingWithAnId, WebhookBody};
 use jiff::Timestamp;
 use leptos::task::tick;
-use macros::tracing_to_console_log;
+use macros::leptos_test_setup;
 use maplit::{hashmap, hashset};
 use mockall::predicate;
 use std::{
@@ -37,11 +35,13 @@ use super::{
     DbSubscription, SyncEngine,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Default, Debug)]
 struct NumTimesHit {
     hit: Arc<AtomicUsize>,
 }
 
+#[allow(dead_code)]
 impl NumTimesHit {
     pub fn increment(&self) {
         self.hit.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -59,8 +59,7 @@ impl NumTimesHit {
     }
 }
 
-#[wasm_bindgen_test::wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 async fn testing_optimistic_create() {
     let user = User::default();
     let repository = Repository::default();
@@ -199,7 +198,6 @@ async fn testing_optimistic_create() {
 
     wait_for(move || create_issues_hit.expect_and_reset(1)).await;
     assert!(bulk_subscriber_hit.expect_and_reset(0));
-
 
     let txn = sync_engine.db.txn().with_store::<Issue>().build();
     let single_issue = txn

@@ -193,10 +193,6 @@ where
         self.optimistic_changes.update(row, update_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
-            tracing::trace!(
-                "invoked commit_listener() from within ObjectStore::update() with reactivity trackers: {:?}",
-                reactivity_trackers
-            );
             commit_listener(&reactivity_trackers);
         }
     }
@@ -209,10 +205,6 @@ where
         self.optimistic_changes.create(row, create_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
-            tracing::trace!(
-                "invoked commit_listener() from within ObjectStore::create() with reactivity trackers: {:?}",
-                reactivity_trackers
-            );
             commit_listener(&reactivity_trackers);
         }
     }

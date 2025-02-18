@@ -79,11 +79,6 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
                 orig_trackers
                     .iter()
                     .filter(|sub| {
-                        tracing::trace!(
-                            "Checking if orig {:#?} is affected by writes in {:#?}",
-                            sub.original_reactivity_trackers,
-                            reactivity_trackers
-                        );
                         sub.original_reactivity_trackers
                             .is_affected_by_writes_in(reactivity_trackers)
                     })

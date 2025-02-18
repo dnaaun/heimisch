@@ -1,10 +1,9 @@
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use bon::builder;
-use macros::tracing_to_console_log;
+use macros::leptos_test_setup;
 use typesafe_idb::{ReadOnly, ReadWrite};
 use url::Url;
-use wasm_bindgen_test::wasm_bindgen_test;
 
 use crate::{
     backend_api_trait::BackendApi,
@@ -78,8 +77,7 @@ async fn num_times_subscriber_called<Txn1Markers, Txn1Mode, Txn2Markers, Txn2Mod
     }
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn index_get_no_optimisim_put_overlapping() {
     num_times_subscriber_called()
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
@@ -105,8 +103,7 @@ pub async fn index_get_no_optimisim_put_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn index_get_no_optimisim_put_non_overlapping() {
     num_times_subscriber_called()
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
@@ -132,8 +129,7 @@ pub async fn index_get_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn get_no_optimisim_put_overlapping() {
     let some_issue_id = 4.into();
     num_times_subscriber_called()
@@ -161,8 +157,7 @@ pub async fn get_no_optimisim_put_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn get_no_optimisim_put_non_overlapping() {
     let some_issue_id = 4.into();
     num_times_subscriber_called()
@@ -211,8 +206,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn get_all_no_optimisim_put_overlapping() {
     num_times_subscriber_called()
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
@@ -232,8 +226,7 @@ pub async fn get_all_no_optimisim_put_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn get_all_no_optimisim_put_non_overlapping() {
     num_times_subscriber_called()
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
@@ -257,8 +250,7 @@ pub async fn get_all_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn get_all_no_optimisim_create_overlapping() {
     num_times_subscriber_called()
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
@@ -276,8 +268,7 @@ pub async fn get_all_no_optimisim_create_overlapping() {
         .await;
 }
 
-#[wasm_bindgen_test]
-#[tracing_to_console_log]
+#[leptos_test_setup]
 pub async fn get_all_no_optimisim_create_non_overlapping() {
     num_times_subscriber_called()
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
