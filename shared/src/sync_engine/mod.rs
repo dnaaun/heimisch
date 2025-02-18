@@ -92,6 +92,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
             .txn()
             .with_store::<InstallationAccessTokenRow>()
             .build();
+
         let iac = txn
             .object_store::<InstallationAccessTokenRow>()?
             .no_optimism_get_all()

@@ -48,15 +48,18 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
 
         let this = SyncEngine::clone(self);
         let installation_id = *installation_id;
+
         self.db
             .object_store_rw::<Issue>()?
             .create(optimistic_issue, async move {
                 let conf = this.get_api_conf(&installation_id).await.map_err(|_| ())?;
-                this.github_api
+                let id = this.github_api
                     .issues_slash_create(&conf, &owner_login, &repo_name, issues_create_request)
                     .await
                     .map(|i| IssueId::from(i.id))
-                    .map_err(|_| ())
+                    .map_err(|_| ());
+                tracing::info!("Created issue");
+                id
             });
 
         Ok(issue_id)

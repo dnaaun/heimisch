@@ -1,3 +1,4 @@
+use std::{cell::RefCell, rc::Rc};
 use url::Url;
 
 use crate::{
@@ -87,5 +88,90 @@ impl BackendApiTrait for BackendApi {
         self.client
             .make_post_request(AuthFinishEndpoint, payload, ())
             .await
+    }
+}
+
+impl<T: 'static> BackendApiTrait for Rc<T>
+where
+    T: BackendApiTrait,
+{
+    fn get_domain(&self) -> Url {
+        T::get_domain(self)
+    }
+
+    fn get_installations(
+        &self,
+    ) -> impl std::future::Future<Output = Result<GetInstallationsResponse, OwnApiError>> {
+        T::get_installations(self)
+    }
+
+    fn get_installation_access_token(
+        &self,
+        params: GetInstallationAccessTokenQueryParams,
+    ) -> impl std::future::Future<Output = Result<InstallationAccessToken, OwnApiError>> {
+        T::get_installation_access_token(self, params)
+    }
+
+    fn create_app_install(
+        &self,
+        payload: CreateAppInstallPayload,
+    ) -> impl std::future::Future<Output = Result<CreateAppInstallResponse, OwnApiError>> {
+        T::create_app_install(self, payload)
+    }
+
+    fn auth_finish(
+        &self,
+        payload: AuthFinishPayload,
+    ) -> impl std::future::Future<Output = Result<AuthFinishResponse, OwnApiError>> {
+        T::auth_finish(self, payload)
+    }
+}
+
+impl<T: 'static> BackendApiTrait for RefCell<T>
+where
+    T: BackendApiTrait,
+{
+    fn get_domain(&self) -> Url {
+        let inner = self.borrow();
+        inner.get_domain()
+    }
+
+    fn get_installations(
+        &self,
+    ) -> impl std::future::Future<Output = Result<GetInstallationsResponse, OwnApiError>> {
+        async move {
+            let inner = self.borrow();
+            inner.get_installations().await
+        }
+    }
+
+    fn get_installation_access_token(
+        &self,
+        params: GetInstallationAccessTokenQueryParams,
+    ) -> impl std::future::Future<Output = Result<InstallationAccessToken, OwnApiError>> {
+        async move {
+            let inner = self.borrow();
+            inner.get_installation_access_token(params).await
+        }
+    }
+
+    fn create_app_install(
+        &self,
+        payload: CreateAppInstallPayload,
+    ) -> impl std::future::Future<Output = Result<CreateAppInstallResponse, OwnApiError>> {
+        async move {
+            let inner = self.borrow();
+            inner.create_app_install(payload).await
+        }
+    }
+
+    fn auth_finish(
+        &self,
+        payload: AuthFinishPayload,
+    ) -> impl std::future::Future<Output = Result<AuthFinishResponse, OwnApiError>> {
+        async move {
+            let inner = self.borrow();
+            inner.auth_finish(payload).await
+        }
     }
 }

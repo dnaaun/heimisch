@@ -1342,7 +1342,7 @@ dependencies = [
  "gloo-net 0.3.1",
  "gloo-render",
  "gloo-storage",
- "gloo-timers",
+ "gloo-timers 0.2.6",
  "gloo-utils 0.1.7",
  "gloo-worker",
 ]
@@ -1481,6 +1481,18 @@ version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b995a66bb87bebce9a0f4a95aed01daca4872c050bfcb21653361c03bc35e5c"
 dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
+ "futures-channel",
+ "futures-core",
  "js-sys",
  "wasm-bindgen",
 ]
@@ -2405,6 +2417,12 @@ dependencies = [
  "proc-macro2",
  "quote",
 ]
+
+[[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "matchers"
@@ -3834,12 +3852,14 @@ dependencies = [
  "futures",
  "github_api",
  "github_webhook_body",
+ "gloo-timers 0.3.0",
  "http 1.1.0",
  "idalloc",
  "idb",
  "jiff",
  "leptos",
  "macros",
+ "maplit",
  "mockall",
  "parking_lot",
  "pin-project",

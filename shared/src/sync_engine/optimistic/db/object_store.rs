@@ -1,5 +1,6 @@
 use std::{cell::RefCell, future::Future, panic::Location, rc::Rc};
 
+use maplit::{hashmap, hashset};
 use typesafe_idb::{IndexSpec, ObjectStore, Present, Store, TxnMode};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
@@ -22,10 +23,10 @@ pub struct ObjectStoreWithOptimisticChanges<S, Mode> {
 pub struct MaybeOptimistic<S> {
     #[deref]
     inner: S,
-    is_optimistic: bool,
+    pub is_optimistic: bool,
 }
 
-impl<S> MaybeOptimistic<S> { 
+impl<S> MaybeOptimistic<S> {
     pub fn into_inner(self) -> S {
         self.inner
     }
@@ -113,8 +114,7 @@ where
                 .creations
                 .all_the_latest_downcasted()
                 .into_iter()
-                .map(|o| MaybeOptimistic::new(o, true))
-                
+                .map(|o| MaybeOptimistic::new(o, true)),
         );
 
         Ok(all)
@@ -124,7 +124,10 @@ where
     pub(crate) async fn no_optimism_get_all(&self) -> Result<Vec<S>, Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
-        self.inner.get_all().await.map_err(|e| Error::new(e, self.location))
+        self.inner
+            .get_all()
+            .await
+            .map_err(|e| Error::new(e, self.location))
     }
 
     pub fn index<IS: IndexSpec<Store = S>>(
@@ -147,23 +150,24 @@ where
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     pub async fn delete(&self, id: &S::Id) -> Result<(), Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_modification(S::NAME, SerializedId::new_from_id::<S>(id));
-
         self.inner
             .delete(id)
             .await
             .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes.remove_obsoletes_for_id::<S>(id);
+
+        if let Some(commit_listener) = self.commit_listener.as_ref() {
+            let reactivity_trackers = ReactivityTrackers {
+                stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_id::<S>(id)]],
+                ..Default::default()
+            };
+            commit_listener(&reactivity_trackers);
+        }
+
         Ok(())
     }
 
     pub async fn put(&self, item: &S) -> Result<(), Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_modification(S::NAME, SerializedId::new_from_row(item));
-
         self.inner
             .put(item)
             .await
@@ -172,37 +176,44 @@ where
             .remove_obsoletes_for_id::<S>(item.id());
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
-            commit_listener(&self.reactivity_trackers.borrow());
+            let reactivity_trackers = ReactivityTrackers {
+                stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(item)]],
+                ..Default::default()
+            };
+            commit_listener(&reactivity_trackers);
         }
 
         Ok(())
     }
     pub fn update(&self, row: S, update_fut: impl Future<Output = Result<(), ()>> + 'static) {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_modification(S::NAME, SerializedId::new_from_row(&row));
+        let reactivity_trackers = ReactivityTrackers {
+            stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
+            ..Default::default()
+        };
         self.optimistic_changes.update(row, update_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
-            commit_listener(&self.reactivity_trackers.borrow());
+            tracing::trace!(
+                "invoked commit_listener() from within ObjectStore::update() with reactivity trackers: {:?}",
+                reactivity_trackers
+            );
+            commit_listener(&reactivity_trackers);
         }
     }
 
-    pub fn create(
-        &self,
-        row: S,
-        create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
-    ) {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_modification(S::NAME, SerializedId::new_from_row(&row));
-        let id = row.id().clone();
+    pub fn create(&self, row: S, create_fut: impl Future<Output = Result<S::Id, ()>> + 'static) {
+        let reactivity_trackers = ReactivityTrackers {
+            stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
+            ..Default::default()
+        };
         self.optimistic_changes.create(row, create_fut);
 
-        tracing::info!("did self.optimistic_changes.create for row with id: {:?}", id);
         if let Some(commit_listener) = self.commit_listener.as_ref() {
-            commit_listener(&self.reactivity_trackers.borrow());
-            tracing::info!("invoked commit_listener() from within ObjectStore::create()");
+            tracing::trace!(
+                "invoked commit_listener() from within ObjectStore::create() with reactivity trackers: {:?}",
+                reactivity_trackers
+            );
+            commit_listener(&reactivity_trackers);
         }
     }
 }

@@ -8,7 +8,7 @@ use crate::{
     },
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct GetInstallationAccessTokenQueryParams {
     pub installation_id: InstallationId,
 }

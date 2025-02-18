@@ -18579,6 +18579,8 @@ impl From<&DiscussionAnsweredAnswer> for DiscussionAnsweredAnswer {
         value.clone()
     }
 }
+
+/// Added a Default impl only to make writing tests easier.
 #[doc = "<p>How the author is associated with the repository.</p>"]
 #[doc = r""]
 #[doc = r" <details><summary>JSON schema</summary>"]
@@ -18612,12 +18614,16 @@ impl From<&DiscussionAnsweredAnswer> for DiscussionAnsweredAnswer {
     Ord,
     PartialEq,
     PartialOrd,
+    Default,
 )]
 pub enum DiscussionAnsweredAnswerAuthorAssociation {
     #[serde(rename = "COLLABORATOR")]
     Collaborator,
+    
+    #[default]
     #[serde(rename = "CONTRIBUTOR")]
     Contributor,
+
     #[serde(rename = "FIRST_TIMER")]
     FirstTimer,
     #[serde(rename = "FIRST_TIME_CONTRIBUTOR")]
@@ -18762,7 +18768,7 @@ impl std::convert::TryFrom<String> for DiscussionAnsweredAnswerAuthorAssociation
 #[doc = "}"]
 #[doc = r" ```"]
 #[doc = r" </details>"]
-#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug, Default)]
 pub struct DiscussionAnsweredAnswerReactions {
     #[doc = ""]
     pub confused: i64,
@@ -30832,7 +30838,7 @@ impl From<i64> for IssuesOpenedChangesOldRepositoryPushedAt {
 #[doc = "}"]
 #[doc = r" ```"]
 #[doc = r" </details>"]
-#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug, Default)]
 pub struct IssuesOpenedIssue {
     #[doc = ""]
     pub active_lock_reason: Option<IssueCommentCreatedIssueActiveLockReason>,
@@ -72002,7 +72008,7 @@ impl From<&SecurityAndAnalysisDefaultChangesFrom> for SecurityAndAnalysisDefault
 #[doc = "}"]
 #[doc = r" ```"]
 #[doc = r" </details>"]
-#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug, Default)]
 pub struct SomethingWithAnId {
     pub id: i64,
 }
@@ -74804,7 +74810,7 @@ impl From<&TeamEditedChangesRepositoryPermissionsFrom>
 #[doc = "}"]
 #[doc = r" ```"]
 #[doc = r" </details>"]
-#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug)]
+#[derive(:: serde :: Deserialize, :: serde :: Serialize, Clone, Debug, Default)]
 pub struct Untyped(pub ::serde_json::Map<String, ::serde_json::Value>);
 impl ::std::ops::Deref for Untyped {
     type Target = ::serde_json::Map<String, ::serde_json::Value>;

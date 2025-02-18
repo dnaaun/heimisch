@@ -23,12 +23,12 @@ use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
 async fn get_sync_engine() -> SyncEngine<BackendApi, MockTransport, ()> {
     SyncEngine::<BackendApi, MockTransport, ()>::new(
-        BackendApi::new(EndpointClient::new(
+        Rc::new(BackendApi::new(EndpointClient::new(
             |_| (),
             Url::parse("https://www.example.com/").unwrap(),
-        )),
+        ))),
         |_| async { Ok(MockTransport::new().0) },
-        (),
+        Rc::new(()),
     )
     .await
     .unwrap()

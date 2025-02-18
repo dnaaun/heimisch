@@ -28,11 +28,15 @@ where
     Transport: TransportTrait,
 {
     pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport> {
+
+        tracing::info!("IN RECV WEBSOCKET UPDATES");
         let mut url = self
             .backend_api
             .get_domain()
             .join(WEBSOCKET_UPDATES_ENDPOINT)
             .expect("");
+        tracing::info!("GOT THE URL");
+
 
         let last_webhook_update_at = self
             .db
@@ -55,8 +59,11 @@ where
         loop {
             let fut = websocket_conn.next();
             pin_mut!(fut);
+            tracing::info!("Waiting for websocket updates");
             match fut.await {
-                Some(value) => match value {
+                Some(value) => {
+                    tracing::info!("Received websocket update: {:?}", value);
+                    match value {
                     Ok(server_msg) => match self.apply_update_to_db(&server_msg).await {
                         Ok(_) => {
                             tracing::info!("Successfully applied webhook update: {server_msg:?}")
@@ -86,7 +93,7 @@ where
                     Err(err) => {
                         tracing::error!("Error receiving websocket update: {:?}", err);
                     }
-                },
+                }},
                 None => return Ok(()),
             }
         }
@@ -121,6 +128,7 @@ where
                 id: Default::default(),
             })
             .await?;
+        drop(txn);
         Ok(())
     }
 }

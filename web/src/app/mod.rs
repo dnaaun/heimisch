@@ -25,9 +25,9 @@ pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         Rc::new(
             SyncEngine::new(
-                BACKEND_API.with(|e| e.clone()),
+                Rc::new(BACKEND_API.with(|e| e.clone())),
                 |url| async { Transport::new(url).await },
-                shared::github_api_trait::GithubApi,
+                Rc::new(shared::github_api_trait::GithubApi),
             )
             .await
             .unwrap(),

@@ -1,24 +1,31 @@
 use crate::{
     config::Config,
-    custom_github_api::{get_user_access_token_request, ATResp},
-    db::get_login_user,
-    utils::gen_rand_string,
+    // custom_github_api::{get_user_access_token_request, ATResp},
+    // db::get_login_user,
+    // utils::gen_rand_string,
 };
 pub mod endpoint_test_client;
 mod parse_request;
 
 use std::{
     cell::LazyCell,
-    collections::HashMap,
+    // collections::HashMap,
     future::Future,
     path::PathBuf,
     sync::Arc,
-    time::{Duration, SystemTime},
+    time::{
+        // Duration,
+        SystemTime,
+    },
 };
 
 use crate::error::Error as CrateError;
 use assert_json_diff::assert_json_include;
-use axum_test::{TestResponse, TestServer, WsMessage};
+use axum_test::{
+    TestResponse,
+    TestServer,
+    // WsMessage
+};
 use backtrace::Backtrace;
 use deadpool_diesel::postgres::Pool;
 use derive_more::derive::AsRef;
@@ -27,27 +34,24 @@ use diesel_test::{
     postgres::{ParsingDbUrlError, PostgresDbUrlFactory},
     DieselTestConfig,
 };
-use endpoint_test_client::PostEndpointTestClient;
-use github_api::models::{PrivateUser, UsersGetAuthenticated200Response};
-use github_webhook_body::WebhookBody;
+// use endpoint_test_client::PostEndpointTestClient;
+// use github_api::models::{PrivateUser, UsersGetAuthenticated200Response};
+// use github_webhook_body::WebhookBody;
 use http::StatusCode;
 use parking_lot::Mutex;
 use parse_request::ParsedHttpRequest;
 use serde_json::Value;
-use shared::github_api_trait::GithubApi;
+// use shared::github_api_trait::GithubApi;
 use shared::{
-    endpoints::defns::api::{
-        auth::{
-            finish::{AuthFinishEndpoint, AuthFinishPayload, GithubAccessToken},
-            initiate::AuthInitiateEndpoint,
-        },
-        websocket_updates::{ServerMsg, WEBSOCKET_UPDATES_ENDPOINT},
-    },
+    // endpoints::defns::api::websocket_updates::{ServerMsg, WEBSOCKET_UPDATES_ENDPOINT},
     types::{installation::InstallationId, user::UserId},
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-use url::Url;
-use wiremock::{MockServer, ResponseTemplate};
+// use url::Url;
+use wiremock::{
+    MockServer,
+    // ResponseTemplate
+};
 
 use crate::{
     config::init_config,
@@ -120,8 +124,6 @@ struct TestSetup {
     server: TestServer,
     #[as_ref]
     config: Config,
-    github_api_mock_server: MockServer,
-    github_non_api_mock_server: MockServer,
 }
 
 async fn with_test_server<Fut: Future>(
@@ -164,8 +166,6 @@ async fn with_test_server<Fut: Future>(
                 pool,
                 server,
                 config,
-                github_api_mock_server,
-                github_non_api_mock_server,
             };
 
             Ok::<Fut::Output, TestError>(func(test_setup).await)

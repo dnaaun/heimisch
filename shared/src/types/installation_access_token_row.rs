@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::installation::InstallationId;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct InstallationAccessToken {
     pub token: String,
 

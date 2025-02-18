@@ -8,12 +8,11 @@ use crate::backend_api_trait::BackendApiTrait;
 use crate::types::label::Label;
 use crate::types::last_webhook_update_at::LastWebhookUpdateAt;
 use crate::types::{
-    github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
-    issue::Issue, issue_comment::IssueComment,
-    issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
-    issues_initial_sync_status::IssuesInitialSyncStatus, license::License,
-    milestone::Milestone, repository::Repository,
-    repository_initial_sync_status::RepositoryInitialSyncStatus, user::User,
+    github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow, issue::Issue,
+    issue_comment::IssueComment, issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
+    issues_initial_sync_status::IssuesInitialSyncStatus, license::License, milestone::Milestone,
+    repository::Repository, repository_initial_sync_status::RepositoryInitialSyncStatus,
+    user::User,
 };
 use send_wrapper::SendWrapper;
 use typesafe_idb::{StoreMarker, TypesafeDb};
@@ -44,9 +43,9 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
     SyncEngine<BackendApi, Transport, GithubApi>
 {
     pub async fn new<F, Fut>(
-        backend_api: BackendApi,
+        backend_api: Rc<BackendApi>,
         make_transport: F,
-        github_api: GithubApi,
+        github_api: Rc<GithubApi>,
     ) -> SyncResult<Self, Transport>
     where
         F: Fn(Url) -> Fut + 'static,
@@ -80,6 +79,11 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
                 orig_trackers
                     .iter()
                     .filter(|sub| {
+                        tracing::trace!(
+                            "Checking if orig {:#?} is affected by writes in {:#?}",
+                            sub.original_reactivity_trackers,
+                            reactivity_trackers
+                        );
                         sub.original_reactivity_trackers
                             .is_affected_by_writes_in(reactivity_trackers)
                     })
@@ -91,8 +95,8 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
         Ok(Self {
             db: Rc::new(db),
             db_subscriptions: SendWrapper::new(db_subscriptions),
-            backend_api: Rc::new(backend_api),
-            github_api: Rc::new(github_api),
+            backend_api,
+            github_api,
             make_transport,
         })
     }

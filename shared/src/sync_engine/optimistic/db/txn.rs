@@ -64,7 +64,10 @@ impl<Markers, Mode> TxnWithOptimisticChanges<Markers, Mode> {
         {
             idb_txn.commit().map_err(|e| Error::new(e, self.location))?;
             if let Some(listener) = commit_listener {
-                // tracing::trace!("Invoking listener for txn commit");
+                tracing::trace!(
+                    "Invoking listener for txn commit with reactivity trackers: {:?}",
+                    self.reactivity_trackers.borrow()
+                );
                 listener(&self.reactivity_trackers.borrow());
             } else {
                 // tracing::trace!("No listener to invoke for txn commit.");
@@ -168,7 +171,7 @@ where
             optimistic_updates: self.optimistic_updates.clone(),
             inner: Some((self.inner.build(), self.commit_listener, self.location).into()),
             reactivity_trackers: Default::default(),
-            location: self.location
+            location: self.location,
         }
     }
 }

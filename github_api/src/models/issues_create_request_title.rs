@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 /// IssuesCreateRequestTitle : The title of the issue.
 /// The title of the issue.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(untagged)]
 pub enum IssuesCreateRequestTitle {
     String(String),

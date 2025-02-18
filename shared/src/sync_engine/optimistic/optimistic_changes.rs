@@ -63,9 +63,12 @@ impl OptimisticChanges {
         let creations = self.creations.clone();
         let time = creations.insert::<S>(&id, Rc::new(row));
 
+        tracing::info!("doing OptimisticChanges::create for row with id: {:?}", id);
+
         Executor::spawn_local(async move {
             match create_fut.await {
                 Ok(actual_id) => {
+                    tracing::info!("Inside the spawn_local in OptimisticChanges::create");
                     creations.mark_successful::<S>(
                         &id,
                         &time,

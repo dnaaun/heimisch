@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use leptos::{
     prelude::*,
@@ -75,9 +75,9 @@ pub async fn idb_signal_basic_reactivity() {
     _ = Executor::init_wasm_bindgen();
 
     let sync_engine = SyncEngine::new(
-        BACKEND_API.with(|e| e.clone()),
+        Rc::new(BACKEND_API.with(|e| e.clone())),
         async |url| Transport::new(url).await,
-        shared::github_api_trait::GithubApi,
+        shared::github_api_trait::GithubApi.into(),
     )
     .await
     .unwrap();
