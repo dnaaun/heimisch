@@ -65,8 +65,20 @@ mod status {
     }
 }
 
-type OptimisticChangeMapInner<T, RealisticId> =
-    HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>>;
+struct OptimisticChangeMapInner<T, RealisticId> {
+    changes:
+        HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>>,
+    realistic_to_optimistic: HashMap<RealisticId, SerializedId>,
+}
+
+impl<T, RealisticId> Default for OptimisticChangeMapInner<T, RealisticId> {
+    fn default() -> Self {
+        Self {
+            changes: Default::default(),
+            realistic_to_optimistic: Default::default(),
+        }
+    }
+}
 
 pub struct OptimisticChangeMap<T, RealisticId = ()> {
     inner: Arc<RwLock<OptimisticChangeMapInner<T, RealisticId>>>,
@@ -94,6 +106,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
         let time = MonotonicTime::new();
         self.inner
             .write()
+            .changes
             .entry(S::NAME)
             .or_default()
             .entry(optimistic_id)
@@ -107,7 +120,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
-        if let Some(by_id) = inner.get_mut(&S::NAME) {
+        if let Some(by_id) = inner.changes.get_mut(&S::NAME) {
             let mut by_time_len = None;
             if let Some(by_time) = by_id.get_mut(&optimistic_id) {
                 match by_time.entry(*time) {
@@ -128,7 +141,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
             by_id_len = Some(by_id.len());
         }
         if by_id_len == Some(0) {
-            inner.remove(&S::NAME);
+            inner.changes.remove(&S::NAME);
         }
     }
 
@@ -140,7 +153,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
-        if let Some(by_id) = inner.get_mut(&S::NAME) {
+        if let Some(by_id) = inner.changes.get_mut(&S::NAME) {
             let mut by_time_len = None;
             if let Some(by_time) = by_id.get_mut(&optimistic_id) {
                 let to_remove_keys = by_time
@@ -165,10 +178,12 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
             by_id_len = Some(by_id.len());
         }
         if by_id_len == Some(0) {
-            inner.remove(&S::NAME);
+            inner.changes.remove(&S::NAME);
         }
     }
+}
 
+impl<T, RealisticId: Clone + Eq + std::hash::Hash> OptimisticChangeMap<T, RealisticId> {
     pub fn mark_realistic<S: Store>(
         &self,
         optimistic_id: &S::Id,
@@ -176,15 +191,24 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
         realistic_id: RealisticId,
     ) {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
-        self.inner
-            .write()
+        let mut inner = self.inner.write();
+        inner
+            .changes
             .get_mut(&S::NAME)
             .unwrap()
             .get_mut(&optimistic_id)
             .expect("id to mark realistic not found")
             .get_mut(time)
             .expect("could not find the monotonic time to mark realistic")
-            .mark_realistic(realistic_id);
+            .mark_realistic(realistic_id.clone());
+
+        inner
+            .realistic_to_optimistic
+            .insert(realistic_id, optimistic_id);
+    }
+
+    pub fn get_realistic_to_optimistic(&self) -> HashMap<RealisticId, SerializedId> {
+        self.inner.read().realistic_to_optimistic.clone()
     }
 }
 
@@ -194,6 +218,7 @@ impl<T: Clone, RealisticId: Clone> OptimisticChangeMap<T, RealisticId> {
         Some(
             self.inner
                 .read()
+                .changes
                 .get(&S::NAME)?
                 .get(&optimistic_id)?
                 .last_key_value()?
@@ -209,6 +234,7 @@ impl<RealisticId> OptimisticChangeMap<Rc<dyn Any>, RealisticId> {
         Some(
             self.inner
                 .read()
+                .changes
                 .get(&S::NAME)?
                 .get(&optimistic_id)?
                 .last_key_value()?
@@ -223,6 +249,7 @@ impl<RealisticId> OptimisticChangeMap<Rc<dyn Any>, RealisticId> {
     pub fn all_the_latest_downcasted<S: Store + 'static>(&self) -> Vec<S> {
         self.inner
             .read()
+            .changes
             .get(&S::NAME)
             .map(|s| s.values())
             .into_iter()

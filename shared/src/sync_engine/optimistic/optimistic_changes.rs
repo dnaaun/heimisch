@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(clippy::type_complexity)]
 
-use std::{any::Any, future::Future, rc::Rc};
+use std::{any::Any, collections::HashMap, future::Future, rc::Rc};
 
 use any_spawner::Executor;
 use typesafe_idb::Store;
@@ -93,5 +93,9 @@ impl OptimisticChanges {
         self.updates.remove_all_realistic::<S>(id, &());
         self.creations
             .remove_all_realistic::<S>(id, &SerializedId::new_from_id::<S>(id));
+    }
+
+    pub fn get_realistic_to_optimistic_for_creations(&self) -> HashMap<SerializedId, SerializedId> {
+        self.creations.get_realistic_to_optimistic()
     }
 }

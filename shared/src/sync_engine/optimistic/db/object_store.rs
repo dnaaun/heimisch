@@ -180,8 +180,22 @@ where
             .remove_successful_for_id::<S>(item.id());
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
+            let optimistic_id = self
+                .optimistic_changes
+                .get_realistic_to_optimistic_for_creations()
+                .get(&SerializedId::new_from_id::<S>(item.id()))
+                .map(|i| i.clone());
+
             let reactivity_trackers = ReactivityTrackers {
-                stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(item)]],
+                stores_modified: hashmap![
+                    S::NAME => [
+                        Some(SerializedId::new_from_row(item)),
+                        optimistic_id,
+                    ]
+                    .into_iter()
+                    .filter_map(|i| i)
+                    .collect(),
+                ],
                 ..Default::default()
             };
             tracing::trace!(
@@ -214,6 +228,7 @@ where
             stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
             ..Default::default()
         };
+
         self.optimistic_changes.create(row, create_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
