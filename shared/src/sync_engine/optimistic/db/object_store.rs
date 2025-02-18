@@ -51,7 +51,10 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadOnly = Present>,
 {
-    pub async fn get_optimistically(&self, id: &S::Id) -> Result<Option<MaybeOptimistic<S>>, Error> {
+    pub async fn get_optimistically(
+        &self,
+        id: &S::Id,
+    ) -> Result<Option<MaybeOptimistic<S>>, Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -156,16 +159,17 @@ where
             .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes.remove_successful_for_id::<S>(id);
 
-        if let Some(commit_listener) = self.commit_listener.as_ref() {
-            let reactivity_trackers = ReactivityTrackers {
-                stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_id::<S>(id)]],
-                ..Default::default()
-            };
-            tracing::trace!(
-                "In ObjectStoreWithOptimisticChanges::delete calling commit listener with {:?}",
-                reactivity_trackers
-            );
-            commit_listener(&reactivity_trackers);
+        let serialized_id = SerializedId::new_from_id::<S>(id);
+        let optimistic_id = self
+            .optimistic_changes
+            .get_realistic_to_optimistic_for_creations()
+            .get(&serialized_id)
+            .map(|i| i.clone());
+
+        let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
+        reactivity_trackers.add_modification(S::NAME, serialized_id);
+        if let Some(optimistic_id) = optimistic_id {
+            reactivity_trackers.add_modification(S::NAME, optimistic_id);
         }
 
         Ok(())
@@ -179,36 +183,27 @@ where
         self.optimistic_changes
             .remove_successful_for_id::<S>(item.id());
 
-        if let Some(commit_listener) = self.commit_listener.as_ref() {
-            let optimistic_id = self
-                .optimistic_changes
-                .get_realistic_to_optimistic_for_creations()
-                .get(&SerializedId::new_from_id::<S>(item.id()))
-                .map(|i| i.clone());
+        let serialized_id = SerializedId::new_from_row(item);
+        let optimistic_id = self
+            .optimistic_changes
+            .get_realistic_to_optimistic_for_creations()
+            .get(&serialized_id)
+            .map(|i| i.clone());
 
-            let reactivity_trackers = ReactivityTrackers {
-                stores_modified: hashmap![
-                    S::NAME => [
-                        Some(SerializedId::new_from_row(item)),
-                        optimistic_id,
-                    ]
-                    .into_iter()
-                    .filter_map(|i| i)
-                    .collect(),
-                ],
-                ..Default::default()
-            };
-            tracing::trace!(
-                "In ObjectStoreWithOptimisticChanges::put calling commit listener with {:?}",
-                reactivity_trackers
-            );
-            commit_listener(&reactivity_trackers);
+        let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
+        reactivity_trackers.add_modification(S::NAME, serialized_id);
+        if let Some(optimistic_id) = optimistic_id {
+            reactivity_trackers.add_modification(S::NAME, optimistic_id);
         }
 
         Ok(())
     }
 
-    pub fn update_optimistically(&self, row: S, update_fut: impl Future<Output = Result<(), ()>> + 'static) {
+    pub fn update_optimistically(
+        &self,
+        row: S,
+        update_fut: impl Future<Output = Result<(), ()>> + 'static,
+    ) {
         let reactivity_trackers = ReactivityTrackers {
             stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
             ..Default::default()
@@ -224,7 +219,11 @@ where
         }
     }
 
-    pub fn create_optimistically(&self, row: S, create_fut: impl Future<Output = Result<S::Id, ()>> + 'static) {
+    pub fn create_optimistically(
+        &self,
+        row: S,
+        create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
+    ) {
         let reactivity_trackers = ReactivityTrackers {
             stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
             ..Default::default()
