@@ -154,13 +154,17 @@ where
             .delete(id)
             .await
             .map_err(|e| Error::new(e, self.location))?;
-        self.optimistic_changes.remove_obsoletes_for_id::<S>(id);
+        self.optimistic_changes.remove_successful_for_id::<S>(id);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
             let reactivity_trackers = ReactivityTrackers {
                 stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_id::<S>(id)]],
                 ..Default::default()
             };
+            tracing::trace!(
+                "In ObjectStoreWithOptimisticChanges::delete calling commit listener with {:?}",
+                reactivity_trackers
+            );
             commit_listener(&reactivity_trackers);
         }
 
@@ -173,13 +177,17 @@ where
             .await
             .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes
-            .remove_obsoletes_for_id::<S>(item.id());
+            .remove_successful_for_id::<S>(item.id());
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
             let reactivity_trackers = ReactivityTrackers {
                 stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(item)]],
                 ..Default::default()
             };
+            tracing::trace!(
+                "In ObjectStoreWithOptimisticChanges::put calling commit listener with {:?}",
+                reactivity_trackers
+            );
             commit_listener(&reactivity_trackers);
         }
 
@@ -193,6 +201,10 @@ where
         self.optimistic_changes.update(row, update_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
+            tracing::trace!(
+                "In ObjectStoreWithOptimisticChanges::update calling commit listener with {:?}",
+                reactivity_trackers
+            );
             commit_listener(&reactivity_trackers);
         }
     }
@@ -205,6 +217,10 @@ where
         self.optimistic_changes.create(row, create_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
+            tracing::trace!(
+                "In ObjectStoreWithOptimisticChanges::create calling commit listener with {:?}",
+                reactivity_trackers
+            );
             commit_listener(&reactivity_trackers);
         }
     }

@@ -255,6 +255,7 @@ async fn testing_optimistic_create() {
         .unwrap();
 
     wait_for(move || bulk_subscriber_hit.expect_and_reset(1)).await;
+    wait_for(move || single_subscriber_hit.expect_and_reset(1)).await;
 }
 
 #[allow(dead_code)] // Not sure why this is necessary since wait_for is indeed used.

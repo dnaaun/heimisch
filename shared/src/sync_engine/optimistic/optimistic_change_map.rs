@@ -13,60 +13,63 @@ use super::{db::SerializedId, monotonic_time::MonotonicTime};
 
 mod status {
     /// The value inside is never `None`. But having an option is the only way I know of enabling
-    /// the `mark_successful()` function.
+    /// the `mark_realistic()` function.
     #[derive(Clone)]
-    pub enum Status<T, SuccessMarker> {
-        Pending(Option<T>),
-        Successful { t: T, marker: SuccessMarker },
+    pub enum Status<T, RealisticId> {
+        Optimistic(Option<T>),
+        Realistic { t: T, realistic_id: RealisticId },
     }
 
-    impl<T, SuccessMarker> Status<T, SuccessMarker> {
-        pub fn new(t: T) -> Status<T, SuccessMarker> {
-            Self::Pending(Some(t))
+    impl<T, RealisticId> Status<T, RealisticId> {
+        pub fn new(t: T) -> Status<T, RealisticId> {
+            Self::Optimistic(Some(t))
         }
-        pub fn mark_successful(&mut self, marker: SuccessMarker) {
-            if let Status::Pending(t) = self {
+        pub fn mark_realistic(&mut self, marker: RealisticId) {
+            if let Status::Optimistic(t) = self {
                 let t = std::mem::take(t).unwrap();
-                *self = Status::Successful { marker, t }
+                *self = Status::Realistic {
+                    realistic_id: marker,
+                    t,
+                }
             } else {
-                panic!("Tried to mark_successful something that was already marked as such!")
+                panic!("Tried to mark_realistic something that was already marked as such!")
             }
         }
 
-        pub fn as_successful(&self) -> Option<&T> {
+        pub fn as_realistic(&self) -> Option<&T> {
             match self {
-                Status::Successful { t, .. } => Some(t),
+                Status::Realistic { t, .. } => Some(t),
                 _ => None,
             }
         }
 
         pub fn read(&self) -> &T {
             match self {
-                Status::Pending(p) => p.as_ref().unwrap(),
-                Status::Successful { t, .. } => t,
+                Status::Optimistic(p) => p.as_ref().unwrap(),
+                Status::Realistic { t, .. } => t,
             }
         }
 
         pub fn get(self) -> T {
             match self {
-                Status::Pending(p) => p.unwrap(),
-                Status::Successful { t, .. } => t,
+                Status::Optimistic(p) => p.unwrap(),
+                Status::Realistic { t, .. } => t,
             }
         }
     }
 
     impl<T> From<T> for Status<T, ()> {
         fn from(value: T) -> Self {
-            Self::Pending(Some(value))
+            Self::Optimistic(Some(value))
         }
     }
 }
 
-type OptimisticChangeMapInner<T, SuccessMarker> =
-    HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, SuccessMarker>>>>;
+type OptimisticChangeMapInner<T, RealisticId> =
+    HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>>;
 
-pub struct OptimisticChangeMap<T, SuccessMarker = ()> {
-    inner: Arc<RwLock<OptimisticChangeMapInner<T, SuccessMarker>>>,
+pub struct OptimisticChangeMap<T, RealisticId = ()> {
+    inner: Arc<RwLock<OptimisticChangeMapInner<T, RealisticId>>>,
 }
 
 impl<T, S> Clone for OptimisticChangeMap<T, S> {
@@ -85,31 +88,31 @@ impl<T, S> Default for OptimisticChangeMap<T, S> {
     }
 }
 
-impl<T, SuccessMarker: Eq + std::fmt::Debug> OptimisticChangeMap<T, SuccessMarker> {
-    pub fn insert<S: Store>(&self, id: &S::Id, v: T) -> MonotonicTime {
-        let id = SerializedId::new_from_id::<S>(id);
+impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
+    pub fn insert<S: Store>(&self, optimistic_id: &S::Id, v: T) -> MonotonicTime {
+        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let time = MonotonicTime::new();
         self.inner
             .write()
             .entry(S::NAME)
             .or_default()
-            .entry(id)
+            .entry(optimistic_id)
             .or_default()
             .insert(time, Status::new(v));
         time
     }
 
     /// Will panic if the thing is not pending, or if it doesn't exist.
-    pub fn remove_pending<S: Store>(&self, id: &S::Id, time: &MonotonicTime) {
-        let id = SerializedId::new_from_id::<S>(id);
+    pub fn remove_pending<S: Store>(&self, optimistic_id: &S::Id, time: &MonotonicTime) {
+        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
         if let Some(by_id) = inner.get_mut(&S::NAME) {
             let mut by_time_len = None;
-            if let Some(by_time) = by_id.get_mut(&id) {
+            if let Some(by_time) = by_id.get_mut(&optimistic_id) {
                 match by_time.entry(*time) {
                     std::collections::btree_map::Entry::Occupied(occupied_entry) => {
-                        if let Status::Pending(_) = occupied_entry.get() {
+                        if let Status::Optimistic(_) = occupied_entry.get() {
                             occupied_entry.remove();
                         } else {
                             panic!("Is not pending.");
@@ -120,7 +123,7 @@ impl<T, SuccessMarker: Eq + std::fmt::Debug> OptimisticChangeMap<T, SuccessMarke
                 by_time_len = Some(by_time.len());
             }
             if by_time_len == Some(0) {
-                by_id.remove(&id);
+                by_id.remove(&optimistic_id);
             }
             by_id_len = Some(by_id.len());
         }
@@ -129,17 +132,24 @@ impl<T, SuccessMarker: Eq + std::fmt::Debug> OptimisticChangeMap<T, SuccessMarke
         }
     }
 
-    pub fn remove_all_successful<S: Store>(&self, id: &S::Id, success_marker: &SuccessMarker) {
-        let id = SerializedId::new_from_id::<S>(id);
+    pub fn remove_all_realistic<S: Store>(
+        &self,
+        optimistic_id: &S::Id,
+        realistic_id: &RealisticId,
+    ) {
+        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
         if let Some(by_id) = inner.get_mut(&S::NAME) {
             let mut by_time_len = None;
-            if let Some(by_time) = by_id.get_mut(&id) {
+            if let Some(by_time) = by_id.get_mut(&optimistic_id) {
                 let to_remove_keys = by_time
                     .iter()
                     .filter_map(|(time, status)| match status {
-                        Status::Successful { marker, .. } if marker == success_marker => Some(time),
+                        Status::Realistic {
+                            realistic_id: realistic_id_candidate,
+                            ..
+                        } if realistic_id_candidate == realistic_id => Some(time),
                         _ => None,
                     })
                     .cloned()
@@ -150,7 +160,7 @@ impl<T, SuccessMarker: Eq + std::fmt::Debug> OptimisticChangeMap<T, SuccessMarke
                 by_time_len = Some(by_time.len());
             }
             if by_time_len == Some(0) {
-                by_id.remove(&id);
+                by_id.remove(&optimistic_id);
             }
             by_id_len = Some(by_id.len());
         }
@@ -159,34 +169,33 @@ impl<T, SuccessMarker: Eq + std::fmt::Debug> OptimisticChangeMap<T, SuccessMarke
         }
     }
 
-    pub fn mark_successful<S: Store>(
+    pub fn mark_realistic<S: Store>(
         &self,
-        id: &S::Id,
+        optimistic_id: &S::Id,
         time: &MonotonicTime,
-        marker: SuccessMarker,
+        realistic_id: RealisticId,
     ) {
-        tracing::info!("Marking succesful id={id:?}, and marker={marker:?}");
-        let id = SerializedId::new_from_id::<S>(id);
+        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         self.inner
             .write()
             .get_mut(&S::NAME)
             .unwrap()
-            .get_mut(&id)
-            .expect("id to mark successful not found")
+            .get_mut(&optimistic_id)
+            .expect("id to mark realistic not found")
             .get_mut(time)
-            .expect("could not find the monotonic time to mark succesful")
-            .mark_successful(marker);
+            .expect("could not find the monotonic time to mark realistic")
+            .mark_realistic(realistic_id);
     }
 }
 
-impl<T: Clone, SuccessMarker: Clone> OptimisticChangeMap<T, SuccessMarker> {
-    pub fn latest<S: Store>(&self, id: &S::Id) -> Option<Status<T, SuccessMarker>> {
-        let id = SerializedId::new_from_id::<S>(id);
+impl<T: Clone, RealisticId: Clone> OptimisticChangeMap<T, RealisticId> {
+    pub fn latest<S: Store>(&self, optimistic_id: &S::Id) -> Option<Status<T, RealisticId>> {
+        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         Some(
             self.inner
                 .read()
                 .get(&S::NAME)?
-                .get(&id)?
+                .get(&optimistic_id)?
                 .last_key_value()?
                 .1
                 .clone(),
@@ -194,14 +203,14 @@ impl<T: Clone, SuccessMarker: Clone> OptimisticChangeMap<T, SuccessMarker> {
     }
 }
 
-impl<SuccessMarker> OptimisticChangeMap<Rc<dyn Any>, SuccessMarker> {
-    pub fn latest_downcasted<S: Store + 'static>(&self, id: &S::Id) -> Option<S> {
-        let id = SerializedId::new_from_id::<S>(id);
+impl<RealisticId> OptimisticChangeMap<Rc<dyn Any>, RealisticId> {
+    pub fn latest_downcasted<S: Store + 'static>(&self, optimistic_id: &S::Id) -> Option<S> {
+        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         Some(
             self.inner
                 .read()
                 .get(&S::NAME)?
-                .get(&id)?
+                .get(&optimistic_id)?
                 .last_key_value()?
                 .1
                 .read()
