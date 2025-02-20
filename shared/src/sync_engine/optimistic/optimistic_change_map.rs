@@ -68,14 +68,16 @@ mod status {
 struct OptimisticChangeMapInner<T, RealisticId> {
     changes:
         HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>>,
-    realistic_to_optimistic: HashMap<RealisticId, SerializedId>,
+    optimistic_to_realistic: HashMap<RealisticId, SerializedId>,
 }
 
-impl<T, RealisticId> Default for OptimisticChangeMapInner<T, RealisticId> {
+impl<T, RealisticId: std::cmp::Eq + std::hash::Hash> Default
+    for OptimisticChangeMapInner<T, RealisticId>
+{
     fn default() -> Self {
         Self {
             changes: Default::default(),
-            realistic_to_optimistic: Default::default(),
+            optimistic_to_realistic: HashMap::new(),
         }
     }
 }
@@ -92,7 +94,7 @@ impl<T, S> Clone for OptimisticChangeMap<T, S> {
     }
 }
 
-impl<T, S> Default for OptimisticChangeMap<T, S> {
+impl<T, S: std::cmp::Eq + std::hash::Hash + std::fmt::Debug> Default for OptimisticChangeMap<T, S> {
     fn default() -> Self {
         Self {
             inner: Default::default(),
@@ -145,37 +147,34 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
         }
     }
 
-    pub fn remove_all_realistic<S: Store>(
-        &self,
-        optimistic_id: &S::Id,
-        realistic_id: &RealisticId,
-    ) {
-        let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
+    pub fn remove_all_realistic<S: Store>(&self, realistic_id: &RealisticId) {
         let mut by_id_len = None;
         let mut inner = self.inner.write();
         if let Some(by_id) = inner.changes.get_mut(&S::NAME) {
-            let mut by_time_len = None;
-            if let Some(by_time) = by_id.get_mut(&optimistic_id) {
-                let to_remove_keys = by_time
-                    .iter()
-                    .filter_map(|(time, status)| match status {
-                        Status::Realistic {
-                            realistic_id: realistic_id_candidate,
-                            ..
-                        } if realistic_id_candidate == realistic_id => Some(time),
-                        _ => None,
-                    })
-                    .cloned()
-                    .collect::<Vec<_>>();
-                for key in to_remove_keys {
-                    by_time.remove(&key);
+            for optimistic_id in by_id.keys().cloned().collect::<Vec<_>>().into_iter() {
+                let mut by_time_len = None;
+                if let Some(by_time) = by_id.get_mut(&optimistic_id) {
+                    let to_remove_keys = by_time
+                        .iter()
+                        .filter_map(|(time, status)| match status {
+                            Status::Realistic {
+                                realistic_id: realistic_id_candidate,
+                                ..
+                            } if realistic_id_candidate == realistic_id => Some(time),
+                            _ => None,
+                        })
+                        .cloned()
+                        .collect::<Vec<_>>();
+                    for key in to_remove_keys {
+                        by_time.remove(&key);
+                    }
+                    by_time_len = Some(by_time.len());
                 }
-                by_time_len = Some(by_time.len());
+                if by_time_len == Some(0) {
+                    by_id.remove(&optimistic_id);
+                }
+                by_id_len = Some(by_id.len());
             }
-            if by_time_len == Some(0) {
-                by_id.remove(&optimistic_id);
-            }
-            by_id_len = Some(by_id.len());
         }
         if by_id_len == Some(0) {
             inner.changes.remove(&S::NAME);
@@ -183,7 +182,9 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
     }
 }
 
-impl<T, RealisticId: Clone + Eq + std::hash::Hash> OptimisticChangeMap<T, RealisticId> {
+impl<T, RealisticId: Clone + Eq + std::hash::Hash + std::fmt::Debug>
+    OptimisticChangeMap<T, RealisticId>
+{
     pub fn mark_realistic<S: Store>(
         &self,
         optimistic_id: &S::Id,
@@ -203,12 +204,16 @@ impl<T, RealisticId: Clone + Eq + std::hash::Hash> OptimisticChangeMap<T, Realis
             .mark_realistic(realistic_id.clone());
 
         inner
-            .realistic_to_optimistic
+            .optimistic_to_realistic
             .insert(realistic_id, optimistic_id);
     }
 
-    pub fn get_realistic_to_optimistic(&self) -> HashMap<RealisticId, SerializedId> {
-        self.inner.read().realistic_to_optimistic.clone()
+    pub fn get_realistic_to_optimistic(&self, realistic_id: &RealisticId) -> Option<SerializedId> {
+        self.inner
+            .read()
+            .optimistic_to_realistic
+            .get(realistic_id)
+            .cloned()
     }
 }
 

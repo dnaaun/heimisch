@@ -1,5 +1,5 @@
 use any_spawner::Executor;
-use futures::SinkExt;
+use futures::{channel::mpsc, SinkExt, StreamExt};
 use github_api::models::{IssuesCreateRequest, IssuesCreateRequestTitle};
 use github_webhook_body::{Issues, IssuesOpenedIssue, SomethingWithAnId, WebhookBody};
 use jiff::Timestamp;
@@ -7,6 +7,7 @@ use leptos::task::tick;
 use macros::leptos_test_setup;
 use maplit::{hashmap, hashset};
 use mockall::predicate;
+use parking_lot::Mutex;
 use std::{
     cell::RefCell,
     rc::Rc,
@@ -61,42 +62,50 @@ impl NumTimesHit {
 
 #[leptos_test_setup]
 async fn testing_optimistic_create() {
+    // Let's buckle up. Get all our stuff ready.
     let user = User::default();
     let repository = Repository::default();
-    let actual_issue_id = 23423;
+    let realistic_issue_id = 23423;
     let actual_issue_number = 9098;
     let github_issue = github_api::models::Issue {
-        id: actual_issue_id,
+        id: realistic_issue_id,
         number: actual_issue_number,
         ..Default::default()
     };
     let installation_id = repository.installation_id;
+
+    // Setup our mock transport and mock backend api.
     let (mock_transport, mut mock_transport_handler) = MockTransport::new();
     let mock_transport = Rc::new(RefCell::new(Some(mock_transport)));
     let mut mock_backend_api = MockBackendApiTrait::new();
     let mut mock_github_api = MockGithubApiTrait::new();
 
     let title = IssuesCreateRequestTitle::String("fancy title".to_string());
-    let issue_create_request = IssuesCreateRequest {
-        title: title.clone(),
-        body: Some("fancy body".to_string()),
-        ..Default::default()
-    };
 
     let create_issues_hit = Arc::new(NumTimesHit::default());
     let create_issues_hit_clone = create_issues_hit.clone();
+    let (mut create_issues_resp_sender, create_issues_resp_receiver) =
+        mpsc::channel::<github_api::models::Issue>(10);
+    let create_issues_resp_receiver = Arc::new(Mutex::new(create_issues_resp_receiver));
+
+    let title_clone = title.clone();
     mock_github_api
         .expect_issues_slash_create()
         .once()
         .withf(move |_, _, _, issue_create_request_in_mock| {
-            issue_create_request_in_mock.title == title.clone()
+            issue_create_request_in_mock.title == title_clone
         })
-        .returning(move |_, _, _, _| {
-            let github_issue = github_issue.clone();
+        .returning_st(move |_, _, _, _| {
+            let create_issues_resp_receiver = create_issues_resp_receiver.clone();
             let create_issues_hit_clone = create_issues_hit_clone.clone();
             Box::pin(async move {
+                let ret = create_issues_resp_receiver
+                    .lock()
+                    .next()
+                    .await
+                    .expect("channel closed");
                 create_issues_hit_clone.increment();
-                Ok(github_issue.clone())
+                Ok(ret)
             })
         });
 
@@ -177,6 +186,10 @@ async fn testing_optimistic_create() {
 
     let _ = sync_engine.db_subscriptions.add(bulk_db_subscription);
 
+    let issue_create_request = IssuesCreateRequest {
+        title: title.clone(),
+        ..Default::default()
+    };
     let optimistic_issue_id = sync_engine
         .create_issue(&installation_id, &user, &repository, issue_create_request)
         .unwrap();
@@ -196,7 +209,6 @@ async fn testing_optimistic_create() {
     assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
     assert!(issues[0].is_optimistic);
 
-    wait_for(move || create_issues_hit.expect_and_reset(1)).await;
     assert!(bulk_subscriber_hit.expect_and_reset(0));
 
     let txn = sync_engine.db.txn().with_store::<Issue>().build();
@@ -211,6 +223,10 @@ async fn testing_optimistic_create() {
     assert!(single_issue.is_optimistic);
     assert!(single_issue.id == optimistic_issue_id);
     assert!(single_issue.title == Avail::Yes("fancy title".into()));
+
+    // Now let's send the reply to the create_issues_resp_receiver.
+    create_issues_resp_sender.send(github_issue).await.unwrap();
+    wait_for(&move || create_issues_hit.expect_and_reset(1)).await;
 
     let single_subscriber_hit = Arc::new(NumTimesHit::default());
     let single_subscriber_hit_clone = single_subscriber_hit.clone();
@@ -235,7 +251,8 @@ async fn testing_optimistic_create() {
             id: *installation_id,
         }),
         issue: IssuesOpenedIssue {
-            id: actual_issue_id,
+            id: realistic_issue_id,
+            title: "fancy title".to_string(),
             updated_at: now.clone(),
             created_at: now,
             ..Default::default()
@@ -254,16 +271,38 @@ async fn testing_optimistic_create() {
         .await
         .unwrap();
 
-    wait_for(move || bulk_subscriber_hit.expect_and_reset(1)).await;
-    wait_for(move || single_subscriber_hit.expect_and_reset(1)).await;
+    wait_for(&move || bulk_subscriber_hit.expect_and_reset(1)).await;
+    wait_for(&move || single_subscriber_hit.expect_and_reset(1)).await;
+
+    let txn = sync_engine.db.txn().with_store::<Issue>().build();
+    
+    // Make sure that the optimistic thing is removed from bulk reads.
+    let issues = txn
+        .object_store::<Issue>()
+        .unwrap()
+        .get_all_optimistically()
+        .await
+        .unwrap();
+
+    assert_eq!(issues.len(), 1);
+    assert_eq!(issues[0].id, realistic_issue_id.into());
+    assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
+    assert!(!issues[0].is_optimistic);
+
+    // Make sure that fetching by optimistic id returns the realistic thing.
+    let issue = txn
+        .object_store::<Issue>()
+        .unwrap()
+        .get_optimistically(&optimistic_issue_id)
+        .await
+        .unwrap()
+        ;
+    assert_eq!(issue, None);
 }
 
 #[allow(dead_code)] // Not sure why this is necessary since wait_for is indeed used.
 #[track_caller]
-async fn wait_for<F>(assertion: F)
-where
-    F: Fn() -> bool,
-{
+async fn wait_for(assertion: &dyn Fn() -> bool) {
     let start = leptos::prelude::window().performance().unwrap().now();
     let mut delay_ms = 20.0;
 

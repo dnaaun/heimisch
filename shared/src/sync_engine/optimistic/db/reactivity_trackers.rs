@@ -24,6 +24,10 @@ impl SerializedId {
     pub fn new_from_id<S: Store>(id: &S::Id) -> Self {
         Self(serde_json::to_string(&id).expect("did not expect ids not to be json serializable?"))
     }
+
+    pub fn to_unserialized_id<S: Store>(&self) -> S::Id {
+        serde_json::from_str(&self.0).expect("did not expect ids not to be json de-serializable?")
+    }
 }
 
 #[derive(Debug, Clone, Default)]

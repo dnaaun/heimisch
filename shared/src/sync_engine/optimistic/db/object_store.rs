@@ -62,17 +62,20 @@ where
         if self.optimistic_changes.deletes.latest::<S>(id).is_some() {
             return Ok(None);
         }
-        let optimistically_updated = self.optimistic_changes.updates.latest_downcasted::<S>(id);
+        let optimistically_updated = self.optimistic_changes.updates.latest_downcasted::<S>(&id);
         if let Some(o) = optimistically_updated {
             return Ok(Some(MaybeOptimistic::new(o, true)));
         }
-        let optimistically_created = self.optimistic_changes.creations.latest_downcasted::<S>(id);
+        let optimistically_created = self
+            .optimistic_changes
+            .creations
+            .latest_downcasted::<S>(id);
         if let Some(o) = optimistically_created {
             return Ok(Some(MaybeOptimistic::new(o, true)));
         };
 
         self.inner
-            .get(id)
+            .get(&id)
             .await
             .map_err(|e| Error::new(e, self.location))
             .map(|o| o.map(|o| MaybeOptimistic::new(o, false)))
@@ -152,6 +155,20 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
+    pub fn add_to_reactivity_during_write(&self, id: &S::Id) {
+        let serialized_id = SerializedId::new_from_id::<S>(id);
+        let optimistic_id = self
+            .optimistic_changes
+            .get_realistic_to_optimistic_for_creations::<S>(id)
+            .map(|i| SerializedId::new_from_id::<S>(&i));
+
+        if let Some(optimistic_id) = optimistic_id {
+            let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
+            reactivity_trackers.add_modification(S::NAME, serialized_id);
+            reactivity_trackers.add_modification(S::NAME, optimistic_id);
+        }
+    }
+
     pub async fn delete(&self, id: &S::Id) -> Result<(), Error> {
         self.inner
             .delete(id)
@@ -159,18 +176,7 @@ where
             .map_err(|e| Error::new(e, self.location))?;
         self.optimistic_changes.remove_successful_for_id::<S>(id);
 
-        let serialized_id = SerializedId::new_from_id::<S>(id);
-        let optimistic_id = self
-            .optimistic_changes
-            .get_realistic_to_optimistic_for_creations()
-            .get(&serialized_id)
-            .map(|i| i.clone());
-
-        let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
-        reactivity_trackers.add_modification(S::NAME, serialized_id);
-        if let Some(optimistic_id) = optimistic_id {
-            reactivity_trackers.add_modification(S::NAME, optimistic_id);
-        }
+        self.add_to_reactivity_during_write(id);
 
         Ok(())
     }
@@ -183,18 +189,7 @@ where
         self.optimistic_changes
             .remove_successful_for_id::<S>(item.id());
 
-        let serialized_id = SerializedId::new_from_row(item);
-        let optimistic_id = self
-            .optimistic_changes
-            .get_realistic_to_optimistic_for_creations()
-            .get(&serialized_id)
-            .map(|i| i.clone());
-
-        let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
-        reactivity_trackers.add_modification(S::NAME, serialized_id);
-        if let Some(optimistic_id) = optimistic_id {
-            reactivity_trackers.add_modification(S::NAME, optimistic_id);
-        }
+        self.add_to_reactivity_during_write(item.id());
 
         Ok(())
     }

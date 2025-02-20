@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(clippy::type_complexity)]
 
-use std::{any::Any, collections::HashMap, future::Future, rc::Rc};
+use std::{any::Any, future::Future, rc::Rc};
 
 use any_spawner::Executor;
 use typesafe_idb::Store;
@@ -87,15 +87,21 @@ impl OptimisticChanges {
         });
     }
 
+    /// This can be refactored (along with mark_realistic).
     pub fn remove_successful_for_id<S: Store>(&self, id: &S::Id) {
         tracing::info!("Called remove successful for id: {id:?}");
-        self.deletes.remove_all_realistic::<S>(id, &());
-        self.updates.remove_all_realistic::<S>(id, &());
+        self.deletes.remove_all_realistic::<S>(&());
+        self.updates.remove_all_realistic::<S>(&());
         self.creations
-            .remove_all_realistic::<S>(id, &SerializedId::new_from_id::<S>(id));
+            .remove_all_realistic::<S>(&SerializedId::new_from_id::<S>(id));
     }
 
-    pub fn get_realistic_to_optimistic_for_creations(&self) -> HashMap<SerializedId, SerializedId> {
-        self.creations.get_realistic_to_optimistic()
+    pub fn get_realistic_to_optimistic_for_creations<S: Store>(
+        &self,
+        realistic_id: &S::Id,
+    ) -> Option<S::Id> {
+        self.creations
+            .get_realistic_to_optimistic(&SerializedId::new_from_id::<S>(realistic_id))
+            .map(|id| id.to_unserialized_id::<S>())
     }
 }
