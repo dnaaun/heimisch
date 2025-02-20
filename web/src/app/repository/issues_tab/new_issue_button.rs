@@ -13,7 +13,7 @@ pub fn NewIssueButton(
         let on_click = move |_ev| {
             let url =
                 zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/new");
-            set_pathname(url.clone());
+            set_pathname(&url);
         };
         view! {
             <Button on:click=on_click>

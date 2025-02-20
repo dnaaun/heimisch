@@ -5,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use bimap::BiMap;
 use parking_lot::RwLock;
 pub use status::Status;
 use typesafe_idb::{Store, StoreName};
@@ -68,7 +69,7 @@ mod status {
 struct OptimisticChangeMapInner<T, RealisticId> {
     changes:
         HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>>,
-    optimistic_to_realistic: HashMap<RealisticId, SerializedId>,
+    optimistic_to_realistic: BiMap<RealisticId, SerializedId>,
 }
 
 impl<T, RealisticId: std::cmp::Eq + std::hash::Hash> Default
@@ -77,7 +78,7 @@ impl<T, RealisticId: std::cmp::Eq + std::hash::Hash> Default
     fn default() -> Self {
         Self {
             changes: Default::default(),
-            optimistic_to_realistic: HashMap::new(),
+            optimistic_to_realistic: BiMap::default(),
         }
     }
 }
@@ -212,7 +213,15 @@ impl<T, RealisticId: Clone + Eq + std::hash::Hash + std::fmt::Debug>
         self.inner
             .read()
             .optimistic_to_realistic
-            .get(realistic_id)
+            .get_by_left(realistic_id)
+            .cloned()
+    }
+
+    pub fn get_optimistic_to_realistic(&self, optimistic_id: &SerializedId) -> Option<RealisticId> {
+        self.inner
+            .read()
+            .optimistic_to_realistic
+            .get_by_right(optimistic_id)
             .cloned()
     }
 }

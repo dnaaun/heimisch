@@ -2,15 +2,18 @@ use futures::future::{join_all, OptionFuture};
 use github_api::models::milestone::OpenOrClosed;
 use jiff::Timestamp;
 use leptos::prelude::*;
+use macros::zwang_url;
+use crate::app::routing::*;
 use shared::{
     avail::Avail,
+    sync_engine::optimistic::db::MaybeOptimistic,
     types::{
         issue::{self, Issue},
         issue_comment::{IssueComment, IssueIdIndex},
         user::User,
     },
 };
-use zwang_router::{ArgFromParent, RouteParams};
+use zwang_router::{set_pathname_untracked, ArgFromParent, RouteParams};
 
 use crate::{
     app::{
@@ -39,6 +42,7 @@ pub fn OneIssue(
         repo_name,
     }): RouteParams<ParamsIssueNumberOwnerNameRepoName>,
 ) -> impl IntoView {
+    let prev_optimistic_id = RwSignal::new(None);
     let issue_number = move || issue_number.get().parse::<i64>();
     move || {
         let sync_engine = use_sync_engine();
@@ -46,27 +50,68 @@ pub fn OneIssue(
             Ok(i) => i,
             Err(_) => return view! { <NotFound /> }.into_any(),
         };
+        let sync_engine2 = sync_engine.clone();
         let issue_and_user = sync_engine.idb_signal(
             move |txn| txn.with_store::<User>().with_store::<Issue>().build(),
-            move |txn| async move {
-                let issue = txn
-                    .object_store::<Issue>()?
-                    .index::<issue::RepositoryIdIndex>()?
-                    .get_all_optimistically(Some(&repository_page_context.read().repository.id))
-                    .await?
-                    .into_iter()
-                    .find(move |i| i.number == issue_number);
+            move |txn| {
+                let sync_engine2 = sync_engine2.clone();
+                async move {
+                    let issue = txn
+                        .object_store::<Issue>()?
+                        .index::<issue::RepositoryIdIndex>()?
+                        .get_all_optimistically(Some(&repository_page_context.read().repository.id))
+                        .await?
+                        .into_iter()
+                        .find(move |i| i.number == issue_number);
 
-                Ok(if let Some(issue) = issue {
-                    let user = if let Avail::Yes(Some(user_id)) = issue.user_id {
-                        txn.object_store::<User>()?.get_optimistically(&user_id).await?
+                    let issue = if let Some(issue) = issue {
+                        Some(issue)
                     } else {
-                        None
+                        if let Some(prev_optimistic_id) = prev_optimistic_id.get_untracked() {
+                            if let Some(realistic_id) = sync_engine2
+                                .db
+                                .get_optimistic_to_realistic_for_creations::<Issue>(
+                                    &prev_optimistic_id,
+                                )
+                            {
+                                let issue = txn.object_store::<Issue>()?
+                                    .get(&realistic_id)
+                                    .await?
+                                    .map(|issue| MaybeOptimistic::new(issue, false));
+
+                                if let Some(issue) = &issue {
+                                    set_pathname_untracked(&zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/issue_number={issue.number.to_string()}"));
+                                }
+
+                                issue
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
                     };
-                    Some((issue, user))
-                } else {
-                    None
-                })
+
+                    Ok(if let Some(issue) = issue {
+                        if issue.is_optimistic {
+                            *prev_optimistic_id.write_untracked() = Some(issue.id);
+                        } else {
+                            *prev_optimistic_id.write_untracked() = None;
+                        }
+
+                        let user = if let Avail::Yes(Some(user_id)) = issue.user_id {
+                            txn.object_store::<User>()?
+                                .get_optimistically(&user_id)
+                                .await?
+                        } else {
+                            None
+                        };
+                        Some((issue, user))
+                    } else {
+                        *prev_optimistic_id.write_untracked() = None;
+                        None
+                    })
+                }
             },
         );
 

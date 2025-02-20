@@ -104,4 +104,13 @@ impl OptimisticChanges {
             .get_realistic_to_optimistic(&SerializedId::new_from_id::<S>(realistic_id))
             .map(|id| id.to_unserialized_id::<S>())
     }
+
+    pub fn get_optimistic_to_realistic_for_creations<S: Store>(
+        &self,
+        optimistic_id: &S::Id,
+    ) -> Option<S::Id> {
+        self.creations
+            .get_optimistic_to_realistic(&SerializedId::new_from_id::<S>(optimistic_id))
+            .map(|id| id.to_unserialized_id::<S>())
+    }
 }

@@ -61,7 +61,7 @@ pub fn NewIssue(
                     let owner_login = owner_login.clone();
                     let issue_number = issue_number.to_string();
                     let repo_name = repository.name.clone();
-                    set_pathname(zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
+                    set_pathname(&zwang_url!("/owner_name={owner_login}/repo_name={repo_name}/issues/issue_number={issue_number}"));
                 }
             });
         };

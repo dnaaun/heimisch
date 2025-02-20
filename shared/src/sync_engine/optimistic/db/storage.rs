@@ -65,4 +65,12 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
             .build()
             .object_store::<S>()
     }
+
+    pub fn get_optimistic_to_realistic_for_creations<S: Store>(
+        &self,
+        optimistic_id: &S::Id,
+    ) -> Option<S::Id> {
+        self.optimistic_updates
+            .get_optimistic_to_realistic_for_creations::<S>(optimistic_id)
+    }
 }

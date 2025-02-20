@@ -85,7 +85,7 @@ pub fn RepositoryPage(
     } = params;
 
     let set_active_tab = move |new_active_tab: Tab| {
-        set_pathname(Root::OwnerName {
+        set_pathname(&Root::OwnerName {
             owner_name: owner_name.get_untracked(),
             child: RootOwnerName::RepoName {
                 repo_name: repo_name.get_untracked(),

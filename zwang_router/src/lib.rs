@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 use std::{fmt::Display, ops::Deref, sync::Arc};
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
-pub use macros::{zwang_url, zwang_routes};
+pub use macros::{zwang_routes, zwang_url};
 
 pub trait MemoExt<T>
 where
@@ -236,13 +236,17 @@ pub fn use_pathname() -> ArcMemo<String> {
     PATHNAME_MANAGER.with(|i| i.pathname.clone())
 }
 
-pub fn set_pathname(path: impl ToString) {
+pub fn set_pathname(path: &dyn ToString) {
+    set_pathname_untracked(path);
+    PATHNAME_MANAGER.with(|i| (i.set_pathname)(window().location().pathname().expect("")));
+}
+
+pub fn set_pathname_untracked(path: &dyn ToString) {
     window()
         .history()
         .expect("")
         .push_state_with_url(&JsValue::NULL, "", Some(&path.to_string()))
         .expect("");
-    PATHNAME_MANAGER.with(|i| (i.set_pathname)(window().location().pathname().expect("")));
 }
 
 pub fn set_search(search: impl ToString) {
@@ -275,7 +279,7 @@ pub fn A(
             class=class
             href=href.clone()
             on:click=move |ev| {
-                set_pathname(href.clone());
+                set_pathname(&href);
                 ev.prevent_default();
             }
         >
@@ -307,8 +311,7 @@ impl std::fmt::Display for NoPart {
     }
 }
 
-pub fn empty_component<ArgFromParent>(_: ArgFromParent) -> impl IntoView {
-}
+pub fn empty_component<ArgFromParent>(_: ArgFromParent) -> impl IntoView {}
 
 pub fn passthrough_component<A, V>(
     ArgFromParent(arg_from_parent): ArgFromParent<A>,
