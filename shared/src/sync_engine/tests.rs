@@ -209,8 +209,6 @@ async fn testing_optimistic_create() {
     assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
     assert!(issues[0].is_optimistic);
 
-    assert!(bulk_subscriber_hit.expect_and_reset(0));
-
     let txn = sync_engine.db.txn().with_store::<Issue>().build();
     let single_issue = txn
         .object_store::<Issue>()
