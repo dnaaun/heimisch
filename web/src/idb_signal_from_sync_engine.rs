@@ -2,17 +2,20 @@ use leptos::prelude::*;
 use std::{future::Future, sync::Arc};
 
 use send_wrapper::SendWrapper;
-use shared::{backend_api_trait::BackendApiTrait, sync_engine::{
-    optimistic::db::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges},
-    DbStoreMarkers, SyncEngine, TransportTrait,
-}};
+use shared::{
+    backend_api_trait::BackendApiTrait,
+    sync_engine::{
+        optimistic::db::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges},
+        DbStoreMarkers, SyncEngine, TransportTrait,
+    },
+};
 use typesafe_idb::{ReadOnly, TxnMode};
 
 use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
 pub trait IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T>
 where
-    T: 'static,
+    T: 'static + std::fmt::Debug,
 {
     /// Will create a signal that will be recomputed every time an indexeddb change is committed by
     /// the sync engine.
@@ -30,12 +33,13 @@ where
 }
 
 impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
-    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T> for SyncEngine<BA, TT, GH>
+    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T>
+    for SyncEngine<BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
     Mode: TxnMode + 'static,
-    T: 'static,
+    T: 'static + std::fmt::Debug,
     TT: TransportTrait,
     BA: BackendApiTrait,
 {

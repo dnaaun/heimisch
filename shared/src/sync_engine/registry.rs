@@ -31,7 +31,8 @@ impl<T> Registry<T> {
     pub fn new() -> Self {
         Default::default()
     }
-
+}
+impl<T> Registry<T> {
     /// Will return the function that will remove it from the registry
     pub fn add(&self, t: T) -> impl Fn() + Send + Sync {
         let id = {
@@ -43,7 +44,7 @@ impl<T> Registry<T> {
         let inner = self.inner.clone();
 
         move || {
-            inner.borrow_mut().map.remove(&id);
+            let item = inner.borrow_mut().map.remove(&id);
         }
     }
 }

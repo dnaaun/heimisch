@@ -79,23 +79,10 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
                 let matching_trackers = orig_trackers
                     .iter()
                     .filter(|sub| {
-                        tracing::trace!(
-                            "checking if {:?} is affected by {:?}",
-                            sub.original_reactivity_trackers,
-                            reactivity_trackers
-                        );
                         sub.original_reactivity_trackers
                             .is_affected_by_writes_in(reactivity_trackers)
                     })
                     .collect::<Vec<_>>();
-
-                tracing::trace!(
-                    "matching_trackers: {:?}",
-                    matching_trackers
-                        .iter()
-                        .map(|sub| sub.original_reactivity_trackers.clone())
-                        .collect::<Vec<_>>()
-                );
 
                 matching_trackers.into_iter().for_each(|sub| (sub.func)());
             }),

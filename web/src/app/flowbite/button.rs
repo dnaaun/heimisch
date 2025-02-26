@@ -28,6 +28,24 @@ impl ButtonColor {
         }
     }
 }
+#[allow(dead_code)]
+#[derive(Default, Clone)]
+pub enum ButtonType {
+    Submit,
+    #[default]
+    Button
+}
+
+impl ButtonType {
+    fn get_type_str(&self) -> &'static str {
+        match self {
+            ButtonType::Submit => "submit",
+            ButtonType::Button => "button"
+        }
+    }
+}
+
+
 
 #[allow(dead_code)]
 #[derive(Default)]
@@ -52,13 +70,18 @@ impl ButtonSize {
     }
 }
 
+
+
 /// https://flowbite.com/docs/components/buttons/#default-button
+#[allow(non_snake_case)]
 #[component]
 pub fn Button(
     #[prop(optional, into)] color: Signal<ButtonColor>,
     #[prop(optional)] children: Option<Children>,
+    #[prop(optional, into)] type_: Signal<ButtonType>,
     #[prop(optional, into)] size: Signal<ButtonSize>,
 ) -> impl IntoView {
+    let type_= move || type_.read().get_type_str();
     let class = move || {
         format!(
             "font-medium rounded-lg me-2 mb-2 focus:outline-none {} {}",
@@ -67,7 +90,7 @@ pub fn Button(
         )
     };
     view! {
-        <button type="button" class=class>
+        <button type=type_ class=class>
             {children.map(|c| c())}
         </button>
     }

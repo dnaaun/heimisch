@@ -7,6 +7,7 @@ pub use websocket_updates::transport::*;
 mod conversions;
 mod initial_sync;
 
+mod new_defn;
 pub mod changes;
 pub mod error;
 pub mod mutations;
@@ -36,7 +37,15 @@ pub struct DbSubscription {
     pub original_reactivity_trackers: ReactivityTrackers,
     pub func: Arc<dyn Fn()>,
 }
-mod new_defn;
+
+impl std::fmt::Debug for DbSubscription {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DbSubscription")
+            .field("original_reactivity_trackers", &self.original_reactivity_trackers)
+            .field("func", &"some func yo")
+            .finish()
+    }
+}
 
 pub use new_defn::DbStoreMarkers;
 

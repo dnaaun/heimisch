@@ -1,4 +1,4 @@
-use crate::app::repository::RepositoryPageContextInner;
+use crate::app::{flowbite::button::ButtonType, repository::RepositoryPageContextInner};
 use crate::app::routing::*;
 use github_api::models::IssuesCreateRequestTitle;
 use leptos::{prelude::*, task::spawn_local};
@@ -25,7 +25,7 @@ pub fn NewIssue(
     let body = RwSignal::new(Default::default());
     move || {
         let sync_engine = use_sync_engine();
-        let on_create = move |_| {
+        let on_submit = move |_| {
             let sync_engine = sync_engine.clone();
             let RepositoryPageContextInner {
                 user: owner,
@@ -66,6 +66,7 @@ pub fn NewIssue(
             });
         };
         view! {
+            <form on:submit=on_submit>
             <Thirds
                 two_thirds=view! {
                     <div class="flex flex-nowrap gap-2">
@@ -90,13 +91,14 @@ pub fn NewIssue(
                             <div
                             class="flex gap-2 flex-end justify-end flex-end mb-4">
                             <Button color=ButtonColor::Light>Cancel</Button>
-                            <Button on:click=on_create>Create</Button>
+                            <Button type_=ButtonType::Submit>Create</Button>
                             </div>
                         </div>
                     </div>
                 }
                 one_third=()
             />
+            </form>
         }
     }
 }

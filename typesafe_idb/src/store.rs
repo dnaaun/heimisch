@@ -1,10 +1,11 @@
+use std::fmt::Debug;
 use serde::{de::DeserializeOwned, Serialize};
 use std::hash::Hash;
 
 use crate::StoreName;
 
 #[allow(async_fn_in_trait)]
-pub trait Store: Serialize + DeserializeOwned + Clone + 'static {
+pub trait Store: Serialize + DeserializeOwned + Clone + 'static + Debug {
     const NAME: StoreName;
     type Marker: Default;
 

@@ -1,11 +1,14 @@
 use jiff::{fmt::strtime, Timestamp};
 use leptos::prelude::*;
 use macros::zwang_url;
-use shared::{sync_engine::optimistic::db::MaybeOptimistic, types::{
-    issue::{Issue, RepositoryIdIndex},
-    issue_comment::{IssueComment, IssueIdIndex},
-    user::User,
-}};
+use shared::{
+    sync_engine::optimistic::db::MaybeOptimistic,
+    types::{
+        issue::{Issue, RepositoryIdIndex},
+        issue_comment::{IssueComment, IssueIdIndex},
+        user::User,
+    },
+};
 
 use itertools::Itertools;
 use zwang_router::{ArgFromParent, RouteParams, A};
@@ -33,11 +36,12 @@ pub fn IssuesList(
     let issues = sync_engine.idb_signal(
         |builder| builder.with_store::<Issue>().build(),
         move |txn| async move {
-            Ok(txn
+            let issues = txn
                 .object_store::<Issue>()?
                 .index::<RepositoryIdIndex>()?
                 .get_all_optimistically(Some(&repository_page_context.read().repository.id))
-                .await?)
+                .await?;
+            Ok(issues)
         },
     );
 
@@ -123,7 +127,10 @@ fn IssueRow(
                     Some(u) => u,
                     None => return Ok(None),
                 };
-                Ok(txn.object_store::<User>()?.get_optimistically(&user_id).await?)
+                Ok(txn
+                    .object_store::<User>()?
+                    .get_optimistically(&user_id)
+                    .await?)
             }
         },
     );

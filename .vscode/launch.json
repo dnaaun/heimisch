@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Launch Browser Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/web/dist",
+            "cwd": "${workspaceFolder}/web",
+            "userDataDir": true,
+            "runtimeArgs": [
+                "--remote-debugging-port=9222"
+            ]
+        }
+    ]
+}
