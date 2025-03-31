@@ -5,8 +5,19 @@ use std::pin::Pin;
 use std::rc::Rc;
 
 use crate::backend_api_trait::BackendApiTrait;
-use crate::types::label::Label;
-use crate::types::last_webhook_update_at::LastWebhookUpdateAt;
+use crate::types::github_app::GithubAppStoreMarker;
+use crate::types::installation_access_token_row::InstallationAccessTokenRowStoreMarker;
+use crate::types::issue::IssueStoreMarker;
+use crate::types::issue_comment::IssueCommentStoreMarker;
+use crate::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatusStoreMarker;
+use crate::types::issues_initial_sync_status::IssuesInitialSyncStatusStoreMarker;
+use crate::types::label::{Label, LabelStoreMarker};
+use crate::types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtStoreMarker};
+use crate::types::license::LicenseStoreMarker;
+use crate::types::milestone::MilestoneStoreMarker;
+use crate::types::repository::RepositoryStoreMarker;
+use crate::types::repository_initial_sync_status::RepositoryInitialSyncStatusStoreMarker;
+use crate::types::user::UserStoreMarker;
 use crate::types::{
     github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow, issue::Issue,
     issue_comment::IssueComment, issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
@@ -15,7 +26,7 @@ use crate::types::{
     user::User,
 };
 use send_wrapper::SendWrapper;
-use typesafe_idb::{StoreMarker, TypesafeDb};
+use typesafe_idb::TypesafeDb;
 use url::Url;
 
 use super::optimistic::db::DbWithOptimisticChanges;
@@ -24,20 +35,40 @@ use super::websocket_updates::transport::TransportTrait;
 use super::DbSubscription;
 use super::{error::SyncResult, SyncEngine};
 
-pub type DbStoreMarkers = impl StoreMarker<IssueCommentsInitialSyncStatus>
-    + StoreMarker<RepositoryInitialSyncStatus>
-    + StoreMarker<IssueComment>
-    + StoreMarker<InstallationAccessTokenRow>
-    + StoreMarker<IssuesInitialSyncStatus>
-    + StoreMarker<License>
-    + StoreMarker<Label>
-    + StoreMarker<Milestone>
-    + StoreMarker<Repository>
-    + StoreMarker<GithubApp>
-    + StoreMarker<User>
-    + StoreMarker<Issue>
-    + StoreMarker<LastWebhookUpdateAt>
-    + Default;
+pub type DbStoreMarkers = (
+    RepositoryInitialSyncStatusStoreMarker,
+    (
+        IssueCommentsInitialSyncStatusStoreMarker,
+        (
+            LastWebhookUpdateAtStoreMarker,
+            (
+                IssueCommentStoreMarker,
+                (
+                    InstallationAccessTokenRowStoreMarker,
+                    (
+                        IssuesInitialSyncStatusStoreMarker,
+                        (
+                            LabelStoreMarker,
+                            (
+                                LicenseStoreMarker,
+                                (
+                                    MilestoneStoreMarker,
+                                    (
+                                        RepositoryStoreMarker,
+                                        (
+                                            GithubAppStoreMarker,
+                                            (UserStoreMarker, (IssueStoreMarker, ())),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ),
+);
 
 impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
     SyncEngine<BackendApi, Transport, GithubApi>

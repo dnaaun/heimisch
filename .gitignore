@@ -11,3 +11,7 @@ style/tailwind_output.css
 .idea/
 
 .aider.*
+
+rustc-ice-*
+
+.DS_Store

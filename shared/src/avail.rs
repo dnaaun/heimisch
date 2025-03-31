@@ -117,6 +117,7 @@ impl<T> IntoIterator for Avail<T> {
 
     type IntoIter = AvailIntoIter<T>;
 
+    #[define_opaque(AvailIntoIter)]
     fn into_iter(self) -> Self::IntoIter {
         match self {
             Avail::Yes(i) => Some(i).into_iter(),
