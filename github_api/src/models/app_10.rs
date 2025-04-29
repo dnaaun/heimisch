@@ -140,6 +140,11 @@ pub enum Events {
     WorkflowRun,
     #[serde(rename = "reminder")]
     Reminder,
+
+    /// Required because I ran into a sync error:
+    /// https://linear.app/heimisch/issue/HEI-12/issue-comment-type-doesnt-match-the-api-preventing-finishing-syncing
+    #[serde(rename = "sub_issues")]
+    SubIssues,
 }
 
 impl Default for Events {
