@@ -2,18 +2,24 @@ use futures::future::{join_all, OptionFuture};
 use itertools::Itertools;
 use leptos::prelude::*;
 use shared::types::{repository::Repository, user::User};
-use zwang_router::{Outlet, A, zwang_url};
+use zwang_router::{zwang_url, Outlet, A};
 
 use crate::{
     app::icon::Icon, frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
 
-use super::{flowbite::checkbox::Checkbox, routing::*, sync_engine_provider::use_sync_engine};
+use super::{
+    flowbite::checkbox::Checkbox,
+    installation_id_sync::use_sync_installation_ids_and_recv_websocket_updates, routing::*,
+    sync_engine_provider::use_sync_engine,
+};
 
 #[allow(non_snake_case)]
 pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
     let sync_engine = use_sync_engine();
+
+    use_sync_installation_ids_and_recv_websocket_updates();
 
     let show_forks = RwSignal::new(true);
 
@@ -25,7 +31,10 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
                 .build()
         },
         |txn| async move {
-            let repositorys = txn.object_store::<Repository>()?.get_all_optimistically().await?;
+            let repositorys = txn
+                .object_store::<Repository>()?
+                .get_all_optimistically()
+                .await?;
             let user_store = txn.object_store::<User>()?;
             let users = join_all(repositorys.iter().map(|r| {
                 OptionFuture::from(r.owner_id.clone().to_option().map(|user_id| {

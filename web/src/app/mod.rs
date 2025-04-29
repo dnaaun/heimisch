@@ -1,7 +1,6 @@
 mod auth;
 mod authenticated_home_page;
 mod flowbite;
-mod home;
 mod icon;
 mod installation_id_sync;
 mod not_found;

@@ -1,11 +1,13 @@
 use crate::signal_ext::*;
 use leptos::{prelude::*, task::spawn_local};
 use shared::{
-    sync_engine::optimistic::db::MaybeOptimistic, types::{
+    sync_engine::optimistic::db::MaybeOptimistic,
+    types::{
         self,
         repository::Repository,
         user::{self, User},
-    }, utils::LogErr
+    },
+    utils::LogErr,
 };
 use top_bar::TopBar;
 use zwang_router::{set_pathname, Outlet, ParsedPath, RouteParams};
@@ -14,10 +16,7 @@ pub mod pull_requests_tab;
 mod top_bar;
 
 use crate::{
-    app::{
-        installation_id_sync::use_sync_installation_ids_and_recv_websocket_updates,
-        not_found::NotFound, routing::*,
-    },
+    app::{not_found::NotFound, routing::*},
     frontend_error::FrontendError,
     idb_signal_from_sync_engine::IdbSignalFromSyncEngine,
 };
@@ -55,7 +54,7 @@ impl From<Tab> for RootOwnerNameRepoName {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RepositoryPageContextInner {
     repository: MaybeOptimistic<Repository>,
-    user: MaybeOptimistic<User>
+    user: MaybeOptimistic<User>,
 }
 
 pub type RepositoryPageContext = Memo<RepositoryPageContextInner>;
@@ -94,49 +93,42 @@ pub fn RepositoryPage(
         });
     };
 
-    use_sync_installation_ids_and_recv_websocket_updates();
-
     let sync_engine = use_sync_engine();
 
-    let repository_page_context = sync_engine.idb_signal(
-        |builder| {
-            builder
-                .with_store::<User>()
-                .with_store::<Repository>()
-                .build()
-        },
-        move |txn| async move {
-            let user = txn
-                .object_store::<User>()?
-                .index::<user::LoginIndex>()?
-                .get_optimistically(&params.owner_name.read())
-                .await?;
-            match user {
-                Some(user) => {
-                    let user_id = user.id;
-                    let repos = txn
-                        .object_store::<Repository>()?
-                        .index::<types::repository::NameIndex>()?
-                        .get_all_optimistically(Some(&params.repo_name.read()))
-                        .await?;
+    let repository_page_context =
+        sync_engine.idb_signal(
+            |builder| {
+                builder
+                    .with_store::<User>()
+                    .with_store::<Repository>()
+                    .build()
+            },
+            move |txn| async move {
+                let user = txn
+                    .object_store::<User>()?
+                    .index::<user::LoginIndex>()?
+                    .get_optimistically(&params.owner_name.read())
+                    .await?;
+                match user {
+                    Some(user) => {
+                        let user_id = user.id;
+                        let repos = txn
+                            .object_store::<Repository>()?
+                            .index::<types::repository::NameIndex>()?
+                            .get_all_optimistically(Some(&params.repo_name.read()))
+                            .await?;
 
-                    let repository = repos
-                        .into_iter()
-                        .find(|r| r.owner_id.map_ref(|o| o == &user_id).assume(false));
+                        let repository = repos
+                            .into_iter()
+                            .find(|r| r.owner_id.map_ref(|o| o == &user_id).assume(false));
 
-                    Ok( 
-                        repository.map(|repository| {
-                            RepositoryPageContextInner {
-                                repository,
-                                user,
-                            }
-                        })
-                    )
+                        Ok(repository
+                            .map(|repository| RepositoryPageContextInner { repository, user }))
+                    }
+                    None => Ok(None),
                 }
-                None => Ok(None),
-            }
-        },
-    );
+            },
+        );
 
     // Memo is necessary to make sure effect runs once for each repo
     let repository_page_context = Memo::new(move |_| repository_page_context.get());
