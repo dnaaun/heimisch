@@ -8,9 +8,9 @@ edition = "2021"
 # This specific combination of versions for leptos and thaw was selected simply because it's the one
 # that compiles :).
 # https://discord.com/channels/1031524867910148188/1290135091179294730/1290404436321112084
-leptos = { version = "0.7", features = ["nightly", "tracing", "csr"] }
+leptos = { version = "0.7.8", features = ["nightly", "tracing", "csr"] }
 leptos_reactive = { version = "*" } 
-leptos_router = { version = "0.7", features = ["nightly"] }
+leptos_router = { version = "0.7.8", features = ["nightly"] }
 wasm-bindgen = { version = "0.2.100", default-features = false }
 web-sys = { version = "*", default-features = false, features = ["Window", "Clipboard",
 "Navigator", "Storage", "WebSocket"] }
