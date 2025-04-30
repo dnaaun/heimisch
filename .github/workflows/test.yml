@@ -35,11 +35,22 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests for ${{ matrix.crate }}
-        run: cargo test -p ${{ matrix.crate }}
+        run: cargo test -p ${{ matrix.crate }} -- --test-threads=4
 
   wasm-tests:
-    name: WASM Tests
+    name: WASM Tests - ${{ matrix.package }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [web, shared]
+        include:
+          - package: web
+            working-directory: ./web
+            features: ""
+          - package: shared
+            working-directory: ./shared
+            features: "--features hydrate"
     steps:
       - uses: actions/checkout@v4
 
@@ -55,11 +66,7 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Run WASM tests for web/
-        working-directory: ./web
-        run: wasm-pack test --headless --firefox 
-
-      - name: Run WASM tests for shared/
-        working-directory: ./shared
-        run: wasm-pack test --headless --firefox --features hydrate
+      - name: Run WASM tests
+        working-directory: ${{ matrix.working-directory }}
+        run: wasm-pack test --headless --firefox ${{ matrix.features }}
 
