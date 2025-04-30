@@ -54,7 +54,12 @@ impl Config {
 }
 
 pub async fn init_config() -> Config {
-    dotenv().expect("");
+    if let Err(err) = dotenv() {
+        // Only log a warning if we're not in CI
+        if env::var("CI").is_err() {
+            panic!("Warning: Could not load .env file: {}", err);
+        }
+    }
 
     let host = env::var("HOST").unwrap().parse().unwrap();
     let port = env::var("PORT").unwrap().parse().unwrap();

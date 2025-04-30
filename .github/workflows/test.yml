@@ -9,21 +9,87 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
-
-  # Just adding these because tests are failing in CI. Hopefully they are not actually used in CI lol.
   HEIMISCH_OUTPUT_NAME: 'heimisch'
   HEIMISCH_API_DOMAIN: 'http://localhost:3210/'
-  HEIMISCH_FRONTEND_DOMAIN: 'http://localhost:3000/'
+  HEIMISCH_FRONTEND_DOMAIN: 'http://localhost:4000/'
 
 jobs:
-  non-wasm-tests:
-    name: Non-WASM Tests - ${{ matrix.crate }}
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    env:
+      HOST: 0.0.0.0
+      PORT: 3210
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/heimisch_test
+      GITHUB_HEIMISCH_APP_ID: 12345
+      GITHUB_HEIMISCH_CLIENT_ID: test_client_id
+      GITHUB_HEIMISCH_CLIENT_SECRET: test_client_secret
+      GITHUB_HEIMISCH_PRIVATE_KEY_PEM: |-
+        -----BEGIN PRIVATE KEY-----
+        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC28TYKnClyfEDz
+        tkDgC0oDwU7Epuv2PUY9XMjpBN7H4a+mvgjn+0Tgj3JP2aFBnNZY/NvsFwoaaPcI
+        Ccb9iygJnBS8v+14DsMy4hiRYbu1suvS3k2s7l5qj9lVoPbafY47F9p9WV6nLoU4
+        FugfPbSZNczS1SXAYzS4IdL7/pFCATr/ktUTCsgoIO51o42kTECWolwDT9WCJ918
+        smToFOjJt1Dwv0VGIKfrkIol9P0l/60fpxmKD0NBThNMugb3NMzHW7Jd4JhZslam
+        aQKwDmBfk0NfByNDrGqlEZwBTOpy8l/f5ypqt/iMeEXGWAPHISd0UMCJAl/Xgd0m
+        iS517j+JAgMBAAECggEAC+ajbruDtT1IzunsbL7DQv0GciPPPhq0mO2SKtl8oiln
+        /zuF0gyOKaMfSztDwqRQq+OQLXq+tyLcribPrYMJ2N0w2qoMKVchguwDL+L5Hnv8
+        HCDG0hEELp+6wlepM2O/VtAJkEW58vuDYleYJF8j4mMl9tGzpeE2RuO5aVgBTFcy
+        vQu/KRAQoU8tzHYRn2gMcgDfiAB9xFbs+TozWQHTm5er9siNsWON8JDtelSnwxvP
+        7JQnNDU3HbEG9o55Z8ipbr9/T5vc0Tp+nJJhOv5xZJq+yRHlaEpXTqRaFPY1M5hf
+        v4A+hoNSdQGoQsdapmtxscNs05ml6sRn8UEirpa10QKBgQDc/f15ecCpAVD/R0q3
+        k//jX6ZFIy706oLFfgg/bswMdeRY3fcSOrEhsSq7+gz7T/FlFLjvmr/NVDdFMWkS
+        Yk/bQDkSGwO29jl9QBH1uIWF7kVWBojCZDGHVIuKvnzXxXRLwqfPIrbDEkVo8r+O
+        5uYs5WdWsuEM4Hv+Y4Jc+1kNeQKBgQDT7Cmsw0kxxBmctsmof1vT018LKp1Sevnp
+        sofLnfKLb1S/jrWGwp1Xq4KpmGT87xz34UDn2steiy61kp/hjc/zqEzQAbO+4QSI
+        uToc2WkzXkyHuIq4I5w1MjxctJNfD5qI8R8UgFCXiSiKhZp8xUOQ5tuB3lP43O2s
+        hf/4JIkOkQKBgH4d8T8XDa0llCzraaeUrc778i64on6hKto8T8arm4Vs7lEM84iS
+        uC3LJuE6FZiCifeuuM/814L9kcFKLnWQZ5RvdWJwylDq+eoR224IzSKe1TD/76JI
+        fb+Gr1AR37tf8zudLhlW7UgsMDJxfoK2IRv0G2JuGWM45WpLLcWUp8C5AoGBAIRE
+        uh4iJOTyyCmPzH1mQCINoxyNFHQOXT0HOMpVYrS0X+jPYW0iuqGlYoAHpcBYXXQ5
+        GxGa9aOkqxqY0UEuCcTCHm8VIOLZ/sJ3GVY4O/jbulhbTflwAGcTW6lg6zpBuuoN
+        1KAvFh3+dVc/3BRT6r/d1tNPuIlzGsS7Pe/andCBAoGBALJYsDnmQGc6FkZPAHNr
+        lLvg6/oFkBiy0vnlp1zv5E3yJbtv6HJ+9PBRRQaEfWynvnQB1Td3CpAgOZn22jif
+        mDSMfMYdiDeaep0QP7YVKjXMllU1wI8IiWv9/fFiMvV1VtdOKj734HalO2wgIXkQ
+        E6HKlTIjCbZRYxo834p8Wqmt
+        -----END PRIVATE KEY-----
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: heimisch_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly-2025-04-28
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run backend tests
+        run: cargo test -p backend -- --test-threads=4
+
+  other-non-wasm-tests:
+    name: Other Non-WASM Tests - ${{ matrix.crate }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         crate:
-          - backend
           - typesafe_idb
           - meta_tools
           - macros_impl
@@ -35,10 +101,7 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly-2025-04-28
-          # cache is enabled by default
 
-      # Keeping Swatinem/rust-cache for caching dependencies
-      # The toolchain itself will be cached by actions-rust-lang/setup-rust-toolchain
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
@@ -67,10 +130,7 @@ jobs:
         with:
           toolchain: nightly-2025-04-28
           targets: wasm32-unknown-unknown
-          # cache is enabled by default
 
-      # Keeping Swatinem/rust-cache for caching dependencies
-      # The toolchain itself will be cached by actions-rust-lang/setup-rust-toolchain
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 

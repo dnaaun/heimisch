@@ -1,2 +1,2 @@
--P ubuntu-latest=rust:latest
+-P ubuntu-latest=node:18-buster
 --container-architecture linux/amd64 
