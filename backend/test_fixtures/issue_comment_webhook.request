@@ -1,7 +1,6 @@
 POST /api/github_webhooks HTTP/1.1
 Host: elided.com
 User-Agent: GitHub-Hookshot/cf2815b
-Content-Length: 9826
 Accept: */*
 Content-Type: application/json
 X-Forwarded-For: 140.82.115.39
