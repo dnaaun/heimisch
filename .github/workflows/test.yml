@@ -10,6 +10,11 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
 
+  # Just adding these because tests are failing in CI. Hopefully they are not actually used in CI lol.
+  HEIMISCH_OUTPUT_NAME: 'heimisch'
+  HEIMISCH_API_DOMAIN: 'http://localhost:3210/'
+  HEIMISCH_FRONTEND_DOMAIN: 'http://localhost:3000/'
+
 jobs:
   non-wasm-tests:
     name: Non-WASM Tests - ${{ matrix.crate }}
@@ -27,10 +32,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly-2025-04-28
+          # cache is enabled by default
 
+      # Keeping Swatinem/rust-cache for caching dependencies
+      # The toolchain itself will be cached by actions-rust-lang/setup-rust-toolchain
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
@@ -55,16 +63,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly-2025-04-28
           targets: wasm32-unknown-unknown
+          # cache is enabled by default
+
+      # Keeping Swatinem/rust-cache for caching dependencies
+      # The toolchain itself will be cached by actions-rust-lang/setup-rust-toolchain
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
 
       - name: Run WASM tests
         working-directory: ${{ matrix.working-directory }}
