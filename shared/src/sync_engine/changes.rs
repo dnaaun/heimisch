@@ -9,7 +9,9 @@ use crate::backend_api_trait::BackendApiTrait;
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
-use super::optimistic::db::{DbWithOptimisticChanges, TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
+use super::optimistic::db::{
+    DbWithOptimisticChanges, TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges,
+};
 use super::websocket_updates::transport::TransportTrait;
 use super::{
     super::types::{
@@ -426,7 +428,9 @@ where
     }
 }
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> SyncEngine<BackendApi, Transport, GithubApi> {
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<BackendApi, Transport, GithubApi>
+{
     pub async fn persist_changes<
         Marker: StoreMarkersForChanges,
         Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
@@ -498,9 +502,7 @@ where
     for (_, issue_comment) in issue_comments {
         match issue_comment {
             ExistingOrDeleted::Existing(issue_comment) => {
-                let existing = issue_comment_store
-                    .get(&issue_comment.id)
-                    .await?;
+                let existing = issue_comment_store.get(&issue_comment.id).await?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(issue_comment)?,
                     None => issue_comment,

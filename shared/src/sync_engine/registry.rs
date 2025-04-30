@@ -44,7 +44,7 @@ impl<T> Registry<T> {
         let inner = self.inner.clone();
 
         move || {
-            let item = inner.borrow_mut().map.remove(&id);
+            let _item = inner.borrow_mut().map.remove(&id);
         }
     }
 }
