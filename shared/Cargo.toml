@@ -14,7 +14,7 @@ serde_json = "1.0.132"
 tracing = "0.1.40"
 github_api = { path = "../github_api" }
 macros = { path = "../macros" }
-wasm_testing_utils = { path = "../wasm_testing_utils" }
+leptos_testing_utils = { path = "../leptos_testing_utils" }
 typesafe_idb = { path = "../typesafe_idb", optional = false }
 utils = { path = "../utils" }
 idb = { version = "*", optional = false }

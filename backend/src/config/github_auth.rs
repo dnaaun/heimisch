@@ -35,7 +35,7 @@ pub fn create_jwt(
         exp: usize,
     }
 
-    let now = jiff::Timestamp::now().as_jiff_duration().as_secs() as usize;
+    let now = jiff::Timestamp::now().as_duration().as_secs() as usize;
 
     // Github only allows JWTs that expire in the next 10 minutes.
     // The token is issued 60 seconds in the past and expires in 9 minutes,

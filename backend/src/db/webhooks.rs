@@ -53,7 +53,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn convert_system_time_to_jiff(system_time: SystemTime) -> jiff::Timestamp {
     let duration_since_epoch = system_time.duration_since(UNIX_EPOCH).unwrap();
-    jiff::Timestamp::from_jiff_duration(SignedDuration::from_nanos(
+    jiff::Timestamp::from_duration(SignedDuration::from_nanos(
         duration_since_epoch.as_nanos().try_into().unwrap(),
     ))
     .unwrap()
@@ -61,10 +61,10 @@ pub fn convert_system_time_to_jiff(system_time: SystemTime) -> jiff::Timestamp {
 
 pub fn convert_jiff_to_system_time(timestamp: jiff::Timestamp) -> SystemTime {
     // Convert jiff::Timestamp to a duration since the Unix epoch
-    let signed_duration = timestamp.as_jiff_duration();
+    let duration = timestamp.as_duration();
 
     // Convert the SignedDuration to nanos
-    let nanos_since_epoch = signed_duration.as_nanos().try_into().unwrap();
+    let nanos_since_epoch = duration.as_nanos().try_into().unwrap();
 
     // Create a Duration from the nanos
     let duration = std::time::Duration::from_nanos(nanos_since_epoch);

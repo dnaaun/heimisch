@@ -15,7 +15,7 @@ members = [
     "typesafe_idb",
     "reqwest_wiremock",
     "zwang_router",
-    "wasm_testing_utils",
+    "leptos_testing_utils",
 ]
 
 [[workspace.metadata.leptos]]

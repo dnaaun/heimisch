@@ -1,5 +1,5 @@
 [package]
-name = "wasm_testing_utils"
+name = "leptos_testing_utils"
 version = "0.0.0"
 edition = "2021"
 

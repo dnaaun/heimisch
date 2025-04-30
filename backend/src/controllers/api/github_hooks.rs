@@ -54,7 +54,6 @@ pub fn github_hooks(router: Router<AppState>) -> Router<AppState> {
                     x_github_event,
                     ..
                 } = header;
-
                 let webhook_id = webhook_id.parse::<i64>().map_err(|_| {
                     ErrorSource::GithubWebhookHeaderError {
                         message: format!("webhook id not convertable to i64: {webhook_id}"),

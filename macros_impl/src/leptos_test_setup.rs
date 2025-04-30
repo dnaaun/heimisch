@@ -19,7 +19,7 @@ pub fn leptos_test_setup(item: TokenStream) -> TokenStream {
             {
                 _ = ::leptos::task::Executor::init_wasm_bindgen();
                 let buffer = ::std::sync::Arc::new(::std::sync::Mutex::new(Vec::new()));
-                let writer_factory = ::wasm_testing_utils::leptos_test_setup::MemoryWriterFactory {
+                let writer_factory = ::leptos_testing_utils::leptos_test_setup::MemoryWriterFactory {
                     buffer: ::std::sync::Arc::clone(&buffer),
                 };
                 let subscriber = ::tracing_subscriber::fmt()

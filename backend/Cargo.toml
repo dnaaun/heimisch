@@ -46,7 +46,7 @@ reqwest_wiremock = { path = "../reqwest_wiremock", features = ["mocking"] }
 serde_path_to_error = "0.1.16"
 
 [dev-dependencies]
-axum-test = { version = "*", features = ["ws"] }
+axum-test = { version = "16.4.1", features = ["ws"] }
 diesel_test = { path = "../diesel-test" }
 tokio-tungstenite = "0.24.0"
 wiremock = "0.6.2"

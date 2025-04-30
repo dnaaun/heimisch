@@ -5,15 +5,15 @@
 #![feature(trait_alias)]
 
 pub mod avail;
+pub mod consts;
 pub mod endpoints;
+pub mod random;
+pub mod retry;
 pub mod sync_engine;
 pub mod types;
 pub mod utils;
-pub mod retry;
-pub mod consts;
-pub mod random;
 
+pub mod backend_api_trait;
+pub mod github_api_trait;
 #[cfg(test)]
 pub mod test_setup;
-pub mod github_api_trait;
-pub mod backend_api_trait;
