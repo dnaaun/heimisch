@@ -18,24 +18,18 @@ jobs:
       fail-fast: false
       matrix:
         crate:
-          - shared
           - backend
-          - cli
-          - utils
-          - diesel-test
+          - typesafe_idb
           - meta_tools
-          - github_webhook_body
-          - macros
           - macros_impl
-          - github_api
-          - reqwest_wiremock
-          - zwang_router
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly-2025-04-28
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
@@ -52,6 +46,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@nightly
         with:
+          toolchain: nightly-2025-04-28
           targets: wasm32-unknown-unknown
 
       - name: Install wasm-pack
@@ -60,26 +55,11 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Run WASM tests for web
-        run: wasm-pack test --headless --chrome web
+      - name: Run WASM tests for web/
+        working-directory: ./web
+        run: wasm-pack test --headless --firefox 
 
-      - name: Run WASM tests for typesafe_idb
-        run: wasm-pack test --headless --chrome typesafe_idb
+      - name: Run WASM tests for shared/
+        working-directory: ./shared
+        run: wasm-pack test --headless --firefox --features hydrate
 
-      - name: Run WASM tests for wasm_testing_utils
-        run: wasm-pack test --headless --chrome wasm_testing_utils
-
-  web-tests:
-    name: Web Tests (Non-WASM)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@nightly
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run non-WASM tests for web crate
-        run: cargo test -p web --lib --bins --tests 

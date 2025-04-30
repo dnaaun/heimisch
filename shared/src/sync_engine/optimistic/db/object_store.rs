@@ -66,10 +66,7 @@ where
         if let Some(o) = optimistically_updated {
             return Ok(Some(MaybeOptimistic::new(o, true)));
         }
-        let optimistically_created = self
-            .optimistic_changes
-            .creations
-            .latest_downcasted::<S>(id);
+        let optimistically_created = self.optimistic_changes.creations.latest_downcasted::<S>(id);
         if let Some(o) = optimistically_created {
             return Ok(Some(MaybeOptimistic::new(o, true)));
         };
@@ -155,6 +152,9 @@ where
     S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
+    /// Abstract away writing both the equivalent optimistic id (if such
+    /// an id exists in optimistic creations) and the actual id
+    /// to the reactivity trackers.
     pub fn add_to_reactivity_during_write(&self, id: &S::Id) {
         let serialized_id = SerializedId::new_from_id::<S>(id);
         let optimistic_id = self
@@ -162,9 +162,9 @@ where
             .get_realistic_to_optimistic_for_creations::<S>(id)
             .map(|i| SerializedId::new_from_id::<S>(&i));
 
+        let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
+        reactivity_trackers.add_modification(S::NAME, serialized_id);
         if let Some(optimistic_id) = optimistic_id {
-            let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
-            reactivity_trackers.add_modification(S::NAME, serialized_id);
             reactivity_trackers.add_modification(S::NAME, optimistic_id);
         }
     }

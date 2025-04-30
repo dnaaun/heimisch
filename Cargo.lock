@@ -5125,6 +5125,7 @@ dependencies = [
  "leptos",
  "leptos_reactive",
  "leptos_router",
+ "leptos_testing_utils",
  "macros",
  "parking_lot",
  "pin-project",

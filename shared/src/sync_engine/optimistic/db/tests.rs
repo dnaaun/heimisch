@@ -66,7 +66,7 @@ async fn num_times_subscriber_called<Txn1Markers, Txn1Mode, Txn2Markers, Txn2Mod
 
     let txn2 = make_txn_2(sync_engine.db.txn().read_write());
     with_txn_2(&txn2).await;
-    txn2.commit().unwrap();
+    let _ = txn2.commit().unwrap();
 
     let value = *subscriber_hit_times.borrow();
 
@@ -212,7 +212,11 @@ pub async fn get_all_no_optimisim_put_overlapping() {
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
         .make_txn_2(|txn| txn.with_store::<Issue>().build())
         .with_txn_1(async |txn| {
-            let _ = txn.object_store::<Issue>().unwrap().get_all_optimistically().await;
+            let _ = txn
+                .object_store::<Issue>()
+                .unwrap()
+                .get_all_optimistically()
+                .await;
         })
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()
@@ -256,7 +260,11 @@ pub async fn get_all_no_optimisim_create_overlapping() {
         .make_txn_1(|txn| txn.with_store::<Issue>().build())
         .make_txn_2(|txn| txn.with_store::<Issue>().build())
         .with_txn_1(async |txn| {
-            let _ = txn.object_store::<Issue>().unwrap().get_all_optimistically().await;
+            let _ = txn
+                .object_store::<Issue>()
+                .unwrap()
+                .get_all_optimistically()
+                .await;
         })
         .with_txn_2(async |txn| {
             txn.object_store::<Issue>()

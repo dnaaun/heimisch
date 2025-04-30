@@ -53,6 +53,7 @@ tracing-subscriber = "0.3.19"
 tracing-subscriber-wasm = "0.1.0"
 tracing-test = "0.2.5"
 wasm-bindgen-test = "0.3.50"
+leptos_testing_utils = { path = "../leptos_testing_utils" }
 
 [features]
 default = []
