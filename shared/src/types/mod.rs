@@ -1,11 +1,13 @@
 pub mod github_app;
 pub mod installation;
 pub mod installation_access_token_row;
+pub mod installation_initial_sync_status;
 pub mod issue;
 pub mod issue_comment;
 pub mod issue_comment_initial_sync_status;
 pub mod issues_initial_sync_status;
 pub mod label;
+pub mod last_webhook_update_at;
 pub mod license;
 pub mod milestone;
 pub mod pull_request;
@@ -15,4 +17,3 @@ pub mod repository_initial_sync_status;
 pub mod team;
 pub mod team_organization;
 pub mod user;
-pub mod last_webhook_update_at;

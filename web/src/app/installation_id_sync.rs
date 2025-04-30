@@ -23,24 +23,38 @@ pub fn use_sync_installation_ids_and_recv_websocket_updates() {
                 .await
                 .log_err();
         });
+
         let sync_engine2 = sync_engine.clone();
         spawn_local(async move {
             let sync_engine = sync_engine2.clone();
+
+            // First, sync existing installation IDs
+            let existing_ids = get_installation_ids_from_local_storage();
+            for id in existing_ids.iter().cloned() {
+                let sync_engine = sync_engine.clone();
+                spawn_local(async move {
+                    let _ = sync_engine
+                        .fetch_repositorys_for_installation_id(&id)
+                        .await
+                        .log_err();
+                });
+            }
+
+            // Then, get installations from backend and sync any new ones
             if let Ok(get_installations_resp) = BACKEND_API
                 .with(|e| e.clone())
                 .get_installations()
                 .await
                 .log_err()
             {
-                let existing = get_installation_ids_from_local_storage();
                 let new_ids = get_installations_resp
                     .installations
                     .into_iter()
                     .map(|i| i.id)
                     .collect::<HashSet<_>>()
-                    .difference(&existing)
+                    .difference(&existing_ids)
                     .cloned()
-                    .collect();
+                    .collect::<HashSet<_>>();
 
                 add_installation_ids_to_local_storage(&new_ids);
 
@@ -51,7 +65,7 @@ pub fn use_sync_installation_ids_and_recv_websocket_updates() {
                             .fetch_repositorys_for_installation_id(&id)
                             .await
                             .log_err();
-                    })
+                    });
                 }
             };
         });

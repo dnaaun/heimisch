@@ -1,8 +1,15 @@
 use futures::future::try_join_all;
 
 use crate::{
-    avail::MergeError, backend_api_trait::BackendApiTrait, github_api_trait::GithubApiTrait,
-    sync_engine::websocket_updates::transport::TransportTrait, types::installation::InstallationId,
+    avail::MergeError,
+    backend_api_trait::BackendApiTrait,
+    github_api_trait::GithubApiTrait,
+    sync_engine::websocket_updates::transport::TransportTrait,
+    types::{
+        installation::InstallationId,
+        installation_initial_sync_status::InstallationInitialSyncStatus,
+        issues_initial_sync_status::InitialSyncStatusEnum,
+    },
 };
 
 use super::super::{
@@ -18,8 +25,25 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         &self,
         id: &InstallationId,
     ) -> SyncResult<(), Transport> {
+        let txn = self
+            .db
+            .txn()
+            .with_store::<InstallationInitialSyncStatus>()
+            .build();
+        let initial_sync_status = txn
+            .object_store::<InstallationInitialSyncStatus>()?
+            .get(id)
+            .await?;
+        if let Some(initial_sync_status) = initial_sync_status {
+            if let InitialSyncStatusEnum::Full = initial_sync_status.status {
+                return Ok(());
+            }
+        }
+        drop(txn);
+
         let conf = self.get_api_conf(id).await?;
 
+        // No need to mark as Partial since we only have Full and NoSync states now
         let mut repos = vec![];
         let mut page = 1;
         loop {
@@ -55,6 +79,20 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
 
         let txn = Changes::txn(&self.db).read_write().build();
         self.persist_changes(&txn, changes).await?;
+
+        // Mark sync as complete
+        let txn = self
+            .db
+            .txn()
+            .with_store::<InstallationInitialSyncStatus>()
+            .read_write()
+            .build();
+        txn.object_store::<InstallationInitialSyncStatus>()?
+            .put(&InstallationInitialSyncStatus {
+                status: InitialSyncStatusEnum::Full,
+                id: *id,
+            })
+            .await?;
 
         Ok(())
     }

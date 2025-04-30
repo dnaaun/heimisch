@@ -7,6 +7,7 @@ use std::rc::Rc;
 use crate::backend_api_trait::BackendApiTrait;
 use crate::types::github_app::GithubAppStoreMarker;
 use crate::types::installation_access_token_row::InstallationAccessTokenRowStoreMarker;
+use crate::types::installation_initial_sync_status::InstallationInitialSyncStatusStoreMarker;
 use crate::types::issue::IssueStoreMarker;
 use crate::types::issue_comment::IssueCommentStoreMarker;
 use crate::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatusStoreMarker;
@@ -19,7 +20,8 @@ use crate::types::repository::RepositoryStoreMarker;
 use crate::types::repository_initial_sync_status::RepositoryInitialSyncStatusStoreMarker;
 use crate::types::user::UserStoreMarker;
 use crate::types::{
-    github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow, issue::Issue,
+    github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
+    installation_initial_sync_status::InstallationInitialSyncStatus, issue::Issue,
     issue_comment::IssueComment, issue_comment_initial_sync_status::IssueCommentsInitialSyncStatus,
     issues_initial_sync_status::IssuesInitialSyncStatus, license::License, milestone::Milestone,
     repository::Repository, repository_initial_sync_status::RepositoryInitialSyncStatus,
@@ -36,28 +38,31 @@ use super::DbSubscription;
 use super::{error::SyncResult, SyncEngine};
 
 pub type DbStoreMarkers = (
-    RepositoryInitialSyncStatusStoreMarker,
+    InstallationInitialSyncStatusStoreMarker,
     (
-        IssueCommentsInitialSyncStatusStoreMarker,
+        RepositoryInitialSyncStatusStoreMarker,
         (
-            LastWebhookUpdateAtStoreMarker,
+            IssueCommentsInitialSyncStatusStoreMarker,
             (
-                IssueCommentStoreMarker,
+                LastWebhookUpdateAtStoreMarker,
                 (
-                    InstallationAccessTokenRowStoreMarker,
+                    IssueCommentStoreMarker,
                     (
-                        IssuesInitialSyncStatusStoreMarker,
+                        InstallationAccessTokenRowStoreMarker,
                         (
-                            LabelStoreMarker,
+                            IssuesInitialSyncStatusStoreMarker,
                             (
-                                LicenseStoreMarker,
+                                LabelStoreMarker,
                                 (
-                                    MilestoneStoreMarker,
+                                    LicenseStoreMarker,
                                     (
-                                        RepositoryStoreMarker,
+                                        MilestoneStoreMarker,
                                         (
-                                            GithubAppStoreMarker,
-                                            (UserStoreMarker, (IssueStoreMarker, ())),
+                                            RepositoryStoreMarker,
+                                            (
+                                                GithubAppStoreMarker,
+                                                (UserStoreMarker, (IssueStoreMarker, ())),
+                                            ),
                                         ),
                                     ),
                                 ),
@@ -99,7 +104,8 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
             .with_store::<IssueComment>()
             .with_store::<LastWebhookUpdateAt>()
             .with_store::<IssueCommentsInitialSyncStatus>()
-            .with_store::<RepositoryInitialSyncStatus>();
+            .with_store::<RepositoryInitialSyncStatus>()
+            .with_store::<InstallationInitialSyncStatus>();
 
         let db_subscriptions: Rc<Registry<DbSubscription>> = Default::default();
         let db_subscriptions2 = db_subscriptions.clone();
