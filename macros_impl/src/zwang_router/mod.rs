@@ -17,7 +17,6 @@ pub use path::zwang_url;
 #[cfg(test)]
 const TEST_STR: &str = r#"
 {
-    fallback: NotFound,
     view: Sidebar,
     children: [
         {
