@@ -29,13 +29,11 @@ where
 {
     pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport> {
 
-        tracing::info!("IN RECV WEBSOCKET UPDATES");
         let mut url = self
             .backend_api
             .get_domain()
             .join(WEBSOCKET_UPDATES_ENDPOINT)
             .expect("");
-        tracing::info!("GOT THE URL");
 
 
         let last_webhook_update_at = self

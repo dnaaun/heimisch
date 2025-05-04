@@ -47,6 +47,7 @@ impl<S> Clone for IdbSignal<S> {
 
 #[allow(unused)]
 impl<S: 'static + Clone> IdbSignal<S> {
+    #[track_caller]
     pub fn get(&self) -> Option<S> {
         self.inner.try_get_value().unwrap().local_resource.get()
     }

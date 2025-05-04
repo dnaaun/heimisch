@@ -153,7 +153,10 @@ fn IssueRow(
     let title = issue.title.clone();
     let number = issue.number;
 
-    let login = user.get().transpose()?.flatten().map(|u| u.login.clone());
+    let login = move || -> Result<_, FrontendError> {
+        let user = user.get().transpose()?.flatten();
+        Ok(user.map(|u| u.login.clone()))
+    };
 
     let opened_or_closed_text = closed_at
         .as_ref()
@@ -167,7 +170,13 @@ fn IssueRow(
         });
 
     let href = Signal::derive(move || {
-        zwang_url!("/owner_name={owner_name.get()}/repo_name={repo_name.get()}/issues/issue_number={number.to_string()}")
+        // TODO: Figure out why doing `.get()` makes leptos warn that we're
+        // reading these `owner_name` and `repo_name` memos in an "unreactive"
+        // context. Can't think of anything that should be more reactive than
+        // the body of a Signal::derive.
+        let owner_name = owner_name.get_untracked();
+        let repo_name = repo_name.get_untracked();
+        zwang_url!("/owner_name={owner_name}/repo_name={repo_name}/issues/issue_number={number.to_string()}")
             .to_string()
     });
     Ok::<_, FrontendError>(view! {

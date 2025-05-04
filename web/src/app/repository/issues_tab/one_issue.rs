@@ -1,9 +1,9 @@
+use crate::app::routing::*;
 use futures::future::{join_all, OptionFuture};
 use github_api::models::milestone::OpenOrClosed;
 use jiff::Timestamp;
 use leptos::prelude::*;
 use macros::zwang_url;
-use crate::app::routing::*;
 use shared::{
     avail::Avail,
     sync_engine::optimistic::db::MaybeOptimistic,
@@ -114,10 +114,6 @@ pub fn OneIssue(
                 }
             },
         );
-
-        Effect::new(move || {
-            tracing::info!("issue_and_user: {:?}", issue_and_user.get());
-        });
 
         (move || {
             issue_and_user.get().map(|issue_and_user| {

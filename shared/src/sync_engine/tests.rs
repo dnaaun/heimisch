@@ -138,16 +138,8 @@ async fn testing_optimistic_create() {
     .await
     .unwrap();
     let sync_engine_clone = sync_engine.clone();
-    tracing::info!(
-        "The get_backend() is {:?}",
-        mock_backend_api_clone.borrow().get_domain()
-    );
+
     Executor::spawn_local(async move {
-        tracing::info!("In 'coroutine' that will receive websocket updates");
-        tracing::info!(
-            "The get_backend() is {:?}",
-            mock_backend_api_clone.borrow().get_domain()
-        );
         let _ = sync_engine_clone.recv_websocket_updates().await.log_err();
     });
 
@@ -273,7 +265,7 @@ async fn testing_optimistic_create() {
     wait_for(&move || single_subscriber_hit.expect_and_reset(1)).await;
 
     let txn = sync_engine.db.txn().with_store::<Issue>().build();
-    
+
     // Make sure that the optimistic thing is removed from bulk reads.
     let issues = txn
         .object_store::<Issue>()
@@ -293,8 +285,7 @@ async fn testing_optimistic_create() {
         .unwrap()
         .get_optimistically(&optimistic_issue_id)
         .await
-        .unwrap()
-        ;
+        .unwrap();
     assert_eq!(issue, None);
 }
 

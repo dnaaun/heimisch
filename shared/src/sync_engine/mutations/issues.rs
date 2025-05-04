@@ -2,16 +2,20 @@ use github_api::models::IssuesCreateRequest;
 use jiff::Timestamp;
 
 use crate::{
-    backend_api_trait::BackendApiTrait, github_api_trait::GithubApiTrait, random::random, sync_engine::{error::SyncError, websocket_updates::transport::TransportTrait, SyncEngine}, types::{
+    backend_api_trait::BackendApiTrait,
+    github_api_trait::GithubApiTrait,
+    random::random,
+    sync_engine::{error::SyncError, websocket_updates::transport::TransportTrait, SyncEngine},
+    types::{
         installation::InstallationId,
         issue::{Issue, IssueId},
         repository::Repository,
         user::User,
-    }
+    },
 };
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait> 
-    SyncEngine<BackendApi, Transport, GithubApi> 
+impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
+    SyncEngine<BackendApi, Transport, GithubApi>
 {
     /// Returns the optimistic id of the issue.
     ///
@@ -53,12 +57,12 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
             .object_store_rw::<Issue>()?
             .create_optimistically(optimistic_issue, async move {
                 let conf = this.get_api_conf(&installation_id).await.map_err(|_| ())?;
-                let id = this.github_api
+                let id = this
+                    .github_api
                     .issues_slash_create(&conf, &owner_login, &repo_name, issues_create_request)
                     .await
                     .map(|i| IssueId::from(i.id))
                     .map_err(|_| ());
-                tracing::info!("Created issue");
                 id
             });
 

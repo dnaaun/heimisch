@@ -25,12 +25,13 @@ const TEST_STR: &str = r#"
         },
         {
             path: "/{owner_name}",
+            layout: Sidebar,
             children: [
                 {
                     path: "/{repo_name}",
                     layout: RepositoryPage,
-                    view: IssuesTab,
-                    will_pass: Signal<RepositoryId>,
+                    view: IssuesList,
+                    will_pass: RepositoryPageContext,
                     children: [
                         {
                             path: "/pulls",
@@ -38,12 +39,17 @@ const TEST_STR: &str = r#"
                         },
                         {
                             path: "/issues",
-                            will_pass: Signal<RepositoryId>,
+                            will_pass: RepositoryPageContext,
                             view: IssuesList,
-                            children: [ {
+                            children: [
+                                {
+                                    path: "/new",
+                                    view: NewIssue
+                                },
+                                {
                                     path: "/{issue_number}",
                                     view: OneIssue
-                                }
+                                },
                             ]
                         },
                     ]

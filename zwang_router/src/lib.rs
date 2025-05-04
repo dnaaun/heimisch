@@ -20,6 +20,7 @@ impl<T> MemoExt<T> for Memo<Option<T>>
 where
     T: Clone + Send + Sync + 'static + PartialEq,
 {
+    #[track_caller]
     fn unwrap(self) -> Memo<T> {
         Memo::new(move |_| {
             let option: Option<T> = self.get();

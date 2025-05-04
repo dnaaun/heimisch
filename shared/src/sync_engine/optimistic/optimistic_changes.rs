@@ -47,12 +47,9 @@ impl OptimisticChanges {
         let creations = self.creations.clone();
         let time = creations.insert::<S>(&id, Rc::new(row));
 
-        tracing::info!("doing OptimisticChanges::create for row with id: {:?}", id);
-
         Executor::spawn_local(async move {
             match create_fut.await {
                 Ok(actual_id) => {
-                    tracing::info!("Inside the spawn_local in OptimisticChanges::create");
                     creations.mark_realistic::<S>(
                         &id,
                         &time,
@@ -89,7 +86,6 @@ impl OptimisticChanges {
 
     /// This can be refactored (along with mark_realistic).
     pub fn remove_successful_for_id<S: Store>(&self, id: &S::Id) {
-        tracing::info!("Called remove successful for id: {id:?}");
         self.deletes.remove_all_realistic::<S>(&());
         self.updates.remove_all_realistic::<S>(&());
         self.creations
