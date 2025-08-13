@@ -13,7 +13,6 @@ pub mod error;
 pub mod mutations;
 pub mod optimistic;
 mod registry;
-pub mod storage_traits;
 pub mod websocket_updates;
 
 #[cfg(test)]

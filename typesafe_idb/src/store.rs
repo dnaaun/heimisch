@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use serde::{de::DeserializeOwned, Serialize};
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::StoreName;

@@ -59,7 +59,7 @@ impl<Markers, Mode> Txn<Markers, Mode> {
         Markers: StoreMarker<S>,
     {
         let actual_object_store = self.actual_txn.as_ref().map(|t| t.object_store(&S::NAME))
-            .expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be unobtainable.")?;
+            .expect("Should be None ony if it's committed/aborted, which means a &self shouldn't be obtainable.")?;
 
         Ok(ObjectStore {
             actual_object_store,
