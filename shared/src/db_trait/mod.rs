@@ -63,6 +63,7 @@ pub trait RawDbTrait {
     type Error;
     type RawTxn: RawTxnTrait<Error = Self::Error>;
     type RawDbBuilder: RawDbBuilderTrait<Error = Self::Error, Db = Self>;
+    type RawIndex: RawIndexTrait<Error = Self::Error>;
     type RawTableBuilder;
 
     fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error>;
@@ -275,5 +276,43 @@ where
 
     pub async fn delete(&self, id: &R::Id) -> Result<(), Db::Error> {
         self.raw_table.delete(id).await
+    }
+}
+
+pub trait IndexSpec {
+    type Table: Table;
+    const NAME: &'static str;
+
+    // The `Eq` requirement is used when doing optimistic updates, and it's not really
+    // unrealistic at all to expect things that indexed by indexed db have a `Eq` Rust
+    // representation.
+    type Type: Serialize + Eq;
+
+    fn get_index_value(row: &Self::Table) -> &Self::Type;
+}
+
+#[allow(async_fn_in_trait)]
+pub trait RawIndexTrait {
+    type Error;
+
+    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Self::Error>;
+    async fn get_all<IS: IndexSpec>(
+        &self,
+        value: Option<&IS::Type>,
+    ) -> Result<Vec<IS::Table>, Self::Error>;
+}
+
+pub struct Index<RawDb: RawDbTrait, IS> {
+    pub(crate) actual_index: RawDb::RawIndex,
+    pub(crate) _markers: PhantomData<IS>,
+}
+
+impl<RawDb: RawDbTrait, IS: IndexSpec> Index<RawDb, IS> {
+    pub async fn get(&self, value: &IS::Type) -> Result<Option<IS::Table>, RawDb::Error> {
+        self.actual_index.get::<IS>(value).await
+    }
+
+    pub async fn get_all(&self, value: Option<&IS::Type>) -> Result<Vec<IS::Table>, RawDb::Error> {
+        self.actual_index.get_all::<IS>(value).await
     }
 }

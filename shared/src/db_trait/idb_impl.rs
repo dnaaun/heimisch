@@ -93,6 +93,7 @@ impl RawDbTrait for idb::Database {
     type RawTxn = idb::Transaction;
     type RawDbBuilder = idb::builder::DatabaseBuilder;
     type RawTableBuilder = idb::builder::ObjectStoreBuilder;
+    type RawIndex = idb::Index;
 
     fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error> {
         Ok(self.transaction(
@@ -111,5 +112,34 @@ impl RawDbTrait for idb::Database {
 
     fn table_builder<R: Table>() -> Self::RawTableBuilder {
         idb::builder::ObjectStoreBuilder::new(R::NAME)
+    }
+}
+
+impl RawIndexTrait for idb::Index {
+    type Error = Error;
+
+    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Self::Error> {
+        Ok(self
+            .get(idb::Query::Key(serde_abstraction::to_value(value)?))?
+            .await?
+            .map(|i| serde_abstraction::from_value(i))
+            .transpose()?)
+    }
+
+    async fn get_all<IS: IndexSpec>(
+        &self,
+        value: Option<&IS::Type>,
+    ) -> Result<Vec<IS::Table>, Self::Error> {
+        Ok(self
+            .get_all(
+                value
+                    .map(|v| serde_abstraction::to_value(v).map(idb::Query::Key))
+                    .transpose()?,
+                None,
+            )?
+            .await?
+            .into_iter()
+            .map(serde_abstraction::from_value)
+            .collect::<Result<Vec<_>, _>>()?)
     }
 }
