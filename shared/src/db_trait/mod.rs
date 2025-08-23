@@ -1,8 +1,12 @@
+pub mod idb_impl;
+
 use std::{
     any::TypeId,
     collections::{HashMap, HashSet},
     marker::PhantomData,
 };
+
+use serde::{de::DeserializeOwned, Serialize};
 
 #[marker]
 pub trait TableMarker<T> {}
@@ -13,12 +17,14 @@ impl<Head, Tail, T> TableMarker<T> for (Head, Tail) where Head: TableMarker<T> {
 
 impl<T: Table> TableMarker<T> for T::Marker {}
 
-pub trait Table {
+pub trait Table: DeserializeOwned + Serialize {
     const NAME: &'static str;
 
     /// I _feel_ like I'm going to need this.
     type Marker: Default;
-    type Id;
+
+    /// I need the `Serialize` here to make it easier to integrate with idb.
+    type Id: serde::Serialize;
 
     fn id(&self) -> &Self::Id;
 }
@@ -47,7 +53,8 @@ pub trait RawDbBuilderTrait {
     type Error;
     type Db: RawDbTrait<Error = Self::Error>;
 
-    fn build(self) -> Result<Self::Db, Self::Error>;
+    #[allow(async_fn_in_trait)]
+    async fn build(self) -> Result<Self::Db, Self::Error>;
 
     fn add_table(self, table_builder: <Self::Db as RawDbTrait>::RawTableBuilder) -> Self;
 }
@@ -58,7 +65,7 @@ pub trait RawDbTrait {
     type RawDbBuilder: RawDbBuilderTrait<Error = Self::Error, Db = Self>;
     type RawTableBuilder;
 
-    fn txn(&self) -> Self::RawTxn;
+    fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error>;
     fn builder(name: &str) -> Self::RawDbBuilder;
 
     fn table_builder<R: Table>() -> Self::RawTableBuilder;
@@ -102,7 +109,7 @@ impl<RawDb: RawDbTrait, TableMarkers> DbBuilder<RawDb, TableMarkers> {
             |db_builder, (_, table_builder)| db_builder.add_table(table_builder),
         );
 
-        let db = db_builder.build()?;
+        let db = db_builder.build().await?;
 
         Ok(Db {
             markers: PhantomData,
@@ -128,17 +135,20 @@ pub struct ReadOnly;
 pub struct ReadWrite;
 
 pub trait TxnMode {
-    type SupportsReadOnly;
+    const IS_READ_WRITE: bool;
+
+    // I need this because Rust's support for constraining on associated consts is incomplete.
+    // See #92827 <https://github.com/rust-lang/rust/issues/92827>
     type SupportsReadWrite;
 }
 
 impl TxnMode for ReadOnly {
-    type SupportsReadOnly = Present;
+    const IS_READ_WRITE: bool = false;
     type SupportsReadWrite = ();
 }
 
 impl TxnMode for ReadWrite {
-    type SupportsReadOnly = Present;
+    const IS_READ_WRITE: bool = true;
     type SupportsReadWrite = Present;
 }
 pub struct TxnBuilder<'db, RawDb: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode> {
@@ -152,6 +162,7 @@ impl<'db, Db: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
     TxnBuilder<'db, Db, DbTableMarkers, TxnTableMarkers, Mode>
 where
     TxnTableMarkers: Default,
+    Mode: TxnMode,
 {
     pub fn with_table<R: Table + 'static>(
         self,
@@ -184,6 +195,18 @@ where
             db: self.db,
             mode: PhantomData,
         }
+    }
+
+    pub async fn build(self) -> Result<Txn<Db, TxnTableMarkers, Mode>, Db::Error> {
+        let raw_txn = self.db.raw.txn(
+            &self.store_names.into_iter().collect::<Vec<_>>(),
+            Mode::IS_READ_WRITE,
+        )?;
+        Ok(Txn {
+            markers: self.txn_table_markers,
+            raw_txn: Some(raw_txn),
+            mode: PhantomData,
+        })
     }
 }
 
@@ -231,7 +254,7 @@ pub struct TableAccess<Db: RawDbTrait, R: Table, Mode> {
 
 impl<Db: RawDbTrait, R: Table, Mode> TableAccess<Db, R, Mode>
 where
-    Mode: TxnMode<SupportsReadOnly = Present>,
+    Mode: TxnMode,
 {
     pub async fn get(&self, id: &R::Id) -> Result<Option<R>, Db::Error> {
         self.raw_table.get(id).await

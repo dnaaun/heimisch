@@ -14,8 +14,6 @@ use super::{
 };
 use crate::app::auth::Auth;
 
-use zwang_router::zwang_routes;
-
 trait RouteToView {
     type PrevParams: Sync + Send + 'static;
     type ArgFromParent;

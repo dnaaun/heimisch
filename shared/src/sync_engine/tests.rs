@@ -18,7 +18,7 @@ use url::Url;
 
 use crate::{
     avail::Avail,
-    backend_api_trait::{BackendApiTrait, MockBackendApiTrait},
+    backend_api_trait::MockBackendApiTrait,
     endpoints::defns::api::{
         installations::GetInstallationAccessTokenQueryParams, websocket_updates::ServerMsg,
     },
@@ -125,7 +125,7 @@ async fn testing_optimistic_create() {
         .returning(|| Url::parse("https://bcd.efg.xyz").unwrap());
 
     let mock_backend_api = Rc::new(RefCell::new(mock_backend_api));
-    let mock_backend_api_clone = mock_backend_api.clone();
+    // let mock_backend_api_clone = mock_backend_api.clone();
 
     let sync_engine = SyncEngine::new(
         mock_backend_api,
