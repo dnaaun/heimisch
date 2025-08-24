@@ -105,7 +105,7 @@ pub fn RepositoryPage(
             },
             move |txn| async move {
                 let user = txn
-                    .object_store::<User>()?
+                    .table::<User>()?
                     .index::<user::LoginIndex>()?
                     .get_optimistically(&params.owner_name.read())
                     .await?;
@@ -113,7 +113,7 @@ pub fn RepositoryPage(
                     Some(user) => {
                         let user_id = user.id;
                         let repos = txn
-                            .object_store::<Repository>()?
+                            .table::<Repository>()?
                             .index::<types::repository::NameIndex>()?
                             .get_all_optimistically(Some(&params.repo_name.read()))
                             .await?;

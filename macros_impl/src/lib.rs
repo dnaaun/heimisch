@@ -4,9 +4,10 @@
 extern crate proc_macro;
 
 mod avail_merge;
-mod zwang_router;
-mod typesafe_idb;
 pub mod leptos_test_setup;
+pub mod table;
+mod typesafe_idb;
+mod zwang_router;
 
 pub use avail_merge::derive_avail_merge;
 pub use typesafe_idb::derive_typesafe_idb;

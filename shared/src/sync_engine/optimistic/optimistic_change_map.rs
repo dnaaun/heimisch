@@ -8,7 +8,9 @@ use std::{
 use bimap::BiMap;
 use parking_lot::RwLock;
 pub use status::Status;
-use typesafe_idb::{Store, StoreName};
+use typesafe_idb::StoreName;
+
+use crate::typed_db::Table;
 
 use super::{db::SerializedId, monotonic_time::MonotonicTime};
 
@@ -104,7 +106,7 @@ impl<T, S: std::cmp::Eq + std::hash::Hash + std::fmt::Debug> Default for Optimis
 }
 
 impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
-    pub fn insert<S: Store>(&self, optimistic_id: &S::Id, v: T) -> MonotonicTime {
+    pub fn insert<S: Table>(&self, optimistic_id: &S::Id, v: T) -> MonotonicTime {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let time = MonotonicTime::new();
         self.inner
@@ -119,7 +121,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
     }
 
     /// Will panic if the thing is not pending, or if it doesn't exist.
-    pub fn remove_pending<S: Store>(&self, optimistic_id: &S::Id, time: &MonotonicTime) {
+    pub fn remove_pending<S: Table>(&self, optimistic_id: &S::Id, time: &MonotonicTime) {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         let mut by_id_len = None;
         let mut inner = self.inner.write();
@@ -148,7 +150,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
         }
     }
 
-    pub fn remove_all_realistic<S: Store>(&self, realistic_id: &RealisticId) {
+    pub fn remove_all_realistic<S: Table>(&self, realistic_id: &RealisticId) {
         let mut by_id_len = None;
         let mut inner = self.inner.write();
         if let Some(by_id) = inner.changes.get_mut(&S::NAME) {
@@ -186,7 +188,7 @@ impl<T, RealisticId: Eq + std::fmt::Debug> OptimisticChangeMap<T, RealisticId> {
 impl<T, RealisticId: Clone + Eq + std::hash::Hash + std::fmt::Debug>
     OptimisticChangeMap<T, RealisticId>
 {
-    pub fn mark_realistic<S: Store>(
+    pub fn mark_realistic<S: Table>(
         &self,
         optimistic_id: &S::Id,
         time: &MonotonicTime,
@@ -227,7 +229,7 @@ impl<T, RealisticId: Clone + Eq + std::hash::Hash + std::fmt::Debug>
 }
 
 impl<T: Clone, RealisticId: Clone> OptimisticChangeMap<T, RealisticId> {
-    pub fn latest<S: Store>(&self, optimistic_id: &S::Id) -> Option<Status<T, RealisticId>> {
+    pub fn latest<S: Table>(&self, optimistic_id: &S::Id) -> Option<Status<T, RealisticId>> {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         Some(
             self.inner
@@ -243,7 +245,7 @@ impl<T: Clone, RealisticId: Clone> OptimisticChangeMap<T, RealisticId> {
 }
 
 impl<RealisticId> OptimisticChangeMap<Rc<dyn Any>, RealisticId> {
-    pub fn latest_downcasted<S: Store + 'static>(&self, optimistic_id: &S::Id) -> Option<S> {
+    pub fn latest_downcasted<S: Table + 'static>(&self, optimistic_id: &S::Id) -> Option<S> {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         Some(
             self.inner
@@ -260,7 +262,7 @@ impl<RealisticId> OptimisticChangeMap<Rc<dyn Any>, RealisticId> {
         )
     }
 
-    pub fn all_the_latest_downcasted<S: Store + 'static>(&self) -> Vec<S> {
+    pub fn all_the_latest_downcasted<S: Table + 'static>(&self) -> Vec<S> {
         self.inner
             .read()
             .changes

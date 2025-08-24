@@ -1,9 +1,11 @@
 use std::{cell::RefCell, future::Future, panic::Location, rc::Rc};
 
 use maplit::{hashmap, hashset};
-use typesafe_idb::{IndexSpec, ObjectStore, Present, Store, TxnMode};
 
-use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
+use crate::{
+    typed_db::{IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode},
+    sync_engine::optimistic::optimistic_changes::OptimisticChanges,
+};
 
 use super::{
     index::IndexWithOptimisticChanges, reactivity_trackers::ReactivityTrackers, CommitListener,
@@ -11,9 +13,9 @@ use super::{
 };
 
 #[derive(Clone, derive_more::Constructor)]
-pub struct ObjectStoreWithOptimisticChanges<S, Mode> {
+pub struct TableWithOptimisticChanges<RawDb: RawDbTrait, S: Table, Mode> {
     optimistic_changes: Rc<OptimisticChanges>,
-    inner: ObjectStore<S, Mode>,
+    inner: TableAccess<RawDb, S, Mode>,
     pub reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
     pub commit_listener: Option<CommitListener>,
     location: &'static Location<'static>,
@@ -46,15 +48,16 @@ impl<S> MaybeOptimistic<S> {
     }
 }
 
-impl<S, Mode> ObjectStoreWithOptimisticChanges<S, Mode>
+impl<RawDb, S, Mode> TableWithOptimisticChanges<RawDb, S, Mode>
 where
-    S: Store + 'static,
-    Mode: TxnMode<SupportsReadOnly = Present>,
+    Mode: TxnMode,
+    RawDb: RawDbTrait,
+    S: Table + 'static,
 {
     pub async fn get_optimistically(
         &self,
         id: &S::Id,
-    ) -> Result<Option<MaybeOptimistic<S>>, Error> {
+    ) -> Result<Option<MaybeOptimistic<S>>, RawDb::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
@@ -74,29 +77,24 @@ where
         self.inner
             .get(&id)
             .await
-            .map_err(|e| Error::new(e, self.location))
             .map(|o| o.map(|o| MaybeOptimistic::new(o, false)))
     }
 
-    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, Error> {
+    pub async fn get(&self, id: &S::Id) -> Result<Option<S>, RawDb::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
 
-        self.inner
-            .get(id)
-            .await
-            .map_err(|e| super::Error::new(e, self.location))
+        self.inner.get(id).await
     }
 
-    pub async fn get_all_optimistically(&self) -> Result<Vec<MaybeOptimistic<S>>, super::Error> {
+    pub async fn get_all_optimistically(&self) -> Result<Vec<MaybeOptimistic<S>>, RawDb::Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
         let from_db_filtered = self
             .inner
             .get_all()
-            .await
-            .map_err(|e| super::Error::new(e, self.location))?
+            .await?
             .into_iter()
             .filter(|r| {
                 self.optimistic_changes
@@ -124,16 +122,13 @@ where
     }
 
     #[allow(dead_code)]
-    pub(crate) async fn get_all(&self) -> Result<Vec<S>, Error> {
+    pub(crate) async fn get_all(&self) -> Result<Vec<S>, RawDb::Error> {
         self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
 
-        self.inner
-            .get_all()
-            .await
-            .map_err(|e| Error::new(e, self.location))
+        self.inner.get_all().await
     }
 
-    pub fn index<IS: IndexSpec<Store = S>>(
+    pub fn index<IS: IndexSpec<Table = S>>(
         &self,
     ) -> Result<IndexWithOptimisticChanges<'_, IS>, Error> {
         Ok(IndexWithOptimisticChanges::new(
@@ -147,9 +142,8 @@ where
     }
 }
 
-impl<S, Mode> ObjectStoreWithOptimisticChanges<S, Mode>
+impl<RawDb: RawDbTrait, S: Table, Mode> TableWithOptimisticChanges<RawDb, S, Mode>
 where
-    S: Store + 'static,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     /// Abstract away writing both the equivalent optimistic id (if such
@@ -169,11 +163,8 @@ where
         }
     }
 
-    pub async fn delete(&self, id: &S::Id) -> Result<(), Error> {
-        self.inner
-            .delete(id)
-            .await
-            .map_err(|e| Error::new(e, self.location))?;
+    pub async fn delete(&self, id: &S::Id) -> Result<(), RawDb::Error> {
+        self.inner.delete(id).await?;
         self.optimistic_changes.remove_successful_for_id::<S>(id);
 
         self.add_to_reactivity_during_write(id);
@@ -181,11 +172,8 @@ where
         Ok(())
     }
 
-    pub async fn put(&self, item: &S) -> Result<(), Error> {
-        self.inner
-            .put(item)
-            .await
-            .map_err(|e| Error::new(e, self.location))?;
+    pub async fn put(&self, item: &S) -> Result<(), RawDb::Error> {
+        self.inner.put(item).await?;
         self.optimistic_changes
             .remove_successful_for_id::<S>(item.id());
 

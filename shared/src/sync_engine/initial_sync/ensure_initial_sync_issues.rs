@@ -125,7 +125,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
                 .read_write()
                 .build();
             self.persist_changes(&txn, changes).await?;
-            txn.object_store::<IssuesInitialSyncStatus>()?
+            txn.table::<IssuesInitialSyncStatus>()?
                 .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,

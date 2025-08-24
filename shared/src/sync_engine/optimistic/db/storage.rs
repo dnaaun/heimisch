@@ -1,39 +1,37 @@
 use std::{panic::Location, rc::Rc};
 
-use typesafe_idb::{ReadOnly, ReadWrite, Store, StoreMarker, Txn, TypesafeDb, TypesafeDbBuilder};
+use crate::{
+    typed_db::{Db, DbBuilder, RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker},
+    sync_engine::optimistic::optimistic_changes::OptimisticChanges,
+};
 
-use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
+use super::{reactivity_trackers::CommitListener, TxnBuilderWithOptimisticChanges};
 
-use super::{reactivity_trackers::CommitListener, Error, TxnBuilderWithOptimisticChanges};
-
-pub struct DbWithOptimisticChanges<StoreMarkers> {
-    inner: TypesafeDb<StoreMarkers>,
+pub struct DbWithOptimisticChanges<RawDb: RawDbTrait, StoreMarkers> {
+    inner: Db<RawDb, StoreMarkers>,
     optimistic_updates: Rc<OptimisticChanges>,
     pub(crate) listener: CommitListener,
 }
 
-impl<StoreMarkers> DbWithOptimisticChanges<StoreMarkers> {
+impl<RawDb: RawDbTrait, StoreMarkers> DbWithOptimisticChanges<RawDb, StoreMarkers> {
     #[track_caller]
     pub async fn new(
-        inner: TypesafeDbBuilder<StoreMarkers>,
+        inner: DbBuilder<RawDb, StoreMarkers>,
         listener: CommitListener,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, RawDb::Error> {
         Ok(Self {
-            inner: inner
-                .build()
-                .await
-                .map_err(|e| Error::new(e, Location::caller()))?,
+            inner: inner.build().await?,
             optimistic_updates: Rc::new(Default::default()),
             listener,
         })
     }
 }
 
-impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
+impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMarkers> {
     #[track_caller]
-    pub fn txn(&self) -> TxnBuilderWithOptimisticChanges<'_, DbStoreMarkers, (), ReadOnly> {
+    pub fn txn(&self) -> TxnBuilderWithOptimisticChanges<'_, RawDb, DbTableMarkers, (), ReadOnly> {
         TxnBuilderWithOptimisticChanges::new(
-            Txn::builder(&self.inner),
+            self.inner.txn(),
             self.optimistic_updates.clone(),
             Some(self.listener.clone()),
             Location::caller(),
@@ -42,31 +40,32 @@ impl<DbStoreMarkers> DbWithOptimisticChanges<DbStoreMarkers> {
 
     /// Shortcut
     #[track_caller]
-    pub fn object_store<S: Store>(
+    pub fn table<S: Table + 'static>(
         &self,
-    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadOnly>, Error>
+    ) -> Result<super::TableWithOptimisticChanges<RawDb, S, ReadOnly>, RawDb::Error>
     where
-        DbStoreMarkers: StoreMarker<S>,
+        DbTableMarkers: TableMarker<S>,
     {
-        self.txn().with_store::<S>().build().object_store::<S>()
+        Ok(self.txn().with_table::<S>().build()?.table::<S>()?)
     }
 
     /// Shortcut
     #[track_caller]
-    pub fn object_store_rw<S: Store>(
+    pub fn object_store_rw<S: Table + 'static>(
         &self,
-    ) -> Result<super::ObjectStoreWithOptimisticChanges<S, ReadWrite>, Error>
+    ) -> Result<super::TableWithOptimisticChanges<RawDb, S, ReadWrite>, RawDb::Error>
     where
-        DbStoreMarkers: StoreMarker<S>,
+        DbTableMarkers: TableMarker<S>,
     {
-        self.txn()
-            .with_store::<S>()
+        Ok(self
+            .txn()
+            .with_table::<S>()
             .read_write()
-            .build()
-            .object_store::<S>()
+            .build()?
+            .table::<S>()?)
     }
 
-    pub fn get_optimistic_to_realistic_for_creations<S: Store>(
+    pub fn get_optimistic_to_realistic_for_creations<S: Table>(
         &self,
         optimistic_id: &S::Id,
     ) -> Option<S::Id> {

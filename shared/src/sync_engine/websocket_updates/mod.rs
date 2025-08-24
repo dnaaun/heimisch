@@ -9,6 +9,7 @@ use transport::TransportTrait;
 
 use crate::{
     backend_api_trait::BackendApiTrait,
+    typed_db::RawDbTrait,
     endpoints::defns::api::websocket_updates::{
         ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
     },
@@ -22,26 +23,24 @@ use crate::{
 
 use super::{error::SyncErrorSrc, SyncEngine, SyncResult};
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 where
     Transport: TransportTrait,
 {
     pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport> {
-
         let mut url = self
             .backend_api
             .get_domain()
             .join(WEBSOCKET_UPDATES_ENDPOINT)
             .expect("");
 
-
         let last_webhook_update_at = self
             .db
             .txn()
-            .with_store::<LastWebhookUpdateAt>()
+            .with_table::<LastWebhookUpdateAt>()
             .build()
-            .object_store::<LastWebhookUpdateAt>()?
+            .table::<LastWebhookUpdateAt>()?
             .get(&LastWebhookUpdateAtId::Singleton)
             .await?;
         url.set_query(Some(
@@ -62,36 +61,39 @@ where
                 Some(value) => {
                     tracing::info!("Received websocket update: {:?}", value);
                     match value {
-                    Ok(server_msg) => match self.apply_update_to_db(&server_msg).await {
-                        Ok(_) => {
-                            tracing::info!("Successfully applied webhook update: {server_msg:?}")
-                        }
-                        Err(err) => {
-                            let serialized = match serde_json::to_string_pretty(&server_msg) {
-                                Ok(s) => s,
-                                Err(e) => format!("error serializing update to json {e:?}"),
-                            };
+                        Ok(server_msg) => match self.apply_update_to_db(&server_msg).await {
+                            Ok(_) => {
+                                tracing::info!(
+                                    "Successfully applied webhook update: {server_msg:?}"
+                                )
+                            }
+                            Err(err) => {
+                                let serialized = match serde_json::to_string_pretty(&server_msg) {
+                                    Ok(s) => s,
+                                    Err(e) => format!("error serializing update to json {e:?}"),
+                                };
 
-                            match err {
-                                ApplyingError::NotImplemented => tracing::info!(
+                                match err {
+                                    ApplyingError::NotImplemented => tracing::info!(
                                     "LOCAL DB UPDATES FOR WEBHOOK NOT IMPLEMENTED: {serialized}"
                                 ),
-                                ApplyingError::Sync(sync_error) => {
-                                    tracing::error!(
-                                        "Error applying update:
+                                    ApplyingError::Sync(sync_error) => {
+                                        tracing::error!(
+                                            "Error applying update:
 {}
 {:?}",
-                                        serialized,
-                                        sync_error
-                                    )
+                                            serialized,
+                                            sync_error
+                                        )
+                                    }
                                 }
                             }
+                        },
+                        Err(err) => {
+                            tracing::error!("Error receiving websocket update: {:?}", err);
                         }
-                    },
-                    Err(err) => {
-                        tracing::error!("Error receiving websocket update: {:?}", err);
                     }
-                }},
+                }
                 None => return Ok(()),
             }
         }
@@ -120,7 +122,7 @@ where
             .read_write()
             .build();
         self.persist_changes(&txn, changes).await?;
-        txn.object_store::<LastWebhookUpdateAt>()?
+        txn.table::<LastWebhookUpdateAt>()?
             .put(&LastWebhookUpdateAt {
                 at: jiff::Timestamp::now(),
                 id: Default::default(),

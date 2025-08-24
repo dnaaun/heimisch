@@ -10,6 +10,9 @@ pub struct Error {
 
 impl Error {
     pub fn new(inner: typesafe_idb::Error, txn_location: &'static Location<'static>) -> Self {
-        Self { inner, txn_location }
+        Self {
+            inner,
+            txn_location,
+        }
     }
 }

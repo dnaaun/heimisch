@@ -7,10 +7,10 @@ pub use websocket_updates::transport::*;
 mod conversions;
 mod initial_sync;
 
-mod new_defn;
 pub mod changes;
 pub mod error;
 pub mod mutations;
+mod new_defn;
 pub mod optimistic;
 mod registry;
 pub mod websocket_updates;
@@ -22,6 +22,7 @@ use std::{cmp::Ordering, rc::Rc};
 
 use crate::{
     backend_api_trait::BackendApiTrait,
+    typed_db::RawDbTrait,
     endpoints::defns::api::installations::GetInstallationAccessTokenQueryParams,
     types::{
         installation::InstallationId,
@@ -40,7 +41,10 @@ pub struct DbSubscription {
 impl std::fmt::Debug for DbSubscription {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DbSubscription")
-            .field("original_reactivity_trackers", &self.original_reactivity_trackers)
+            .field(
+                "original_reactivity_trackers",
+                &self.original_reactivity_trackers,
+            )
             .field("func", &"some func yo")
             .finish()
     }
@@ -48,8 +52,13 @@ impl std::fmt::Debug for DbSubscription {
 
 pub use new_defn::DbStoreMarkers;
 
-pub struct SyncEngine<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> {
-    pub db: Rc<DbWithOptimisticChanges<DbStoreMarkers>>,
+pub struct SyncEngine<
+    RawDb: RawDbTrait,
+    BackendApi: BackendApiTrait,
+    Transport: TransportTrait,
+    GithubApi,
+> {
+    pub db: Rc<DbWithOptimisticChanges<RawDb, DbStoreMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     backend_api: Rc<BackendApi>,
     github_api: Rc<GithubApi>,
@@ -58,8 +67,8 @@ pub struct SyncEngine<BackendApi: BackendApiTrait, Transport: TransportTrait, Gi
     >,
 }
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> Clone
-    for SyncEngine<BackendApi, Transport, GithubApi>
+impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> Clone
+    for SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     fn clone(&self) -> Self {
         Self {
@@ -74,8 +83,8 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> Clone
 
 const MAX_PER_PAGE: i32 = 100;
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     async fn get_api_conf(
         &self,
@@ -98,7 +107,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
         let txn = self
             .db
             .txn()
-            .with_store::<InstallationAccessTokenRow>()
+            .with_table::<InstallationAccessTokenRow>()
             .build();
 
         let iac = txn

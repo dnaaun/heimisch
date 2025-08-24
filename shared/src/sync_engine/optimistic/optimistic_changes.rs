@@ -4,7 +4,8 @@
 use std::{any::Any, future::Future, rc::Rc};
 
 use any_spawner::Executor;
-use typesafe_idb::Store;
+
+use crate::typed_db::Table;
 
 use super::{db::SerializedId, optimistic_change_map::OptimisticChangeMap};
 
@@ -16,7 +17,7 @@ pub struct OptimisticChanges {
 }
 
 impl OptimisticChanges {
-    pub fn update<S: Store + 'static>(
+    pub fn update<S: Table + 'static>(
         &self,
         row: S,
         update_fut: impl Future<Output = Result<(), ()>> + 'static,
@@ -37,7 +38,7 @@ impl OptimisticChanges {
         });
     }
 
-    pub fn create<S: Store + 'static>(
+    pub fn create<S: Table + 'static>(
         &self,
         row: S,
         // The future must resolve to the id of whatever is created.
@@ -63,7 +64,7 @@ impl OptimisticChanges {
         });
     }
 
-    pub fn delete<S: Store>(
+    pub fn delete<S: Table>(
         &self,
         id: &S::Id,
         delete_fut: impl Future<Output = Result<(), ()>> + 'static,
@@ -85,14 +86,14 @@ impl OptimisticChanges {
     }
 
     /// This can be refactored (along with mark_realistic).
-    pub fn remove_successful_for_id<S: Store>(&self, id: &S::Id) {
+    pub fn remove_successful_for_id<S: Table>(&self, id: &S::Id) {
         self.deletes.remove_all_realistic::<S>(&());
         self.updates.remove_all_realistic::<S>(&());
         self.creations
             .remove_all_realistic::<S>(&SerializedId::new_from_id::<S>(id));
     }
 
-    pub fn get_realistic_to_optimistic_for_creations<S: Store>(
+    pub fn get_realistic_to_optimistic_for_creations<S: Table>(
         &self,
         realistic_id: &S::Id,
     ) -> Option<S::Id> {
@@ -101,7 +102,7 @@ impl OptimisticChanges {
             .map(|id| id.to_unserialized_id::<S>())
     }
 
-    pub fn get_optimistic_to_realistic_for_creations<S: Store>(
+    pub fn get_optimistic_to_realistic_for_creations<S: Table>(
         &self,
         optimistic_id: &S::Id,
     ) -> Option<S::Id> {

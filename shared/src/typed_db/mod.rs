@@ -1,4 +1,8 @@
 pub mod idb_impl;
+pub mod raw_traits;
+
+pub use raw_traits::RawDbTrait;
+use raw_traits::*;
 
 use std::{
     any::TypeId,
@@ -27,49 +31,8 @@ pub trait Table: DeserializeOwned + Serialize {
     type Id: serde::Serialize;
 
     fn id(&self) -> &Self::Id;
-}
 
-#[allow(async_fn_in_trait)]
-pub trait RawTableAccessTrait<R: Table> {
-    type Error;
-
-    async fn get(&self, id: &R::Id) -> Result<Option<R>, Self::Error>;
-    async fn get_all(&self) -> Result<Vec<R>, Self::Error>;
-    async fn put(&self, item: &R) -> Result<(), Self::Error>;
-    async fn delete(&self, id: &R::Id) -> Result<(), Self::Error>;
-}
-
-pub trait RawTxnTrait {
-    type Error;
-    type RawTableAccess<R: Table>: RawTableAccessTrait<R, Error = Self::Error>;
-
-    fn commit(self) -> Result<(), Self::Error>;
-    fn abort(self) -> Result<(), Self::Error>;
-    fn get_table<R: Table>(&self, store_name: &str)
-        -> Result<Self::RawTableAccess<R>, Self::Error>;
-}
-
-pub trait RawDbBuilderTrait {
-    type Error;
-    type Db: RawDbTrait<Error = Self::Error>;
-
-    #[allow(async_fn_in_trait)]
-    async fn build(self) -> Result<Self::Db, Self::Error>;
-
-    fn add_table(self, table_builder: <Self::Db as RawDbTrait>::RawTableBuilder) -> Self;
-}
-
-pub trait RawDbTrait {
-    type Error;
-    type RawTxn: RawTxnTrait<Error = Self::Error>;
-    type RawDbBuilder: RawDbBuilderTrait<Error = Self::Error, Db = Self>;
-    type RawIndex: RawIndexTrait<Error = Self::Error>;
-    type RawTableBuilder;
-
-    fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error>;
-    fn builder(name: &str) -> Self::RawDbBuilder;
-
-    fn table_builder<R: Table>() -> Self::RawTableBuilder;
+    fn index_names() -> Vec<&'static str>;
 }
 
 pub struct Db<RawDb, TableMarkers> {
@@ -198,7 +161,7 @@ where
         }
     }
 
-    pub async fn build(self) -> Result<Txn<Db, TxnTableMarkers, Mode>, Db::Error> {
+    pub fn build(self) -> Result<Txn<Db, TxnTableMarkers, Mode>, Db::Error> {
         let raw_txn = self.db.raw.txn(
             &self.store_names.into_iter().collect::<Vec<_>>(),
             Mode::IS_READ_WRITE,
@@ -248,8 +211,8 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
     }
 }
 
-pub struct TableAccess<Db: RawDbTrait, R: Table, Mode> {
-    pub(crate) raw_table: <Db::RawTxn as RawTxnTrait>::RawTableAccess<R>,
+pub struct TableAccess<RawDb: RawDbTrait, R: Table, Mode> {
+    pub(crate) raw_table: RawDb::RawTableAccess<R>,
     pub(crate) mode: PhantomData<(R, Mode)>,
 }
 
@@ -263,6 +226,11 @@ where
 
     pub async fn get_all(&self) -> Result<Vec<R>, Db::Error> {
         self.raw_table.get_all().await
+    }
+
+    pub async fn index<IS: IndexSpec<Table = R>>(&self) -> Result<Index<Db>, Db::Error> {
+        let raw_index = self.raw_table.index(IS::NAME)?;
+        Ok(Index { raw_index })
     }
 }
 
@@ -291,28 +259,23 @@ pub trait IndexSpec {
     fn get_index_value(row: &Self::Table) -> &Self::Type;
 }
 
-#[allow(async_fn_in_trait)]
-pub trait RawIndexTrait {
-    type Error;
+/// I'm not sure this abstraction over RawIndex is necessary, but it definltely feels more uniform.
+pub struct Index<RawDb: RawDbTrait> {
+    pub(crate) raw_index: RawDb::RawIndex,
+}
 
-    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Self::Error>;
+impl<RawDb: RawDbTrait> Index<RawDb> {
+    async fn get<IS: IndexSpec>(
+        &self,
+        value: &IS::Type,
+    ) -> Result<Option<IS::Table>, <RawDb as RawDbTrait>::Error> {
+        Ok(self.raw_index.get::<IS>(value).await?)
+    }
+
     async fn get_all<IS: IndexSpec>(
         &self,
         value: Option<&IS::Type>,
-    ) -> Result<Vec<IS::Table>, Self::Error>;
-}
-
-pub struct Index<RawDb: RawDbTrait, IS> {
-    pub(crate) actual_index: RawDb::RawIndex,
-    pub(crate) _markers: PhantomData<IS>,
-}
-
-impl<RawDb: RawDbTrait, IS: IndexSpec> Index<RawDb, IS> {
-    pub async fn get(&self, value: &IS::Type) -> Result<Option<IS::Table>, RawDb::Error> {
-        self.actual_index.get::<IS>(value).await
-    }
-
-    pub async fn get_all(&self, value: Option<&IS::Type>) -> Result<Vec<IS::Table>, RawDb::Error> {
-        self.actual_index.get_all::<IS>(value).await
+    ) -> Result<Vec<IS::Table>, <RawDb as RawDbTrait>::Error> {
+        Ok(self.raw_index.get_all::<IS>(value).await?)
     }
 }

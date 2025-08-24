@@ -1,3 +1,4 @@
+use raw_traits::*;
 use typesafe_idb::serde_abstraction;
 
 use super::*;
@@ -20,9 +21,9 @@ impl From<idb::Error> for Error {
 }
 
 impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
-    type Error = Error;
+    type RawDb = idb::Database;
 
-    async fn get(&self, key: &R::Id) -> Result<Option<R>, Self::Error> {
+    async fn get(&self, key: &R::Id) -> Result<Option<R>, Error> {
         let item = self
             .get(idb::Query::Key(serde_abstraction::to_value(key)?))?
             .await?
@@ -31,7 +32,7 @@ impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
         Ok(item)
     }
 
-    async fn get_all(&self) -> Result<Vec<R>, Self::Error> {
+    async fn get_all(&self) -> Result<Vec<R>, Error> {
         let items = self
             .get_all(None, None)?
             .await?
@@ -41,49 +42,48 @@ impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
         Ok(items)
     }
 
-    async fn put(&self, item: &R) -> Result<(), Self::Error> {
+    async fn put(&self, item: &R) -> Result<(), Error> {
         self.put(&serde_abstraction::to_value(item)?, None)?.await?;
         Ok(())
     }
 
-    async fn delete(&self, key: &R::Id) -> Result<(), Self::Error> {
+    async fn delete(&self, key: &R::Id) -> Result<(), Error> {
         self.delete(idb::Query::Key(serde_abstraction::to_value(key)?))?
             .await?;
         Ok(())
     }
+
+    fn index(&self, name: &str) -> Result<idb::Index, Error> {
+        Ok(self.index(name)?)
+    }
 }
 
 impl RawTxnTrait for idb::Transaction {
-    type Error = Error;
-    type RawTableAccess<R: Table> = idb::ObjectStore;
+    type RawDb = idb::Database;
 
-    fn commit(self) -> Result<(), Self::Error> {
+    fn commit(self) -> Result<(), Error> {
         self.commit()?;
         Ok(())
     }
 
-    fn abort(self) -> Result<(), Self::Error> {
+    fn abort(self) -> Result<(), Error> {
         self.abort()?;
         Ok(())
     }
 
-    fn get_table<R: Table>(
-        &self,
-        store_name: &str,
-    ) -> Result<Self::RawTableAccess<R>, Self::Error> {
+    fn get_table<R: Table>(&self, store_name: &str) -> Result<idb::ObjectStore, Error> {
         Ok(self.object_store(store_name)?)
     }
 }
 
 impl RawDbBuilderTrait for idb::builder::DatabaseBuilder {
-    type Error = Error;
-    type Db = idb::Database;
+    type RawDb = idb::Database;
 
-    async fn build(self) -> Result<Self::Db, Self::Error> {
+    async fn build(self) -> Result<Self::RawDb, Error> {
         Ok(self.build().await?)
     }
 
-    fn add_table(self, table_builder: <Self::Db as RawDbTrait>::RawTableBuilder) -> Self {
+    fn add_table(self, table_builder: idb::builder::ObjectStoreBuilder) -> Self {
         self.add_object_store(table_builder)
     }
 }
@@ -94,6 +94,7 @@ impl RawDbTrait for idb::Database {
     type RawDbBuilder = idb::builder::DatabaseBuilder;
     type RawTableBuilder = idb::builder::ObjectStoreBuilder;
     type RawIndex = idb::Index;
+    type RawTableAccess<R: Table> = idb::ObjectStore;
 
     fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error> {
         Ok(self.transaction(
@@ -111,14 +112,20 @@ impl RawDbTrait for idb::Database {
     }
 
     fn table_builder<R: Table>() -> Self::RawTableBuilder {
-        idb::builder::ObjectStoreBuilder::new(R::NAME)
+        let builder = idb::builder::ObjectStoreBuilder::new(R::NAME);
+        R::index_names().iter().fold(builder, |builder, name| {
+            builder.add_index(idb::builder::IndexBuilder::new(
+                name.to_string(),
+                idb::KeyPath::Single(name.to_string()),
+            ))
+        })
     }
 }
 
 impl RawIndexTrait for idb::Index {
-    type Error = Error;
+    type RawDb = idb::Database;
 
-    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Self::Error> {
+    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Error> {
         Ok(self
             .get(idb::Query::Key(serde_abstraction::to_value(value)?))?
             .await?
@@ -129,7 +136,7 @@ impl RawIndexTrait for idb::Index {
     async fn get_all<IS: IndexSpec>(
         &self,
         value: Option<&IS::Type>,
-    ) -> Result<Vec<IS::Table>, Self::Error> {
+    ) -> Result<Vec<IS::Table>, Error> {
         Ok(self
             .get_all(
                 value
