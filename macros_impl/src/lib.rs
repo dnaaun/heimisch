@@ -5,7 +5,7 @@ extern crate proc_macro;
 
 mod avail_merge;
 pub mod leptos_test_setup;
-pub mod table;
+pub mod typed_db;
 mod typesafe_idb;
 mod zwang_router;
 

@@ -74,20 +74,6 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         })
         .collect();
 
-    let index_adds: Vec<_> = fields
-        .iter()
-        .filter(|f| f.index.is_some())
-        .map(|f| {
-            let field_name_str = f.ident.as_ref().unwrap().to_string();
-            quote! {
-                .add_index(idb::builder::IndexBuilder::new(
-                    #field_name_str.into(),
-                    idb::KeyPath::Single(#field_name_str.into()),
-                ))
-            }
-        })
-        .collect();
-
     let output = quote! {
         #[derive(Default)]
         pub struct #table_marker_name {}
@@ -105,7 +91,6 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             fn object_store_builder() -> idb::builder::ObjectStoreBuilder {
                 idb::builder::ObjectStoreBuilder::new(<::typesafe_idb::StoreName as ::std::ops::Deref>::deref(&Self::NAME))
                     .key_path(Some(idb::KeyPath::new_single(stringify!(#id_field_name))))
-                    #(#index_adds)*
             }
         }
         #(#index_structs)*

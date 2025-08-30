@@ -1,4 +1,5 @@
 use super::{IndexSpec, Table};
+use std::fmt::Debug;
 
 #[allow(async_fn_in_trait)]
 pub trait RawTableAccessTrait<R: Table> {
@@ -36,7 +37,7 @@ pub trait RawDbBuilderTrait {
 }
 
 pub trait RawDbTrait {
-    type Error;
+    type Error: Debug;
     type RawTxn: RawTxnTrait<RawDb = Self>;
     type RawDbBuilder: RawDbBuilderTrait<RawDb = Self>;
     type RawIndex: RawIndexTrait<RawDb = Self>;

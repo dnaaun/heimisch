@@ -3944,6 +3944,7 @@ dependencies = [
  "serde_urlencoded",
  "tracing",
  "tracing-subscriber",
+ "typed_db",
  "typesafe_idb",
  "url",
  "utils",
@@ -4750,6 +4751,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "typed_db"
+version = "0.1.0"
+dependencies = [
+ "idb",
+ "serde",
+ "typesafe_idb",
 ]
 
 [[package]]

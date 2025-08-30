@@ -1,3 +1,5 @@
+#![feature(marker_trait_attr)]
+
 pub mod idb_impl;
 pub mod raw_traits;
 
@@ -10,7 +12,7 @@ use std::{
     marker::PhantomData,
 };
 
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 #[marker]
 pub trait TableMarker<T> {}
@@ -32,7 +34,7 @@ pub trait Table: DeserializeOwned + Serialize {
 
     fn id(&self) -> &Self::Id;
 
-    fn index_names() -> Vec<&'static str>;
+    fn index_names() -> &'static [&'static str];
 }
 
 pub struct Db<RawDb, TableMarkers> {

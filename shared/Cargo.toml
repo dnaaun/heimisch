@@ -15,6 +15,7 @@ tracing = "0.1.40"
 github_api = { path = "../github_api" }
 macros = { path = "../macros" }
 typesafe_idb = { path = "../typesafe_idb", optional = false }
+typed_db = { path = "../typed_db", optional = false }
 utils = { path = "../utils" }
 idb = { version = "*", optional = false }
 idalloc = "0.1.1"

@@ -22,8 +22,9 @@ use std::{cmp::Ordering, rc::Rc};
 
 use crate::{
     backend_api_trait::BackendApiTrait,
-    typed_db::RawDbTrait,
     endpoints::defns::api::installations::GetInstallationAccessTokenQueryParams,
+    sync_engine::error::RawDbErrorToSyncError,
+    typed_db::RawDbTrait,
     types::{
         installation::InstallationId,
         installation_access_token_row::{InstallationAccessToken, InstallationAccessTokenRow},
@@ -89,7 +90,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
     async fn get_api_conf(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<github_api::apis::configuration::Configuration, Transport> {
+    ) -> SyncResult<github_api::apis::configuration::Configuration, Transport, RawDb> {
         let bearer_access_token = Some(self.get_valid_iac(id).await?.token);
         let conf = github_api::apis::configuration::Configuration {
             user_agent: Some("Heimisch".into()),
@@ -103,7 +104,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
     async fn get_valid_iac(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<InstallationAccessToken, Transport> {
+    ) -> SyncResult<InstallationAccessToken, Transport, RawDb> {
         let txn = self
             .db
             .txn()
@@ -111,9 +112,12 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             .build();
 
         let iac = txn
-            .object_store::<InstallationAccessTokenRow>()?
+            .tse()?
+            .table::<InstallationAccessTokenRow>()
+            .tse()?
             .get_all()
-            .await?
+            .await
+            .tse()?
             .into_iter()
             .filter(|iac| {
                 if &iac.installation_id != id {
@@ -144,15 +148,18 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
                 let txn = self
                     .db
                     .txn()
-                    .with_store::<InstallationAccessTokenRow>()
+                    .with_table::<InstallationAccessTokenRow>()
                     .read_write()
                     .build();
-                txn.object_store::<InstallationAccessTokenRow>()?
+                txn.tse()?
+                    .table::<InstallationAccessTokenRow>()
+                    .tse()?
                     .put(&InstallationAccessTokenRow {
                         token: resp.clone(),
                         installation_id: *id,
                     })
-                    .await?;
+                    .await
+                    .tse()?;
 
                 Ok(resp)
             }

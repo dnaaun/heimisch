@@ -1,16 +1,18 @@
-use crate::{avail::{MergeError, NotAvailableError}, endpoints::endpoint_client::OwnApiError};
+use crate::{
+    avail::{MergeError, NotAvailableError},
+    endpoints::endpoint_client::OwnApiError,
+    typed_db::RawDbTrait,
+};
 use std::{fmt::Debug, panic::Location};
 
 use super::{
-    conversions::conversion_error::ConversionError,
-    optimistic::db::Error,
-    websocket_updates::transport::TransportTrait,
+    conversions::conversion_error::ConversionError, websocket_updates::transport::TransportTrait,
 };
 
-pub enum SyncErrorSrc<T: TransportTrait> {
+pub enum SyncErrorSrc<Transport: TransportTrait, RawDb: RawDbTrait> {
     OwnApi(OwnApiError),
     Github(github_api::simple_error::SimpleError),
-    Db(Error),
+    Db(RawDb::Error),
     SerdeToObject(typesafe_idb::serde_abstraction::Error),
     SerdeToString(serde_json::Error),
     Jiff(jiff::Error),
@@ -18,11 +20,11 @@ pub enum SyncErrorSrc<T: TransportTrait> {
     Ewebsock(ewebsock::Error),
     /// These are things like: the user that owns a repository in our db not existing in our db.
     DataModel(String),
-    Transport(T::TransportError),
-    NotAvailable(NotAvailableError)
+    Transport(Transport::TransportError),
+    NotAvailable(NotAvailableError),
 }
 
-impl<T: TransportTrait> Debug for SyncErrorSrc<T> {
+impl<T: TransportTrait, RawDb: RawDbTrait> Debug for SyncErrorSrc<T, RawDb> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SyncErrorSrc::OwnApi(err) => write!(f, "SyncErrorSrc::OwnApi({:?})", err),
@@ -40,9 +42,9 @@ impl<T: TransportTrait> Debug for SyncErrorSrc<T> {
     }
 }
 
-impl<T: TransportTrait> From<SyncErrorSrc<T>> for SyncError<T> {
+impl<T: TransportTrait, RawDb: RawDbTrait> From<SyncErrorSrc<T, RawDb>> for SyncError<T, RawDb> {
     #[track_caller]
-    fn from(value: SyncErrorSrc<T>) -> Self {
+    fn from(value: SyncErrorSrc<T, RawDb>) -> Self {
         Self {
             source: value,
             location: Location::caller(),
@@ -51,12 +53,12 @@ impl<T: TransportTrait> From<SyncErrorSrc<T>> for SyncError<T> {
 }
 
 #[allow(dead_code)]
-pub struct SyncError<T: TransportTrait> {
-    source: SyncErrorSrc<T>,
-    location: &'static Location<'static>
+pub struct SyncError<Transport: TransportTrait, RawDb: RawDbTrait> {
+    source: SyncErrorSrc<Transport, RawDb>,
+    location: &'static Location<'static>,
 }
 
-impl<T: TransportTrait> Debug for SyncError<T> {
+impl<Transport: TransportTrait, RawDb: RawDbTrait> Debug for SyncError<Transport, RawDb> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SyncError")
             .field("source", &self.source)
@@ -65,7 +67,9 @@ impl<T: TransportTrait> Debug for SyncError<T> {
     }
 }
 
-impl<T: TransportTrait> From<ConversionError> for SyncError<T> {
+impl<Transport: TransportTrait, RawDb: RawDbTrait> From<ConversionError>
+    for SyncError<Transport, RawDb>
+{
     fn from(value: ConversionError) -> Self {
         match value {
             ConversionError::Merge(merge_error) => SyncErrorSrc::Merge(merge_error),
@@ -76,7 +80,7 @@ impl<T: TransportTrait> From<ConversionError> for SyncError<T> {
     }
 }
 
-impl<T: TransportTrait> SyncError<T> {
+impl<Transport: TransportTrait, RawDb: RawDbTrait> SyncError<Transport, RawDb> {
     /// We don't derive `From<>` because a `String` might accidentally get converted (which is what
     /// `ewebsock::Error` really is).
     pub fn from_ewebsock(error: ewebsock::Error) -> Self {
@@ -84,46 +88,58 @@ impl<T: TransportTrait> SyncError<T> {
     }
 }
 
-pub type SyncResult<T, W> = Result<T, SyncError<W>>;
+pub type SyncResult<T, Transport, RawDb: RawDbTrait> = Result<T, SyncError<Transport, RawDb>>;
 
-impl<W: TransportTrait, T> From<github_api::apis::Error<T>> for SyncError<W> {
+impl<W: TransportTrait, T, RawDb: RawDbTrait> From<github_api::apis::Error<T>>
+    for SyncError<W, RawDb>
+{
     #[track_caller]
     fn from(value: github_api::apis::Error<T>) -> Self {
         SyncErrorSrc::Github(value.into()).into()
     }
 }
 
-
-impl<W: TransportTrait> From<OwnApiError> for SyncError<W> {
+impl<W: TransportTrait, RawDb: RawDbTrait> From<OwnApiError> for SyncError<W, RawDb> {
     #[track_caller]
     fn from(value: OwnApiError) -> Self {
         SyncErrorSrc::OwnApi(value).into()
     }
 }
 
-impl<W: TransportTrait> From<Error> for SyncError<W> {
-    #[track_caller]
-    fn from(value: Error) -> Self {
-        SyncErrorSrc::Db(value).into()
-    }
-}
-
-impl<W: TransportTrait> From<serde_json::Error> for SyncError<W> {
+impl<W: TransportTrait, RawDb: RawDbTrait> From<serde_json::Error> for SyncError<W, RawDb> {
     #[track_caller]
     fn from(value: serde_json::Error) -> Self {
         SyncErrorSrc::SerdeToString(value).into()
     }
 }
-impl<W: TransportTrait> From<MergeError> for SyncError<W> {
+impl<W: TransportTrait, RawDb: RawDbTrait> From<MergeError> for SyncError<W, RawDb> {
     #[track_caller]
     fn from(value: MergeError) -> Self {
         SyncErrorSrc::Merge(value).into()
     }
 }
 
-impl<W: TransportTrait> From<NotAvailableError> for SyncError<W> {
+impl<W: TransportTrait, RawDb: RawDbTrait> From<NotAvailableError> for SyncError<W, RawDb> {
     #[track_caller]
     fn from(value: NotAvailableError) -> Self {
         SyncErrorSrc::NotAvailable(value).into()
+    }
+}
+
+pub trait RawDbErrorToSyncError<I, Transport: TransportTrait, RawDb: RawDbTrait> {
+    /// I cannot `impl<RawDb: RawDbTrait> From<RawDb::Error>` because of that Rust rule that prevents
+    /// multiple impls of the same trait for the same type.
+    /// So this trait is supposed to be a nicer substitute.
+    fn tse(self) -> Result<I, SyncError<Transport, RawDb>>;
+}
+
+impl<I, Db: RawDbTrait, Transport: TransportTrait> RawDbErrorToSyncError<I, Transport, Db>
+    for Result<I, Db::Error>
+{
+    fn tse(self) -> Result<I, SyncError<Transport, Db>> {
+        match self {
+            Ok(i) => Ok(i),
+            Err(e) => Err(SyncErrorSrc::Db(e).into()),
+        }
     }
 }

@@ -1,8 +1,8 @@
-use raw_traits::*;
 use typesafe_idb::serde_abstraction;
 
 use super::*;
 
+#[derive(Debug)]
 pub enum Error {
     Serde(serde_abstraction::Error),
     Id(idb::Error),

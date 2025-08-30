@@ -17,4 +17,3 @@ pub mod backend_api_trait;
 pub mod github_api_trait;
 #[cfg(test)]
 pub mod test_setup;
-pub mod typed_db;
