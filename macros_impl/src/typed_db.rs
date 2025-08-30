@@ -74,13 +74,19 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         })
         .collect();
 
+    let index_names: Vec<_> = fields
+        .iter()
+        .filter(|f| f.index.is_some())
+        .map(|f| f.ident.as_ref().unwrap().to_string())
+        .collect();
+
     let output = quote! {
         #[derive(Default)]
         pub struct #table_marker_name {}
 
-        impl typesafe_idb::StoreMarker<#struct_name> for #table_marker_name {}
-        impl typesafe_idb::Store for #struct_name {
-            const NAME: ::typesafe_idb::StoreName = ::typesafe_idb::StoreName(stringify!(#struct_name_lowercase_pluralized));
+        impl typed_db::TableMarker<#struct_name> for #table_marker_name {}
+        impl typed_db::Table for #struct_name {
+            const NAME: &'static str = stringify!(#struct_name_lowercase_pluralized);
             type Marker = #table_marker_name;
             type Id = #id_field_type;
 
@@ -88,9 +94,8 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 &self.#id_field_name
             }
 
-            fn object_store_builder() -> idb::builder::ObjectStoreBuilder {
-                idb::builder::ObjectStoreBuilder::new(<::typesafe_idb::StoreName as ::std::ops::Deref>::deref(&Self::NAME))
-                    .key_path(Some(idb::KeyPath::new_single(stringify!(#id_field_name))))
+            fn index_names() -> &'static [&'static str] {
+                &[#(#index_names)*]
             }
         }
         #(#index_structs)*
