@@ -36,7 +36,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         let inner = self.inner.as_ref().expect("");
         Ok(TableWithOptimisticChanges::new(
             self.optimistic_updates.clone(),
-            inner.idb_txn.table::<S>()?,
+            Rc::new(inner.idb_txn.table::<S>()?),
             self.reactivity_trackers.clone(),
             inner.commit_listener.clone(),
             inner.location,

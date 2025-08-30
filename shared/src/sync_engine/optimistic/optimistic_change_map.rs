@@ -8,7 +8,6 @@ use std::{
 use bimap::BiMap;
 use parking_lot::RwLock;
 pub use status::Status;
-use typesafe_idb::StoreName;
 
 use typed_db::Table;
 
@@ -69,8 +68,10 @@ mod status {
 }
 
 struct OptimisticChangeMapInner<T, RealisticId> {
-    changes:
-        HashMap<StoreName, HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>>,
+    changes: HashMap<
+        &'static str,
+        HashMap<SerializedId, BTreeMap<MonotonicTime, Status<T, RealisticId>>>,
+    >,
     optimistic_to_realistic: BiMap<RealisticId, SerializedId>,
 }
 

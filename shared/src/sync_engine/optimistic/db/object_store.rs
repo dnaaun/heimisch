@@ -13,7 +13,7 @@ use super::{
 #[derive(Clone, derive_more::Constructor)]
 pub struct TableWithOptimisticChanges<RawDb: RawDbTrait, S: Table, Mode> {
     optimistic_changes: Rc<OptimisticChanges>,
-    inner: TableAccess<RawDb, S, Mode>,
+    inner: Rc<TableAccess<RawDb, S, Mode>>,
     pub reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
     pub commit_listener: Option<CommitListener>,
     location: &'static Location<'static>,

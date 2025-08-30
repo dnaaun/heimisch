@@ -6,7 +6,7 @@ use shared::{
     backend_api_trait::BackendApiTrait,
     sync_engine::{
         optimistic::db::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges},
-        DbStoreMarkers, SyncEngine, TransportTrait,
+        DbTableMarkers, SyncEngine, TransportTrait,
     },
 };
 use typesafe_idb::{ReadOnly, TxnMode};
@@ -33,7 +33,7 @@ where
 }
 
 impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
-    IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T>
+    IdbSignalFromSyncEngine<DbTableMarkers, TxnStoreMarkers, Mode, Fut, T>
     for SyncEngine<BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
@@ -47,7 +47,7 @@ where
     fn idb_signal(
         &self,
         make_txn: impl for<'a> Fn(
-                TxnBuilderWithOptimisticChanges<'a, DbStoreMarkers, (), ReadOnly>,
+                TxnBuilderWithOptimisticChanges<'a, DbTableMarkers, (), ReadOnly>,
             ) -> TxnWithOptimisticChanges<TxnStoreMarkers, Mode>
             + 'static,
         compute_val: impl Fn(Arc<TxnWithOptimisticChanges<TxnStoreMarkers, Mode>>) -> Fut + 'static,

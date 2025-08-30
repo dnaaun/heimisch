@@ -9,7 +9,7 @@ use crate::{
     backend_api_trait::BackendApi,
     endpoints::endpoint_client::EndpointClient,
     sync_engine::{
-        websocket_updates::transport::tests::MockTransport, DbStoreMarkers, DbSubscription,
+        websocket_updates::transport::tests::MockTransport, DbSubscription, DbTableMarkers,
         SyncEngine,
     },
     types::{
@@ -38,10 +38,10 @@ wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 #[builder]
 async fn num_times_subscriber_called<Txn1Markers, Txn1Mode, Txn2Markers, Txn2Mode>(
     make_txn_1: impl for<'a> Fn(
-        TxnBuilderWithOptimisticChanges<'a, DbStoreMarkers, (), ReadOnly>,
+        TxnBuilderWithOptimisticChanges<'a, DbTableMarkers, (), ReadOnly>,
     ) -> TxnWithOptimisticChanges<Txn1Markers, Txn1Mode>,
     make_txn_2: impl for<'a> Fn(
-        TxnBuilderWithOptimisticChanges<'a, DbStoreMarkers, (), ReadWrite>,
+        TxnBuilderWithOptimisticChanges<'a, DbTableMarkers, (), ReadWrite>,
     ) -> TxnWithOptimisticChanges<Txn2Markers, Txn2Mode>,
     with_txn_1: impl AsyncFn(&TxnWithOptimisticChanges<Txn1Markers, Txn1Mode>),
     with_txn_2: impl AsyncFn(&TxnWithOptimisticChanges<Txn2Markers, Txn2Mode>),

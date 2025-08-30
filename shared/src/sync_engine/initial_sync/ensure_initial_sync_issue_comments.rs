@@ -12,7 +12,7 @@ use super::super::{
 use crate::{
     backend_api_trait::BackendApiTrait,
     github_api_trait::GithubApiTrait,
-    sync_engine::websocket_updates::transport::TransportTrait,
+    sync_engine::{error::RawDbErrorToSyncError, websocket_updates::transport::TransportTrait},
     types::{
         installation::InstallationId,
         issue::{Issue, IssueId, NumberIndex},
@@ -30,6 +30,8 @@ impl<
         Transport: TransportTrait,
         GithubApi: GithubApiTrait,
     > SyncEngine<RawDb, BackendApi, Transport, GithubApi>
+where
+    RawDb: 'static,
 {
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.
@@ -37,27 +39,33 @@ impl<
         &self,
         id: RepositoryId,
         installation_id: &InstallationId,
-    ) -> SyncResult<(), Transport> {
+    ) -> SyncResult<(), Transport, RawDb> {
         let mut page = 1;
         let txn = self
             .db
             .txn()
-            .with_store::<IssueCommentsInitialSyncStatus>()
-            .with_store::<IssueComment>()
-            .build();
+            .with_table::<IssueCommentsInitialSyncStatus>()
+            .with_table::<IssueComment>()
+            .build()
+            .tse()?;
         let initial_sync_status = txn
-            .object_store::<IssueCommentsInitialSyncStatus>()?
+            .table::<IssueCommentsInitialSyncStatus>()
+            .tse()?
             .get(&id)
-            .await?;
+            .await
+            .tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
                 InitialSyncStatusEnum::Full => return Ok(()),
                 InitialSyncStatusEnum::Partial => {
                     page = (txn
-                        .object_store::<IssueComment>()?
-                        .index::<RepositoryIdIndex>()?
+                        .table::<IssueComment>()
+                        .tse()?
+                        .index::<RepositoryIdIndex>()
+                        .tse()?
                         .get_all_optimistically(Some(&id))
-                        .await?
+                        .await
+                        .tse()?
                         .len() as f64
                         / f64::from(MAX_PER_PAGE))
                     .ceil() as i32;
@@ -71,13 +79,16 @@ impl<
         let txn = self
             .db
             .txn()
-            .with_store::<Repository>()
-            .with_store::<User>()
-            .build();
+            .with_table::<Repository>()
+            .with_table::<User>()
+            .build()
+            .tse()?;
         let repo = txn
-            .object_store::<Repository>()?
+            .table::<Repository>()
+            .tse()?
             .get(&id)
-            .await?
+            .await
+            .tse()?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
             })?;
@@ -87,9 +98,11 @@ impl<
             ))
         })?;
         let repo_owner = txn
-            .object_store::<User>()?
+            .table::<User>()
+            .tse()?
             .get(&repo_owner_id)
-            .await?
+            .await
+            .tse()?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("user with id {repo_owner_id:?}: doesn't exist"))
             })?;
@@ -118,8 +131,8 @@ impl<
             let issue_id_from_number = Arc::new(move |number| {
                 let db = db.clone();
                 Box::pin(async move {
-                    let txn = db.clone().txn().with_store::<Issue>().build();
-                    txn.object_store::<Issue>()
+                    let txn = db.clone().txn().with_table::<Issue>().build().unwrap();
+                    txn.table::<Issue>()
                         .unwrap()
                         .index::<NumberIndex>()
                         .unwrap()
@@ -143,16 +156,19 @@ impl<
                 Changes::try_from_iter(issue_comment_ids_and_changes.into_iter().map(|r| r.1))?;
 
             let txn = Changes::txn(&self.db)
-                .with_store::<IssueCommentsInitialSyncStatus>()
+                .with_table::<IssueCommentsInitialSyncStatus>()
                 .read_write()
-                .build();
+                .build()
+                .tse()?;
             self.persist_changes(&txn, changes).await?;
-            txn.table::<IssueCommentsInitialSyncStatus>()?
+            txn.table::<IssueCommentsInitialSyncStatus>()
+                .tse()?
                 .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id,
                 })
-                .await?;
+                .await
+                .tse()?;
 
             page += 1;
             if last_fetched_num < MAX_PER_PAGE as usize {
@@ -163,15 +179,18 @@ impl<
         let txn = self
             .db
             .txn()
-            .with_store::<IssueCommentsInitialSyncStatus>()
+            .with_table::<IssueCommentsInitialSyncStatus>()
             .read_write()
-            .build();
-        txn.object_store::<IssueCommentsInitialSyncStatus>()?
+            .build()
+            .tse()?;
+        txn.table::<IssueCommentsInitialSyncStatus>()
+            .tse()?
             .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id,
             })
-            .await?;
+            .await
+            .tse()?;
         Ok(())
     }
 }

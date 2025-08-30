@@ -17,6 +17,7 @@ use crate::{
     sync_engine::{
         changes::{AddChanges, Changes},
         conversions::ToDb,
+        error::RawDbErrorToSyncError,
     },
     types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtId},
 };
@@ -28,7 +29,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
 where
     Transport: TransportTrait,
 {
-    pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport> {
+    pub async fn recv_websocket_updates(&self) -> SyncResult<(), Transport, RawDb> {
         let mut url = self
             .backend_api
             .get_domain()
@@ -40,9 +41,12 @@ where
             .txn()
             .with_table::<LastWebhookUpdateAt>()
             .build()
-            .table::<LastWebhookUpdateAt>()?
+            .tse()?
+            .table::<LastWebhookUpdateAt>()
+            .tse()?
             .get(&LastWebhookUpdateAtId::Singleton)
-            .await?;
+            .await
+            .tse()?;
         url.set_query(Some(
             &serde_urlencoded::to_string(&WebsocketUpdatesQueryParams {
                 return_backlog_after: last_webhook_update_at.map(|l| l.at),
@@ -99,7 +103,10 @@ where
         }
     }
 
-    async fn apply_update_to_db(&self, _server_msg: &ServerMsg) -> ApplyingResult<(), Transport> {
+    async fn apply_update_to_db(
+        &self,
+        _server_msg: &ServerMsg,
+    ) -> ApplyingResult<(), Transport, RawDb> {
         use github_webhook_body::*;
         let changes = match _server_msg.body.clone() {
             WebhookBody::Issues(issues) => {
@@ -118,16 +125,19 @@ where
         };
 
         let txn = Changes::txn(&self.db)
-            .with_store::<LastWebhookUpdateAt>()
+            .with_table::<LastWebhookUpdateAt>()
             .read_write()
-            .build();
+            .build()
+            .tse()?;
         self.persist_changes(&txn, changes).await?;
-        txn.table::<LastWebhookUpdateAt>()?
+        txn.table::<LastWebhookUpdateAt>()
+            .tse()?
             .put(&LastWebhookUpdateAt {
                 at: jiff::Timestamp::now(),
                 id: Default::default(),
             })
-            .await?;
+            .await
+            .tse()?;
         drop(txn);
         Ok(())
     }

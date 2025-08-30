@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use futures::future::{join_all, OptionFuture};
-use typesafe_idb::Store;
+use typed_db::Table;
 
 impl ToDb for github_api::models::Issue {
     type DbType = crate::types::issue::Issue;

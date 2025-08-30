@@ -1,24 +1,25 @@
 use std::future::Future;
 use std::pin::Pin;
-/// Without this isolation, our `impl` definition for the `DbStoreMarkers` type will not have one
+/// Without this isolation, our `impl` definition for the `DbTableMarkers` type will not have one
 /// "defining use."
 use std::rc::Rc;
 
 use crate::backend_api_trait::BackendApiTrait;
-use crate::types::github_app::GithubAppStoreMarker;
+use crate::sync_engine::error::RawDbErrorToSyncError;
+use crate::types::github_app::GithubAppTableMarker;
 use crate::types::installation_access_token_row::InstallationAccessTokenRowTableMarker;
-use crate::types::installation_initial_sync_status::InstallationInitialSyncStatusStoreMarker;
-use crate::types::issue::IssueStoreMarker;
-use crate::types::issue_comment::IssueCommentStoreMarker;
-use crate::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatusStoreMarker;
-use crate::types::issues_initial_sync_status::IssuesInitialSyncStatusStoreMarker;
-use crate::types::label::{Label, LabelStoreMarker};
-use crate::types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtStoreMarker};
-use crate::types::license::LicenseStoreMarker;
-use crate::types::milestone::MilestoneStoreMarker;
-use crate::types::repository::RepositoryStoreMarker;
-use crate::types::repository_initial_sync_status::RepositoryInitialSyncStatusStoreMarker;
-use crate::types::user::UserStoreMarker;
+use crate::types::installation_initial_sync_status::InstallationInitialSyncStatusTableMarker;
+use crate::types::issue::IssueTableMarker;
+use crate::types::issue_comment::IssueCommentTableMarker;
+use crate::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatusTableMarker;
+use crate::types::issues_initial_sync_status::IssuesInitialSyncStatusTableMarker;
+use crate::types::label::{Label, LabelTableMarker};
+use crate::types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtTableMarker};
+use crate::types::license::LicenseTableMarker;
+use crate::types::milestone::MilestoneTableMarker;
+use crate::types::repository::RepositoryTableMarker;
+use crate::types::repository_initial_sync_status::RepositoryInitialSyncStatusTableMarker;
+use crate::types::user::UserTableMarker;
 use crate::types::{
     github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
     installation_initial_sync_status::InstallationInitialSyncStatus, issue::Issue,
@@ -28,7 +29,7 @@ use crate::types::{
     user::User,
 };
 use send_wrapper::SendWrapper;
-use typesafe_idb::TypesafeDb;
+use typed_db::{Db, RawDbTrait};
 use url::Url;
 
 use super::optimistic::db::DbWithOptimisticChanges;
@@ -37,31 +38,31 @@ use super::websocket_updates::transport::TransportTrait;
 use super::DbSubscription;
 use super::{error::SyncResult, SyncEngine};
 
-pub type DbStoreMarkers = (
-    InstallationInitialSyncStatusStoreMarker,
+pub type DbTableMarkers = (
+    InstallationInitialSyncStatusTableMarker,
     (
-        RepositoryInitialSyncStatusStoreMarker,
+        RepositoryInitialSyncStatusTableMarker,
         (
-            IssueCommentsInitialSyncStatusStoreMarker,
+            IssueCommentsInitialSyncStatusTableMarker,
             (
-                LastWebhookUpdateAtStoreMarker,
+                LastWebhookUpdateAtTableMarker,
                 (
-                    IssueCommentStoreMarker,
+                    IssueCommentTableMarker,
                     (
-                        InstallationAccessTokenRowStoreMarker,
+                        InstallationAccessTokenRowTableMarker,
                         (
-                            IssuesInitialSyncStatusStoreMarker,
+                            IssuesInitialSyncStatusTableMarker,
                             (
-                                LabelStoreMarker,
+                                LabelTableMarker,
                                 (
-                                    LicenseStoreMarker,
+                                    LicenseTableMarker,
                                     (
-                                        MilestoneStoreMarker,
+                                        MilestoneTableMarker,
                                         (
-                                            RepositoryStoreMarker,
+                                            RepositoryTableMarker,
                                             (
-                                                GithubAppStoreMarker,
-                                                (UserStoreMarker, (IssueStoreMarker, ())),
+                                                GithubAppTableMarker,
+                                                (UserTableMarker, (IssueTableMarker, ())),
                                             ),
                                         ),
                                     ),
@@ -75,14 +76,14 @@ pub type DbStoreMarkers = (
     ),
 );
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     pub async fn new<F, Fut>(
         backend_api: Rc<BackendApi>,
         make_transport: F,
         github_api: Rc<GithubApi>,
-    ) -> SyncResult<Self, Transport>
+    ) -> SyncResult<Self, Transport, RawDb>
     where
         F: Fn(Url) -> Fut + 'static,
         Fut: Future<Output = Result<Transport, Transport::TransportError>> + 'static,
@@ -91,21 +92,21 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
         let make_transport =
             Rc::new(move |url| Box::pin(make_transport(url)) as Pin<Box<dyn Future<Output = _>>>);
 
-        let db = TypesafeDb::builder("heimisch".into())
-            .with_store::<Issue>()
-            .with_store::<User>()
-            .with_store::<GithubApp>()
-            .with_store::<Repository>()
-            .with_store::<Milestone>()
-            .with_store::<License>()
-            .with_store::<Label>()
-            .with_store::<IssuesInitialSyncStatus>()
-            .with_store::<InstallationAccessTokenRow>()
-            .with_store::<IssueComment>()
-            .with_store::<LastWebhookUpdateAt>()
-            .with_store::<IssueCommentsInitialSyncStatus>()
-            .with_store::<RepositoryInitialSyncStatus>()
-            .with_store::<InstallationInitialSyncStatus>();
+        let db = Db::<RawDb, ()>::builder("heimisch".into())
+            .with_table::<Issue>()
+            .with_table::<User>()
+            .with_table::<GithubApp>()
+            .with_table::<Repository>()
+            .with_table::<Milestone>()
+            .with_table::<License>()
+            .with_table::<Label>()
+            .with_table::<IssuesInitialSyncStatus>()
+            .with_table::<InstallationAccessTokenRow>()
+            .with_table::<IssueComment>()
+            .with_table::<LastWebhookUpdateAt>()
+            .with_table::<IssueCommentsInitialSyncStatus>()
+            .with_table::<RepositoryInitialSyncStatus>()
+            .with_table::<InstallationInitialSyncStatus>();
 
         let db_subscriptions: Rc<Registry<DbSubscription>> = Default::default();
         let db_subscriptions2 = db_subscriptions.clone();
@@ -124,7 +125,8 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
                 matching_trackers.into_iter().for_each(|sub| (sub.func)());
             }),
         )
-        .await?;
+        .await
+        .tse()?;
 
         Ok(Self {
             db: Rc::new(db),

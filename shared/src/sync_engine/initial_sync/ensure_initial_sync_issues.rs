@@ -1,4 +1,5 @@
 use futures::future::try_join_all;
+use typed_db::RawDbTrait;
 
 use super::super::{
     changes::{AddChanges, Changes},
@@ -6,46 +7,58 @@ use super::super::{
     error::{SyncErrorSrc, SyncResult},
     SyncEngine, MAX_PER_PAGE,
 };
+use crate::sync_engine::websocket_updates::transport::TransportTrait;
 use crate::{
-    avail::MergeError, github_api_trait::GithubApiTrait, types::{
+    avail::MergeError,
+    github_api_trait::GithubApiTrait,
+    types::{
         installation::InstallationId,
         issue::{Issue, RepositoryIdIndex},
         issues_initial_sync_status::{InitialSyncStatusEnum, IssuesInitialSyncStatus},
         repository::{Repository, RepositoryId},
         user::User,
-    }
+    },
 };
-use crate::sync_engine::websocket_updates::transport::TransportTrait;
-use crate::backend_api_trait::BackendApiTrait;
+use crate::{backend_api_trait::BackendApiTrait, sync_engine::error::RawDbErrorToSyncError};
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait> 
-    SyncEngine<BackendApi, Transport, GithubApi> 
+impl<
+        RawDb: RawDbTrait,
+        BackendApi: BackendApiTrait,
+        Transport: TransportTrait,
+        GithubApi: GithubApiTrait,
+    > SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     pub async fn ensure_initial_sync_issues(
         &self,
         id: &RepositoryId,
         installation_id: &InstallationId,
-    ) -> SyncResult<(), Transport> {
+    ) -> SyncResult<(), Transport, RawDb> {
         let mut page = 1;
         let txn = self
             .db
             .txn()
-            .with_store::<IssuesInitialSyncStatus>()
-            .with_store::<Issue>()
-            .build();
+            .with_table::<IssuesInitialSyncStatus>()
+            .with_table::<Issue>()
+            .build()
+            .tse()?;
         let initial_sync_status = txn
-            .object_store::<IssuesInitialSyncStatus>()?
+            .table::<IssuesInitialSyncStatus>()
+            .tse()?
             .get(id)
-            .await?;
+            .await
+            .tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
                 InitialSyncStatusEnum::Full => return Ok(()),
                 InitialSyncStatusEnum::Partial => {
                     page = (txn
-                        .object_store::<Issue>()?
-                        .index::<RepositoryIdIndex>()?
+                        .table::<Issue>()
+                        .tse()?
+                        .index::<RepositoryIdIndex>()
+                        .tse()?
                         .get_all_optimistically(Some(id))
-                        .await?
+                        .await
+                        .tse()?
                         .len() as f64
                         / f64::from(MAX_PER_PAGE))
                     .ceil() as i32;
@@ -59,11 +72,13 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         let txn = self
             .db
             .txn()
-            .with_store::<Repository>()
-            .with_store::<User>()
-            .build();
+            .with_table::<Repository>()
+            .with_table::<User>()
+            .build()
+            .tse()?;
         let repo = txn
-            .object_store::<Repository>()?
+            .table::<Repository>()
+            .tse()?
             .get(id)
             .await?
             .ok_or_else(|| {
@@ -88,23 +103,25 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
 
         // NOTE: Maybe abstract away dealing with pagination.
         loop {
-            let issues = self.github_api.issues_slash_list_for_repo(
-                &conf,
-                &owner_name,
-                &repo_name,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                "created".into(),
-                "asc".into(),
-                None,
-                MAX_PER_PAGE.into(),
-                page.into(),
-            )
-            .await?;
+            let issues = self
+                .github_api
+                .issues_slash_list_for_repo(
+                    &conf,
+                    &owner_name,
+                    &repo_name,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    "created".into(),
+                    "asc".into(),
+                    None,
+                    MAX_PER_PAGE.into(),
+                    page.into(),
+                )
+                .await?;
             let last_fetched_num = issues.len();
             let changes = Changes::try_try_from_iter(
                 try_join_all(
@@ -121,16 +138,19 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
             )??;
 
             let txn = Changes::txn(&self.db)
-                .with_store::<IssuesInitialSyncStatus>()
+                .with_table::<IssuesInitialSyncStatus>()
                 .read_write()
-                .build();
+                .build()
+                .tse()?;
             self.persist_changes(&txn, changes).await?;
-            txn.table::<IssuesInitialSyncStatus>()?
+            txn.table::<IssuesInitialSyncStatus>()
+                .tse()?
                 .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
                 })
-                .await?;
+                .await
+                .tse()?;
 
             page += 1;
             if last_fetched_num < MAX_PER_PAGE as usize {
@@ -141,15 +161,18 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         let txn = self
             .db
             .txn()
-            .with_store::<IssuesInitialSyncStatus>()
+            .with_table::<IssuesInitialSyncStatus>()
             .read_write()
-            .build();
-        txn.object_store::<IssuesInitialSyncStatus>()?
+            .build()
+            .tse()?;
+        txn.table::<IssuesInitialSyncStatus>()
+            .tse()?
             .put(&IssuesInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id: *id,
             })
-            .await?;
+            .await
+            .tse()?;
         Ok(())
     }
 }

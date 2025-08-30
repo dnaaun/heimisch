@@ -51,7 +51,7 @@ impl std::fmt::Debug for DbSubscription {
     }
 }
 
-pub use new_defn::DbStoreMarkers;
+pub use new_defn::DbTableMarkers;
 
 pub struct SyncEngine<
     RawDb: RawDbTrait,
@@ -59,7 +59,7 @@ pub struct SyncEngine<
     Transport: TransportTrait,
     GithubApi,
 > {
-    pub db: Rc<DbWithOptimisticChanges<RawDb, DbStoreMarkers>>,
+    pub db: Rc<DbWithOptimisticChanges<RawDb, DbTableMarkers>>,
     pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
     backend_api: Rc<BackendApi>,
     github_api: Rc<GithubApi>,

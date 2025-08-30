@@ -1,11 +1,10 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use typesafe_idb::{ReadOnly, Store};
-
-use typesafe_idb::{Present, StoreMarker, TxnMode};
+use typed_db::{Present, RawDbTrait, ReadOnly, Table, TableMarker, TxnMode};
 
 use crate::avail::{MergeError, MergeStructWithAvails};
 use crate::backend_api_trait::BackendApiTrait;
+use crate::sync_engine::error::RawDbErrorToSyncError;
 use crate::types::issue_comment::{IssueComment, IssueCommentId};
 use crate::types::label::{Label, LabelId};
 
@@ -27,15 +26,15 @@ use super::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Deleted<S: Store>(pub S::Id);
+pub struct Deleted<S: Table>(pub S::Id);
 
 #[derive(Debug, Clone)]
-pub enum ExistingOrDeleted<S: Store> {
+pub enum ExistingOrDeleted<S: Table> {
     Existing(S),
     Deleted(S::Id),
 }
 
-impl<S: Store + MergeStructWithAvails> MergeStructWithAvails for ExistingOrDeleted<S> {
+impl<S: Table + MergeStructWithAvails> MergeStructWithAvails for ExistingOrDeleted<S> {
     fn merge(&mut self, other: Self) -> Result<(), MergeError> {
         use ExistingOrDeleted::*;
         match (self, other) {
@@ -58,13 +57,13 @@ impl<S: Store + MergeStructWithAvails> MergeStructWithAvails for ExistingOrDelet
     }
 }
 
-impl<S: Store> From<S> for ExistingOrDeleted<S> {
+impl<S: Table> From<S> for ExistingOrDeleted<S> {
     fn from(value: S) -> Self {
         Self::Existing(value)
     }
 }
 
-impl<S: Store> From<Deleted<S>> for ExistingOrDeleted<S> {
+impl<S: Table> From<Deleted<S>> for ExistingOrDeleted<S> {
     fn from(value: Deleted<S>) -> Self {
         Self::Deleted(value.0)
     }
@@ -72,7 +71,7 @@ impl<S: Store> From<Deleted<S>> for ExistingOrDeleted<S> {
 
 impl<S> AddChanges<ExistingOrDeleted<S>> for Changes
 where
-    S: Store,
+    S: Table,
     Changes: AddChanges<Deleted<S>>,
     Changes: AddChanges<S>,
 {
@@ -111,28 +110,28 @@ where
     }
 }
 
-pub trait StoreMarkersForChanges:
-    StoreMarker<Milestone>
-    + StoreMarker<Label>
-    + StoreMarker<License>
-    + StoreMarker<Repository>
-    + StoreMarker<User>
-    + StoreMarker<Issue>
-    + StoreMarker<IssueComment>
-    + StoreMarker<GithubApp>
+pub trait TableMarkersForChanges:
+    TableMarker<Milestone>
+    + TableMarker<Label>
+    + TableMarker<License>
+    + TableMarker<Repository>
+    + TableMarker<User>
+    + TableMarker<Issue>
+    + TableMarker<IssueComment>
+    + TableMarker<GithubApp>
     + Default
 {
 }
 
-impl<T> StoreMarkersForChanges for T where
-    T: StoreMarker<Milestone>
-        + StoreMarker<License>
-        + StoreMarker<Label>
-        + StoreMarker<Repository>
-        + StoreMarker<User>
-        + StoreMarker<Issue>
-        + StoreMarker<IssueComment>
-        + StoreMarker<GithubApp>
+impl<T> TableMarkersForChanges for T where
+    T: TableMarker<Milestone>
+        + TableMarker<License>
+        + TableMarker<Label>
+        + TableMarker<Repository>
+        + TableMarker<User>
+        + TableMarker<Issue>
+        + TableMarker<IssueComment>
+        + TableMarker<GithubApp>
         + Default
 {
 }
@@ -144,21 +143,27 @@ impl Changes {
     }
 
     /// A transaction builder that contains all the stores that `Changes` might interact with.
-    pub fn txn<DbStoreMarkers>(
-        db: &DbWithOptimisticChanges<DbStoreMarkers>,
-    ) -> TxnBuilderWithOptimisticChanges<'_, DbStoreMarkers, impl StoreMarkersForChanges, ReadOnly>
+    pub fn txn<RawDb: RawDbTrait, TableMarkers>(
+        db: &DbWithOptimisticChanges<RawDb, TableMarkers>,
+    ) -> TxnBuilderWithOptimisticChanges<
+        '_,
+        RawDb,
+        TableMarkers,
+        impl TableMarkersForChanges,
+        ReadOnly,
+    >
     where
-        DbStoreMarkers: StoreMarkersForChanges,
+        TableMarkers: TableMarkersForChanges,
     {
         db.txn()
-            .with_store::<GithubApp>()
-            .with_store::<Issue>()
-            .with_store::<Label>()
-            .with_store::<IssueComment>()
-            .with_store::<User>()
-            .with_store::<Repository>()
-            .with_store::<License>()
-            .with_store::<Milestone>()
+            .with_table::<GithubApp>()
+            .with_table::<Issue>()
+            .with_table::<Label>()
+            .with_table::<IssueComment>()
+            .with_table::<User>()
+            .with_table::<Repository>()
+            .with_table::<License>()
+            .with_table::<Milestone>()
     }
 
     /// Add some iterable of changes.
@@ -428,17 +433,17 @@ where
     }
 }
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
+    SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     pub async fn persist_changes<
-        Marker: StoreMarkersForChanges,
-        Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+        Marker: TableMarkersForChanges,
+        Mode: TxnMode<SupportsReadWrite = Present>,
     >(
         &self,
-        txn: &TxnWithOptimisticChanges<Marker, Mode>,
+        txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
         changes: impl IntoChanges,
-    ) -> SyncResult<(), Transport> {
+    ) -> SyncResult<(), Transport, RawDb> {
         let Changes {
             github_apps,
             issues,
@@ -449,40 +454,41 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
             labels,
             milestones,
         } = changes.into_changes()?;
-        persist_changes_to_issues::<Transport, Marker, Mode>(txn, issues).await?;
-        persist_changes_to_issue_comments::<Transport, Marker, Mode>(txn, issue_comments).await?;
-        persist_changes_to_github_apps::<Transport, Marker, Mode>(txn, github_apps).await?;
-        persist_changes_to_users::<Transport, Marker, Mode>(txn, users).await?;
-        persist_changes_to_repositorys::<Transport, Marker, Mode>(txn, repositorys).await?;
-        persist_changes_to_milestones::<Transport, Marker, Mode>(txn, milestones).await?;
-        persist_changes_to_licenses::<Transport, Marker, Mode>(txn, licenses).await?;
-        upsert_labels::<Transport, Marker, Mode>(txn, labels).await?;
+        persist_changes_to_issues::<Transport, RawDb, Marker, Mode>(txn, issues).await?;
+        persist_changes_to_issue_comments::<Transport, RawDb, Marker, Mode>(txn, issue_comments)
+            .await?;
+        persist_changes_to_github_apps::<Transport, RawDb, Marker, Mode>(txn, github_apps).await?;
+        persist_changes_to_users::<Transport, RawDb, Marker, Mode>(txn, users).await?;
+        persist_changes_to_repositorys::<Transport, RawDb, Marker, Mode>(txn, repositorys).await?;
+        persist_changes_to_milestones::<Transport, RawDb, Marker, Mode>(txn, milestones).await?;
+        persist_changes_to_licenses::<Transport, RawDb, Marker, Mode>(txn, licenses).await?;
+        upsert_labels::<Transport, RawDb, Marker, Mode>(txn, labels).await?;
 
         Ok(())
     }
 }
 
-async fn persist_changes_to_issues<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_issues<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<Issue>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<Issue>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let issue_store = txn.object_store::<Issue>()?;
+    let issue_store = txn.table::<Issue>().tse()?;
     for (_, issue) in issues {
         match issue {
             ExistingOrDeleted::Existing(issue) => {
-                let existing = issue_store.get(&issue.id).await?;
+                let existing = issue_store.get(&issue.id).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(issue)?,
                     None => issue,
                 };
-                issue_store.put(&merged).await?;
+                issue_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                issue_store.delete(&id).await?;
+                issue_store.delete(&id).await.tse()?;
             }
         }
     }
@@ -490,81 +496,81 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_issue_comments<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_issue_comments<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<IssueComment>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<IssueComment>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let issue_comment_store = txn.object_store::<IssueComment>()?;
+    let issue_comment_store = txn.table::<IssueComment>().tse()?;
     for (_, issue_comment) in issue_comments {
         match issue_comment {
             ExistingOrDeleted::Existing(issue_comment) => {
-                let existing = issue_comment_store.get(&issue_comment.id).await?;
+                let existing = issue_comment_store.get(&issue_comment.id).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(issue_comment)?,
                     None => issue_comment,
                 };
-                issue_comment_store.put(&merged).await?;
+                issue_comment_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                issue_comment_store.delete(&id).await?;
+                issue_comment_store.delete(&id).await.tse()?;
             }
         }
     }
     Ok(())
 }
 
-async fn persist_changes_to_github_apps<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_github_apps<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<GithubApp>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<GithubApp>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let github_app_store = txn.object_store::<GithubApp>()?;
+    let github_app_store = txn.table::<GithubApp>().tse()?;
     for (_, github_app) in github_apps {
         match github_app {
             ExistingOrDeleted::Existing(github_app) => {
-                let existing = github_app_store.get(&github_app.id).await?;
+                let existing = github_app_store.get(&github_app.id).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(github_app)?,
                     None => github_app,
                 };
-                github_app_store.put(&merged).await?;
+                github_app_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                github_app_store.delete(&id).await?;
+                github_app_store.delete(&id).await.tse()?;
             }
         }
     }
     Ok(())
 }
 
-async fn persist_changes_to_users<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_users<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     users: HashMap<UserId, ExistingOrDeleted<User>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<User>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<User>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let user_store = txn.object_store::<User>()?;
+    let user_store = txn.table::<User>().tse()?;
     for (_, user) in users {
         match user {
             ExistingOrDeleted::Existing(user) => {
-                let existing = user_store.get(&user.id).await?;
+                let existing = user_store.get(&user.id).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(user)?,
                     None => user,
                 };
-                user_store.put(&merged).await?;
+                user_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                user_store.delete(&id).await?;
+                user_store.delete(&id).await.tse()?;
             }
         }
     }
@@ -572,27 +578,27 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_licenses<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_licenses<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<License>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<License>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let license_store = txn.object_store::<License>()?;
+    let license_store = txn.table::<License>().tse()?;
     for (_, license) in licenses {
         match license {
             ExistingOrDeleted::Existing(license) => {
-                let existing = license_store.get(&license.key).await?;
+                let existing = license_store.get(&license.key).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(license)?,
                     None => license,
                 };
-                license_store.put(&merged).await?;
+                license_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                license_store.delete(&id).await?;
+                license_store.delete(&id).await.tse()?;
             }
         }
     }
@@ -600,27 +606,27 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_milestones<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_milestones<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<Milestone>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<Milestone>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let milestone_store = txn.object_store::<Milestone>()?;
+    let milestone_store = txn.table::<Milestone>().tse()?;
     for (_, milestone) in milestones {
         match milestone {
             ExistingOrDeleted::Existing(milestone) => {
-                let existing = milestone_store.get(&milestone.id).await?;
+                let existing = milestone_store.get(&milestone.id).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(milestone)?,
                     None => milestone,
                 };
-                milestone_store.put(&merged).await?;
+                milestone_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                milestone_store.delete(&id).await?;
+                milestone_store.delete(&id).await.tse()?;
             }
         }
     }
@@ -628,27 +634,27 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_repositorys<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn persist_changes_to_repositorys<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<Repository>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<Repository>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let repository_store = txn.object_store::<Repository>()?;
+    let repository_store = txn.table::<Repository>().tse()?;
     for (_, repository) in repositorys {
         match repository {
             ExistingOrDeleted::Existing(repository) => {
-                let existing = repository_store.get(&repository.id).await?;
+                let existing = repository_store.get(&repository.id).await.tse()?;
                 let merged = match existing {
                     Some(existing) => existing.with_merged(repository)?,
                     None => repository,
                 };
-                repository_store.put(&merged).await?;
+                repository_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                repository_store.delete(&id).await?;
+                repository_store.delete(&id).await.tse()?;
             }
         }
     }
@@ -656,22 +662,22 @@ where
     Ok(())
 }
 
-async fn upsert_labels<W: TransportTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<Marker, Mode>,
+async fn upsert_labels<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
-) -> SyncResult<(), W>
+) -> SyncResult<(), W, RawDb>
 where
-    Marker: StoreMarker<Label>,
-    Mode: TxnMode<SupportsReadOnly = Present, SupportsReadWrite = Present>,
+    Marker: TableMarker<Label>,
+    Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let label_store = txn.object_store::<Label>()?;
+    let label_store = txn.table::<Label>().tse()?;
     for (_, label) in labels {
         match label {
             ExistingOrDeleted::Existing(label) => {
-                label_store.put(&label).await?;
+                label_store.put(&label).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {
-                label_store.delete(&id).await?;
+                label_store.delete(&id).await.tse()?;
             }
         }
     }

@@ -27,7 +27,9 @@ use crate::avail::Avail;
 )]
 pub struct UserId(i64);
 
-#[derive(macros::TypesafeIdb, Serialize, Deserialize, Clone, Debug, AvailMerge, Default, PartialEq, Eq, Hash)]
+#[derive(
+    macros::Table, Serialize, Deserialize, Clone, Debug, AvailMerge, Default, PartialEq, Eq, Hash,
+)]
 pub struct User {
     pub avatar_url: Avail<String>,
     pub bio: Avail<Option<String>>,
@@ -49,12 +51,12 @@ pub struct User {
     pub hireable: Avail<Option<bool>>,
     pub html_url: Avail<String>,
 
-    #[idb(id)]
+    #[db(id)]
     pub id: UserId,
     pub ldap_dn: Avail<Option<String>>,
     pub location: Avail<Option<String>>,
 
-    #[idb(index)]
+    #[db(index)]
     pub login: String,
 
     pub name: Avail<Option<String>>,

@@ -8,7 +8,7 @@ use crate::sync_engine::{
 };
 use crate::types::issue::IssueId;
 use futures::future::{LocalBoxFuture, OptionFuture};
-use typesafe_idb::Store;
+use typed_db::Table;
 
 impl ToDb for github_api::models::IssueComment {
     type DbType = crate::types::issue_comment::IssueComment;
