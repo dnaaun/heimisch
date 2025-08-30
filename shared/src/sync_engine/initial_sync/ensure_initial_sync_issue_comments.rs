@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures::future::{join_all, LocalBoxFuture};
+use typed_db::RawDbTrait;
 
 use super::super::{
     changes::Changes,
@@ -23,8 +24,12 @@ use crate::{
     },
 };
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<
+        RawDb: RawDbTrait,
+        BackendApi: BackendApiTrait,
+        Transport: TransportTrait,
+        GithubApi: GithubApiTrait,
+    > SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     /// This function will try to find issue ids in the db by using the issue number in `issue_url`
     /// of issue_comment`.

@@ -1,7 +1,8 @@
+use typed_db::RawDbTrait;
+
 use crate::{
     avail::{MergeError, NotAvailableError},
     endpoints::endpoint_client::OwnApiError,
-    typed_db::RawDbTrait,
 };
 use std::{fmt::Debug, panic::Location};
 

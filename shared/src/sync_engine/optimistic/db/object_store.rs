@@ -2,14 +2,12 @@ use std::{cell::RefCell, future::Future, panic::Location, rc::Rc};
 
 use maplit::{hashmap, hashset};
 
-use crate::{
-    typed_db::{IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode},
-    sync_engine::optimistic::optimistic_changes::OptimisticChanges,
-};
+use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
+use typed_db::{IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode};
 
 use super::{
     index::IndexWithOptimisticChanges, reactivity_trackers::ReactivityTrackers, CommitListener,
-    Error, SerializedId,
+    SerializedId,
 };
 
 #[derive(Clone, derive_more::Constructor)]
@@ -130,12 +128,10 @@ where
 
     pub fn index<IS: IndexSpec<Table = S>>(
         &self,
-    ) -> Result<IndexWithOptimisticChanges<'_, IS>, Error> {
+    ) -> Result<IndexWithOptimisticChanges<'_, RawDb, IS>, RawDb::Error> {
         Ok(IndexWithOptimisticChanges::new(
             self.optimistic_changes.clone(),
-            self.inner
-                .index::<IS>()
-                .map_err(|e| Error::new(e, self.location))?,
+            self.inner.index::<IS>()?,
             &self.reactivity_trackers,
             self.location,
         ))

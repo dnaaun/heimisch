@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use crate::backend_api_trait::BackendApiTrait;
 use crate::types::github_app::GithubAppStoreMarker;
-use crate::types::installation_access_token_row::InstallationAccessTokenRowStoreMarker;
+use crate::types::installation_access_token_row::InstallationAccessTokenRowTableMarker;
 use crate::types::installation_initial_sync_status::InstallationInitialSyncStatusStoreMarker;
 use crate::types::issue::IssueStoreMarker;
 use crate::types::issue_comment::IssueCommentStoreMarker;

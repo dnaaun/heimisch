@@ -6,10 +6,10 @@ pub mod transport;
 use applying_error::{ApplyingError, ApplyingResult};
 use futures::{pin_mut, StreamExt};
 use transport::TransportTrait;
+use typed_db::RawDbTrait;
 
 use crate::{
     backend_api_trait::BackendApiTrait,
-    typed_db::RawDbTrait,
     endpoints::defns::api::websocket_updates::{
         ServerMsg, WebsocketUpdatesQueryParams, WEBSOCKET_UPDATES_ENDPOINT,
     },

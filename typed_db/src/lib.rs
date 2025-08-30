@@ -230,9 +230,12 @@ where
         self.raw_table.get_all().await
     }
 
-    pub async fn index<IS: IndexSpec<Table = R>>(&self) -> Result<Index<Db>, Db::Error> {
+    pub async fn index<IS: IndexSpec<Table = R>>(&self) -> Result<Index<Db, IS>, Db::Error> {
         let raw_index = self.raw_table.index(IS::NAME)?;
-        Ok(Index { raw_index })
+        Ok(Index {
+            raw_index,
+            _spec: PhantomData,
+        })
     }
 }
 
@@ -261,20 +264,20 @@ pub trait IndexSpec {
     fn get_index_value(row: &Self::Table) -> &Self::Type;
 }
 
-/// I'm not sure this abstraction over RawIndex is necessary, but it definltely feels more uniform.
-pub struct Index<RawDb: RawDbTrait> {
+pub struct Index<RawDb: RawDbTrait, IS: IndexSpec> {
     pub(crate) raw_index: RawDb::RawIndex,
+    _spec: PhantomData<IS>,
 }
 
-impl<RawDb: RawDbTrait> Index<RawDb> {
-    async fn get<IS: IndexSpec>(
+impl<RawDb: RawDbTrait, IS: IndexSpec> Index<RawDb, IS> {
+    pub async fn get(
         &self,
         value: &IS::Type,
     ) -> Result<Option<IS::Table>, <RawDb as RawDbTrait>::Error> {
         Ok(self.raw_index.get::<IS>(value).await?)
     }
 
-    async fn get_all<IS: IndexSpec>(
+    pub async fn get_all(
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Table>, <RawDb as RawDbTrait>::Error> {

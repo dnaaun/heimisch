@@ -3,34 +3,30 @@ use std::panic::Location;
 use std::rc::Rc;
 use typesafe_idb::Store;
 
-use typesafe_idb::{Index, IndexSpec};
+use typed_db::{Index, IndexSpec, RawDbTrait};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
 use super::reactivity_trackers::ReactivityTrackers;
-use super::{Error, MaybeOptimistic};
+use super::MaybeOptimistic;
 
 #[derive(derive_more::Constructor)]
-pub struct IndexWithOptimisticChanges<'txn, IS> {
+pub struct IndexWithOptimisticChanges<'txn, RawDb: RawDbTrait, IS: IndexSpec> {
     optimistic_changes: Rc<OptimisticChanges>,
-    inner: Index<IS>,
+    inner: Index<RawDb, IS>,
     pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
     txn_location: &'static Location<'static>,
 }
-impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
+impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<'_, RawDb, IS> {
     pub async fn get_optimistically(
         &self,
         id: &IS::Type,
-    ) -> Result<Option<MaybeOptimistic<IS::Store>>, super::Error> {
+    ) -> Result<Option<MaybeOptimistic<IS::Store>>, RawDb::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
 
-        let row = match self
-            .get(id)
-            .await
-            .map_err(|e| super::Error::new(e, self.txn_location))?
-        {
+        let row = match self.get(id).await? {
             Some(r) => r,
             None => return Ok(None),
         };
@@ -51,10 +47,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
             .or(Some(MaybeOptimistic::new(row, false))))
     }
 
-    pub(crate) async fn get(
-        &self,
-        id: &IS::Type,
-    ) -> Result<Option<IS::Store>, typesafe_idb::Error> {
+    pub(crate) async fn get(&self, id: &IS::Type) -> Result<Option<IS::Store>, RawDb::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
@@ -65,7 +58,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     pub async fn get_all_optimistically(
         &self,
         value: Option<&IS::Type>,
-    ) -> Result<Vec<MaybeOptimistic<IS::Store>>, Error> {
+    ) -> Result<Vec<MaybeOptimistic<IS::Store>>, RawDb::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);
@@ -73,8 +66,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
         let from_db_filtered = self
             .inner
             .get_all(value)
-            .await
-            .map_err(|e| Error::new(e, self.txn_location))?
+            .await?
             .into_iter()
             .filter(|r| {
                 self.optimistic_changes
@@ -116,7 +108,7 @@ impl<IS: IndexSpec> IndexWithOptimisticChanges<'_, IS> {
     pub(crate) async fn get_all(
         &self,
         value: Option<&IS::Type>,
-    ) -> Result<Vec<IS::Store>, typesafe_idb::Error> {
+    ) -> Result<Vec<IS::Store>, RawDb::Error> {
         self.reactivity_trackers
             .borrow_mut()
             .add_bulk_read(IS::Store::NAME);

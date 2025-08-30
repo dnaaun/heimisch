@@ -41,7 +41,7 @@ impl std::default::Default for IssueId {
 }
 
 #[derive(
-    macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Hash,
+    macros::Table, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Hash,
 )]
 pub struct Issue {
     pub active_lock_reason: Avail<Option<ActiveLockReason>>,
@@ -75,7 +75,7 @@ pub struct Issue {
 
     pub html_url: Avail<String>,
 
-    #[idb(id)]
+    #[db(id)]
     pub id: IssueId,
 
     #[doc = "Labels to associate with this issue; pass one or more label names to replace the set of labels on this issue; send an empty array to clear all labels from the issue; note that the labels are silently dropped for users without push access to the repository"]
@@ -90,7 +90,7 @@ pub struct Issue {
     pub node_id: Avail<String>,
 
     #[doc = "Number uniquely identifying the issue within its repository"]
-    #[idb(index)]
+    #[db(index)]
     pub number: i64,
 
     pub performed_via_github_app_id: Avail<Option<GithubAppId>>,
@@ -99,7 +99,7 @@ pub struct Issue {
 
     pub reactions: Avail<Reactions>,
 
-    #[idb(index)]
+    #[db(index)]
     pub repository_id: RepositoryId,
 
     pub repository_url: Avail<String>,

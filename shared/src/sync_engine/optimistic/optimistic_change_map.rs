@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 pub use status::Status;
 use typesafe_idb::StoreName;
 
-use crate::typed_db::Table;
+use typed_db::Table;
 
 use super::{db::SerializedId, monotonic_time::MonotonicTime};
 

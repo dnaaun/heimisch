@@ -22,7 +22,7 @@ use super::team_organization::TeamOrganizationId;
 )]
 pub struct TeamId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug)]
 pub struct Team {
     /// This is optional only because the `TeamSimple` returned
     /// sometimes doesn't contain it.
@@ -30,7 +30,7 @@ pub struct Team {
     pub description: Option<String>,
     pub html_url: String,
     #[doc = "Unique identifier of the team"]
-    #[idb(id)]
+    #[db(id)]
     pub id: TeamId,
     #[doc = "Distinguished Name (DN) that team maps to within LDAP environment"]
     #[serde(default, skip_serializing_if = "Option::is_none")]

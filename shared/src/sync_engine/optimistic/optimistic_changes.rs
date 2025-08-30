@@ -5,7 +5,7 @@ use std::{any::Any, future::Future, rc::Rc};
 
 use any_spawner::Executor;
 
-use crate::typed_db::Table;
+use typed_db::Table;
 
 use super::{db::SerializedId, optimistic_change_map::OptimisticChangeMap};
 

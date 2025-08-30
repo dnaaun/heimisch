@@ -24,7 +24,6 @@ use crate::{
     backend_api_trait::BackendApiTrait,
     endpoints::defns::api::installations::GetInstallationAccessTokenQueryParams,
     sync_engine::error::RawDbErrorToSyncError,
-    typed_db::RawDbTrait,
     types::{
         installation::InstallationId,
         installation_access_token_row::{InstallationAccessToken, InstallationAccessTokenRow},
@@ -32,6 +31,7 @@ use crate::{
 };
 use error::SyncResult;
 use jiff::{Timestamp, ToSpan};
+use typed_db::RawDbTrait;
 
 #[derive(Clone)]
 pub struct DbSubscription {

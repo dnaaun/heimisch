@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 use super::repository::RepositoryId;
 
 /// Serde internal tagging is necessary if we're going to index on `id` in IndexedDb.
-#[derive(macros::TypesafeIdb, Debug, Serialize, Deserialize, Clone)]
+#[derive(macros::Table, Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub struct IssuesInitialSyncStatus {
     pub status: InitialSyncStatusEnum,
-    #[idb(id)]
+    #[db(id)]
     pub id: RepositoryId,
 }
 

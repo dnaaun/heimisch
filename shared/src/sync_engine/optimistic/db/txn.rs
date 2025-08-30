@@ -1,9 +1,8 @@
 use std::{cell::RefCell, panic::Location, rc::Rc};
 
-use crate::{
-    typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode},
-    sync_engine::optimistic::optimistic_changes::OptimisticChanges,
-};
+use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode};
+
+use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
 use super::{
     object_store::TableWithOptimisticChanges,

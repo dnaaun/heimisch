@@ -27,16 +27,14 @@ use super::{github_app::GithubAppId, issue::IssueId, repository::RepositoryId, u
 )]
 pub struct IssueCommentId(i64);
 
-#[derive(
-    macros::TypesafeIdb, Clone, Default, Debug, PartialEq, Serialize, Deserialize, AvailMerge,
-)]
+#[derive(macros::Table, Clone, Default, Debug, PartialEq, Serialize, Deserialize, AvailMerge)]
 pub struct IssueComment {
     pub author_association: Avail<AuthorAssociation>,
     pub body: Avail<String>,
     pub created_at: Avail<Timestamp>,
     pub html_url: Avail<String>,
 
-    #[idb(id)]
+    #[db(id)]
     pub id: IssueCommentId,
     pub issue_url: Avail<String>,
     pub node_id: Avail<String>,
@@ -48,12 +46,12 @@ pub struct IssueComment {
 
     /// I don't support indexing on nested attrs yet, which I'd have to support if I want to index
     /// `Avail<IssueId>`, hence:
-    #[idb(index)]
+    #[db(index)]
     pub issue_id: Option<IssueId>,
 
     /// I want to store this because the intial fetch of issue comments doesn't include the issue
     /// id, and so we have to reconstruct it from the issue_url, but doing that in bulk will be
     /// cheaper. And storing the repository_id makes doing _that_ easier.
-    #[idb(index)]
+    #[db(index)]
     pub repository_id: RepositoryId,
 }

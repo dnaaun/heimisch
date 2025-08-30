@@ -27,7 +27,7 @@ use super::user::UserId;
 )]
 pub struct GithubAppId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
 pub struct GithubApp {
     pub client_id: Avail<Option<String>>,
     pub client_secret: Avail<Option<String>>,
@@ -39,7 +39,7 @@ pub struct GithubApp {
     pub html_url: Avail<String>,
 
     #[doc = "Unique identifier of the GitHub app"]
-    #[idb(id)]
+    #[db(id)]
     pub id: GithubAppId,
 
     #[doc = "The number of installations associated with the GitHub app"]

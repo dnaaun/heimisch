@@ -34,7 +34,7 @@ use super::{installation::InstallationId, license::LicenseId, user::UserId};
 pub struct RepositoryId(i64);
 
 #[derive(
-    macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Eq,
+    macros::Table, Deserialize, Serialize, Clone, Debug, AvailMerge, Default, PartialEq, Eq,
 )]
 pub struct Repository {
     #[doc = "Whether to allow Auto-merge to be used on pull requests."]
@@ -101,7 +101,7 @@ pub struct Repository {
     pub hooks_url: Avail<String>,
     pub html_url: Avail<String>,
     #[doc = "Unique identifier of the repository"]
-    #[idb(id)]
+    #[db(id)]
     pub id: RepositoryId,
     #[doc = "Whether this repository acts as a template that can be used to generate new repositories."]
     #[serde(default)]
@@ -123,7 +123,7 @@ pub struct Repository {
     pub milestones_url: Avail<String>,
     pub mirror_url: Avail<Option<String>>,
 
-    #[idb(index)]
+    #[db(index)]
     pub name: String,
 
     pub node_id: Avail<String>,
@@ -171,6 +171,6 @@ pub struct Repository {
     pub web_commit_signoff_required: Avail<bool>,
 
     /// This isn't present in API responses, but is useful for us.
-    #[idb(index)]
+    #[db(index)]
     pub installation_id: InstallationId,
 }

@@ -22,7 +22,7 @@ use crate::avail::Avail;
 )]
 pub struct LicenseId(String);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
 pub struct License {
     pub body: Avail<String>,
     pub conditions: Avail<Vec<String>>,
@@ -31,7 +31,7 @@ pub struct License {
     pub html_url: Avail<String>,
     pub implementation: Avail<String>,
 
-    #[idb(id)]
+    #[db(id)]
     pub key: LicenseId,
 
     pub limitations: Avail<Vec<String>>,

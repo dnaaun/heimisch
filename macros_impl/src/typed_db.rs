@@ -61,7 +61,7 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             quote! {
                 pub struct #index_name { }
 
-                impl typesafe_idb::IndexSpec for #index_name {
+                impl typed_db::IndexSpec for #index_name {
                     type Table = #struct_name;
                     const NAME: &'static str = #field_name_str;
                     type Type = #field_type;
@@ -95,7 +95,7 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             }
 
             fn index_names() -> &'static [&'static str] {
-                &[#(#index_names)*]
+                &[#(#index_names),*]
             }
         }
         #(#index_structs)*

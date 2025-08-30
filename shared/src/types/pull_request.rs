@@ -51,7 +51,7 @@ pub struct Link {
 )]
 pub struct PullRequestId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug)]
 pub struct PullRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_lock_reason: Option<String>,
@@ -79,7 +79,7 @@ pub struct PullRequest {
     pub draft: Option<bool>,
     pub head: PullRequestHead,
     pub html_url: String,
-    #[idb(id)]
+    #[db(id)]
     pub id: PullRequestId,
     pub issue_url: String,
     pub label_ids: Vec<LabelId>,

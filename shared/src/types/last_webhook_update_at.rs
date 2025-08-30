@@ -10,9 +10,9 @@ pub enum LastWebhookUpdateAtId {
 }
 
 /// Serde internal tagging is necessary if we're going to index on `id` in IndexedDb.
-#[derive(macros::TypesafeIdb, Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(macros::Table, Debug, Serialize, Deserialize, Clone, Default)]
 pub struct LastWebhookUpdateAt {
     pub at: Timestamp,
-    #[idb(id)]
+    #[db(id)]
     pub id: LastWebhookUpdateAtId,
 }

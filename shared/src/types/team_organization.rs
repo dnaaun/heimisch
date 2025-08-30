@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct TeamOrganizationId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug)]
 pub struct TeamOrganization {
     pub archived_at: Option<Timestamp>,
     pub avatar_url: String,
@@ -47,7 +47,7 @@ pub struct TeamOrganization {
     pub has_repository_projects: bool,
     pub hooks_url: String,
     pub html_url: String,
-    #[idb(id)]
+    #[db(id)]
     pub id: TeamOrganizationId,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub is_verified: Option<bool>,

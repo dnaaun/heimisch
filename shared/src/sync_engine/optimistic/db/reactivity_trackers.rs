@@ -3,9 +3,7 @@ use std::{
     rc::Rc,
 };
 
-use typesafe_idb::Store;
-
-use crate::typed_db::Table;
+use typed_db::Table;
 
 #[derive(Debug, Ord, PartialOrd, Hash, PartialEq, Eq, Clone)]
 pub struct SerializedId(String);

@@ -27,7 +27,7 @@ use super::user::UserId;
 )]
 pub struct MilestoneId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug, AvailMerge, Default)]
 pub struct Milestone {
     pub closed_at: Avail<Option<Timestamp>>,
     pub closed_issues: Avail<i64>,
@@ -36,7 +36,7 @@ pub struct Milestone {
     pub description: Avail<Option<String>>,
     pub due_on: Avail<Option<Timestamp>>,
     pub html_url: Avail<String>,
-    #[idb(id)]
+    #[db(id)]
     pub id: MilestoneId,
     pub labels_url: Avail<String>,
     pub node_id: Avail<String>,

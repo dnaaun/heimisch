@@ -1,9 +1,8 @@
 use std::{panic::Location, rc::Rc};
 
-use crate::{
-    typed_db::{Db, DbBuilder, RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker},
-    sync_engine::optimistic::optimistic_changes::OptimisticChanges,
-};
+use typed_db::{Db, DbBuilder, RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker};
+
+use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 
 use super::{reactivity_trackers::CommitListener, TxnBuilderWithOptimisticChanges};
 
@@ -51,7 +50,7 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
 
     /// Shortcut
     #[track_caller]
-    pub fn object_store_rw<S: Table + 'static>(
+    pub fn table_rw<S: Table + 'static>(
         &self,
     ) -> Result<super::TableWithOptimisticChanges<RawDb, S, ReadWrite>, RawDb::Error>
     where

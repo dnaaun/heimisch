@@ -2,10 +2,10 @@ use serde::{Deserialize, Serialize};
 
 use super::repository::RepositoryId;
 
-#[derive(macros::TypesafeIdb, Debug, Serialize, Deserialize, Clone)]
+#[derive(macros::Table, Debug, Serialize, Deserialize, Clone)]
 pub struct RepositoryInitialSyncStatus {
     pub status: RepoSyncStatus,
-    #[idb(id)]
+    #[db(id)]
     pub id: RepositoryId,
 }
 

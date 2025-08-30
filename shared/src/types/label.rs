@@ -19,12 +19,12 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct LabelId(i64);
 
-#[derive(macros::TypesafeIdb, Deserialize, Serialize, Clone, Debug, PartialEq, Hash)]
+#[derive(macros::Table, Deserialize, Serialize, Clone, Debug, PartialEq, Hash)]
 pub struct Label {
     pub color: String,
     pub default: bool,
     pub description: Option<String>,
-    #[idb(id)]
+    #[db(id)]
     pub id: LabelId,
     pub name: String,
     pub node_id: String,
