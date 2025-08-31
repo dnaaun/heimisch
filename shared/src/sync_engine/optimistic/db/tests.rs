@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use bon::builder;
 use macros::leptos_test_setup;
-use typesafe_idb::{ReadOnly, ReadWrite};
+use typed_db::{RawDbTrait, ReadOnly, ReadWrite};
 use url::Url;
 
 use crate::{
@@ -20,8 +20,8 @@ use crate::{
 
 use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
-async fn get_sync_engine() -> SyncEngine<BackendApi, MockTransport, ()> {
-    SyncEngine::<BackendApi, MockTransport, ()>::new(
+async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, MockTransport, ()> {
+    SyncEngine::<RawDb, BackendApi, MockTransport, ()>::new(
         Rc::new(BackendApi::new(EndpointClient::new(
             |_| (),
             Url::parse("https://www.example.com/").unwrap(),
@@ -36,15 +36,21 @@ async fn get_sync_engine() -> SyncEngine<BackendApi, MockTransport, ()> {
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 #[builder]
-async fn num_times_subscriber_called<Txn1Markers, Txn1Mode, Txn2Markers, Txn2Mode>(
+async fn num_times_subscriber_called<
+    RawDb: RawDbTrait,
+    Txn1Markers,
+    Txn1Mode,
+    Txn2Markers,
+    Txn2Mode,
+>(
     make_txn_1: impl for<'a> Fn(
-        TxnBuilderWithOptimisticChanges<'a, DbTableMarkers, (), ReadOnly>,
-    ) -> TxnWithOptimisticChanges<Txn1Markers, Txn1Mode>,
+        TxnBuilderWithOptimisticChanges<'a, RawDb, DbTableMarkers, (), ReadOnly>,
+    ) -> TxnWithOptimisticChanges<RawDb, Txn1Markers, Txn1Mode>,
     make_txn_2: impl for<'a> Fn(
-        TxnBuilderWithOptimisticChanges<'a, DbTableMarkers, (), ReadWrite>,
-    ) -> TxnWithOptimisticChanges<Txn2Markers, Txn2Mode>,
-    with_txn_1: impl AsyncFn(&TxnWithOptimisticChanges<Txn1Markers, Txn1Mode>),
-    with_txn_2: impl AsyncFn(&TxnWithOptimisticChanges<Txn2Markers, Txn2Mode>),
+        TxnBuilderWithOptimisticChanges<'a, RawDb, DbTableMarkers, (), ReadWrite>,
+    ) -> TxnWithOptimisticChanges<RawDb, Txn2Markers, Txn2Mode>,
+    with_txn_1: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn1Markers, Txn1Mode>),
+    with_txn_2: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn2Markers, Txn2Mode>),
     should_overlap: bool,
 ) {
     let subscriber_hit_times = Rc::new(RefCell::new(0));
@@ -79,24 +85,18 @@ async fn num_times_subscriber_called<Txn1Markers, Txn1Mode, Txn2Markers, Txn2Mod
 
 #[leptos_test_setup]
 pub async fn index_get_no_optimisim_put_overlapping() {
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Issue>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .index::<RepositoryIdIndex>()
-                .unwrap()
                 .get_optimistically(&4.into())
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Issue>()
-                .unwrap()
-                .put(&Default::default())
-                .await
-                .unwrap();
+            txn.table::<Issue>().put(&Default::default()).await.unwrap();
         })
         .should_overlap(true)
         .call()
@@ -105,21 +105,18 @@ pub async fn index_get_no_optimisim_put_overlapping() {
 
 #[leptos_test_setup]
 pub async fn index_get_no_optimisim_put_non_overlapping() {
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Repository>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .index::<RepositoryIdIndex>()
-                .unwrap()
                 .get_optimistically(&4.into())
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Repository>()
-                .unwrap()
+            txn.table::<Repository>()
                 .put(&Default::default())
                 .await
                 .unwrap();
@@ -132,19 +129,17 @@ pub async fn index_get_no_optimisim_put_non_overlapping() {
 #[leptos_test_setup]
 pub async fn get_no_optimisim_put_overlapping() {
     let some_issue_id = 4.into();
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Issue>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .get_optimistically(&some_issue_id)
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Issue>()
-                .unwrap()
+            txn.table::<Issue>()
                 .put(&Issue {
                     id: some_issue_id,
                     ..Default::default()
@@ -160,19 +155,17 @@ pub async fn get_no_optimisim_put_overlapping() {
 #[leptos_test_setup]
 pub async fn get_no_optimisim_put_non_overlapping() {
     let some_issue_id = 4.into();
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Issue>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .get_optimistically(&some_issue_id)
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Issue>()
-                .unwrap()
+            txn.table::<Issue>()
                 .put(&Issue {
                     id: (*some_issue_id + 1).into(),
                     ..Default::default()
@@ -184,19 +177,17 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .call()
         .await;
 
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Repository>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .get_optimistically(&some_issue_id)
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Repository>()
-                .unwrap()
+            txn.table::<Repository>()
                 .put(&Default::default())
                 .await
                 .unwrap();
@@ -208,22 +199,14 @@ pub async fn get_no_optimisim_put_non_overlapping() {
 
 #[leptos_test_setup]
 pub async fn get_all_no_optimisim_put_overlapping() {
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Issue>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
-            let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
-                .get_all_optimistically()
-                .await;
+            let _ = txn.table::<Issue>().get_all_optimistically().await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Issue>()
-                .unwrap()
-                .put(&Default::default())
-                .await
-                .unwrap();
+            txn.table::<Issue>().put(&Default::default()).await.unwrap();
         })
         .should_overlap(true)
         .call()
@@ -232,19 +215,17 @@ pub async fn get_all_no_optimisim_put_overlapping() {
 
 #[leptos_test_setup]
 pub async fn get_all_no_optimisim_put_non_overlapping() {
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Repository>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .get_optimistically(&Default::default())
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Repository>()
-                .unwrap()
+            txn.table::<Repository>()
                 .put(&Default::default())
                 .await
                 .unwrap();
@@ -256,19 +237,14 @@ pub async fn get_all_no_optimisim_put_non_overlapping() {
 
 #[leptos_test_setup]
 pub async fn get_all_no_optimisim_create_overlapping() {
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Issue>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
-            let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
-                .get_all_optimistically()
-                .await;
+            let _ = txn.table::<Issue>().get_all_optimistically().await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Issue>()
-                .unwrap()
+            txn.table::<Issue>()
                 .create_optimistically(Default::default(), async { Ok(Default::default()) });
         })
         .should_overlap(true)
@@ -278,19 +254,17 @@ pub async fn get_all_no_optimisim_create_overlapping() {
 
 #[leptos_test_setup]
 pub async fn get_all_no_optimisim_create_non_overlapping() {
-    num_times_subscriber_called()
-        .make_txn_1(|txn| txn.with_store::<Issue>().build())
-        .make_txn_2(|txn| txn.with_store::<Repository>().build())
+    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+        .make_txn_1(|txn| txn.with_table::<Issue>().build())
+        .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
             let _ = txn
-                .object_store::<Issue>()
-                .unwrap()
+                .table::<Issue>()
                 .get_optimistically(&Default::default())
                 .await;
         })
         .with_txn_2(async |txn| {
-            txn.object_store::<Repository>()
-                .unwrap()
+            txn.table::<Repository>()
                 .create_optimistically(Default::default(), async { Ok(Default::default()) });
         })
         .should_overlap(false)

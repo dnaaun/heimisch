@@ -9,7 +9,7 @@ use shared::{
         DbTableMarkers, SyncEngine, TransportTrait,
     },
 };
-use typesafe_idb::{ReadOnly, TxnMode};
+use typed_db::{ReadOnly, TxnMode};
 
 use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
@@ -25,16 +25,18 @@ where
     fn idb_signal(
         &self,
         make_txn: impl for<'a> Fn(
-                TxnBuilderWithOptimisticChanges<'a, DbStoreMarkers, (), ReadOnly>,
-            ) -> TxnWithOptimisticChanges<TxnStoreMarkers, Mode>
+                TxnBuilderWithOptimisticChanges<'a, idb::Database, DbStoreMarkers, (), ReadOnly>,
+            )
+                -> TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>
             + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<TxnStoreMarkers, Mode>>) -> Fut + 'static,
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>>) -> Fut
+            + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>;
 }
 
 impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
     IdbSignalFromSyncEngine<DbTableMarkers, TxnStoreMarkers, Mode, Fut, T>
-    for SyncEngine<BA, TT, GH>
+    for SyncEngine<idb::Database, BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
@@ -47,10 +49,12 @@ where
     fn idb_signal(
         &self,
         make_txn: impl for<'a> Fn(
-                TxnBuilderWithOptimisticChanges<'a, DbTableMarkers, (), ReadOnly>,
-            ) -> TxnWithOptimisticChanges<TxnStoreMarkers, Mode>
+                TxnBuilderWithOptimisticChanges<'a, idb::Database, DbTableMarkers, (), ReadOnly>,
+            )
+                -> TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>
             + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<TxnStoreMarkers, Mode>>) -> Fut + 'static,
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>>) -> Fut
+            + 'static,
     ) -> IdbSignal<Result<T, FrontendError>> {
         let db = SendWrapper::new(self.db.clone());
         let make_txn = move || make_txn(db.txn().with_no_commit_listener());

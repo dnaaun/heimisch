@@ -1,7 +1,5 @@
 use std::cell::RefCell;
-use std::panic::Location;
 use std::rc::Rc;
-use typesafe_idb::Store;
 
 use typed_db::{Index, IndexSpec, RawDbTrait, Table};
 
@@ -15,7 +13,6 @@ pub struct IndexWithOptimisticChanges<'txn, RawDb: RawDbTrait, IS: IndexSpec> {
     optimistic_changes: Rc<OptimisticChanges>,
     inner: Index<RawDb, IS>,
     pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
-    txn_location: &'static Location<'static>,
 }
 impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<'_, RawDb, IS> {
     pub async fn get_optimistically(

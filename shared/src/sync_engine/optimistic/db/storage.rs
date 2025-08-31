@@ -1,4 +1,4 @@
-use std::{panic::Location, rc::Rc};
+use std::rc::Rc;
 
 use typed_db::{Db, DbBuilder, RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker};
 
@@ -33,35 +33,31 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
             self.inner.txn(),
             self.optimistic_updates.clone(),
             Some(self.listener.clone()),
-            Location::caller(),
         )
     }
 
     /// Shortcut
     #[track_caller]
-    pub fn table<S: Table + 'static>(
-        &self,
-    ) -> Result<super::TableWithOptimisticChanges<RawDb, S, ReadOnly>, RawDb::Error>
+    pub fn table<S: Table + 'static>(&self) -> super::TableWithOptimisticChanges<RawDb, S, ReadOnly>
     where
         DbTableMarkers: TableMarker<S>,
     {
-        Ok(self.txn().with_table::<S>().build()?.table::<S>()?)
+        self.txn().with_table::<S>().build().table::<S>()
     }
 
     /// Shortcut
     #[track_caller]
     pub fn table_rw<S: Table + 'static>(
         &self,
-    ) -> Result<super::TableWithOptimisticChanges<RawDb, S, ReadWrite>, RawDb::Error>
+    ) -> super::TableWithOptimisticChanges<RawDb, S, ReadWrite>
     where
         DbTableMarkers: TableMarker<S>,
     {
-        Ok(self
-            .txn()
+        self.txn()
             .with_table::<S>()
             .read_write()
-            .build()?
-            .table::<S>()?)
+            .build()
+            .table::<S>()
     }
 
     pub fn get_optimistic_to_realistic_for_creations<S: Table>(

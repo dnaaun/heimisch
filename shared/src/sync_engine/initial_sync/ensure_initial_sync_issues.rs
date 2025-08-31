@@ -39,23 +39,15 @@ impl<
             .txn()
             .with_table::<IssuesInitialSyncStatus>()
             .with_table::<Issue>()
-            .build()
-            .tse()?;
-        let initial_sync_status = txn
-            .table::<IssuesInitialSyncStatus>()
-            .tse()?
-            .get(id)
-            .await
-            .tse()?;
+            .build();
+        let initial_sync_status = txn.table::<IssuesInitialSyncStatus>().get(id).await.tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
                 InitialSyncStatusEnum::Full => return Ok(()),
                 InitialSyncStatusEnum::Partial => {
                     page = (txn
                         .table::<Issue>()
-                        .tse()?
                         .index::<RepositoryIdIndex>()
-                        .tse()?
                         .get_all_optimistically(Some(id))
                         .await
                         .tse()?
@@ -74,13 +66,12 @@ impl<
             .txn()
             .with_table::<Repository>()
             .with_table::<User>()
-            .build()
-            .tse()?;
+            .build();
         let repo = txn
             .table::<Repository>()
-            .tse()?
             .get(id)
-            .await?
+            .await
+            .tse()?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("repository with id {id:?}: doesn't exist"))
             })?;
@@ -90,9 +81,10 @@ impl<
             ))
         })?;
         let repo_owner = txn
-            .object_store::<User>()?
+            .table::<User>()
             .get(&repo_owner_id)
-            .await?
+            .await
+            .tse()?
             .ok_or_else(|| {
                 SyncErrorSrc::DataModel(format!("user with id {repo_owner_id:?}: doesn't exist"))
             })?;
@@ -140,11 +132,9 @@ impl<
             let txn = Changes::txn(&self.db)
                 .with_table::<IssuesInitialSyncStatus>()
                 .read_write()
-                .build()
-                .tse()?;
+                .build();
             self.persist_changes(&txn, changes).await?;
             txn.table::<IssuesInitialSyncStatus>()
-                .tse()?
                 .put(&IssuesInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id: *id,
@@ -163,10 +153,8 @@ impl<
             .txn()
             .with_table::<IssuesInitialSyncStatus>()
             .read_write()
-            .build()
-            .tse()?;
+            .build();
         txn.table::<IssuesInitialSyncStatus>()
-            .tse()?
             .put(&IssuesInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id: *id,

@@ -32,10 +32,10 @@ pub fn TopBar(
     #[prop(into)] repo_name: Signal<String>,
 ) -> impl IntoView {
     let initial_sync_done = use_sync_engine().idb_signal(
-        move |builder| builder.with_store::<RepositoryInitialSyncStatus>().build(),
+        move |builder| builder.with_table::<RepositoryInitialSyncStatus>().build(),
         move |txn| async move {
             Ok(matches!(
-                txn.object_store::<RepositoryInitialSyncStatus>()?
+                txn.table::<RepositoryInitialSyncStatus>()
                     .get(&repository_id.get())
                     .await?,
                 Some(RepositoryInitialSyncStatus {

@@ -1,5 +1,6 @@
-use std::{cell::RefCell, future::Future, panic::Location, rc::Rc};
+use std::{cell::RefCell, future::Future, rc::Rc};
 
+use derivative::Derivative;
 use maplit::{hashmap, hashset};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
@@ -10,13 +11,14 @@ use super::{
     SerializedId,
 };
 
-#[derive(Clone, derive_more::Constructor)]
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""))]
+#[derive(derive_more::Constructor)]
 pub struct TableWithOptimisticChanges<RawDb: RawDbTrait, S: Table, Mode> {
     optimistic_changes: Rc<OptimisticChanges>,
     inner: Rc<TableAccess<RawDb, S, Mode>>,
     pub reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
     pub commit_listener: Option<CommitListener>,
-    location: &'static Location<'static>,
 }
 
 #[derive(Clone, derive_more::Constructor, derive_more::Deref, Debug, PartialEq, Eq, Hash)]
@@ -126,15 +128,12 @@ where
         self.inner.get_all().await
     }
 
-    pub fn index<IS: IndexSpec<Table = S>>(
-        &self,
-    ) -> Result<IndexWithOptimisticChanges<'_, RawDb, IS>, RawDb::Error> {
-        Ok(IndexWithOptimisticChanges::new(
+    pub fn index<IS: IndexSpec<Table = S>>(&self) -> IndexWithOptimisticChanges<'_, RawDb, IS> {
+        IndexWithOptimisticChanges::new(
             self.optimistic_changes.clone(),
-            self.inner.index::<IS>()?,
+            self.inner.index::<IS>(),
             &self.reactivity_trackers,
-            self.location,
-        ))
+        )
     }
 }
 

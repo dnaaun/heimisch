@@ -10,10 +10,7 @@ pub trait RawTableAccessTrait<R: Table> {
     async fn put(&self, item: &R) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
     async fn delete(&self, id: &R::Id) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
 
-    fn index(
-        &self,
-        name: &str,
-    ) -> Result<<Self::RawDb as RawDbTrait>::RawIndex, <Self::RawDb as RawDbTrait>::Error>;
+    fn index(&self, name: &str) -> <Self::RawDb as RawDbTrait>::RawIndex;
 }
 
 pub trait RawTxnTrait {
@@ -24,7 +21,7 @@ pub trait RawTxnTrait {
     fn get_table<R: Table>(
         &self,
         store_name: &str,
-    ) -> Result<<Self::RawDb as RawDbTrait>::RawTableAccess<R>, <Self::RawDb as RawDbTrait>::Error>;
+    ) -> <Self::RawDb as RawDbTrait>::RawTableAccess<R>;
 }
 
 pub trait RawDbBuilderTrait {
@@ -44,7 +41,7 @@ pub trait RawDbTrait {
     type RawTableBuilder;
     type RawTableAccess<R: Table>: RawTableAccessTrait<R, RawDb = Self>;
 
-    fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error>;
+    fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn;
     fn builder(name: &str) -> Self::RawDbBuilder;
 
     fn table_builder<R: Table>() -> Self::RawTableBuilder;

@@ -26,19 +26,16 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
     let repositorys_and_owners = sync_engine.idb_signal(
         |txn_builder| {
             txn_builder
-                .with_store::<Repository>()
-                .with_store::<User>()
+                .with_table::<Repository>()
+                .with_table::<User>()
                 .build()
         },
         |txn| async move {
-            let repositorys = txn
-                .table::<Repository>()?
-                .get_all_optimistically()
-                .await?;
-            let user_store = txn.table::<User>()?;
+            let repositorys = txn.table::<Repository>().get_all_optimistically().await?;
+            let user_table = txn.table::<User>();
             let users = join_all(repositorys.iter().map(|r| {
                 OptionFuture::from(r.owner_id.clone().to_option().map(|user_id| {
-                    let user_store = user_store.clone();
+                    let user_store = user_table.clone();
                     async move { user_store.get_optimistically(&user_id).await }
                 }))
             }))

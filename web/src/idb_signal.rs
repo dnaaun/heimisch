@@ -85,8 +85,9 @@ where
 {
     #[track_caller]
     pub fn new<Markers, Mode, Fut, Deregister>(
-        make_txn: impl Fn() -> TxnWithOptimisticChanges<Markers, Mode> + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<Markers, Mode>>) -> Fut + 'static,
+        make_txn: impl Fn() -> TxnWithOptimisticChanges<idb::Database, Markers, Mode> + 'static,
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, Markers, Mode>>) -> Fut
+            + 'static,
         register_notifier: impl Fn(DbSubscription) -> Deregister + 'static,
     ) -> Self
     where

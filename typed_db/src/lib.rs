@@ -3,6 +3,7 @@
 pub mod idb_impl;
 pub mod raw_traits;
 
+pub use derivative::Derivative;
 pub use raw_traits::RawDbTrait;
 use raw_traits::*;
 
@@ -11,7 +12,6 @@ use std::{
     collections::{HashMap, HashSet},
     marker::PhantomData,
     rc::Rc,
-    sync::Arc,
 };
 
 use serde::{Serialize, de::DeserializeOwned};
@@ -173,16 +173,16 @@ where
         }
     }
 
-    pub fn build(self) -> Result<Txn<Db, TxnTableMarkers, Mode>, Db::Error> {
+    pub fn build(self) -> Txn<Db, TxnTableMarkers, Mode> {
         let raw_txn = self.db.raw.txn(
             &self.store_names.into_iter().collect::<Vec<_>>(),
             Mode::IS_READ_WRITE,
-        )?;
-        Ok(Txn {
+        );
+        Txn {
             markers: self.txn_table_markers,
             raw_txn: Some(raw_txn),
             mode: PhantomData,
-        })
+        }
     }
 }
 
@@ -194,22 +194,18 @@ pub struct Txn<Db: RawDbTrait, TableMarkers, Mode> {
 }
 
 impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
-    pub fn table<R>(&self) -> Result<TableAccess<Db, R, Mode>, Db::Error>
+    pub fn table<R>(&self) -> TableAccess<Db, R, Mode>
     where
         TableMarkers: TableMarker<R>,
         R: Table,
     {
-        let raw_table = self
-            .raw_txn
-            .as_ref()
-            .map(|t| t.get_table(&R::NAME))
-            .expect(
+        let raw_table = self.raw_txn.as_ref().map(|t| t.get_table(&R::NAME)).expect(
             "Should be None only if committed/aborted, which means &self shouldn't be obtainable",
-        )?;
-        Ok(TableAccess {
+        );
+        TableAccess {
             raw_table: Rc::new(raw_table),
             mode: PhantomData,
-        })
+        }
     }
 
     pub fn commit(mut self) -> Result<(), Db::Error> {
@@ -223,7 +219,8 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""))]
 pub struct TableAccess<RawDb: RawDbTrait, R: Table, Mode> {
     pub(crate) raw_table: Rc<RawDb::RawTableAccess<R>>,
     pub(crate) mode: PhantomData<(R, Mode)>,
@@ -241,12 +238,12 @@ where
         self.raw_table.get_all().await
     }
 
-    pub fn index<IS: IndexSpec<Table = R>>(&self) -> Result<Index<Db, IS>, Db::Error> {
-        let raw_index = self.raw_table.index(IS::NAME)?;
-        Ok(Index {
+    pub fn index<IS: IndexSpec<Table = R>>(&self) -> Index<Db, IS> {
+        let raw_index = self.raw_table.index(IS::NAME);
+        Index {
             raw_index,
             _spec: PhantomData,
-        })
+        }
     }
 }
 

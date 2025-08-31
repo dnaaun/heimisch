@@ -1,10 +1,11 @@
 use futures::future::try_join_all;
+use typed_db::RawDbTrait;
 
 use crate::{
     avail::MergeError,
     backend_api_trait::BackendApiTrait,
     github_api_trait::GithubApiTrait,
-    sync_engine::websocket_updates::transport::TransportTrait,
+    sync_engine::{error::RawDbErrorToSyncError, websocket_updates::transport::TransportTrait},
     types::{
         installation::InstallationId,
         installation_initial_sync_status::InstallationInitialSyncStatus,
@@ -18,22 +19,27 @@ use super::super::{
     SyncEngine, SyncResult, MAX_PER_PAGE,
 };
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<
+        RawDb: RawDbTrait,
+        BackendApi: BackendApiTrait,
+        Transport: TransportTrait,
+        GithubApi: GithubApiTrait,
+    > SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     pub async fn fetch_repositorys_for_installation_id(
         &self,
         id: &InstallationId,
-    ) -> SyncResult<(), Transport> {
+    ) -> SyncResult<(), Transport, RawDb> {
         let txn = self
             .db
             .txn()
-            .with_store::<InstallationInitialSyncStatus>()
+            .with_table::<InstallationInitialSyncStatus>()
             .build();
         let initial_sync_status = txn
-            .object_store::<InstallationInitialSyncStatus>()?
+            .table::<InstallationInitialSyncStatus>()
             .get(id)
-            .await?;
+            .await
+            .tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             if let InitialSyncStatusEnum::Full = initial_sync_status.status {
                 return Ok(());
@@ -84,15 +90,16 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         let txn = self
             .db
             .txn()
-            .with_store::<InstallationInitialSyncStatus>()
+            .with_table::<InstallationInitialSyncStatus>()
             .read_write()
             .build();
-        txn.object_store::<InstallationInitialSyncStatus>()?
+        txn.table::<InstallationInitialSyncStatus>()
             .put(&InstallationInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id: *id,
             })
-            .await?;
+            .await
+            .tse()?;
 
         Ok(())
     }

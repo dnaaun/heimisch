@@ -13,7 +13,7 @@ use std::{
     rc::Rc,
     sync::{atomic::AtomicUsize, Arc},
 };
-use typesafe_idb::Store;
+use typed_db::Table;
 use url::Url;
 
 use crate::{
@@ -127,7 +127,7 @@ async fn testing_optimistic_create() {
     let mock_backend_api = Rc::new(RefCell::new(mock_backend_api));
     // let mock_backend_api_clone = mock_backend_api.clone();
 
-    let sync_engine = SyncEngine::new(
+    let sync_engine = SyncEngine::<idb::Database, _, _, _>::new(
         mock_backend_api,
         move |_| {
             let mock_transport = mock_transport.clone();
@@ -146,21 +146,13 @@ async fn testing_optimistic_create() {
     let txn = sync_engine
         .db
         .txn()
-        .with_store::<User>()
-        .with_store::<Repository>()
-        .with_store::<Issue>()
+        .with_table::<User>()
+        .with_table::<Repository>()
+        .with_table::<Issue>()
         .read_write()
         .build();
-    txn.object_store::<User>()
-        .unwrap()
-        .put(&user)
-        .await
-        .unwrap();
-    txn.object_store::<Repository>()
-        .unwrap()
-        .put(&repository)
-        .await
-        .unwrap();
+    txn.table::<User>().put(&user).await.unwrap();
+    txn.table::<Repository>().put(&repository).await.unwrap();
     txn.commit().unwrap();
 
     // Subscribe to changes that pertain to the as-of-yet-not-created issue.
@@ -188,23 +180,17 @@ async fn testing_optimistic_create() {
 
     assert!(bulk_subscriber_hit.expect_and_reset(1));
 
-    let txn = sync_engine.db.txn().with_store::<Issue>().build();
-    let issues = txn
-        .object_store::<Issue>()
-        .unwrap()
-        .get_all_optimistically()
-        .await
-        .unwrap();
+    let txn = sync_engine.db.txn().with_table::<Issue>().build();
+    let issues = txn.table::<Issue>().get_all_optimistically().await.unwrap();
     drop(txn);
     assert_eq!(issues.len(), 1);
     assert_eq!(issues[0].id, optimistic_issue_id);
     assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
     assert!(issues[0].is_optimistic);
 
-    let txn = sync_engine.db.txn().with_store::<Issue>().build();
+    let txn = sync_engine.db.txn().with_table::<Issue>().build();
     let single_issue = txn
-        .object_store::<Issue>()
-        .unwrap()
+        .table::<Issue>()
         .get_optimistically(&optimistic_issue_id)
         .await
         .unwrap()
@@ -264,15 +250,10 @@ async fn testing_optimistic_create() {
     wait_for(&move || bulk_subscriber_hit.expect_and_reset(1)).await;
     wait_for(&move || single_subscriber_hit.expect_and_reset(1)).await;
 
-    let txn = sync_engine.db.txn().with_store::<Issue>().build();
+    let txn = sync_engine.db.txn().with_table::<Issue>().build();
 
     // Make sure that the optimistic thing is removed from bulk reads.
-    let issues = txn
-        .object_store::<Issue>()
-        .unwrap()
-        .get_all_optimistically()
-        .await
-        .unwrap();
+    let issues = txn.table::<Issue>().get_all_optimistically().await.unwrap();
 
     assert_eq!(issues.len(), 1);
     assert_eq!(issues[0].id, realistic_issue_id.into());
@@ -281,8 +262,7 @@ async fn testing_optimistic_create() {
 
     // Make sure that fetching by optimistic id returns the realistic thing.
     let issue = txn
-        .object_store::<Issue>()
-        .unwrap()
+        .table::<Issue>()
         .get_optimistically(&optimistic_issue_id)
         .await
         .unwrap();

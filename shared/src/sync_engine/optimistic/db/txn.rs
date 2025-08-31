@@ -1,4 +1,4 @@
-use std::{cell::RefCell, panic::Location, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode};
 
@@ -13,7 +13,6 @@ use super::{
 struct TxnWithOptimisticChangesInner<RawDb: RawDbTrait, C, Mode> {
     idb_txn: Txn<RawDb, C, Mode>,
     commit_listener: Option<CommitListener>,
-    location: &'static Location<'static>,
 }
 
 pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
@@ -24,23 +23,21 @@ pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
     reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
-    location: &'static Location<'static>,
 }
 
 impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, Mode> {
-    pub fn table<S>(&self) -> Result<TableWithOptimisticChanges<RawDb, S, Mode>, RawDb::Error>
+    pub fn table<S>(&self) -> TableWithOptimisticChanges<RawDb, S, Mode>
     where
         S: Table,
         Markers: TableMarker<S>,
     {
         let inner = self.inner.as_ref().expect("");
-        Ok(TableWithOptimisticChanges::new(
+        TableWithOptimisticChanges::new(
             self.optimistic_updates.clone(),
-            Rc::new(inner.idb_txn.table::<S>()?),
+            Rc::new(inner.idb_txn.table::<S>()),
             self.reactivity_trackers.clone(),
             inner.commit_listener.clone(),
-            inner.location,
-        ))
+        )
     }
 
     pub fn commit(mut self) -> Result<ReactivityTrackers, RawDb::Error> {
@@ -55,7 +52,6 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         if let Some(TxnWithOptimisticChangesInner {
             idb_txn,
             commit_listener,
-            location: _,
         }) = self.inner.take()
         {
             idb_txn.commit()?;
@@ -100,7 +96,6 @@ pub struct TxnBuilderWithOptimisticChanges<
     inner: TxnBuilder<'db, RawDb, DbTableMarkers, TxnTableMarkers, Mode>,
     optimistic_updates: Rc<OptimisticChanges>,
     commit_listener: Option<CommitListener>,
-    location: &'static Location<'static>,
 }
 
 impl<'db, RawDb: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
@@ -127,7 +122,6 @@ where
             inner: self.inner.with_table::<H2>(),
             optimistic_updates: self.optimistic_updates,
             commit_listener: self.commit_listener,
-            location: Location::caller(),
         }
     }
 
@@ -140,7 +134,6 @@ where
             inner: self.inner.read_write(),
             optimistic_updates: self.optimistic_updates,
             commit_listener: self.commit_listener,
-            location: Location::caller(),
         }
     }
 
@@ -153,7 +146,6 @@ where
             inner: self.inner.read_only(),
             optimistic_updates: self.optimistic_updates,
             commit_listener: self.commit_listener,
-            location: Location::caller(),
         }
     }
 
@@ -163,7 +155,6 @@ where
             inner: self.inner,
             optimistic_updates: self.optimistic_updates,
             commit_listener: None,
-            location: Location::caller(),
         }
     }
 }
@@ -174,14 +165,11 @@ where
     Mode: TxnMode,
     TxnTableMarkers: Default,
 {
-    pub fn build(
-        self,
-    ) -> Result<TxnWithOptimisticChanges<RawDb, TxnTableMarkers, Mode>, RawDb::Error> {
-        Ok(TxnWithOptimisticChanges {
+    pub fn build(self) -> TxnWithOptimisticChanges<RawDb, TxnTableMarkers, Mode> {
+        TxnWithOptimisticChanges {
             optimistic_updates: self.optimistic_updates.clone(),
-            inner: Some((self.inner.build()?, self.commit_listener, self.location).into()),
+            inner: Some((self.inner.build(), self.commit_listener).into()),
             reactivity_trackers: Default::default(),
-            location: self.location,
-        })
+        }
     }
 }

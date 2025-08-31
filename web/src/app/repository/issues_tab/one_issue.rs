@@ -52,13 +52,13 @@ pub fn OneIssue(
         };
         let sync_engine2 = sync_engine.clone();
         let issue_and_user = sync_engine.idb_signal(
-            move |txn| txn.with_store::<User>().with_store::<Issue>().build(),
+            move |txn| txn.with_table::<User>().with_table::<Issue>().build(),
             move |txn| {
                 let sync_engine2 = sync_engine2.clone();
                 async move {
                     let issue = txn
-                        .object_store::<Issue>()?
-                        .index::<issue::RepositoryIdIndex>()?
+                        .table::<Issue>()
+                        .index::<issue::RepositoryIdIndex>()
                         .get_all_optimistically(Some(&repository_page_context.read().repository.id))
                         .await?
                         .into_iter()
@@ -74,7 +74,7 @@ pub fn OneIssue(
                                     &prev_optimistic_id,
                                 )
                             {
-                                let issue = txn.object_store::<Issue>()?
+                                let issue = txn.table::<Issue>()
                                     .get(&realistic_id)
                                     .await?
                                     .map(|issue| MaybeOptimistic::new(issue, false));
@@ -100,7 +100,7 @@ pub fn OneIssue(
                         }
 
                         let user = if let Avail::Yes(Some(user_id)) = issue.user_id {
-                            txn.object_store::<User>()?
+                            txn.table::<User>()
                                 .get_optimistically(&user_id)
                                 .await?
                         } else {
@@ -125,13 +125,13 @@ pub fn OneIssue(
 
                 let issue_id = issue.get_value().id;
                 let issue_comment_and_users = sync_engine.idb_signal(|builder| {
-                    builder.with_store::<IssueComment>()
-                        .with_store::<User>()
+                    builder.with_table::<IssueComment>()
+                        .with_table::<User>()
                         .build()
                 }, move |txn| async move {
-                    let mut issue_comments = txn.object_store::<IssueComment>()?.index::<IssueIdIndex>()?.get_all_optimistically(Some(&Some(issue_id))).await?;
+                    let mut issue_comments = txn.table::<IssueComment>().index::<IssueIdIndex>().get_all_optimistically(Some(&Some(issue_id))).await?;
                     issue_comments.sort_by_key(|c| c.created_at.clone());
-                    let user_store = txn.object_store::<User>() ?;
+                    let user_store = txn.table::<User>();
                     let users = join_all(issue_comments.iter().map(async |ic| {
                         OptionFuture::from(
                         ic.user_id.clone().to_option().flatten().map(async |user_id| {

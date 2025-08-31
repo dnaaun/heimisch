@@ -53,8 +53,9 @@ impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
         Ok(())
     }
 
-    fn index(&self, name: &str) -> Result<idb::Index, Error> {
-        Ok(self.index(name)?)
+    fn index(&self, name: &str) -> idb::Index {
+        self.index(name)
+            .expect("This rarely (never) happens I hope.")
     }
 }
 
@@ -71,8 +72,9 @@ impl RawTxnTrait for idb::Transaction {
         Ok(())
     }
 
-    fn get_table<R: Table>(&self, store_name: &str) -> Result<idb::ObjectStore, Error> {
-        Ok(self.object_store(store_name)?)
+    fn get_table<R: Table>(&self, store_name: &str) -> idb::ObjectStore {
+        self.object_store(store_name)
+            .expect("This rarely (never) happens I hope.")
     }
 }
 
@@ -96,15 +98,16 @@ impl RawDbTrait for idb::Database {
     type RawIndex = idb::Index;
     type RawTableAccess<R: Table> = idb::ObjectStore;
 
-    fn txn(&self, store_names: &[&str], read_write: bool) -> Result<Self::RawTxn, Self::Error> {
-        Ok(self.transaction(
+    fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn {
+        self.transaction(
             store_names,
             if read_write {
                 idb::TransactionMode::ReadWrite
             } else {
                 idb::TransactionMode::ReadOnly
             },
-        )?)
+        )
+        .expect("This rarely (never) happens I hope.")
     }
 
     fn builder(name: &str) -> Self::RawDbBuilder {

@@ -112,9 +112,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             .build();
 
         let iac = txn
-            .tse()?
             .table::<InstallationAccessTokenRow>()
-            .tse()?
             .get_all()
             .await
             .tse()?
@@ -151,9 +149,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
                     .with_table::<InstallationAccessTokenRow>()
                     .read_write()
                     .build();
-                txn.tse()?
-                    .table::<InstallationAccessTokenRow>()
-                    .tse()?
+                txn.table::<InstallationAccessTokenRow>()
                     .put(&InstallationAccessTokenRow {
                         token: resp.clone(),
                         installation_id: *id,

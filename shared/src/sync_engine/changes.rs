@@ -476,7 +476,7 @@ where
     Marker: TableMarker<Issue>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let issue_store = txn.table::<Issue>().tse()?;
+    let issue_store = txn.table::<Issue>();
     for (_, issue) in issues {
         match issue {
             ExistingOrDeleted::Existing(issue) => {
@@ -504,7 +504,7 @@ where
     Marker: TableMarker<IssueComment>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let issue_comment_store = txn.table::<IssueComment>().tse()?;
+    let issue_comment_store = txn.table::<IssueComment>();
     for (_, issue_comment) in issue_comments {
         match issue_comment {
             ExistingOrDeleted::Existing(issue_comment) => {
@@ -531,7 +531,7 @@ where
     Marker: TableMarker<GithubApp>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let github_app_store = txn.table::<GithubApp>().tse()?;
+    let github_app_store = txn.table::<GithubApp>();
     for (_, github_app) in github_apps {
         match github_app {
             ExistingOrDeleted::Existing(github_app) => {
@@ -558,7 +558,7 @@ where
     Marker: TableMarker<User>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let user_store = txn.table::<User>().tse()?;
+    let user_store = txn.table::<User>();
     for (_, user) in users {
         match user {
             ExistingOrDeleted::Existing(user) => {
@@ -586,7 +586,7 @@ where
     Marker: TableMarker<License>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let license_store = txn.table::<License>().tse()?;
+    let license_store = txn.table::<License>();
     for (_, license) in licenses {
         match license {
             ExistingOrDeleted::Existing(license) => {
@@ -614,7 +614,7 @@ where
     Marker: TableMarker<Milestone>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let milestone_store = txn.table::<Milestone>().tse()?;
+    let milestone_store = txn.table::<Milestone>();
     for (_, milestone) in milestones {
         match milestone {
             ExistingOrDeleted::Existing(milestone) => {
@@ -642,7 +642,7 @@ where
     Marker: TableMarker<Repository>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let repository_store = txn.table::<Repository>().tse()?;
+    let repository_store = txn.table::<Repository>();
     for (_, repository) in repositorys {
         match repository {
             ExistingOrDeleted::Existing(repository) => {
@@ -670,7 +670,7 @@ where
     Marker: TableMarker<Label>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
-    let label_store = txn.table::<Label>().tse()?;
+    let label_store = txn.table::<Label>();
     for (_, label) in labels {
         match label {
             ExistingOrDeleted::Existing(label) => {

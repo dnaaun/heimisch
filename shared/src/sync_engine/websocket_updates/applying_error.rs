@@ -14,8 +14,7 @@ pub enum ApplyingError<W: TransportTrait, RawDb: RawDbTrait> {
     NotImplemented,
 }
 
-pub type ApplyingResult<T, Transport, RawDb: RawDbTrait> =
-    Result<T, ApplyingError<Transport, RawDb>>;
+pub type ApplyingResult<T, Transport, RawDb> = Result<T, ApplyingError<Transport, RawDb>>;
 
 impl<RawDb, Transport, T> From<T> for ApplyingError<Transport, RawDb>
 where

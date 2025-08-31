@@ -89,7 +89,7 @@ impl<Transport: TransportTrait, RawDb: RawDbTrait> SyncError<Transport, RawDb> {
     }
 }
 
-pub type SyncResult<T, Transport, RawDb: RawDbTrait> = Result<T, SyncError<Transport, RawDb>>;
+pub type SyncResult<T, Transport, RawDb> = Result<T, SyncError<Transport, RawDb>>;
 
 impl<W: TransportTrait, T, RawDb: RawDbTrait> From<github_api::apis::Error<T>>
     for SyncError<W, RawDb>

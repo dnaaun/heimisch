@@ -41,9 +41,7 @@ where
             .txn()
             .with_table::<LastWebhookUpdateAt>()
             .build()
-            .tse()?
             .table::<LastWebhookUpdateAt>()
-            .tse()?
             .get(&LastWebhookUpdateAtId::Singleton)
             .await
             .tse()?;
@@ -127,11 +125,9 @@ where
         let txn = Changes::txn(&self.db)
             .with_table::<LastWebhookUpdateAt>()
             .read_write()
-            .build()
-            .tse()?;
+            .build();
         self.persist_changes(&txn, changes).await?;
         txn.table::<LastWebhookUpdateAt>()
-            .tse()?
             .put(&LastWebhookUpdateAt {
                 at: jiff::Timestamp::now(),
                 id: Default::default(),

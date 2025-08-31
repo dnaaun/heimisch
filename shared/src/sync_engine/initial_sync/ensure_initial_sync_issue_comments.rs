@@ -46,11 +46,9 @@ where
             .txn()
             .with_table::<IssueCommentsInitialSyncStatus>()
             .with_table::<IssueComment>()
-            .build()
-            .tse()?;
+            .build();
         let initial_sync_status = txn
             .table::<IssueCommentsInitialSyncStatus>()
-            .tse()?
             .get(&id)
             .await
             .tse()?;
@@ -60,9 +58,7 @@ where
                 InitialSyncStatusEnum::Partial => {
                     page = (txn
                         .table::<IssueComment>()
-                        .tse()?
                         .index::<RepositoryIdIndex>()
-                        .tse()?
                         .get_all_optimistically(Some(&id))
                         .await
                         .tse()?
@@ -81,11 +77,9 @@ where
             .txn()
             .with_table::<Repository>()
             .with_table::<User>()
-            .build()
-            .tse()?;
+            .build();
         let repo = txn
             .table::<Repository>()
-            .tse()?
             .get(&id)
             .await
             .tse()?
@@ -99,7 +93,6 @@ where
         })?;
         let repo_owner = txn
             .table::<User>()
-            .tse()?
             .get(&repo_owner_id)
             .await
             .tse()?
@@ -131,11 +124,9 @@ where
             let issue_id_from_number = Arc::new(move |number| {
                 let db = db.clone();
                 Box::pin(async move {
-                    let txn = db.clone().txn().with_table::<Issue>().build().unwrap();
+                    let txn = db.clone().txn().with_table::<Issue>().build();
                     txn.table::<Issue>()
-                        .unwrap()
                         .index::<NumberIndex>()
-                        .unwrap()
                         .get_all_optimistically(Some(&number))
                         .await
                         .unwrap()
@@ -158,11 +149,9 @@ where
             let txn = Changes::txn(&self.db)
                 .with_table::<IssueCommentsInitialSyncStatus>()
                 .read_write()
-                .build()
-                .tse()?;
+                .build();
             self.persist_changes(&txn, changes).await?;
             txn.table::<IssueCommentsInitialSyncStatus>()
-                .tse()?
                 .put(&IssueCommentsInitialSyncStatus {
                     status: InitialSyncStatusEnum::Partial,
                     id,
@@ -181,10 +170,8 @@ where
             .txn()
             .with_table::<IssueCommentsInitialSyncStatus>()
             .read_write()
-            .build()
-            .tse()?;
+            .build();
         txn.table::<IssueCommentsInitialSyncStatus>()
-            .tse()?
             .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,
                 id,

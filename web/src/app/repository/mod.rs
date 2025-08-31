@@ -99,22 +99,22 @@ pub fn RepositoryPage(
         sync_engine.idb_signal(
             |builder| {
                 builder
-                    .with_store::<User>()
-                    .with_store::<Repository>()
+                    .with_table::<User>()
+                    .with_table::<Repository>()
                     .build()
             },
             move |txn| async move {
                 let user = txn
-                    .table::<User>()?
-                    .index::<user::LoginIndex>()?
+                    .table::<User>()
+                    .index::<user::LoginIndex>()
                     .get_optimistically(&params.owner_name.read())
                     .await?;
                 match user {
                     Some(user) => {
                         let user_id = user.id;
                         let repos = txn
-                            .table::<Repository>()?
-                            .index::<types::repository::NameIndex>()?
+                            .table::<Repository>()
+                            .index::<types::repository::NameIndex>()
                             .get_all_optimistically(Some(&params.repo_name.read()))
                             .await?;
 

@@ -1,5 +1,5 @@
-use crate::app::{flowbite::button::ButtonType, repository::RepositoryPageContextInner};
 use crate::app::routing::*;
+use crate::app::{flowbite::button::ButtonType, repository::RepositoryPageContextInner};
 use github_api::models::IssuesCreateRequestTitle;
 use leptos::{prelude::*, task::spawn_local};
 use macros::zwang_url;
@@ -49,10 +49,9 @@ pub fn NewIssue(
                     .log_err();
 
                 if let Ok(optimistic_issue_id) = optimistic_issue_id {
-                    let txn = sync_engine.db.txn().with_store::<Issue>().build();
+                    let txn = sync_engine.db.txn().with_table::<Issue>().build();
                     let issue_number = txn
-                        .object_store::<Issue>()
-                        .unwrap()
+                        .table::<Issue>()
                         .get_optimistically(&optimistic_issue_id)
                         .await
                         .unwrap()

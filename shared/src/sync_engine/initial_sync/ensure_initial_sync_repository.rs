@@ -1,7 +1,9 @@
+use typed_db::RawDbTrait;
+
 use crate::{
     backend_api_trait::BackendApiTrait,
     github_api_trait::GithubApiTrait,
-    sync_engine::websocket_updates::transport::TransportTrait,
+    sync_engine::{error::RawDbErrorToSyncError, websocket_updates::transport::TransportTrait},
     types::{
         repository::{Repository, RepositoryId},
         repository_initial_sync_status::{RepoSyncStatus, RepositoryInitialSyncStatus},
@@ -10,8 +12,12 @@ use crate::{
 
 use super::super::{error::SyncResult, SyncEngine};
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<
+        RawDb: RawDbTrait + 'static,
+        BackendApi: BackendApiTrait,
+        Transport: TransportTrait,
+        GithubApi: GithubApiTrait,
+    > SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     /// `force_initial_sync` means we ignore the RepositoryInitialSyncStatus. This will come into
     /// play when we implement the "if the last time we were in touch is less than 7 days, do a
@@ -20,26 +26,27 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         &self,
         id: &RepositoryId,
         force_initial_sync: bool,
-    ) -> SyncResult<(), Transport> {
+    ) -> SyncResult<(), Transport, RawDb> {
         if !force_initial_sync {
             let txn = self
                 .db
                 .txn()
-                .with_store::<RepositoryInitialSyncStatus>()
+                .with_table::<RepositoryInitialSyncStatus>()
                 .build();
-            let store = txn.object_store::<RepositoryInitialSyncStatus>()?;
-            if let Some(RepoSyncStatus::Full) = store.get(id).await?.map(|r| r.status) {
+            let store = txn.table::<RepositoryInitialSyncStatus>();
+            if let Some(RepoSyncStatus::Full) = store.get(id).await.tse()?.map(|r| r.status) {
                 return Ok(());
             }
         }
         let repo = self
             .db
             .txn()
-            .with_store::<Repository>()
+            .with_table::<Repository>()
             .build()
-            .object_store::<Repository>()?
+            .table::<Repository>()
             .get(id)
-            .await?
+            .await
+            .tse()?
             .expect("expected repo to be present if an id is passed");
 
         self.ensure_initial_sync_issues(id, &repo.installation_id)
@@ -49,15 +56,16 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         let txn = self
             .db
             .txn()
-            .with_store::<RepositoryInitialSyncStatus>()
+            .with_table::<RepositoryInitialSyncStatus>()
             .read_write()
             .build();
-        txn.object_store::<RepositoryInitialSyncStatus>()?
+        txn.table::<RepositoryInitialSyncStatus>()
             .put(&RepositoryInitialSyncStatus {
                 status: RepoSyncStatus::Full,
                 id: *id,
             })
-            .await?;
+            .await
+            .tse()?;
 
         Ok(())
     }

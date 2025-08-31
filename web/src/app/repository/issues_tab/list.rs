@@ -34,11 +34,11 @@ pub fn IssuesList(
     let sync_engine = use_sync_engine();
 
     let issues = sync_engine.idb_signal(
-        |builder| builder.with_store::<Issue>().build(),
+        |builder| builder.with_table::<Issue>().build(),
         move |txn| async move {
             let issues = txn
-                .object_store::<Issue>()?
-                .index::<RepositoryIdIndex>()?
+                .table::<Issue>()
+                .index::<RepositoryIdIndex>()
                 .get_all_optimistically(Some(&repository_page_context.read().repository.id))
                 .await?;
             Ok(issues)
@@ -119,7 +119,7 @@ fn IssueRow(
     let sync_engine = use_sync_engine();
     let user_id = issue.user_id.clone();
     let user = sync_engine.idb_signal(
-        |builder| builder.with_store::<User>().build(),
+        |builder| builder.with_table::<User>().build(),
         move |txn| {
             let user_id = user_id.clone();
             async move {
@@ -127,20 +127,17 @@ fn IssueRow(
                     Some(u) => u,
                     None => return Ok(None),
                 };
-                Ok(txn
-                    .object_store::<User>()?
-                    .get_optimistically(&user_id)
-                    .await?)
+                Ok(txn.table::<User>().get_optimistically(&user_id).await?)
             }
         },
     );
     let id = issue.id;
     let comments_count = sync_engine.idb_signal(
-        |builder| builder.with_store::<IssueComment>().build(),
+        |builder| builder.with_table::<IssueComment>().build(),
         move |txn| async move {
             Ok(txn
-                .object_store::<IssueComment>()?
-                .index::<IssueIdIndex>()?
+                .table::<IssueComment>()
+                .index::<IssueIdIndex>()
                 .get_all_optimistically(Some(&Some(id)))
                 .await?
                 .len())

@@ -1,5 +1,6 @@
 use github_api::models::IssuesCreateRequest;
 use jiff::Timestamp;
+use typed_db::RawDbTrait;
 
 use crate::{
     backend_api_trait::BackendApiTrait,
@@ -14,8 +15,12 @@ use crate::{
     },
 };
 
-impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubApiTrait>
-    SyncEngine<BackendApi, Transport, GithubApi>
+impl<
+        RawDb: RawDbTrait + 'static,
+        BackendApi: BackendApiTrait,
+        Transport: TransportTrait,
+        GithubApi: GithubApiTrait,
+    > SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     /// Returns the optimistic id of the issue.
     ///
@@ -26,7 +31,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         owner: &User,
         repo: &Repository,
         issues_create_request: IssuesCreateRequest,
-    ) -> Result<IssueId, SyncError<Transport>> {
+    ) -> Result<IssueId, SyncError<Transport, RawDb>> {
         let now = Timestamp::now();
         let issue_id = IssueId::default();
         let optimistic_issue = Issue {
@@ -54,7 +59,7 @@ impl<BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi: GithubAp
         let installation_id = *installation_id;
 
         self.db
-            .object_store_rw::<Issue>()?
+            .table_rw::<Issue>()
             .create_optimistically(optimistic_issue, async move {
                 let conf = this.get_api_conf(&installation_id).await.map_err(|_| ())?;
                 let id = this

@@ -5,7 +5,7 @@ use send_wrapper::SendWrapper;
 #[derive(Debug, derive_more::Display, Clone)]
 pub enum FrontendError {
     #[display("Indexeddb Error: {_0:?}")]
-    Idb(Arc<SendWrapper<shared::sync_engine::optimistic::db::Error>>),
+    Idb(Arc<SendWrapper<typed_db::idb_impl::Error>>),
 }
 
 /// I only implement this so that I can hash and memoize Result<_, FrontendError>,
@@ -32,8 +32,8 @@ impl From<&FrontendError> for FrontendError {
     }
 }
 
-impl From<shared::sync_engine::optimistic::db::Error> for FrontendError {
-    fn from(value: shared::sync_engine::optimistic::db::Error) -> Self {
+impl From<typed_db::idb_impl::Error> for FrontendError {
+    fn from(value: typed_db::idb_impl::Error) -> Self {
         FrontendError::Idb(Arc::new(SendWrapper::new(value)))
     }
 }
