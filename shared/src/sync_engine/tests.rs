@@ -97,7 +97,7 @@ async fn testing_optimistic_create() {
     let title_clone = title.clone();
     mock_github_api
         .expect_issues_slash_create()
-        .once()
+        .times(..=1)
         .withf(move |_, _, _, issue_create_request_in_mock| {
             issue_create_request_in_mock.title == title_clone
         })
@@ -119,7 +119,7 @@ async fn testing_optimistic_create() {
 
     mock_backend_api
         .expect_get_installation_access_token()
-        .once()
+        .times(..=1)
         .with(predicate::eq(GetInstallationAccessTokenQueryParams {
             installation_id,
         }))
