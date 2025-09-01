@@ -14,14 +14,11 @@ serde_json = "1.0.132"
 tracing = "0.1.40"
 github_api = { path = "../github_api" }
 macros = { path = "../macros" }
-typesafe_idb = { path = "../typesafe_idb", optional = false }
 typed_db = { path = "../typed_db", optional = false }
 utils = { path = "../utils" }
-idb = { version = "*", optional = false }
 idalloc = "0.1.1"
 parking_lot = "0.12.3"
 send_wrapper = "0.6.0"
-futures = "0.3.31"
 codee = { version = "0.2.0", features = ["json_serde"] }
 diesel-derive-newtype = { version = "2.1.2", optional = true }
 diesel = { version = "2.2.4", optional = true }
@@ -29,27 +26,40 @@ http = "1.1.0"
 ewebsock = "0.8.0"
 pin-project = "1.1.7"
 serde_urlencoded = "0.7.1"
-leptos = { version = "*", optional = true }
-web-sys = { version = "*", optional = true, default-features = false, features = ["Performance"] }
-any_spawner = "0.2.0"
+any_spawner = { version = "0.2.0", default-features = false }
 tracing-subscriber = "0.3.19"
 bon = "3.3.2"
 mockall = "0.13.1"
 maplit = "1.0.2"
 bimap = "0.6.3"
 derivative = "2.2.0"
+futures = { version = "0.3.31", default-features = false }
 
-[dev-dependencies]
-wasm-bindgen-test = "0.3.50"
-gloo-timers = { version = "0.3.0", features = ["futures"] }
-leptos_testing_utils = { path = "../leptos_testing_utils" }
+# These are testing dependencies. BUt I can't put them in dev-dependencies
+# because Cargo doesn't allow dev dependencies to be optional.
+leptos = { version = "*", optional = true }
+leptos_testing_utils = { path = "../leptos_testing_utils", optional = true }
+tokio = { version = "1.47.1", default-features = false, optional = true }
+gloo-timers = { version = "*", optional = true }
+web-sys = { version = "*", optional = true, features = ["Performance"] }
 
 [features]
-hydrate = [ "jiff/js", "leptos", "web-sys" ]
+hydrate = [
+	"jiff/js",
+	"typed_db/idb",
+	"dep:leptos",
+	"dep:leptos_testing_utils",
+	"dep:gloo-timers",
+	"dep:web-sys",
+	"any_spawner/wasm-bindgen",
+]
 ssr = [
+	"github_api/ssr",
+	"typed_db/sqlite",
 	"dep:diesel-derive-newtype",
 	"dep:diesel",
-	"github_api/ssr",
+	"dep:tokio",
+	"any_spawner/futures-executor",
 ]
 
 # Otherwise (nightly) rust complains about `[wasm_bindgen_test]`

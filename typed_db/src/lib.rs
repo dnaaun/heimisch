@@ -1,7 +1,9 @@
 #![feature(marker_trait_attr)]
 
+#[cfg(feature = "idb")]
 pub mod idb_impl;
 pub mod raw_traits;
+#[cfg(feature = "sqlite")]
 pub mod sqlite_impl;
 
 pub use derivative::Derivative;

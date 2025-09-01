@@ -12,7 +12,6 @@ members = [
     "macros",
     "macros_impl",
     "github_api",
-    "typesafe_idb",
     "reqwest_wiremock",
     "zwang_router",
     "leptos_testing_utils", "typed_db",

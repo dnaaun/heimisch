@@ -1,10 +1,12 @@
 use any_spawner::Executor;
-use futures::{channel::mpsc, SinkExt, StreamExt};
+use futures::{
+    channel::mpsc,
+    future::{select, Either},
+    SinkExt, StreamExt,
+};
 use github_api::models::{IssuesCreateRequest, IssuesCreateRequestTitle};
 use github_webhook_body::{Issues, IssuesOpenedIssue, SomethingWithAnId, WebhookBody};
 use jiff::Timestamp;
-use leptos::task::tick;
-use macros::leptos_test_setup;
 use maplit::{hashmap, hashset};
 use mockall::predicate;
 use parking_lot::Mutex;
@@ -12,8 +14,9 @@ use std::{
     cell::RefCell,
     rc::Rc,
     sync::{atomic::AtomicUsize, Arc},
+    time::Duration,
 };
-use typed_db::Table;
+use typed_db::{sqlite_impl::SqliteDatabase, Table};
 use url::Url;
 
 use crate::{
@@ -23,6 +26,7 @@ use crate::{
         installations::GetInstallationAccessTokenQueryParams, websocket_updates::ServerMsg,
     },
     github_api_trait::MockGithubApiTrait,
+    sync_engine::optimistic::db::tests::init_executor,
     types::{
         installation_access_token_row::InstallationAccessToken, issue::Issue,
         repository::Repository, user::User,
@@ -60,8 +64,10 @@ impl NumTimesHit {
     }
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 async fn testing_optimistic_create() {
+    init_executor();
+
     // Let's buckle up. Get all our stuff ready.
     let user = User::default();
     let repository = Repository::default();
@@ -127,7 +133,7 @@ async fn testing_optimistic_create() {
     let mock_backend_api = Rc::new(RefCell::new(mock_backend_api));
     // let mock_backend_api_clone = mock_backend_api.clone();
 
-    let sync_engine = SyncEngine::<idb::Database, _, _, _>::new(
+    let sync_engine = SyncEngine::<SqliteDatabase, _, _, _>::new(
         mock_backend_api,
         move |_| {
             let mock_transport = mock_transport.clone();
@@ -268,8 +274,8 @@ async fn testing_optimistic_create() {
         .unwrap();
     assert_eq!(issue, None);
 }
-
-#[allow(dead_code)] // Not sure why this is necessary since wait_for is indeed used.
+#[cfg(feature = "hydrate")]
+#[cfg(not(feature = "ssr"))]
 #[track_caller]
 async fn wait_for(assertion: &dyn Fn() -> bool) {
     let start = leptos::prelude::window().performance().unwrap().now();
@@ -286,4 +292,31 @@ async fn wait_for(assertion: &dyn Fn() -> bool) {
 
     // Alert with Location and message.
     panic!("wait_for failed");
+}
+
+#[cfg(feature = "ssr")]
+#[track_caller]
+async fn wait_for(assertion: &(dyn Fn() -> bool + Sync)) {
+    use futures::future::FutureExt;
+
+    let timeout = select(
+        Box::pin(async {
+            let mut delay_ms = 20.0;
+
+            loop {
+                if assertion() {
+                    return;
+                }
+                delay_ms = (delay_ms * 1.5_f64).min(1000.0);
+                tokio::time::sleep(Duration::from_millis(delay_ms as u64)).await;
+                Executor::tick().await;
+            }
+        }),
+        tokio::time::sleep(Duration::from_secs(2)).boxed(),
+    );
+
+    match timeout.await {
+        Either::Left(_) => {}
+        Either::Right(_) => panic!("wait_for failed"),
+    }
 }

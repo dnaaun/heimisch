@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 
+use any_spawner::Executor;
 use bon::builder;
-use macros::leptos_test_setup;
-use typed_db::{RawDbTrait, ReadOnly, ReadWrite};
+use typed_db::{sqlite_impl::SqliteDatabase, RawDbTrait, ReadOnly, ReadWrite};
 use url::Url;
 
 use crate::{
@@ -32,8 +32,6 @@ async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, M
     .await
     .unwrap()
 }
-
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 #[builder]
 async fn num_times_subscriber_called<
@@ -83,9 +81,8 @@ async fn num_times_subscriber_called<
     }
 }
 
-#[leptos_test_setup]
 pub async fn index_get_no_optimisim_put_overlapping() {
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
@@ -103,9 +100,9 @@ pub async fn index_get_no_optimisim_put_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 pub async fn index_get_no_optimisim_put_non_overlapping() {
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
@@ -126,10 +123,10 @@ pub async fn index_get_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 pub async fn get_no_optimisim_put_overlapping() {
     let some_issue_id = 4.into();
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
@@ -152,10 +149,10 @@ pub async fn get_no_optimisim_put_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 pub async fn get_no_optimisim_put_non_overlapping() {
     let some_issue_id = 4.into();
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
@@ -177,7 +174,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .call()
         .await;
 
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
@@ -197,9 +194,17 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+pub fn init_executor() {
+    #[cfg(feature = "ssr")]
+    Executor::init_futures_executor().unwrap();
+
+    #[cfg(feature = "hydrate")]
+    Executor::init_wasm_bindgen().unwrap();
+}
+
+#[tokio::test]
 pub async fn get_all_no_optimisim_put_overlapping() {
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
@@ -213,9 +218,9 @@ pub async fn get_all_no_optimisim_put_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 pub async fn get_all_no_optimisim_put_non_overlapping() {
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {
@@ -235,9 +240,9 @@ pub async fn get_all_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 pub async fn get_all_no_optimisim_create_overlapping() {
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Issue>().build())
         .with_txn_1(async |txn| {
@@ -252,9 +257,10 @@ pub async fn get_all_no_optimisim_create_overlapping() {
         .await;
 }
 
-#[leptos_test_setup]
+#[tokio::test]
 pub async fn get_all_no_optimisim_create_non_overlapping() {
-    num_times_subscriber_called::<idb::Database, _, _, _, _, _, _, _, _>()
+    init_executor();
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
         .make_txn_1(|txn| txn.with_table::<Issue>().build())
         .make_txn_2(|txn| txn.with_table::<Repository>().build())
         .with_txn_1(async |txn| {

@@ -9,12 +9,6 @@ pub fn derive_avail_merge(input: TokenStream) -> TokenStream {
     macros_impl::derive_avail_merge(input).into()
 }
 
-#[proc_macro_derive(TypesafeIdb, attributes(idb))]
-pub fn derive_typesafe_idb(input: TokenStream) -> TokenStream {
-    // Parse the input tokens into a syntax tree
-    macros_impl::derive_typesafe_idb(input)
-}
-
 #[proc_macro_derive(Table, attributes(db))]
 pub fn derive_table(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree

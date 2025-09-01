@@ -16,6 +16,7 @@ pub struct InstallationAccessTokenRow {
     #[db(id)]
     pub installation_id: InstallationId,
 
-    #[serde(flatten)]
-    pub token: InstallationAccessToken,
+    pub token: String,
+
+    pub expires_at: Timestamp,
 }

@@ -1,15 +1,17 @@
-use typesafe_idb::serde_abstraction;
-
+/// I'm not using https://docs.rs/serde-json-wasm/latest/serde_json_wasm/
+/// because that library didn't play nice with jiff.
 use super::*;
+use wasm_bindgen::JsValue;
 
 #[derive(Debug)]
 pub enum Error {
-    Serde(serde_abstraction::Error),
+    Js(JsValue),
+    Serde(serde_json::Error),
     Id(idb::Error),
 }
 
-impl From<serde_abstraction::Error> for Error {
-    fn from(value: serde_abstraction::Error) -> Self {
+impl From<serde_json::Error> for Error {
+    fn from(value: serde_json::Error) -> Self {
         Error::Serde(value)
     }
 }
@@ -20,14 +22,37 @@ impl From<idb::Error> for Error {
     }
 }
 
+impl From<JsValue> for Error {
+    fn from(value: JsValue) -> Self {
+        Error::Js(value)
+    }
+}
+
+pub fn from_value<T>(value: JsValue) -> Result<T, Error>
+where
+    T: DeserializeOwned,
+{
+    let s = js_sys::JSON::stringify(&value)?;
+    let s = s.as_string().unwrap();
+    Ok(serde_json::from_str(&s)?)
+}
+
+pub fn to_value<T>(t: &T) -> Result<JsValue, Error>
+where
+    T: Serialize,
+{
+    let s = serde_json::to_string(t)?;
+    Ok(js_sys::JSON::parse(&s)?)
+}
+
 impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
     type RawDb = idb::Database;
 
     async fn get(&self, key: &R::Id) -> Result<Option<R>, Error> {
         let item = self
-            .get(idb::Query::Key(serde_abstraction::to_value(key)?))?
+            .get(idb::Query::Key(to_value(key)?))?
             .await?
-            .map(|i| serde_abstraction::from_value(i))
+            .map(|i| from_value(i))
             .transpose()?;
         Ok(item)
     }
@@ -37,19 +62,18 @@ impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
             .get_all(None, None)?
             .await?
             .into_iter()
-            .map(|i| serde_abstraction::from_value(i))
+            .map(|i| from_value(i))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(items)
     }
 
     async fn put(&self, item: &R) -> Result<(), Error> {
-        self.put(&serde_abstraction::to_value(item)?, None)?.await?;
+        self.put(&to_value(item)?, None)?.await?;
         Ok(())
     }
 
     async fn delete(&self, key: &R::Id) -> Result<(), Error> {
-        self.delete(idb::Query::Key(serde_abstraction::to_value(key)?))?
-            .await?;
+        self.delete(idb::Query::Key(to_value(key)?))?.await?;
         Ok(())
     }
 
@@ -130,9 +154,9 @@ impl RawIndexTrait for idb::Index {
 
     async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Error> {
         Ok(self
-            .get(idb::Query::Key(serde_abstraction::to_value(value)?))?
+            .get(idb::Query::Key(to_value(value)?))?
             .await?
-            .map(|i| serde_abstraction::from_value(i))
+            .map(|i| from_value(i))
             .transpose()?)
     }
 
@@ -143,13 +167,13 @@ impl RawIndexTrait for idb::Index {
         Ok(self
             .get_all(
                 value
-                    .map(|v| serde_abstraction::to_value(v).map(idb::Query::Key))
+                    .map(|v| to_value(v).map(idb::Query::Key))
                     .transpose()?,
                 None,
             )?
             .await?
             .into_iter()
-            .map(serde_abstraction::from_value)
+            .map(from_value)
             .collect::<Result<Vec<_>, _>>()?)
     }
 }

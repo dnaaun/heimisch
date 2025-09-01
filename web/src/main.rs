@@ -10,7 +10,6 @@ pub mod signal_ext;
 pub mod typed_transport;
 mod use_unwrapped_context;
 
-pub mod sync_engine_storage;
 #[cfg(test)]
 mod tests;
 

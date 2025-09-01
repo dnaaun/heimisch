@@ -4,11 +4,6 @@ pub struct MonotonicTime {
 }
 
 impl MonotonicTime {
-    #[cfg(not(feature = "hydrate"))]
-    pub fn new() -> Self {
-        todo!()
-    }
-    #[cfg(feature = "hydrate")]
     pub fn new() -> Self {
         use leptos::prelude::window;
         Self {

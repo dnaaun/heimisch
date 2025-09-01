@@ -123,13 +123,16 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
                 }
 
                 matches!(
-                    (iac.token.expires_at - Timestamp::now())
+                    (iac.expires_at - Timestamp::now())
                         .compare(1.minute())
                         .unwrap(),
                     Ordering::Greater
                 )
             })
-            .map(|i| i.token)
+            .map(|i| InstallationAccessToken {
+                token: i.token,
+                expires_at: i.expires_at,
+            })
             .next();
 
         match iac {
@@ -151,8 +154,9 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
                     .build();
                 txn.table::<InstallationAccessTokenRow>()
                     .put(&InstallationAccessTokenRow {
-                        token: resp.clone(),
                         installation_id: *id,
+                        expires_at: resp.expires_at.clone(),
+                        token: resp.token.clone(),
                     })
                     .await
                     .tse()?;

@@ -5,7 +5,7 @@ mod reactivity_trackers;
 mod storage;
 mod txn;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "ssr"))]
 pub mod tests;
 
 pub use index::*;

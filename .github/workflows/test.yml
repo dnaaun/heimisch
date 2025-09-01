@@ -2,16 +2,16 @@ name: Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
-  HEIMISCH_OUTPUT_NAME: 'heimisch'
-  HEIMISCH_API_DOMAIN: 'http://localhost:3210/'
-  HEIMISCH_FRONTEND_DOMAIN: 'http://localhost:4000/'
+  HEIMISCH_OUTPUT_NAME: "heimisch"
+  HEIMISCH_API_DOMAIN: "http://localhost:3210/"
+  HEIMISCH_FRONTEND_DOMAIN: "http://localhost:4000/"
 
 jobs:
   backend-tests:
@@ -90,7 +90,6 @@ jobs:
       fail-fast: false
       matrix:
         crate:
-          - typesafe_idb
           - meta_tools
           - macros_impl
 
@@ -140,4 +139,3 @@ jobs:
       - name: Run WASM tests
         working-directory: ${{ matrix.working-directory }}
         run: wasm-pack test --headless --firefox ${{ matrix.features }}
-
