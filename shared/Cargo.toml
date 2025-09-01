@@ -39,11 +39,12 @@ futures = { version = "0.3.31", default-features = false }
 # because Cargo doesn't allow dev dependencies to be optional.
 leptos = { version = "*", optional = true }
 leptos_testing_utils = { path = "../leptos_testing_utils", optional = true }
-tokio = { version = "1.47.1", default-features = false, optional = true }
+tokio = { version = "1.47.1", default-features = false, features = ["rt-multi-thread", "rt"], optional = true }
 gloo-timers = { version = "*", optional = true }
 web-sys = { version = "*", optional = true, features = ["Performance"] }
 
 [features]
+default = ["ssr"]
 hydrate = [
 	"jiff/js",
 	"typed_db/idb",

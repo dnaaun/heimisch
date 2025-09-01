@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use typed_db::{Db, DbBuilder, RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker};
 
-use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
+use crate::sync_engine::optimistic::{db::MaybeOptimistic, optimistic_changes::OptimisticChanges};
 
 use super::{reactivity_trackers::CommitListener, TxnBuilderWithOptimisticChanges};
 
@@ -34,6 +34,58 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
             self.optimistic_updates.clone(),
             Some(self.listener.clone()),
         )
+    }
+
+    /// Shortcut
+    pub async fn get<T>(
+        &self,
+
+        // The type here is the same thing as `Id` itself. But this helps the type system
+        // understand that fact.
+        id: &T::Id,
+    ) -> Result<Option<T>, RawDb::Error>
+    where
+        T: Table,
+        DbTableMarkers: TableMarker<T>,
+    {
+        self.table::<T>().get(id).await
+    }
+
+    // Shortcut
+    pub async fn get_all_optimistically<T>(&self) -> Result<Vec<MaybeOptimistic<T>>, RawDb::Error>
+    where
+        DbTableMarkers: TableMarker<T>,
+        T: Table,
+    {
+        self.table::<T>().get_all_optimistically().await
+    }
+
+    // Shortcut
+    pub async fn get_optimistically<T>(
+        &self,
+        id: &T::Id,
+    ) -> Result<Option<MaybeOptimistic<T>>, RawDb::Error>
+    where
+        T: Table,
+        DbTableMarkers: TableMarker<T>,
+    {
+        self.table::<T>().get_optimistically(id).await
+    }
+
+    // Shortcut
+    pub async fn put<T: Table>(&self, item: &T) -> Result<(), RawDb::Error>
+    where
+        DbTableMarkers: TableMarker<T>,
+    {
+        self.table_rw::<T>().put(item).await
+    }
+
+    // Shortcut
+    pub async fn delete<T: Table>(&self, id: &T::Id) -> Result<(), RawDb::Error>
+    where
+        DbTableMarkers: TableMarker<T>,
+    {
+        self.table_rw::<T>().delete(id).await
     }
 
     /// Shortcut

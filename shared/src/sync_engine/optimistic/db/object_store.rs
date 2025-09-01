@@ -108,8 +108,11 @@ where
                     .latest_downcasted(r.id())
                     .map(|o| MaybeOptimistic::new(o, true))
                     .unwrap_or(MaybeOptimistic::new(r, false))
-            });
-        let mut all = Vec::from_iter(from_db_filtered);
+            })
+            .collect::<Vec<_>>();
+
+        println!("len(from_db_filtered)={}", from_db_filtered.len());
+        let mut all = from_db_filtered;
         all.extend(
             self.optimistic_changes
                 .creations

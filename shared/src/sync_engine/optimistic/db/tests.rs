@@ -28,6 +28,7 @@ async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, M
         ))),
         |_| async { Ok(MockTransport::new().0) },
         Rc::new(()),
+        ":memory:".into(),
     )
     .await
     .unwrap()
@@ -196,10 +197,10 @@ pub async fn get_no_optimisim_put_non_overlapping() {
 
 pub fn init_executor() {
     #[cfg(feature = "ssr")]
-    Executor::init_futures_executor().unwrap();
+    let _ = Executor::init_futures_executor(); // ignore AlreadySet error
 
     #[cfg(feature = "hydrate")]
-    Executor::init_wasm_bindgen().unwrap();
+    let _ = Executor::init_wasm_bindgen(); // ignore AlreadySet error
 }
 
 #[tokio::test]

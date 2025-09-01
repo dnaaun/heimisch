@@ -36,7 +36,7 @@ pub fn TopBar(
         move |txn| async move {
             Ok(matches!(
                 txn.table::<RepositoryInitialSyncStatus>()
-                    .get(&repository_id.get())
+                    .get(&repository_id.get().into())
                     .await?,
                 Some(RepositoryInitialSyncStatus {
                     status: shared::types::repository_initial_sync_status::RepoSyncStatus::Full,

@@ -64,8 +64,17 @@ impl NumTimesHit {
     }
 }
 
+#[derive(Debug)]
+struct AnyError(Box<dyn std::error::Error>);
+
+impl<E: std::error::Error + 'static> From<E> for AnyError {
+    fn from(value: E) -> Self {
+        Self(Box::new(value))
+    }
+}
+
 #[tokio::test]
-async fn testing_optimistic_create() {
+async fn testing_optimistic_create() -> Result<(), AnyError> {
     init_executor();
 
     // Let's buckle up. Get all our stuff ready.
@@ -133,33 +142,24 @@ async fn testing_optimistic_create() {
     let mock_backend_api = Rc::new(RefCell::new(mock_backend_api));
     // let mock_backend_api_clone = mock_backend_api.clone();
 
-    let sync_engine = SyncEngine::<SqliteDatabase, _, _, _>::new(
+    let se = SyncEngine::<SqliteDatabase, _, _, _>::new(
         mock_backend_api,
         move |_| {
             let mock_transport = mock_transport.clone();
             async move { Ok(mock_transport.borrow_mut().take().unwrap()) }
         },
         mock_github_api.clone(),
+        ":memory:".into(),
     )
-    .await
-    .unwrap();
-    let sync_engine_clone = sync_engine.clone();
+    .await?;
+    let se_clone = se.clone();
 
     Executor::spawn_local(async move {
-        let _ = sync_engine_clone.recv_websocket_updates().await.log_err();
+        let _ = se_clone.recv_websocket_updates().await.log_err();
     });
 
-    let txn = sync_engine
-        .db
-        .txn()
-        .with_table::<User>()
-        .with_table::<Repository>()
-        .with_table::<Issue>()
-        .read_write()
-        .build();
-    txn.table::<User>().put(&user).await.unwrap();
-    txn.table::<Repository>().put(&repository).await.unwrap();
-    txn.commit().unwrap();
+    se.db.put(&user).await?;
+    se.db.put(&repository).await?;
 
     // Subscribe to changes that pertain to the as-of-yet-not-created issue.
     let bulk_subscriber_hit = Arc::new(NumTimesHit::default());
@@ -174,40 +174,35 @@ async fn testing_optimistic_create() {
         }),
     };
 
-    let _ = sync_engine.db_subscriptions.add(bulk_db_subscription);
+    let _ = se.db_subscriptions.add(bulk_db_subscription);
 
     let issue_create_request = IssuesCreateRequest {
         title: title.clone(),
         ..Default::default()
     };
-    let optimistic_issue_id = sync_engine
-        .create_issue(&installation_id, &user, &repository, issue_create_request)
-        .unwrap();
+    let optimistic_issue_id =
+        se.create_issue(&installation_id, &user, &repository, issue_create_request)?;
 
     assert!(bulk_subscriber_hit.expect_and_reset(1));
 
-    let txn = sync_engine.db.txn().with_table::<Issue>().build();
-    let issues = txn.table::<Issue>().get_all_optimistically().await.unwrap();
-    drop(txn);
+    let issues = se.db.get_all_optimistically::<Issue>().await?;
     assert_eq!(issues.len(), 1);
     assert_eq!(issues[0].id, optimistic_issue_id);
     assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
     assert!(issues[0].is_optimistic);
 
-    let txn = sync_engine.db.txn().with_table::<Issue>().build();
-    let single_issue = txn
-        .table::<Issue>()
-        .get_optimistically(&optimistic_issue_id)
-        .await
-        .unwrap()
+    let single_issue = se
+        .db
+        .get_optimistically::<Issue>(&optimistic_issue_id)
+        .await?
         .unwrap();
-    drop(txn);
+
     assert!(single_issue.is_optimistic);
     assert!(single_issue.id == optimistic_issue_id);
     assert!(single_issue.title == Avail::Yes("fancy title".into()));
 
     // Now let's send the reply to the create_issues_resp_receiver.
-    create_issues_resp_sender.send(github_issue).await.unwrap();
+    create_issues_resp_sender.send(github_issue).await?;
     wait_for(&move || create_issues_hit.expect_and_reset(1)).await;
 
     let single_subscriber_hit = Arc::new(NumTimesHit::default());
@@ -222,7 +217,7 @@ async fn testing_optimistic_create() {
         }),
     };
 
-    let _ = sync_engine.db_subscriptions.add(single_db_subscription);
+    let _ = se.db_subscriptions.add(single_db_subscription);
 
     // Let's send in the webhook.
     let now = Timestamp::now().to_string();
@@ -250,16 +245,15 @@ async fn testing_optimistic_create() {
             body: webhook_body,
             created_at: Timestamp::now(),
         })
-        .await
-        .unwrap();
+        .await?;
 
     wait_for(&move || bulk_subscriber_hit.expect_and_reset(1)).await;
     wait_for(&move || single_subscriber_hit.expect_and_reset(1)).await;
 
-    let txn = sync_engine.db.txn().with_table::<Issue>().build();
+    let txn = se.db.txn().with_table::<Issue>().build();
 
     // Make sure that the optimistic thing is removed from bulk reads.
-    let issues = txn.table::<Issue>().get_all_optimistically().await.unwrap();
+    let issues = txn.table::<Issue>().get_all_optimistically().await?;
 
     assert_eq!(issues.len(), 1);
     assert_eq!(issues[0].id, realistic_issue_id.into());
@@ -270,10 +264,12 @@ async fn testing_optimistic_create() {
     let issue = txn
         .table::<Issue>()
         .get_optimistically(&optimistic_issue_id)
-        .await
-        .unwrap();
+        .await?;
     assert_eq!(issue, None);
+
+    Ok(())
 }
+
 #[cfg(feature = "hydrate")]
 #[cfg(not(feature = "ssr"))]
 #[track_caller]

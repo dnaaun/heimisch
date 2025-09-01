@@ -4,7 +4,10 @@ use crate::{
     avail::{MergeError, NotAvailableError},
     endpoints::endpoint_client::OwnApiError,
 };
-use std::{fmt::Debug, panic::Location};
+use std::{
+    fmt::{Debug, Display},
+    panic::Location,
+};
 
 use super::{
     conversions::conversion_error::ConversionError, websocket_updates::transport::TransportTrait,
@@ -55,6 +58,17 @@ impl<T: TransportTrait, RawDb: RawDbTrait> From<SyncErrorSrc<T, RawDb>> for Sync
 pub struct SyncError<Transport: TransportTrait, RawDb: RawDbTrait> {
     source: SyncErrorSrc<Transport, RawDb>,
     location: &'static Location<'static>,
+}
+
+impl<Transport: TransportTrait, RawDb: RawDbTrait> std::error::Error
+    for SyncError<Transport, RawDb>
+{
+}
+
+impl<Transport: TransportTrait, RawDb: RawDbTrait> Display for SyncError<Transport, RawDb> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl<Transport: TransportTrait, RawDb: RawDbTrait> Debug for SyncError<Transport, RawDb> {

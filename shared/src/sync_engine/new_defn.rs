@@ -83,6 +83,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
         backend_api: Rc<BackendApi>,
         make_transport: F,
         github_api: Rc<GithubApi>,
+        db_name: String,
     ) -> SyncResult<Self, Transport, RawDb>
     where
         F: Fn(Url) -> Fut + 'static,
@@ -92,7 +93,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
         let make_transport =
             Rc::new(move |url| Box::pin(make_transport(url)) as Pin<Box<dyn Future<Output = _>>>);
 
-        let db = Db::<RawDb, ()>::builder("heimisch".into())
+        let db = Db::<RawDb, ()>::builder(db_name)
             .with_table::<Issue>()
             .with_table::<User>()
             .with_table::<GithubApp>()

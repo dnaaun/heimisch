@@ -25,6 +25,7 @@ pub async fn idb_signal_basic_reactivity() {
         Rc::new(BACKEND_API.with(|e| e.clone())),
         async |url| Transport::new(url).await,
         shared::github_api_trait::GithubApi.into(),
+        "heimisch".into(),
     )
     .await
     .unwrap();

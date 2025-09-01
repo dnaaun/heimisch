@@ -30,18 +30,16 @@ impl<
         &self,
         id: &InstallationId,
     ) -> SyncResult<(), Transport, RawDb> {
-        let txn = self
+        let initial_sync_status = self
             .db
-            .txn()
-            .with_table::<InstallationInitialSyncStatus>()
-            .build();
-        let initial_sync_status = txn.get::<InstallationInitialSyncStatus>(id).await.tse()?;
+            .get::<InstallationInitialSyncStatus>(id)
+            .await
+            .tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             if let InitialSyncStatusEnum::Full = initial_sync_status.status {
                 return Ok(());
             }
         }
-        drop(txn);
 
         let conf = self.get_api_conf(id).await?;
 

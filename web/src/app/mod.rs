@@ -27,6 +27,7 @@ pub fn App() -> impl IntoView {
                 Rc::new(BACKEND_API.with(|e| e.clone())),
                 |url| async { Transport::new(url).await },
                 Rc::new(shared::github_api_trait::GithubApi),
+                "heimisch".into(),
             )
             .await
             .unwrap(),
