@@ -35,11 +35,7 @@ impl<
             .txn()
             .with_table::<InstallationInitialSyncStatus>()
             .build();
-        let initial_sync_status = txn
-            .table::<InstallationInitialSyncStatus>()
-            .get(id)
-            .await
-            .tse()?;
+        let initial_sync_status = txn.get::<InstallationInitialSyncStatus>(id).await.tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             if let InitialSyncStatusEnum::Full = initial_sync_status.status {
                 return Ok(());

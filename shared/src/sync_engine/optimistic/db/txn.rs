@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode};
 
-use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
+use crate::sync_engine::optimistic::{db::MaybeOptimistic, optimistic_changes::OptimisticChanges};
 
 use super::{
     object_store::TableWithOptimisticChanges,
@@ -26,6 +26,25 @@ pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
 }
 
 impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, Mode> {
+    pub async fn get<S: Table>(&self, id: &S::Id) -> Result<Option<S>, RawDb::Error>
+    where
+        Markers: TableMarker<S>,
+        Mode: TxnMode,
+    {
+        self.table::<S>().get(id).await
+    }
+
+    pub async fn get_optimistically<S: Table>(
+        &self,
+        id: &S::Id,
+    ) -> Result<Option<MaybeOptimistic<S>>, RawDb::Error>
+    where
+        Markers: TableMarker<S>,
+        Mode: TxnMode,
+    {
+        self.table::<S>().get_optimistically(id).await
+    }
+
     pub fn table<S>(&self) -> TableWithOptimisticChanges<RawDb, S, Mode>
     where
         S: Table,

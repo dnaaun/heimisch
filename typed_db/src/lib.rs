@@ -2,6 +2,7 @@
 
 pub mod idb_impl;
 pub mod raw_traits;
+pub mod sqlite_impl;
 
 pub use derivative::Derivative;
 pub use raw_traits::RawDbTrait;
