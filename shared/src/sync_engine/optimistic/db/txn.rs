@@ -23,7 +23,7 @@ pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
     inner: Option<TxnWithOptimisticChangesInner<RawDb, C, Mode>>,
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
-    reactivity_trackers: Arc<Mutex<ReactivityTrackers>>,
+    reactivity_trackers: ReactivityTrackers,
 }
 
 impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, Mode> {
@@ -62,7 +62,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
 
     pub fn commit(mut self) -> Result<ReactivityTrackers, RawDb::Error> {
         self.commit_impl()?;
-        Ok(RefCell::clone(&self.reactivity_trackers).into_inner())
+        Ok(self.reactivity_trackers.clone())
     }
 
     fn commit_impl(&mut self) -> Result<(), RawDb::Error> {
@@ -76,7 +76,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         {
             idb_txn.commit()?;
             if let Some(listener) = commit_listener {
-                listener(&self.reactivity_trackers.lock());
+                listener(&self.reactivity_trackers);
             };
         };
 
@@ -84,7 +84,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
     }
 
     pub fn reactivity_trackers(&self) -> ReactivityTrackers {
-        self.reactivity_trackers.lock().clone()
+        self.reactivity_trackers.clone()
     }
 
     pub fn abort(mut self) -> Result<(), RawDb::Error> {

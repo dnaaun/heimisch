@@ -1,4 +1,5 @@
 use std::future::Future;
+use std::marker::PhantomData;
 use std::pin::Pin;
 /// Without this isolation, our `impl` definition for the `DbTableMarkers` type will not have one
 /// "defining use."
@@ -79,16 +80,11 @@ pub type DbTableMarkers = (
 impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
     SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
-    pub async fn new<F, Fut>(
+    pub async fn new(
         backend_api: Arc<BackendApi>,
-        make_transport: F,
         github_api: Arc<GithubApi>,
         db_name: String,
-    ) -> SyncResult<Self, Transport, RawDb>
-    where
-        F: Fn(Url) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = Result<Transport, Transport::TransportError>> + Send + Sync + 'static,
-    {
+    ) -> SyncResult<Self, Transport, RawDb> {
         let db = Db::<RawDb, ()>::builder(db_name)
             .with_table::<Issue>()
             .with_table::<User>()
@@ -125,18 +121,12 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
         .await
         .tse()?;
 
-        // Convert the nice generic function into the boxed version we need internally
-        let make_transport = Arc::new(move |arg| {
-            Box::pin(make_transport(arg))
-                as BoxFuture<'static, Result<Transport, Transport::TransportError>>
-        });
-
         Ok(Self {
             db: Arc::new(db),
             db_subscriptions,
             backend_api,
             github_api,
-            make_transport,
+            _transport: PhantomData,
         })
     }
 }

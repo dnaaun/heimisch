@@ -1,7 +1,8 @@
 use futures::future::BoxFuture;
 use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
+use parking_lot::Mutex;
 use registry::Registry;
-use std::sync::Arc;
+use std::{marker::PhantomData, sync::Arc};
 use url::Url;
 pub use websocket_updates::transport::*;
 mod conversions;
@@ -63,11 +64,7 @@ pub struct SyncEngine<
     pub db_subscriptions: Registry<DbSubscription>,
     backend_api: Arc<BackendApi>,
     github_api: Arc<GithubApi>,
-    make_transport: Arc<
-        dyn Fn(Url) -> BoxFuture<'static, Result<Transport, Transport::TransportError>>
-            + Send
-            + Sync,
-    >,
+    _transport: PhantomData<Transport>,
 }
 
 impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> Clone
@@ -79,7 +76,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             db_subscriptions: self.db_subscriptions.clone(),
             backend_api: self.backend_api.clone(),
             github_api: self.github_api.clone(),
-            make_transport: self.make_transport.clone(),
+            _transport: PhantomData,
         }
     }
 }

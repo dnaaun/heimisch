@@ -7,7 +7,7 @@ use shared::{backend_api_trait::BackendApi, github_api_trait::GithubApi};
 
 use crate::typed_transport::BinaryTransport;
 pub type SyncEngine = shared::sync_engine::SyncEngine<
-    idb::Database,
+    SendWrapper<idb::Database>,
     BackendApi,
     Transport<BinaryTransport>,
     GithubApi,

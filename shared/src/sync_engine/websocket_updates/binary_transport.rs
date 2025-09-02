@@ -1,7 +1,7 @@
 use codee::{Decoder, Encoder};
 use futures::{Sink, Stream};
+use std::fmt::Debug;
 use url::Url;
-use std:: fmt::Debug;
 
 use crate::endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg};
 
@@ -67,6 +67,7 @@ pub trait BinaryTransportTrait:
 {
     type ConnError: Debug + Send + Sync;
 
-    #[allow(async_fn_in_trait)]
-    async fn establish_conn(url: Url) -> Result<Self, Self::ConnError>;
+    fn establish_conn(
+        url: Url,
+    ) -> impl std::future::Future<Output = Result<Self, Self::ConnError>> + Send + Sync;
 }

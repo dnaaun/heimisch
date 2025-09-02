@@ -18,7 +18,7 @@ use super::{
 pub struct TableWithOptimisticChanges<RawDb: RawDbTrait, S: Table, Mode> {
     optimistic_changes: Arc<OptimisticChanges>,
     inner: Arc<TableAccess<RawDb, S, Mode>>,
-    pub reactivity_trackers: Arc<Mutex<ReactivityTrackers>>,
+    pub reactivity_trackers: ReactivityTrackers,
     pub commit_listener: Option<CommitListener>,
 }
 
@@ -61,7 +61,6 @@ where
     ) -> Result<Option<MaybeOptimistic<S>>, RawDb::Error> {
         {
             self.reactivity_trackers
-                .lock()
                 .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
         }
 
@@ -86,7 +85,6 @@ where
     pub async fn get(&self, id: &S::Id) -> Result<Option<S>, RawDb::Error> {
         {
             self.reactivity_trackers
-                .lock()
                 .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
         }
 
@@ -95,7 +93,7 @@ where
 
     pub async fn get_all_optimistically(&self) -> Result<Vec<MaybeOptimistic<S>>, RawDb::Error> {
         {
-            self.reactivity_trackers.lock().add_bulk_read(S::NAME)
+            self.reactivity_trackers.add_bulk_read(S::NAME)
         };
 
         let from_db_filtered = self
@@ -133,18 +131,16 @@ where
 
     #[allow(dead_code)]
     pub(crate) async fn get_all(&self) -> Result<Vec<S>, RawDb::Error> {
-        {
-            self.reactivity_trackers.lock().add_bulk_read(S::NAME);
-        }
+        self.reactivity_trackers.add_bulk_read(S::NAME);
 
         self.inner.get_all().await
     }
 
-    pub fn index<IS: IndexSpec<Table = S>>(&self) -> IndexWithOptimisticChanges<'_, RawDb, IS> {
+    pub fn index<IS: IndexSpec<Table = S>>(&self) -> IndexWithOptimisticChanges<RawDb, IS> {
         IndexWithOptimisticChanges::new(
             self.optimistic_changes.clone(),
             self.inner.index::<IS>(),
-            &self.reactivity_trackers,
+            self.reactivity_trackers.clone(),
         )
     }
 }
@@ -163,10 +159,13 @@ where
             .get_realistic_to_optimistic_for_creations::<S>(id)
             .map(|i| SerializedId::new_from_id::<S>(&i));
 
-        let mut reactivity_trackers = self.reactivity_trackers.borrow_mut();
-        reactivity_trackers.add_modification(S::NAME, serialized_id);
-        if let Some(optimistic_id) = optimistic_id {
-            reactivity_trackers.add_modification(S::NAME, optimistic_id);
+        {
+            self.reactivity_trackers
+                .add_modification(S::NAME, serialized_id);
+            if let Some(optimistic_id) = optimistic_id {
+                self.reactivity_trackers
+                    .add_modification(S::NAME, optimistic_id);
+            }
         }
     }
 
@@ -194,10 +193,9 @@ where
         row: S,
         update_fut: impl Future<Output = Result<(), ()>> + 'static,
     ) {
-        let reactivity_trackers = ReactivityTrackers {
-            stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
-            ..Default::default()
-        };
+        let reactivity_trackers = ReactivityTrackers::builder()
+            .stores_modified(hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]])
+            .build();
         self.optimistic_changes.update(row, update_fut);
 
         if let Some(commit_listener) = self.commit_listener.as_ref() {
@@ -214,10 +212,9 @@ where
         row: S,
         create_fut: impl Future<Output = Result<S::Id, ()>> + Send + Sync + 'static,
     ) {
-        let reactivity_trackers = ReactivityTrackers {
-            stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],
-            ..Default::default()
-        };
+        let reactivity_trackers = ReactivityTrackers::builder()
+            .stores_modified(hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]])
+            .build();
 
         self.optimistic_changes.create(row, create_fut);
 

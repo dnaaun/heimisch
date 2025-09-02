@@ -51,7 +51,7 @@ where
             })
             .expect(""),
         ));
-        let websocket_conn = try_n_times(|| (self.make_transport)(url.clone()), 3)
+        let websocket_conn = try_n_times(|| Transport::establish(url.clone()), 3)
             .await
             .map_err(|e| SyncErrorSrc::Transport(e))?;
         pin_mut!(websocket_conn);

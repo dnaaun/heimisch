@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::sync::Arc;
 
+use parking_lot::Mutex;
 use typed_db::{Index, IndexSpec, RawDbTrait, Table};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
@@ -9,19 +10,17 @@ use super::reactivity_trackers::ReactivityTrackers;
 use super::MaybeOptimistic;
 
 #[derive(derive_more::Constructor)]
-pub struct IndexWithOptimisticChanges<'txn, RawDb: RawDbTrait, IS: IndexSpec> {
+pub struct IndexWithOptimisticChanges<RawDb: RawDbTrait, IS: IndexSpec> {
     optimistic_changes: Arc<OptimisticChanges>,
     inner: Index<RawDb, IS>,
-    pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
+    pub(crate) reactivity_trackers: ReactivityTrackers,
 }
-impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<'_, RawDb, IS> {
+impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<RawDb, IS> {
     pub async fn get_optimistically(
         &self,
         id: &IS::Type,
     ) -> Result<Option<MaybeOptimistic<IS::Table>>, RawDb::Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_bulk_read(IS::Table::NAME);
+        self.reactivity_trackers.add_bulk_read(IS::Table::NAME);
 
         let row = match self.get(id).await? {
             Some(r) => r,
@@ -45,9 +44,7 @@ impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<'_, RawDb, IS>
     }
 
     pub(crate) async fn get(&self, id: &IS::Type) -> Result<Option<IS::Table>, RawDb::Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_bulk_read(IS::Table::NAME);
+        self.reactivity_trackers.add_bulk_read(IS::Table::NAME);
 
         self.inner.get(id).await
     }
@@ -56,9 +53,7 @@ impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<'_, RawDb, IS>
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<MaybeOptimistic<IS::Table>>, RawDb::Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_bulk_read(IS::Table::NAME);
+        self.reactivity_trackers.add_bulk_read(IS::Table::NAME);
 
         let from_db_filtered = self
             .inner
@@ -106,9 +101,7 @@ impl<RawDb: RawDbTrait, IS: IndexSpec> IndexWithOptimisticChanges<'_, RawDb, IS>
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Table>, RawDb::Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_bulk_read(IS::Table::NAME);
+        self.reactivity_trackers.add_bulk_read(IS::Table::NAME);
 
         self.inner.get_all(value).await
     }

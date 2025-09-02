@@ -1,7 +1,8 @@
-use std::{cell::RefCell, sync::Arc};
+use std::sync::Arc;
 
 use any_spawner::Executor;
 use bon::builder;
+use parking_lot::Mutex;
 use typed_db::{sqlite_impl::SqliteDatabase, RawDbTrait, ReadOnly, ReadWrite};
 use url::Url;
 
@@ -26,7 +27,6 @@ async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, M
             |_| (),
             Url::parse("https://www.example.com/").unwrap(),
         ))),
-        |_| async { Ok(MockTransport::new().0) },
         Arc::new(()),
         ":memory:".into(),
     )
@@ -52,7 +52,7 @@ async fn num_times_subscriber_called<
     with_txn_2: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn2Markers, Txn2Mode>),
     should_overlap: bool,
 ) {
-    let subscriber_hit_times = Rc::new(RefCell::new(0));
+    let subscriber_hit_times = Arc::new(Mutex::new(0));
     let subscriber_hit_times2 = subscriber_hit_times.clone();
     let sync_engine = get_sync_engine().await;
     let txn1 = make_txn_1(sync_engine.db.txn());
@@ -63,17 +63,17 @@ async fn num_times_subscriber_called<
     let _ = sync_engine.db_subscriptions.add(DbSubscription {
         original_reactivity_trackers,
         func: Arc::new(move || {
-            *subscriber_hit_times2.borrow_mut() += 1;
+            *subscriber_hit_times2.lock() += 1;
         }),
     });
 
-    assert!(*subscriber_hit_times.borrow() == 0);
+    assert!(*subscriber_hit_times.lock() == 0);
 
     let txn2 = make_txn_2(sync_engine.db.txn().read_write());
     with_txn_2(&txn2).await;
     let _ = txn2.commit().unwrap();
 
-    let value = *subscriber_hit_times.borrow();
+    let value = *subscriber_hit_times.lock();
 
     if should_overlap {
         assert!(value >= 1);

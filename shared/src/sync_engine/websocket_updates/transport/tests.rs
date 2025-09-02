@@ -4,6 +4,7 @@ use std::{
 };
 
 use futures::{channel::mpsc, Sink, Stream};
+use url::Url;
 
 use crate::endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg};
 
@@ -21,6 +22,13 @@ pub struct MockTransport {
 
 impl TransportTrait for MockTransport {
     type TransportError = mpsc::SendError;
+
+    async fn establish(_url: Url) -> Result<Self, Self::TransportError> {
+        Ok(Self {
+            recer: mpsc::channel(100).1,
+            sender: mpsc::channel(100).0,
+        })
+    }
 }
 
 impl MockTransport {
@@ -70,4 +78,3 @@ impl Sink<ClientMsg> for MockTransport {
         Pin::new(&mut self.sender).poll_close(cx)
     }
 }
-

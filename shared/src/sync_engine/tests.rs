@@ -11,8 +11,6 @@ use maplit::{hashmap, hashset};
 use mockall::predicate;
 use parking_lot::Mutex;
 use std::{
-    cell::RefCell,
-    rc::Rc,
     sync::{atomic::AtomicUsize, Arc},
     time::Duration,
 };
@@ -91,7 +89,6 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
 
     // Setup our mock transport and mock backend api.
     let (mock_transport, mut mock_transport_handler) = MockTransport::new();
-    let mock_transport = Rc::new(RefCell::new(Some(mock_transport)));
     let mut mock_backend_api = MockBackendApiTrait::new();
     let mut mock_github_api = MockGithubApiTrait::new();
 
@@ -124,7 +121,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
             })
         });
 
-    let mock_github_api = Arc::new(Mutex::new(mock_github_api));
+    let mock_github_api = Arc::new(mock_github_api);
 
     mock_backend_api
         .expect_get_installation_access_token()
@@ -139,15 +136,11 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
         .with()
         .returning(|| Url::parse("https://bcd.efg.xyz").unwrap());
 
-    let mock_backend_api = Arc::new(Mutex::new(mock_backend_api));
+    let mock_backend_api = Arc::new(mock_backend_api);
     // let mock_backend_api_clone = mock_backend_api.clone();
 
-    let se = SyncEngine::<SqliteDatabase, _, _, _>::new(
+    let se = SyncEngine::<SqliteDatabase, _, MockTransport, _>::new(
         mock_backend_api,
-        move |_| {
-            let mock_transport = mock_transport.clone();
-            async move { Ok(mock_transport.borrow_mut().take().unwrap()) }
-        },
         mock_github_api.clone(),
         ":memory:".into(),
     )
@@ -165,10 +158,9 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     let bulk_subscriber_hit = Arc::new(NumTimesHit::default());
     let bulk_subscriber_hit_clone = bulk_subscriber_hit.clone();
     let bulk_db_subscription = DbSubscription {
-        original_reactivity_trackers: ReactivityTrackers {
-            stores_read_in_bulk: hashset![Issue::NAME],
-            ..Default::default()
-        },
+        original_reactivity_trackers: ReactivityTrackers::builder()
+            .stores_read_in_bulk(hashset![Issue::NAME])
+            .build(),
         func: Arc::new(move || {
             bulk_subscriber_hit_clone.increment();
         }),
@@ -208,10 +200,9 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     let single_subscriber_hit = Arc::new(NumTimesHit::default());
     let single_subscriber_hit_clone = single_subscriber_hit.clone();
     let single_db_subscription = DbSubscription {
-        original_reactivity_trackers: ReactivityTrackers {
-            stores_read_by_id: hashmap![Issue::NAME => hashset![SerializedId::new_from_id::<Issue>(&optimistic_issue_id)]],
-            ..Default::default()
-        },
+        original_reactivity_trackers: ReactivityTrackers::builder()
+            .stores_read_by_id(hashmap![Issue::NAME => hashset![SerializedId::new_from_id::<Issue>(&optimistic_issue_id)]])
+            .build(),
         func: Arc::new(move || {
             single_subscriber_hit_clone.increment();
         }),
