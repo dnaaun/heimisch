@@ -1,6 +1,9 @@
+use std::ops::Deref;
+
 /// I'm not using https://docs.rs/serde-json-wasm/latest/serde_json_wasm/
 /// because that library didn't play nice with jiff.
 use super::*;
+use send_wrapper::SendWrapper;
 use wasm_bindgen::JsValue;
 
 #[derive(Debug)]
@@ -45,8 +48,8 @@ where
     Ok(js_sys::JSON::parse(&s)?)
 }
 
-impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
-    type RawDb = idb::Database;
+impl<R: Table> RawTableAccessTrait<R> for SendWrapper<idb::ObjectStore> {
+    type RawDb = SendWrapper<idb::Database>;
 
     async fn get(&self, key: &R::Id) -> Result<Option<R>, Error> {
         let item = self
@@ -58,8 +61,7 @@ impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
     }
 
     async fn get_all(&self) -> Result<Vec<R>, Error> {
-        let items = self
-            .get_all(None, None)?
+        let items = idb::ObjectStore::get_all(self, None, None)?
             .await?
             .into_iter()
             .map(|i| from_value(i))
@@ -68,59 +70,65 @@ impl<R: Table> RawTableAccessTrait<R> for idb::ObjectStore {
     }
 
     async fn put(&self, item: &R) -> Result<(), Error> {
-        self.put(&to_value(item)?, None)?.await?;
+        idb::ObjectStore::put(self, &to_value(item)?, None)?.await?;
         Ok(())
     }
 
     async fn delete(&self, key: &R::Id) -> Result<(), Error> {
-        self.delete(idb::Query::Key(to_value(key)?))?.await?;
+        idb::ObjectStore::delete(self, idb::Query::Key(to_value(key)?))?.await?;
         Ok(())
     }
 
     fn index(&self, name: &str) -> idb::Index {
-        self.index(name)
-            .expect("This rarely (never) happens I hope.")
+        idb::ObjectStore::index(self, name).expect("This rarely (never) happens I hope.")
     }
 }
 
-impl RawTxnTrait for idb::Transaction {
-    type RawDb = idb::Database;
+impl RawTxnTrait for SendWrapper<idb::Transaction> {
+    type RawDb = SendWrapper<idb::Database>;
 
     fn commit(self) -> Result<(), Error> {
-        self.commit()?;
+        idb::Transaction::commit(self)?;
         Ok(())
     }
 
     fn abort(self) -> Result<(), Error> {
-        self.abort()?;
+        idb::Transaction::abort(self)?;
         Ok(())
     }
 
-    fn get_table<R: Table>(&self, store_name: &str) -> idb::ObjectStore {
-        self.object_store(store_name)
-            .expect("This rarely (never) happens I hope.")
+    fn get_table<R: Table>(&self, store_name: &str) -> SendWrapper<idb::ObjectStore> {
+        SendWrapper::new(
+            idb::Transaction::object_store(self, store_name)
+                .expect("This rarely (never) happens I hope."),
+        )
     }
 }
 
-impl RawDbBuilderTrait for idb::builder::DatabaseBuilder {
-    type RawDb = idb::Database;
+impl RawDbBuilderTrait for SendWrapper<idb::builder::DatabaseBuilder> {
+    type RawDb = SendWrapper<idb::Database>;
 
     async fn build(self) -> Result<Self::RawDb, Error> {
-        Ok(self.build().await?)
+        Ok(SendWrapper::new(
+            idb::builder::DatabaseBuilder::build(self.take()).await?,
+        ))
     }
 
-    fn add_table(self, table_builder: idb::builder::ObjectStoreBuilder) -> Self {
-        self.add_object_store(table_builder)
+    fn add_table(self, table_builder: SendWrapper<idb::builder::ObjectStoreBuilder>) -> Self {
+        SendWrapper::new(idb::builder::DatabaseBuilder::add_object_store(
+            self.take(),
+            table_builder.take(),
+        ))
     }
 }
 
-impl RawDbTrait for idb::Database {
+impl RawDbTrait for SendWrapper<idb::Database> {
     type Error = Error;
-    type RawTxn = idb::Transaction;
-    type RawDbBuilder = idb::builder::DatabaseBuilder;
-    type RawTableBuilder = idb::builder::ObjectStoreBuilder;
-    type RawIndex = idb::Index;
-    type RawTableAccess<R: Table> = idb::ObjectStore;
+    type RawTxn = SendWrapper<idb::Transaction>;
+    type RawDbBuilder = SendWrapper<idb::builder::DatabaseBuilder>;
+    type RawTableBuilder = SendWrapper<idb::builder::ObjectStoreBuilder>;
+    type RawIndex = SendWrapper<idb::Index>;
+    type RawTableAccess<R: Table> = SendWrapper<idb::ObjectStore>;
 
     fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn {
         self.transaction(

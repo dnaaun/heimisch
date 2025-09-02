@@ -1,19 +1,29 @@
 use super::{IndexSpec, Table};
 use std::fmt::Debug;
 
-#[allow(async_fn_in_trait)]
-pub trait RawTableAccessTrait<R: Table> {
+pub trait RawTableAccessTrait<R: Table>: Send + Sync {
     type RawDb: RawDbTrait;
 
-    async fn get(&self, id: &R::Id) -> Result<Option<R>, <Self::RawDb as RawDbTrait>::Error>;
-    async fn get_all(&self) -> Result<Vec<R>, <Self::RawDb as RawDbTrait>::Error>;
-    async fn put(&self, item: &R) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
-    async fn delete(&self, id: &R::Id) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
+    fn get(
+        &self,
+        id: &R::Id,
+    ) -> impl Future<Output = Result<Option<R>, <Self::RawDb as RawDbTrait>::Error>> + Send + Sync;
+    fn get_all(
+        &self,
+    ) -> impl Future<Output = Result<Vec<R>, <Self::RawDb as RawDbTrait>::Error>> + Send + Sync;
+    fn put(
+        &self,
+        item: &R,
+    ) -> impl Future<Output = Result<(), <Self::RawDb as RawDbTrait>::Error>> + Send + Sync;
+    fn delete(
+        &self,
+        id: &R::Id,
+    ) -> impl Future<Output = Result<(), <Self::RawDb as RawDbTrait>::Error>> + Send + Sync;
 
     fn index(&self, name: &str) -> <Self::RawDb as RawDbTrait>::RawIndex;
 }
 
-pub trait RawTxnTrait {
+pub trait RawTxnTrait: Send + Sync {
     type RawDb: RawDbTrait;
 
     fn commit(self) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
@@ -33,7 +43,7 @@ pub trait RawDbBuilderTrait {
     fn add_table(self, table_builder: <Self::RawDb as RawDbTrait>::RawTableBuilder) -> Self;
 }
 
-pub trait RawDbTrait {
+pub trait RawDbTrait: Send + Sync {
     type Error: Debug;
     type RawTxn: RawTxnTrait<RawDb = Self>;
     type RawDbBuilder: RawDbBuilderTrait<RawDb = Self>;
@@ -48,7 +58,7 @@ pub trait RawDbTrait {
 }
 
 #[allow(async_fn_in_trait)]
-pub trait RawIndexTrait {
+pub trait RawIndexTrait: Send + Sync {
     type RawDb: RawDbTrait;
 
     async fn get<IS: IndexSpec>(

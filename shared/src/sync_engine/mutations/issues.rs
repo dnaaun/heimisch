@@ -16,7 +16,7 @@ use crate::{
 };
 
 impl<
-        RawDb: RawDbTrait + 'static,
+        RawDb: RawDbTrait + 'static + std::marker::Sync + Send,
         BackendApi: BackendApiTrait,
         Transport: TransportTrait,
         GithubApi: GithubApiTrait,

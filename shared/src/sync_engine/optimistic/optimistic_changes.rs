@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(clippy::type_complexity)]
 
-use std::{any::Any, future::Future, rc::Rc};
+use std::{any::Any, future::Future, sync::Arc};
 
 use any_spawner::Executor;
 
@@ -9,10 +9,10 @@ use typed_db::Table;
 
 use super::{db::SerializedId, optimistic_change_map::OptimisticChangeMap};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OptimisticChanges {
-    pub updates: OptimisticChangeMap<Rc<dyn Any>>,
-    pub creations: OptimisticChangeMap<Rc<dyn Any>, SerializedId>,
+    pub updates: OptimisticChangeMap<Arc<dyn Any + Send + Sync>>,
+    pub creations: OptimisticChangeMap<Arc<dyn Any + Send + Sync>, SerializedId>,
     pub deletes: OptimisticChangeMap<()>,
 }
 
@@ -24,7 +24,7 @@ impl OptimisticChanges {
     ) {
         let updates = self.updates.clone();
         let id = row.id().clone();
-        let now = updates.insert::<S>(&id, Rc::new(row));
+        let now = updates.insert::<S>(&id, Arc::new(row));
 
         Executor::spawn_local(async move {
             match update_fut.await {
@@ -42,13 +42,13 @@ impl OptimisticChanges {
         &self,
         row: S,
         // The future must resolve to the id of whatever is created.
-        create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
+        create_fut: impl Future<Output = Result<S::Id, ()>> + Send + Sync + 'static,
     ) {
         let id = row.id().clone();
         let creations = self.creations.clone();
-        let time = creations.insert::<S>(&id, Rc::new(row));
+        let time = creations.insert::<S>(&id, Arc::new(row));
 
-        Executor::spawn_local(async move {
+        Executor::spawn(async move {
             match create_fut.await {
                 Ok(actual_id) => {
                     creations.mark_realistic::<S>(

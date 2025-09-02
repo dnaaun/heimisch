@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{future::Future, sync::Arc};
 use url::Url;
 
 use crate::{
@@ -30,26 +30,26 @@ impl BackendApi {
 }
 
 #[mockall::automock]
-pub trait BackendApiTrait: 'static {
+pub trait BackendApiTrait: Send + Sync + 'static {
     fn get_domain(&self) -> Url;
     fn get_installations(
         &self,
-    ) -> impl std::future::Future<Output = Result<GetInstallationsResponse, OwnApiError>>;
+    ) -> impl Future<Output = Result<GetInstallationsResponse, OwnApiError>> + Send + Sync;
 
     fn get_installation_access_token(
         &self,
         params: GetInstallationAccessTokenQueryParams,
-    ) -> impl std::future::Future<Output = Result<InstallationAccessToken, OwnApiError>>;
+    ) -> impl Future<Output = Result<InstallationAccessToken, OwnApiError>> + Send + Sync;
 
     fn create_app_install(
         &self,
         payload: CreateAppInstallPayload,
-    ) -> impl std::future::Future<Output = Result<CreateAppInstallResponse, OwnApiError>>;
+    ) -> impl Future<Output = Result<CreateAppInstallResponse, OwnApiError>> + Send + Sync;
 
     fn auth_finish(
         &self,
         payload: AuthFinishPayload,
-    ) -> impl std::future::Future<Output = Result<AuthFinishResponse, OwnApiError>>;
+    ) -> impl Future<Output = Result<AuthFinishResponse, OwnApiError>> + Send + Sync;
 }
 
 impl BackendApiTrait for BackendApi {
@@ -91,7 +91,7 @@ impl BackendApiTrait for BackendApi {
     }
 }
 
-impl<T: 'static> BackendApiTrait for Rc<T>
+impl<T: 'static> BackendApiTrait for Arc<T>
 where
     T: BackendApiTrait,
 {
@@ -124,54 +124,5 @@ where
         payload: AuthFinishPayload,
     ) -> impl std::future::Future<Output = Result<AuthFinishResponse, OwnApiError>> {
         T::auth_finish(self, payload)
-    }
-}
-
-impl<T: 'static> BackendApiTrait for RefCell<T>
-where
-    T: BackendApiTrait,
-{
-    fn get_domain(&self) -> Url {
-        let inner = self.borrow();
-        inner.get_domain()
-    }
-
-    fn get_installations(
-        &self,
-    ) -> impl std::future::Future<Output = Result<GetInstallationsResponse, OwnApiError>> {
-        async move {
-            let inner = self.borrow();
-            inner.get_installations().await
-        }
-    }
-
-    fn get_installation_access_token(
-        &self,
-        params: GetInstallationAccessTokenQueryParams,
-    ) -> impl std::future::Future<Output = Result<InstallationAccessToken, OwnApiError>> {
-        async move {
-            let inner = self.borrow();
-            inner.get_installation_access_token(params).await
-        }
-    }
-
-    fn create_app_install(
-        &self,
-        payload: CreateAppInstallPayload,
-    ) -> impl std::future::Future<Output = Result<CreateAppInstallResponse, OwnApiError>> {
-        async move {
-            let inner = self.borrow();
-            inner.create_app_install(payload).await
-        }
-    }
-
-    fn auth_finish(
-        &self,
-        payload: AuthFinishPayload,
-    ) -> impl std::future::Future<Output = Result<AuthFinishResponse, OwnApiError>> {
-        async move {
-            let inner = self.borrow();
-            inner.auth_finish(payload).await
-        }
     }
 }

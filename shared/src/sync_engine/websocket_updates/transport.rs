@@ -97,17 +97,18 @@ where
 }
 
 pub trait TransportTrait:
-
-    Sized + Sink<ClientMsg> + Stream<Item = Result<ServerMsg, Self::TransportError>>
+    Sized
+    + Sink<ClientMsg>
+    + Stream<Item = Result<ServerMsg, Self::TransportError>>
     + 'static
+    + Send
+    + Sync
 {
-    type TransportError: Debug;
+    type TransportError: Debug + Send + Sync;
 }
 
-impl<T: BinaryTransportTrait> Transport<T> {
-    pub async fn new(
-        url: Url,
-    ) -> Result<Self, <Transport<T> as TransportTrait>::TransportError> {
+impl<T: BinaryTransportTrait + Send + Sync> Transport<T> {
+    pub async fn new(url: Url) -> Result<Self, <Transport<T> as TransportTrait>::TransportError> {
         let inner = T::establish_conn(url)
             .await
             .map_err(BinaryTransportError::Conn)?;
@@ -116,9 +117,9 @@ impl<T: BinaryTransportTrait> Transport<T> {
     }
 }
 
-impl<T> TransportTrait for Transport<T>
+impl<T: Send + Sync> TransportTrait for Transport<T>
 where
-    T: BinaryTransportTrait,
+    T: BinaryTransportTrait + Send + Sync,
 {
     type TransportError = BinaryTransportError<<T as Sink<Vec<u8>>>::Error>;
 }

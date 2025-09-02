@@ -1,7 +1,8 @@
-use std::{cell::RefCell, future::Future, rc::Rc};
+use std::{future::Future, sync::Arc};
 
 use derivative::Derivative;
 use maplit::{hashmap, hashset};
+use parking_lot::Mutex;
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 use typed_db::{IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode};
@@ -15,9 +16,9 @@ use super::{
 #[derivative(Clone(bound = ""))]
 #[derive(derive_more::Constructor)]
 pub struct TableWithOptimisticChanges<RawDb: RawDbTrait, S: Table, Mode> {
-    optimistic_changes: Rc<OptimisticChanges>,
-    inner: Rc<TableAccess<RawDb, S, Mode>>,
-    pub reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
+    optimistic_changes: Arc<OptimisticChanges>,
+    inner: Arc<TableAccess<RawDb, S, Mode>>,
+    pub reactivity_trackers: Arc<Mutex<ReactivityTrackers>>,
     pub commit_listener: Option<CommitListener>,
 }
 
@@ -58,9 +59,11 @@ where
         &self,
         id: &S::Id,
     ) -> Result<Option<MaybeOptimistic<S>>, RawDb::Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
+        {
+            self.reactivity_trackers
+                .lock()
+                .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
+        }
 
         if self.optimistic_changes.deletes.latest::<S>(id).is_some() {
             return Ok(None);
@@ -81,15 +84,19 @@ where
     }
 
     pub async fn get(&self, id: &S::Id) -> Result<Option<S>, RawDb::Error> {
-        self.reactivity_trackers
-            .borrow_mut()
-            .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
+        {
+            self.reactivity_trackers
+                .lock()
+                .add_by_id_read(S::NAME, SerializedId::new_from_id::<S>(id));
+        }
 
         self.inner.get(id).await
     }
 
     pub async fn get_all_optimistically(&self) -> Result<Vec<MaybeOptimistic<S>>, RawDb::Error> {
-        self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
+        {
+            self.reactivity_trackers.lock().add_bulk_read(S::NAME)
+        };
 
         let from_db_filtered = self
             .inner
@@ -126,7 +133,9 @@ where
 
     #[allow(dead_code)]
     pub(crate) async fn get_all(&self) -> Result<Vec<S>, RawDb::Error> {
-        self.reactivity_trackers.borrow_mut().add_bulk_read(S::NAME);
+        {
+            self.reactivity_trackers.lock().add_bulk_read(S::NAME);
+        }
 
         self.inner.get_all().await
     }
@@ -203,7 +212,7 @@ where
     pub fn create_optimistically(
         &self,
         row: S,
-        create_fut: impl Future<Output = Result<S::Id, ()>> + 'static,
+        create_fut: impl Future<Output = Result<S::Id, ()>> + Send + Sync + 'static,
     ) {
         let reactivity_trackers = ReactivityTrackers {
             stores_modified: hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]],

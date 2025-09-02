@@ -1,5 +1,6 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, sync::Arc};
 
+use parking_lot::Mutex;
 use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode};
 
 use crate::sync_engine::optimistic::{db::MaybeOptimistic, optimistic_changes::OptimisticChanges};
@@ -16,13 +17,13 @@ struct TxnWithOptimisticChangesInner<RawDb: RawDbTrait, C, Mode> {
 }
 
 pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
-    optimistic_updates: Rc<OptimisticChanges>,
+    optimistic_updates: Arc<OptimisticChanges>,
     /// RTI: Will be None if and only if the transaction is committed or aborted.
     /// RTI upkeep: `.commit()` and `.abort()` take a `self`.
     inner: Option<TxnWithOptimisticChangesInner<RawDb, C, Mode>>,
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
-    reactivity_trackers: Rc<RefCell<ReactivityTrackers>>,
+    reactivity_trackers: Arc<Mutex<ReactivityTrackers>>,
 }
 
 impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, Mode> {
@@ -53,7 +54,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         let inner = self.inner.as_ref().expect("");
         TableWithOptimisticChanges::new(
             self.optimistic_updates.clone(),
-            Rc::new(inner.idb_txn.table::<S>()),
+            Arc::new(inner.idb_txn.table::<S>()),
             self.reactivity_trackers.clone(),
             inner.commit_listener.clone(),
         )
@@ -75,13 +76,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         {
             idb_txn.commit()?;
             if let Some(listener) = commit_listener {
-                tracing::trace!(
-                    "Invoking listener for txn commit with reactivity trackers: {:?}",
-                    self.reactivity_trackers.borrow()
-                );
-                listener(&self.reactivity_trackers.borrow());
-            } else {
-                // tracing::trace!("No listener to invoke for txn commit.");
+                listener(&self.reactivity_trackers.lock());
             };
         };
 
@@ -89,7 +84,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
     }
 
     pub fn reactivity_trackers(&self) -> ReactivityTrackers {
-        self.reactivity_trackers.borrow().clone()
+        self.reactivity_trackers.lock().clone()
     }
 
     pub fn abort(mut self) -> Result<(), RawDb::Error> {
@@ -113,7 +108,7 @@ pub struct TxnBuilderWithOptimisticChanges<
     Mode,
 > {
     inner: TxnBuilder<'db, RawDb, DbTableMarkers, TxnTableMarkers, Mode>,
-    optimistic_updates: Rc<OptimisticChanges>,
+    optimistic_updates: Arc<OptimisticChanges>,
     commit_listener: Option<CommitListener>,
 }
 

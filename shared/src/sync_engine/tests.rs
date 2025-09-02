@@ -124,7 +124,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
             })
         });
 
-    let mock_github_api = Rc::new(RefCell::new(mock_github_api));
+    let mock_github_api = Arc::new(Mutex::new(mock_github_api));
 
     mock_backend_api
         .expect_get_installation_access_token()
@@ -139,7 +139,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
         .with()
         .returning(|| Url::parse("https://bcd.efg.xyz").unwrap());
 
-    let mock_backend_api = Rc::new(RefCell::new(mock_backend_api));
+    let mock_backend_api = Arc::new(Mutex::new(mock_backend_api));
     // let mock_backend_api_clone = mock_backend_api.clone();
 
     let se = SyncEngine::<SqliteDatabase, _, _, _>::new(

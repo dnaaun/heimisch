@@ -65,7 +65,7 @@ pub trait BinaryTransportTrait:
     + Stream<Item = Result<Vec<u8>, ConnOrClosedError<Self::ConnError>>>
     + 'static
 {
-    type ConnError: Debug;
+    type ConnError: Debug + Send + Sync;
 
     #[allow(async_fn_in_trait)]
     async fn establish_conn(url: Url) -> Result<Self, Self::ConnError>;

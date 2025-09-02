@@ -16,7 +16,9 @@ pub const CUSTOM_REDIRECT_HEADER_NAME: HeaderName = HeaderName::from_static("x-c
 /// `leptos::Resource::new()`.
 #[derive(Clone, Debug)]
 pub enum OwnApiError {
-    ReqwestError { error: Arc<dyn std::error::Error> },
+    ReqwestError {
+        error: Arc<dyn std::error::Error + Send + Sync>,
+    },
     PageRedirect,
     UrlParamsEncode(serde_urlencoded::ser::Error),
     UrlParamsDecode(serde_urlencoded::de::Error),
@@ -73,9 +75,7 @@ impl EndpointClient {
     pub fn new(redirect_handler: impl Fn(Url) + Send + Sync + 'static, domain: Url) -> Self {
         Self {
             redirect_handler: Arc::new(redirect_handler),
-            client: ClientBuilder::new()
-                .build()
-                .expect(""),
+            client: ClientBuilder::new().build().expect(""),
             domain,
         }
     }

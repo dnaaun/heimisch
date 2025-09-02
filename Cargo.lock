@@ -4793,6 +4793,7 @@ dependencies = [
  "idb",
  "js-sys",
  "rusqlite",
+ "send_wrapper",
  "serde",
  "serde_json",
  "wasm-bindgen",

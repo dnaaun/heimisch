@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    rc::Rc,
+    sync::Arc,
 };
 
 use typed_db::Table;
@@ -73,4 +73,4 @@ impl ReactivityTrackers {
     }
 }
 
-pub type CommitListener = Rc<dyn Fn(&ReactivityTrackers)>;
+pub type CommitListener = Arc<dyn Fn(&ReactivityTrackers) + Send + Sync>;

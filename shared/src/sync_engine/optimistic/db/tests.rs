@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, sync::Arc};
 
 use any_spawner::Executor;
 use bon::builder;
@@ -22,12 +22,12 @@ use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
 async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, MockTransport, ()> {
     SyncEngine::<RawDb, BackendApi, MockTransport, ()>::new(
-        Rc::new(BackendApi::new(EndpointClient::new(
+        Arc::new(BackendApi::new(EndpointClient::new(
             |_| (),
             Url::parse("https://www.example.com/").unwrap(),
         ))),
         |_| async { Ok(MockTransport::new().0) },
-        Rc::new(()),
+        Arc::new(()),
         ":memory:".into(),
     )
     .await

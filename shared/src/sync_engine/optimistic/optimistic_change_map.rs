@@ -1,7 +1,6 @@
 use std::{
     any::Any,
     collections::{BTreeMap, HashMap},
-    rc::Rc,
     sync::Arc,
 };
 
@@ -245,7 +244,7 @@ impl<T: Clone, RealisticId: Clone> OptimisticChangeMap<T, RealisticId> {
     }
 }
 
-impl<RealisticId> OptimisticChangeMap<Rc<dyn Any>, RealisticId> {
+impl<RealisticId> OptimisticChangeMap<Arc<dyn Any + Send + Sync>, RealisticId> {
     pub fn latest_downcasted<S: Table + 'static>(&self, optimistic_id: &S::Id) -> Option<S> {
         let optimistic_id = SerializedId::new_from_id::<S>(optimistic_id);
         Some(

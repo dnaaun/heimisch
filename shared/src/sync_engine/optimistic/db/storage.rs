@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use typed_db::{Db, DbBuilder, RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker};
 
@@ -8,7 +8,7 @@ use super::{reactivity_trackers::CommitListener, TxnBuilderWithOptimisticChanges
 
 pub struct DbWithOptimisticChanges<RawDb: RawDbTrait, StoreMarkers> {
     inner: Db<RawDb, StoreMarkers>,
-    optimistic_updates: Rc<OptimisticChanges>,
+    optimistic_updates: Arc<OptimisticChanges>,
     pub(crate) listener: CommitListener,
 }
 
@@ -20,7 +20,7 @@ impl<RawDb: RawDbTrait, StoreMarkers> DbWithOptimisticChanges<RawDb, StoreMarker
     ) -> Result<Self, RawDb::Error> {
         Ok(Self {
             inner: inner.build().await?,
-            optimistic_updates: Rc::new(Default::default()),
+            optimistic_updates: Default::default(),
             listener,
         })
     }

@@ -1,7 +1,7 @@
+use futures::future::BoxFuture;
 use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
 use registry::Registry;
-use send_wrapper::SendWrapper;
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::sync::Arc;
 use url::Url;
 pub use websocket_updates::transport::*;
 mod conversions;
@@ -18,7 +18,7 @@ pub mod websocket_updates;
 #[cfg(test)]
 pub mod tests;
 
-use std::{cmp::Ordering, rc::Rc};
+use std::cmp::Ordering;
 
 use crate::{
     backend_api_trait::BackendApiTrait,
@@ -36,7 +36,7 @@ use typed_db::RawDbTrait;
 #[derive(Clone)]
 pub struct DbSubscription {
     pub original_reactivity_trackers: ReactivityTrackers,
-    pub func: Arc<dyn Fn()>,
+    pub func: Arc<dyn Fn() + Send + Sync>,
 }
 
 impl std::fmt::Debug for DbSubscription {
@@ -59,12 +59,14 @@ pub struct SyncEngine<
     Transport: TransportTrait,
     GithubApi,
 > {
-    pub db: Rc<DbWithOptimisticChanges<RawDb, DbTableMarkers>>,
-    pub db_subscriptions: SendWrapper<Rc<Registry<DbSubscription>>>,
-    backend_api: Rc<BackendApi>,
-    github_api: Rc<GithubApi>,
-    make_transport: Rc<
-        dyn Fn(Url) -> Pin<Box<dyn Future<Output = Result<Transport, Transport::TransportError>>>>,
+    pub db: Arc<DbWithOptimisticChanges<RawDb, DbTableMarkers>>,
+    pub db_subscriptions: Registry<DbSubscription>,
+    backend_api: Arc<BackendApi>,
+    github_api: Arc<GithubApi>,
+    make_transport: Arc<
+        dyn Fn(Url) -> BoxFuture<'static, Result<Transport, Transport::TransportError>>
+            + Send
+            + Sync,
     >,
 }
 

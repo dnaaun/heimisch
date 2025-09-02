@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use typed_db::{Index, IndexSpec, RawDbTrait, Table};
 
@@ -10,7 +10,7 @@ use super::MaybeOptimistic;
 
 #[derive(derive_more::Constructor)]
 pub struct IndexWithOptimisticChanges<'txn, RawDb: RawDbTrait, IS: IndexSpec> {
-    optimistic_changes: Rc<OptimisticChanges>,
+    optimistic_changes: Arc<OptimisticChanges>,
     inner: Index<RawDb, IS>,
     pub(crate) reactivity_trackers: &'txn RefCell<ReactivityTrackers>,
 }

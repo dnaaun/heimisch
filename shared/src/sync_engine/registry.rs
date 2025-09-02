@@ -1,7 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use derivative::Derivative;
+use std::{collections::HashMap, sync::Arc};
 
 use idalloc::Slab;
-use send_wrapper::SendWrapper;
+use parking_lot::Mutex;
 
 struct Inner<T> {
     alloc: Slab<u32>,
@@ -11,18 +12,20 @@ struct Inner<T> {
 /// The idea is that one calls `.add()` to add an object to the registry, and it
 /// will return a function that will remove it from the registry when called.
 /// And then one can do `registry.get()` to get all the objects in the registry.
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""))]
 pub struct Registry<T> {
-    inner: SendWrapper<Rc<RefCell<Inner<T>>>>,
+    inner: Arc<Mutex<Inner<T>>>,
 }
 
 /// We want to avoid requiring `T: Default` here, so we can't derive this.
 impl<T> Default for Registry<T> {
     fn default() -> Self {
         Self {
-            inner: SendWrapper::new(Rc::new(RefCell::new(Inner {
+            inner: Arc::new(Mutex::new(Inner {
                 alloc: Default::default(),
                 map: Default::default(),
-            }))),
+            })),
         }
     }
 }
@@ -32,11 +35,11 @@ impl<T> Registry<T> {
         Default::default()
     }
 }
-impl<T> Registry<T> {
+impl<T: Send + Sync> Registry<T> {
     /// Will return the function that will remove it from the registry
     pub fn add(&self, t: T) -> impl Fn() + Send + Sync {
         let id = {
-            let mut inner = self.inner.borrow_mut();
+            let mut inner = self.inner.lock();
             let id = inner.alloc.next();
             inner.map.insert(id, t);
             id
@@ -44,13 +47,13 @@ impl<T> Registry<T> {
         let inner = self.inner.clone();
 
         move || {
-            let _item = inner.borrow_mut().map.remove(&id);
+            let _item = inner.lock().map.remove(&id);
         }
     }
 }
 
 impl<T: Clone> Registry<T> {
     pub fn get(&self) -> Vec<T> {
-        self.inner.borrow().map.values().cloned().collect()
+        self.inner.lock().map.values().cloned().collect()
     }
 }

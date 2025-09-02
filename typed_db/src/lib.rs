@@ -14,7 +14,7 @@ use std::{
     any::TypeId,
     collections::{HashMap, HashSet},
     marker::PhantomData,
-    rc::Rc,
+    sync::Arc,
 };
 
 use serde::{Serialize, de::DeserializeOwned};
@@ -32,7 +32,12 @@ pub trait Table: DeserializeOwned + Serialize +
 // I need this in some places apparently.
 Clone +
 // Also looks like I need this.
-'static {
+
+'static 
+
++ Send + Sync
+
+{
     const NAME: &'static str;
 
     /// I _feel_ like I'm going to need this.
@@ -43,7 +48,9 @@ Clone +
     type Id: serde::Serialize + DeserializeOwned
         // There's somewhere where we clone the id and also 'static is required there.
         + Clone
-        + 'static;
+        + 'static
+        + Send + Sync 
+        ;
 
     fn id(&self) -> &Self::Id;
 
@@ -206,7 +213,7 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
             "Should be None only if committed/aborted, which means &self shouldn't be obtainable",
         );
         TableAccess {
-            raw_table: Rc::new(raw_table),
+            raw_table: Arc::new(raw_table),
             mode: PhantomData,
         }
     }
@@ -225,7 +232,7 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""))]
 pub struct TableAccess<RawDb: RawDbTrait, R: Table, Mode> {
-    pub(crate) raw_table: Rc<RawDb::RawTableAccess<R>>,
+    pub(crate) raw_table: Arc<RawDb::RawTableAccess<R>>,
     pub(crate) mode: PhantomData<(R, Mode)>,
 }
 

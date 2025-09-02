@@ -2,7 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 /// Without this isolation, our `impl` definition for the `DbTableMarkers` type will not have one
 /// "defining use."
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::backend_api_trait::BackendApiTrait;
 use crate::sync_engine::error::RawDbErrorToSyncError;
@@ -28,7 +28,7 @@ use crate::types::{
     repository::Repository, repository_initial_sync_status::RepositoryInitialSyncStatus,
     user::User,
 };
-use send_wrapper::SendWrapper;
+use futures::future::BoxFuture;
 use typed_db::{Db, RawDbTrait};
 use url::Url;
 
@@ -80,19 +80,15 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
     SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
     pub async fn new<F, Fut>(
-        backend_api: Rc<BackendApi>,
+        backend_api: Arc<BackendApi>,
         make_transport: F,
-        github_api: Rc<GithubApi>,
+        github_api: Arc<GithubApi>,
         db_name: String,
     ) -> SyncResult<Self, Transport, RawDb>
     where
-        F: Fn(Url) -> Fut + 'static,
-        Fut: Future<Output = Result<Transport, Transport::TransportError>> + 'static,
+        F: Fn(Url) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<Transport, Transport::TransportError>> + Send + Sync + 'static,
     {
-        // Convert the nice generic function into the boxed version we need internally
-        let make_transport =
-            Rc::new(move |url| Box::pin(make_transport(url)) as Pin<Box<dyn Future<Output = _>>>);
-
         let db = Db::<RawDb, ()>::builder(db_name)
             .with_table::<Issue>()
             .with_table::<User>()
@@ -109,11 +105,11 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             .with_table::<RepositoryInitialSyncStatus>()
             .with_table::<InstallationInitialSyncStatus>();
 
-        let db_subscriptions: Rc<Registry<DbSubscription>> = Default::default();
+        let db_subscriptions: Registry<DbSubscription> = Default::default();
         let db_subscriptions2 = db_subscriptions.clone();
         let db = DbWithOptimisticChanges::new(
             db,
-            Rc::new(move |reactivity_trackers| {
+            Arc::new(move |reactivity_trackers| {
                 let orig_trackers = db_subscriptions2.get();
                 let matching_trackers = orig_trackers
                     .iter()
@@ -129,9 +125,15 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
         .await
         .tse()?;
 
+        // Convert the nice generic function into the boxed version we need internally
+        let make_transport = Arc::new(move |arg| {
+            Box::pin(make_transport(arg))
+                as BoxFuture<'static, Result<Transport, Transport::TransportError>>
+        });
+
         Ok(Self {
-            db: Rc::new(db),
-            db_subscriptions: SendWrapper::new(db_subscriptions),
+            db: Arc::new(db),
+            db_subscriptions,
             backend_api,
             github_api,
             make_transport,
