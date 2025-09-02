@@ -12,11 +12,11 @@ pub type SyncEngine = shared::sync_engine::SyncEngine<
     Transport<BinaryTransport>,
     GithubApi,
 >;
-pub type SyncEngineContext = SendWrapper<Rc<SyncEngine>>;
+pub type SyncEngineContext = SendWrapper<SyncEngine>;
 
 pub fn sync_engine_provided<V>(
     children: impl Fn() -> V + Send + Clone + 'static,
-    sync_engine: LocalResource<Rc<SyncEngine>>,
+    sync_engine: Resource<SyncEngine>,
 ) -> impl Fn() -> AnyView + Send + Clone + 'static
 where
     V: IntoView + 'static,
@@ -40,6 +40,6 @@ where
     }
 }
 
-pub fn use_sync_engine() -> Rc<SyncEngine> {
+pub fn use_sync_engine() -> SyncEngine {
     use_context::<SyncEngineContext>().expect("").take()
 }

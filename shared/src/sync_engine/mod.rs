@@ -1,8 +1,7 @@
 use futures::future::BoxFuture;
 use optimistic::db::{DbWithOptimisticChanges, ReactivityTrackers};
-use parking_lot::Mutex;
 use registry::Registry;
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 use url::Url;
 pub use websocket_updates::transport::*;
 mod conversions;
@@ -54,6 +53,7 @@ impl std::fmt::Debug for DbSubscription {
 
 pub use new_defn::DbTableMarkers;
 
+/// TODO: Use the "inner pattern" here.
 pub struct SyncEngine<
     RawDb: RawDbTrait,
     BackendApi: BackendApiTrait,
@@ -64,7 +64,11 @@ pub struct SyncEngine<
     pub db_subscriptions: Registry<DbSubscription>,
     backend_api: Arc<BackendApi>,
     github_api: Arc<GithubApi>,
-    _transport: PhantomData<Transport>,
+    make_transport: Arc<
+        dyn Fn(Url) -> BoxFuture<'static, Result<Transport, Transport::TransportError>>
+            + Send
+            + Sync,
+    >,
 }
 
 impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi> Clone
@@ -76,7 +80,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             db_subscriptions: self.db_subscriptions.clone(),
             backend_api: self.backend_api.clone(),
             github_api: self.github_api.clone(),
-            _transport: PhantomData,
+            make_transport: self.make_transport.clone(),
         }
     }
 }

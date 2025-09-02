@@ -2,7 +2,6 @@ use std::{future::Future, sync::Arc};
 
 use derivative::Derivative;
 use maplit::{hashmap, hashset};
-use parking_lot::Mutex;
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
 use typed_db::{IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode};

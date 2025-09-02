@@ -20,14 +20,14 @@ github_api = { path = "../github_api" }
 
 wasm-bindgen-futures = "0.4.43"
 
-shared = { path = "../shared", features = ["hydrate"] }
+shared = { path = "../shared", default-features = false, features = ["hydrate"] }
 macros = { path = "../macros" }
 zwang_router = { path = "../zwang_router" }
 reqwest = { version = "0.12.8", features = ["json"] }
 serde = "1.0.210"
 serde_urlencoded = "0.7.1"
 serde_json = "1.0.132"
-typed_db = { path = "../typed_db" }
+typed_db = { path = "../typed_db", features = ["idb"] }
 parking_lot = "0.12.3"
 futures = "0.3.31"
 js-sys = "0.3.72"
@@ -35,7 +35,7 @@ heck = "0.5.0"
 strum_macros = "0.26.4"
 derive_more = { version = "1.0.0", features = ["display", "from_str"] }
 strum = "0.26.3"
-send_wrapper = "0.6.0"
+send_wrapper = { version = "*", features = ["futures"] }
 itertools = "0.13.0"
 jiff = { version = "*", default-features = false, features = ["serde", "alloc", "std", "js"] }
 codee = "0.2.0"

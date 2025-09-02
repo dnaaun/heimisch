@@ -121,7 +121,7 @@ where
                 let val = compute_val(txn.clone()).await;
 
                 let db_subscription = DbSubscription {
-                    original_reactivity_trackers: txn.reactivity_trackers(),
+                    original_reactivity_trackers: txn.reactivity_trackers.clone(),
                     func: Arc::new(move || {
                         // tracing::trace!("IndexedDB notification change received for idb_signal defined at: {defined_at}");
                         trigger.notify();

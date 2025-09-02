@@ -1,4 +1,9 @@
-use std::{fmt::{Debug, Display}, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
+
+use send_wrapper::SendWrapper;
 
 pub trait DisplayDebug: std::fmt::Display + std::fmt::Debug {}
 impl<T: std::fmt::Display + std::fmt::Debug> DisplayDebug for T {}
@@ -21,20 +26,25 @@ impl Display for ReqwestSendError {
 
 impl std::error::Error for ReqwestSendError {}
 
-#[allow(async_fn_in_trait)]
 pub trait ExecuteNicely {
-    async fn execute_nicely(
+    fn execute_nicely(
         &self,
         request: reqwest::Request,
-    ) -> std::result::Result<reqwest::Response, ReqwestSendError>;
+    ) -> impl std::future::Future<Output = std::result::Result<reqwest::Response, ReqwestSendError>>
+           + 'static
+           + Send
+           + Sync;
 }
 
 impl ExecuteNicely for reqwest::Client {
     /// Has a nicer error (at the cost of more clones).
-    async fn execute_nicely(
+    fn execute_nicely(
         &self,
         request: reqwest::Request,
-    ) -> std::result::Result<reqwest::Response, ReqwestSendError> {
+    ) -> impl std::future::Future<Output = std::result::Result<reqwest::Response, ReqwestSendError>>
+           + Send
+           + Sync
+           + 'static {
         // NOTE: as_bytes() returns None in case the body is a stream/file, but I don't have
         // reqwests's `stream` feature on, so we should be good without taking care of that edge
         // case.
@@ -52,13 +62,16 @@ impl ExecuteNicely for reqwest::Client {
 
         let url = request.url().clone();
 
-        match self.execute(request).await {
-            Ok(resp) => Ok(resp),
-            Err(request_error) => Err(ReqwestSendError {
-                url,
-                payload,
-                request_error,
-            }),
+        let request_fut = SendWrapper::new(self.execute(request));
+        async move {
+            match request_fut.await {
+                Ok(resp) => Ok(resp),
+                Err(request_error) => Err(ReqwestSendError {
+                    url,
+                    payload,
+                    request_error,
+                }),
+            }
         }
     }
 }

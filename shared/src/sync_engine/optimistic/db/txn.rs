@@ -1,6 +1,5 @@
-use std::{cell::RefCell, sync::Arc};
+use std::sync::Arc;
 
-use parking_lot::Mutex;
 use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode};
 
 use crate::sync_engine::optimistic::{db::MaybeOptimistic, optimistic_changes::OptimisticChanges};
@@ -23,7 +22,7 @@ pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
     inner: Option<TxnWithOptimisticChangesInner<RawDb, C, Mode>>,
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
-    reactivity_trackers: ReactivityTrackers,
+    pub reactivity_trackers: ReactivityTrackers,
 }
 
 impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, Mode> {

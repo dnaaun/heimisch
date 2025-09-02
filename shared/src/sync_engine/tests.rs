@@ -9,11 +9,11 @@ use github_webhook_body::{Issues, IssuesOpenedIssue, SomethingWithAnId, WebhookB
 use jiff::Timestamp;
 use maplit::{hashmap, hashset};
 use mockall::predicate;
-use parking_lot::Mutex;
 use std::{
     sync::{atomic::AtomicUsize, Arc},
     time::Duration,
 };
+use tokio::sync::Mutex;
 use typed_db::{sqlite_impl::SqliteDatabase, Table};
 use url::Url;
 
@@ -63,6 +63,7 @@ impl NumTimesHit {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct AnyError(Box<dyn std::error::Error>);
 
 impl<E: std::error::Error + 'static> From<E> for AnyError {
@@ -98,6 +99,8 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     let create_issues_hit_clone = create_issues_hit.clone();
     let (mut create_issues_resp_sender, create_issues_resp_receiver) =
         mpsc::channel::<github_api::models::Issue>(10);
+
+    // Because returning_st wants an FnMut, we need to be able to copy this around.
     let create_issues_resp_receiver = Arc::new(Mutex::new(create_issues_resp_receiver));
 
     let title_clone = title.clone();
@@ -108,14 +111,11 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
             issue_create_request_in_mock.title == title_clone
         })
         .returning_st(move |_, _, _, _| {
-            let create_issues_resp_receiver = create_issues_resp_receiver.clone();
             let create_issues_hit_clone = create_issues_hit_clone.clone();
+            let create_issues_resp_receiver = create_issues_resp_receiver.clone();
             Box::pin(async move {
-                let ret = create_issues_resp_receiver
-                    .lock()
-                    .next()
-                    .await
-                    .expect("channel closed");
+                let mut receiver = create_issues_resp_receiver.lock().await;
+                let ret = receiver.next().await.unwrap();
                 create_issues_hit_clone.increment();
                 Ok(ret)
             })
@@ -139,12 +139,17 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     let mock_backend_api = Arc::new(mock_backend_api);
     // let mock_backend_api_clone = mock_backend_api.clone();
 
-    let se = SyncEngine::<SqliteDatabase, _, MockTransport, _>::new(
-        mock_backend_api,
-        mock_github_api.clone(),
-        ":memory:".into(),
-    )
-    .await?;
+    let se = SyncEngine::<SqliteDatabase, _, MockTransport, _>::builder()
+        .backend_api(mock_backend_api)
+        .github_api(mock_github_api.clone())
+        .db_name(":memory:".into())
+        .make_transport(Arc::new(move |_| {
+            let mock_transport = mock_transport.clone();
+            Box::pin(async move { Ok(mock_transport.clone()) })
+        }))
+        .build()
+        .await?;
+
     let se_clone = se.clone();
 
     Executor::spawn_local(async move {

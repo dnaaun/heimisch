@@ -1,7 +1,5 @@
-use std::cell::RefCell;
 use std::sync::Arc;
 
-use parking_lot::Mutex;
 use typed_db::{Index, IndexSpec, RawDbTrait, Table};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;

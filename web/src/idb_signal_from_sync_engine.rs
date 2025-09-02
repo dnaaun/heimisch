@@ -26,10 +26,14 @@ where
         &self,
         make_txn: impl for<'a> Fn(
                 TxnBuilderWithOptimisticChanges<'a, idb::Database, DbStoreMarkers, (), ReadOnly>,
-            )
-                -> TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>
-            + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>>) -> Fut
+            ) -> TxnWithOptimisticChanges<
+                SendWrapper<idb::Database>,
+                TxnStoreMarkers,
+                Mode,
+            > + 'static,
+        compute_val: impl Fn(
+                Arc<TxnWithOptimisticChanges<SendWrapper<idb::Database>, TxnStoreMarkers, Mode>>,
+            ) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>;
 }
@@ -50,9 +54,11 @@ where
         &self,
         make_txn: impl for<'a> Fn(
                 TxnBuilderWithOptimisticChanges<'a, idb::Database, DbTableMarkers, (), ReadOnly>,
-            )
-                -> TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>
-            + 'static,
+            ) -> TxnWithOptimisticChanges<
+                SendWrapper<idb::Database>,
+                TxnStoreMarkers,
+                Mode,
+            > + 'static,
         compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>>) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>> {

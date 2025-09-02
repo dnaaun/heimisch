@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.83"
 reqwest = "0.12.8"
+send_wrapper = { version = "0.6.0", features = ["futures"] }
 serde = "1.0.210"
 serde_json = "1.0.132"
 url = "2.5.2"

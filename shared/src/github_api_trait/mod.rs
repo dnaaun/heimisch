@@ -1,5 +1,7 @@
 use std::{future::Future, sync::Arc};
 
+use send_wrapper::SendWrapper;
+
 use github_api::{
     apis::{
         apps_api::{
@@ -27,7 +29,8 @@ pub trait GithubApiTrait: Send + Sync + 'static {
             models::UsersGetAuthenticated200Response,
             Error<UsersSlashGetAuthenticatedError>,
         >,
-    >;
+    > + Send
+           + Sync;
     fn issues_slash_create(
         &self,
         configuration: &configuration::Configuration,
@@ -47,7 +50,8 @@ pub trait GithubApiTrait: Send + Sync + 'static {
             models::AppsListReposAccessibleToInstallation200Response,
             Error<AppsSlashListReposAccessibleToInstallationError>,
         >,
-    >;
+    > + Send
+           + Sync;
     fn issues_slash_list_comments_for_repo<'a>(
         &self,
         configuration: &configuration::Configuration,
@@ -60,12 +64,15 @@ pub trait GithubApiTrait: Send + Sync + 'static {
         page: Option<i32>,
     ) -> impl Future<
         Output = Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>>,
-    >;
+    > + Send
+           + Sync;
     fn apps_slash_get_installation(
         &self,
         configuration: &configuration::Configuration,
         installation_id: i32,
-    ) -> impl Future<Output = Result<models::Installation, Error<AppsSlashGetInstallationError>>>;
+    ) -> impl Future<Output = Result<models::Installation, Error<AppsSlashGetInstallationError>>>
+           + Send
+           + Sync;
     fn issues_slash_list_for_repo<'a>(
         &self,
         configuration: &configuration::Configuration,
@@ -82,7 +89,7 @@ pub trait GithubApiTrait: Send + Sync + 'static {
         since: Option<String>,
         per_page: Option<i32>,
         page: Option<i32>,
-    ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>>;
+    ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> + Send + Sync;
 }
 
 pub struct GithubApi;
@@ -109,9 +116,8 @@ where
         owner: &str,
         repo: &str,
         issues_create_request: models::IssuesCreateRequest,
-    ) -> impl std::future::Future<Output = Result<models::Issue, Error<IssuesSlashCreateError>>>
-           + Send
-           + Sync {
+    ) -> impl Future<Output = Result<models::Issue, Error<IssuesSlashCreateError>>> + Send + Sync
+    {
         T::issues_slash_create(self, configuration, owner, repo, issues_create_request)
     }
 
@@ -180,7 +186,8 @@ where
         since: Option<String>,
         per_page: Option<i32>,
         page: Option<i32>,
-    ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> {
+    ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> + Send + Sync
+    {
         T::issues_slash_list_for_repo(
             self,
             configuration,
@@ -210,8 +217,11 @@ impl GithubApiTrait for GithubApi {
             models::UsersGetAuthenticated200Response,
             Error<UsersSlashGetAuthenticatedError>,
         >,
-    > {
-        github_api::apis::users_api::users_slash_get_authenticated(configuration)
+    > + Send
+           + Sync {
+        SendWrapper::new(github_api::apis::users_api::users_slash_get_authenticated(
+            configuration,
+        ))
     }
 
     fn issues_slash_create(
@@ -221,13 +231,14 @@ impl GithubApiTrait for GithubApi {
         repo: &str,
         issues_create_request: models::IssuesCreateRequest,
     ) -> impl std::future::Future<Output = Result<models::Issue, Error<IssuesSlashCreateError>>>
-    {
-        github_api::apis::issues_api::issues_slash_create(
+           + Send
+           + Sync {
+        SendWrapper::new(github_api::apis::issues_api::issues_slash_create(
             configuration,
             owner,
             repo,
             issues_create_request,
-        )
+        ))
     }
 
     fn apps_slash_list_repos_accessible_to_installation(
@@ -240,11 +251,14 @@ impl GithubApiTrait for GithubApi {
             models::AppsListReposAccessibleToInstallation200Response,
             Error<AppsSlashListReposAccessibleToInstallationError>,
         >,
-    > {
-        github_api::apis::apps_api::apps_slash_list_repos_accessible_to_installation(
-            configuration,
-            per_page,
-            page,
+    > + Send
+           + Sync {
+        SendWrapper::new(
+            github_api::apis::apps_api::apps_slash_list_repos_accessible_to_installation(
+                configuration,
+                per_page,
+                page,
+            ),
         )
     }
 
@@ -260,16 +274,19 @@ impl GithubApiTrait for GithubApi {
         page: Option<i32>,
     ) -> impl Future<
         Output = Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>>,
-    > {
-        github_api::apis::issues_api::issues_slash_list_comments_for_repo(
-            configuration,
-            owner,
-            repo,
-            sort,
-            direction,
-            since,
-            per_page,
-            page,
+    > + Send
+           + Sync {
+        SendWrapper::new(
+            github_api::apis::issues_api::issues_slash_list_comments_for_repo(
+                configuration,
+                owner,
+                repo,
+                sort,
+                direction,
+                since,
+                per_page,
+                page,
+            ),
         )
     }
 
@@ -278,8 +295,12 @@ impl GithubApiTrait for GithubApi {
         configuration: &configuration::Configuration,
         installation_id: i32,
     ) -> impl Future<Output = Result<models::Installation, Error<AppsSlashGetInstallationError>>>
-    {
-        github_api::apis::apps_api::apps_slash_get_installation(configuration, installation_id)
+           + Send
+           + Sync {
+        SendWrapper::new(github_api::apis::apps_api::apps_slash_get_installation(
+            configuration,
+            installation_id,
+        ))
     }
 
     fn issues_slash_list_for_repo(
@@ -298,8 +319,9 @@ impl GithubApiTrait for GithubApi {
         since: Option<String>,
         per_page: Option<i32>,
         page: Option<i32>,
-    ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> {
-        github_api::apis::issues_api::issues_slash_list_for_repo(
+    ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> + Send + Sync
+    {
+        SendWrapper::new(github_api::apis::issues_api::issues_slash_list_for_repo(
             configuration,
             owner,
             repo,
@@ -314,6 +336,6 @@ impl GithubApiTrait for GithubApi {
             since,
             per_page,
             page,
-        )
+        ))
     }
 }

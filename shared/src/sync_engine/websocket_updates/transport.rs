@@ -97,7 +97,12 @@ where
 }
 
 pub trait TransportTrait:
-    Sized + Sink<ClientMsg> + Stream<Item = Result<ServerMsg, Self::TransportError>> + 'static
+    Send
+    + Sync
+    + Sized
+    + Sink<ClientMsg>
+    + Stream<Item = Result<ServerMsg, Self::TransportError>>
+    + 'static
 {
     type TransportError: Debug + Send + Sync;
 }
@@ -117,14 +122,6 @@ where
     T: BinaryTransportTrait + Send + Sync,
 {
     type TransportError = BinaryTransportError<<T as Sink<Vec<u8>>>::Error>;
-
-    async fn establish(url: Url) -> Result<Self, Self::TransportError> {
-        Ok(Self {
-            inner: T::establish_conn(url)
-                .await
-                .map_err(BinaryTransportError::Conn)?,
-        })
-    }
 }
 
 #[cfg(test)]

@@ -11,7 +11,7 @@ pub mod sync_engine_provider;
 pub mod thirds;
 
 use crate::{app::sync_engine_provider::sync_engine_provided, consts::BACKEND_API};
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 use leptos::prelude::*;
 
@@ -23,14 +23,14 @@ use sync_engine_provider::SyncEngine;
 pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         Rc::new(
-            SyncEngine::new(
-                Rc::new(BACKEND_API.with(|e| e.clone())),
-                |url| async { Transport::new(url).await },
-                Rc::new(shared::github_api_trait::GithubApi),
-                "heimisch".into(),
-            )
-            .await
-            .unwrap(),
+            SyncEngine::builder()
+                .backend_api(Arc::new(BACKEND_API.with(|e| e.clone())))
+                .github_api(Arc::new(shared::github_api_trait::GithubApi))
+                .db_name("heimisch".into())
+                .make_transport(Arc::new(move |url| async { Transport::new(url).await }))
+                .build()
+                .await
+                .unwrap(),
         )
     });
 

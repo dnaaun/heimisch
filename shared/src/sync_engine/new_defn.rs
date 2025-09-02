@@ -1,8 +1,3 @@
-use std::future::Future;
-use std::marker::PhantomData;
-use std::pin::Pin;
-/// Without this isolation, our `impl` definition for the `DbTableMarkers` type will not have one
-/// "defining use."
 use std::sync::Arc;
 
 use crate::backend_api_trait::BackendApiTrait;
@@ -29,6 +24,7 @@ use crate::types::{
     repository::Repository, repository_initial_sync_status::RepositoryInitialSyncStatus,
     user::User,
 };
+use bon::bon;
 use futures::future::BoxFuture;
 use typed_db::{Db, RawDbTrait};
 use url::Url;
@@ -77,13 +73,20 @@ pub type DbTableMarkers = (
     ),
 );
 
+#[bon]
 impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
     SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
+    #[builder]
     pub async fn new(
         backend_api: Arc<BackendApi>,
         github_api: Arc<GithubApi>,
         db_name: String,
+        make_transport: Arc<
+            dyn Fn(Url) -> BoxFuture<'static, Result<Transport, Transport::TransportError>>
+                + Send
+                + Sync,
+        >,
     ) -> SyncResult<Self, Transport, RawDb> {
         let db = Db::<RawDb, ()>::builder(db_name)
             .with_table::<Issue>()
@@ -126,7 +129,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             db_subscriptions,
             backend_api,
             github_api,
-            _transport: PhantomData,
+            make_transport,
         })
     }
 }

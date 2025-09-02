@@ -17,7 +17,7 @@ pub enum ConnError {
 }
 
 #[pin_project]
-pub struct BinaryTransport(#[pin] gloo_net::websocket::futures::WebSocket);
+pub struct BinaryTransport(#[pin] SendWrapper<gloo_net::websocket::futures::WebSocket>);
 
 impl BinaryTransportTrait for BinaryTransport {
     type ConnError = ConnError;

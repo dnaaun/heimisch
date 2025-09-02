@@ -22,16 +22,19 @@ use crate::{
 use super::{TxnBuilderWithOptimisticChanges, TxnWithOptimisticChanges};
 
 async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, MockTransport, ()> {
-    SyncEngine::<RawDb, BackendApi, MockTransport, ()>::new(
-        Arc::new(BackendApi::new(EndpointClient::new(
+    SyncEngine::<RawDb, BackendApi, MockTransport, ()>::builder()
+        .backend_api(Arc::new(BackendApi::new(EndpointClient::new(
             |_| (),
             Url::parse("https://www.example.com/").unwrap(),
-        ))),
-        Arc::new(()),
-        ":memory:".into(),
-    )
-    .await
-    .unwrap()
+        ))))
+        .github_api(Arc::new(()))
+        .db_name(":memory:".into())
+        .make_transport(Arc::new(move |_| {
+            Box::pin(async move { Ok(MockTransport::new().0) })
+        }))
+        .build()
+        .await
+        .unwrap()
 }
 
 #[builder]

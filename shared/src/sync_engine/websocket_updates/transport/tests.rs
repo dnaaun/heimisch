@@ -1,10 +1,12 @@
 use std::{
+    ops::DerefMut,
     pin::Pin,
+    sync::Arc,
     task::{Context, Poll},
 };
 
 use futures::{channel::mpsc, Sink, Stream};
-use url::Url;
+use parking_lot::Mutex;
 
 use crate::endpoints::defns::api::websocket_updates::{ClientMsg, ServerMsg};
 
@@ -15,20 +17,14 @@ pub struct MockTransportHandler {
     pub recver: mpsc::Receiver<ClientMsg>,
 }
 
+#[derive(Clone)]
 pub struct MockTransport {
-    recer: mpsc::Receiver<ServerMsg>,
+    recver: Arc<Mutex<mpsc::Receiver<ServerMsg>>>,
     sender: mpsc::Sender<ClientMsg>,
 }
 
 impl TransportTrait for MockTransport {
     type TransportError = mpsc::SendError;
-
-    async fn establish(_url: Url) -> Result<Self, Self::TransportError> {
-        Ok(Self {
-            recer: mpsc::channel(100).1,
-            sender: mpsc::channel(100).0,
-        })
-    }
 }
 
 impl MockTransport {
@@ -38,7 +34,7 @@ impl MockTransport {
 
         (
             Self {
-                recer: server_msg_receiver,
+                recver: Arc::new(Mutex::new(server_msg_receiver)),
                 sender: client_msg_sender,
             },
             MockTransportHandler {
@@ -52,10 +48,11 @@ impl MockTransport {
 impl Stream for MockTransport {
     type Item = Result<ServerMsg, mpsc::SendError>;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        Pin::new(&mut self.recer)
-            .poll_next(cx)
-            .map(|opt| opt.map(Ok))
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let mut mut_ref = self.recver.lock();
+        let mut_ref = mut_ref.deref_mut();
+        let pinned = std::pin::pin!(mut_ref);
+        pinned.poll_next(cx).map(|opt| opt.map(Ok))
     }
 }
 
