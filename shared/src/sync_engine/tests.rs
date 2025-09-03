@@ -182,7 +182,9 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
 
     assert!(bulk_subscriber_hit.expect_and_reset(1));
 
+    println!("ABOUT TO GET THE THING!!!");
     let issues = se.db.get_all_optimistically::<Issue>().await?;
+    println!("JUST GOT THE ISSUES");
     assert_eq!(issues.len(), 1);
     assert_eq!(issues[0].id, optimistic_issue_id);
     assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
@@ -246,7 +248,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     wait_for(&move || bulk_subscriber_hit.expect_and_reset(1)).await;
     wait_for(&move || single_subscriber_hit.expect_and_reset(1)).await;
 
-    let txn = se.db.txn().with_table::<Issue>().build();
+    let txn = se.db.txn().with_table::<Issue>().build().await;
 
     // Make sure that the optimistic thing is removed from bulk reads.
     let issues = txn.table::<Issue>().get_all_optimistically().await?;

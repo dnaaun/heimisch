@@ -46,7 +46,8 @@ where
             .txn()
             .with_table::<IssueCommentsInitialSyncStatus>()
             .with_table::<IssueComment>()
-            .build();
+            .build()
+            .await;
         let initial_sync_status = txn
             .table::<IssueCommentsInitialSyncStatus>()
             .get(&id)
@@ -77,7 +78,8 @@ where
             .txn()
             .with_table::<Repository>()
             .with_table::<User>()
-            .build();
+            .build()
+            .await;
         let repo = txn
             .table::<Repository>()
             .get(&id)
@@ -124,7 +126,7 @@ where
             let issue_id_from_number = Arc::new(move |number| {
                 let db = db.clone();
                 Box::pin(async move {
-                    let txn = db.clone().txn().with_table::<Issue>().build();
+                    let txn = db.clone().txn().with_table::<Issue>().build().await;
                     txn.table::<Issue>()
                         .index::<NumberIndex>()
                         .get_all_optimistically(Some(&number))
@@ -149,7 +151,8 @@ where
             let txn = Changes::txn(&self.db)
                 .with_table::<IssueCommentsInitialSyncStatus>()
                 .read_write()
-                .build();
+                .build()
+                .await;
             self.persist_changes(&txn, changes).await?;
             txn.table::<IssueCommentsInitialSyncStatus>()
                 .put(&IssueCommentsInitialSyncStatus {
@@ -170,7 +173,8 @@ where
             .txn()
             .with_table::<IssueCommentsInitialSyncStatus>()
             .read_write()
-            .build();
+            .build()
+            .await;
         txn.table::<IssueCommentsInitialSyncStatus>()
             .put(&IssueCommentsInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,

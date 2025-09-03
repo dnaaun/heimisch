@@ -112,7 +112,8 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             .db
             .txn()
             .with_table::<InstallationAccessTokenRow>()
-            .build();
+            .build()
+            .await;
 
         let iac = txn
             .table::<InstallationAccessTokenRow>()
@@ -154,7 +155,8 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
                     .txn()
                     .with_table::<InstallationAccessTokenRow>()
                     .read_write()
-                    .build();
+                    .build()
+                    .await;
                 txn.table::<InstallationAccessTokenRow>()
                     .put(&InstallationAccessTokenRow {
                         installation_id: *id,

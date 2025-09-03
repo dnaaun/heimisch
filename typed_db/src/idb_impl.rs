@@ -90,12 +90,12 @@ impl<R: Table> RawTableAccessTrait<R> for JustSend<idb::ObjectStore> {
 impl RawTxnTrait for JustSend<idb::Transaction> {
     type RawDb = JustSend<idb::Database>;
 
-    fn commit(self) -> Result<(), Error> {
+    async fn commit(self) -> Result<(), Error> {
         idb::Transaction::commit(self.take())?;
         Ok(())
     }
 
-    fn abort(self) -> Result<(), Error> {
+    async fn abort(self) -> Result<(), Error> {
         idb::Transaction::abort(self.take())?;
         Ok(())
     }
@@ -133,7 +133,7 @@ impl RawDbTrait for JustSend<idb::Database> {
     type RawIndex = JustSend<idb::Index>;
     type RawTableAccess<R: Table> = JustSend<idb::ObjectStore>;
 
-    fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn {
+    async fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn {
         JustSend::new(
             self.transaction(
                 store_names,

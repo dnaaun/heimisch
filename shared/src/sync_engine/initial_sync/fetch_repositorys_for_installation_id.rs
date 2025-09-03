@@ -77,7 +77,7 @@ impl<
             Ok::<_, MergeError>(acc)
         })?;
 
-        let txn = Changes::txn(&self.db).read_write().build();
+        let txn = Changes::txn(&self.db).read_write().build().await;
         self.persist_changes(&txn, changes).await?;
 
         // Mark sync as complete
@@ -86,7 +86,8 @@ impl<
             .txn()
             .with_table::<InstallationInitialSyncStatus>()
             .read_write()
-            .build();
+            .build()
+            .await;
         txn.table::<InstallationInitialSyncStatus>()
             .put(&InstallationInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,

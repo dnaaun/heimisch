@@ -41,6 +41,7 @@ where
             .txn()
             .with_table::<LastWebhookUpdateAt>()
             .build()
+            .await
             .table::<LastWebhookUpdateAt>()
             .get(&LastWebhookUpdateAtId::Singleton)
             .await
@@ -125,7 +126,8 @@ where
         let txn = Changes::txn(&self.db)
             .with_table::<LastWebhookUpdateAt>()
             .read_write()
-            .build();
+            .build()
+            .await;
         self.persist_changes(&txn, changes).await?;
         txn.table::<LastWebhookUpdateAt>()
             .put(&LastWebhookUpdateAt {

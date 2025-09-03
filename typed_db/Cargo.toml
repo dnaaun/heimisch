@@ -11,8 +11,11 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0" }
 wasm-bindgen = { version = "*", optional = true }
 js-sys = { version = "*", optional = true }
-utils = { path = "../utils", optional = true }
+utils = { path = "../utils"  }
+backtrace = "0.3.75"
+parking_lot = "0.12.4"
+futures = "0.3.31"
 
 [features]
-idb = ["dep:idb", "dep:wasm-bindgen", "dep:js-sys", "dep:utils", "utils/hydrate"]
+idb = ["dep:idb", "dep:wasm-bindgen", "dep:js-sys", "utils/hydrate"]
 sqlite = ["rusqlite"]

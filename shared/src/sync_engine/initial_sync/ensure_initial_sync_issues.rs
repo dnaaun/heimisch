@@ -39,7 +39,8 @@ impl<
             .txn()
             .with_table::<IssuesInitialSyncStatus>()
             .with_table::<Issue>()
-            .build();
+            .build()
+            .await;
         let initial_sync_status = txn.table::<IssuesInitialSyncStatus>().get(id).await.tse()?;
         if let Some(initial_sync_status) = initial_sync_status {
             match initial_sync_status.status {
@@ -66,7 +67,8 @@ impl<
             .txn()
             .with_table::<Repository>()
             .with_table::<User>()
-            .build();
+            .build()
+            .await;
         let repo = txn
             .table::<Repository>()
             .get(id)
@@ -132,7 +134,8 @@ impl<
             let txn = Changes::txn(&self.db)
                 .with_table::<IssuesInitialSyncStatus>()
                 .read_write()
-                .build();
+                .build()
+                .await;
             self.persist_changes(&txn, changes).await?;
             txn.table::<IssuesInitialSyncStatus>()
                 .put(&IssuesInitialSyncStatus {
@@ -153,7 +156,8 @@ impl<
             .txn()
             .with_table::<IssuesInitialSyncStatus>()
             .read_write()
-            .build();
+            .build()
+            .await;
         txn.table::<IssuesInitialSyncStatus>()
             .put(&IssuesInitialSyncStatus {
                 status: InitialSyncStatusEnum::Full,

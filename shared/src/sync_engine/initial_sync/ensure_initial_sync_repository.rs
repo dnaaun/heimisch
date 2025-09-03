@@ -32,7 +32,8 @@ impl<
                 .db
                 .txn()
                 .with_table::<RepositoryInitialSyncStatus>()
-                .build();
+                .build()
+                .await;
             let store = txn.table::<RepositoryInitialSyncStatus>();
             if let Some(RepoSyncStatus::Full) = store.get(id).await.tse()?.map(|r| r.status) {
                 return Ok(());
@@ -43,6 +44,7 @@ impl<
             .txn()
             .with_table::<Repository>()
             .build()
+            .await
             .table::<Repository>()
             .get(id)
             .await
@@ -58,7 +60,8 @@ impl<
             .txn()
             .with_table::<RepositoryInitialSyncStatus>()
             .read_write()
-            .build();
+            .build()
+            .await;
         txn.table::<RepositoryInitialSyncStatus>()
             .put(&RepositoryInitialSyncStatus {
                 status: RepoSyncStatus::Full,

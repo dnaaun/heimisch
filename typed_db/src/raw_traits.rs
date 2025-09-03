@@ -26,8 +26,12 @@ pub trait RawTableAccessTrait<R: Table>: Send + Sync {
 pub trait RawTxnTrait: Send + Sync {
     type RawDb: RawDbTrait;
 
-    fn commit(self) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
-    fn abort(self) -> Result<(), <Self::RawDb as RawDbTrait>::Error>;
+    fn commit(
+        self,
+    ) -> impl Future<Output = Result<(), <Self::RawDb as RawDbTrait>::Error>> + Send + Sync;
+    fn abort(
+        self,
+    ) -> impl Future<Output = Result<(), <Self::RawDb as RawDbTrait>::Error>> + Send + Sync;
     fn get_table<R: Table>(
         &self,
         store_name: &str,
@@ -37,7 +41,6 @@ pub trait RawTxnTrait: Send + Sync {
 pub trait RawDbBuilderTrait {
     type RawDb: RawDbTrait;
 
-    #[allow(async_fn_in_trait)]
     async fn build(self) -> Result<Self::RawDb, <Self::RawDb as RawDbTrait>::Error>;
 
     fn add_table(self, table_builder: <Self::RawDb as RawDbTrait>::RawTableBuilder) -> Self;
@@ -51,7 +54,11 @@ pub trait RawDbTrait: Send + Sync {
     type RawTableBuilder;
     type RawTableAccess<R: Table>: RawTableAccessTrait<R, RawDb = Self>;
 
-    fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn;
+    fn txn(
+        &self,
+        store_names: &[&str],
+        read_write: bool,
+    ) -> impl Future<Output = Self::RawTxn> + Send + Sync;
     fn builder(name: &str) -> Self::RawDbBuilder;
 
     fn table_builder<R: Table>() -> Self::RawTableBuilder;

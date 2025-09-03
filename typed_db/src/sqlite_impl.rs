@@ -1,5 +1,6 @@
+use futures::lock::Mutex;
 use rusqlite::{Connection, params};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use super::*;
 
@@ -47,7 +48,7 @@ impl<R: Table> RawTableAccessTrait<R> for SqliteTableAccess {
     type RawDb = SqliteDatabase;
 
     async fn get(&self, id: &R::Id) -> Result<Option<R>, Error> {
-        let conn = self.connection.lock().unwrap();
+        let conn = self.connection.lock().await;
         let id_json = serde_json::to_string(id)?;
 
         let mut stmt = conn.prepare(&format!(
@@ -69,7 +70,7 @@ impl<R: Table> RawTableAccessTrait<R> for SqliteTableAccess {
     }
 
     async fn get_all(&self) -> Result<Vec<R>, Error> {
-        let conn = self.connection.lock().unwrap();
+        let conn = self.connection.lock().await;
         let mut stmt = conn.prepare(&format!("SELECT data FROM {}", self.table_name))?;
         let rows = stmt.query_map([], |row| {
             let data: String = row.get(0)?;
@@ -86,7 +87,7 @@ impl<R: Table> RawTableAccessTrait<R> for SqliteTableAccess {
     }
 
     async fn put(&self, item: &R) -> Result<(), Error> {
-        let conn = self.connection.lock().unwrap();
+        let conn = self.connection.lock().await;
         let id_json = serde_json::to_string(item.id())?;
         let data_json = serde_json::to_string(item)?;
 
@@ -101,7 +102,7 @@ impl<R: Table> RawTableAccessTrait<R> for SqliteTableAccess {
     }
 
     async fn delete(&self, id: &R::Id) -> Result<(), Error> {
-        let conn = self.connection.lock().unwrap();
+        let conn = self.connection.lock().await;
         let id_json = serde_json::to_string(id)?;
 
         conn.execute(
@@ -121,38 +122,34 @@ impl<R: Table> RawTableAccessTrait<R> for SqliteTableAccess {
 }
 
 pub struct SqliteTransaction {
-    connection: Arc<Mutex<Connection>>,
+    conn: Arc<Mutex<Connection>>,
     in_transaction: bool,
 }
 
 impl SqliteTransaction {
-    fn new(connection: Arc<Mutex<Connection>>) -> Result<Self, Error> {
-        {
-            let conn = connection.lock().unwrap();
-            conn.execute("BEGIN TRANSACTION", [])?;
-        }
-        Ok(Self {
-            connection,
+    async fn new(conn: Arc<Mutex<Connection>>) -> Self {
+        conn.lock().await.execute("BEGIN TRANSACTION", []).unwrap(); // I should make new() fallible I suppose.
+        Self {
+            conn,
             in_transaction: true,
-        })
+        }
     }
 }
 
 impl RawTxnTrait for SqliteTransaction {
     type RawDb = SqliteDatabase;
 
-    fn commit(mut self) -> Result<(), Error> {
+    async fn commit(mut self) -> Result<(), Error> {
         if self.in_transaction {
-            let conn = self.connection.lock().unwrap();
-            conn.execute("COMMIT", [])?;
+            self.conn.lock().await.execute("COMMIT", [])?;
             self.in_transaction = false;
         }
         Ok(())
     }
 
-    fn abort(mut self) -> Result<(), Error> {
+    async fn abort(mut self) -> Result<(), Error> {
         if self.in_transaction {
-            let conn = self.connection.lock().unwrap();
+            let conn = self.conn.lock().await;
             conn.execute("ROLLBACK", [])?;
             self.in_transaction = false;
         }
@@ -160,15 +157,7 @@ impl RawTxnTrait for SqliteTransaction {
     }
 
     fn get_table<R: Table>(&self, store_name: &str) -> SqliteTableAccess {
-        SqliteTableAccess::new(self.connection.clone(), store_name.to_string())
-    }
-}
-
-impl Drop for SqliteTransaction {
-    fn drop(&mut self) {
-        if self.in_transaction {
-            let _ = self.connection.lock().unwrap().execute("ROLLBACK", []);
-        }
+        SqliteTableAccess::new(self.conn.clone(), store_name.to_string())
     }
 }
 
@@ -235,8 +224,8 @@ impl RawDbTrait for SqliteDatabase {
     type RawTableBuilder = SqliteTableBuilder;
     type RawTableAccess<R: Table> = SqliteTableAccess;
 
-    fn txn(&self, _store_names: &[&str], _read_write: bool) -> Self::RawTxn {
-        SqliteTransaction::new(self.connection.clone()).expect("Failed to create transaction")
+    async fn txn(&self, _store_names: &[&str], _read_write: bool) -> Self::RawTxn {
+        SqliteTransaction::new(self.connection.clone()).await
     }
 
     fn builder(name: &str) -> Self::RawDbBuilder {
@@ -276,7 +265,7 @@ impl RawIndexTrait for SqliteIndex {
     type RawDb = SqliteDatabase;
 
     async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Error> {
-        let conn = self.connection.lock().unwrap();
+        let conn = self.connection.lock().await;
         let value_json = serde_json::to_string(value)?;
 
         let mut stmt = conn.prepare(&format!(
@@ -302,7 +291,7 @@ impl RawIndexTrait for SqliteIndex {
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Table>, Error> {
-        let conn = self.connection.lock().unwrap();
+        let conn = self.connection.lock().await;
 
         let mut items = Vec::new();
 

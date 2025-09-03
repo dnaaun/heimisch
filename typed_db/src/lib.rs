@@ -183,11 +183,13 @@ where
         }
     }
 
-    pub fn build(self) -> Txn<Db, TxnTableMarkers, Mode> {
+    pub async fn build(self) -> Txn<Db, TxnTableMarkers, Mode> {
         let raw_txn = self.db.raw.txn(
             &self.store_names.into_iter().collect::<Vec<_>>(),
             Mode::IS_READ_WRITE,
-        );
+        ).await;
+
+
         Txn {
             markers: self.txn_table_markers,
             raw_txn: Some(raw_txn),
@@ -218,13 +220,13 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
         }
     }
 
-    pub fn commit(mut self) -> Result<(), Db::Error> {
-        self.raw_txn.take().expect("Should be None only if committed/aborted, which means &self shouldn't be obtainable").commit()?;
+    pub async fn commit(mut self) -> Result<(), Db::Error> {
+        self.raw_txn.take().expect("Should be None only if committed/aborted, which means &self shouldn't be obtainable").commit().await?;
         Ok(())
     }
 
-    pub fn abort(mut self) -> Result<(), Db::Error> {
-        self.raw_txn.take().expect("Should be None only if committed/aborted, which means &self shouldn't be obtainable").abort()?;
+    pub async fn abort(mut self) -> Result<(), Db::Error> {
+        self.raw_txn.take().expect("Should be None only if committed/aborted, which means &self shouldn't be obtainable").abort().await?;
         Ok(())
     }
 }

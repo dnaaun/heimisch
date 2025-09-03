@@ -59,12 +59,12 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         )
     }
 
-    pub fn commit(mut self) -> Result<ReactivityTrackers, RawDb::Error> {
-        self.commit_impl()?;
+    pub async fn commit(mut self) -> Result<ReactivityTrackers, RawDb::Error> {
+        self.commit_impl().await?;
         Ok(self.reactivity_trackers.clone())
     }
 
-    fn commit_impl(&mut self) -> Result<(), RawDb::Error> {
+    async fn commit_impl(&mut self) -> Result<(), RawDb::Error> {
         // Note how we `.take()` this? That's how we make sure that, in the Drop impl, we don't
         //   (1) commit the inner transaction, and
         //   (2) invoke the commit listener twice.
@@ -73,7 +73,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
             commit_listener,
         }) = self.inner.take()
         {
-            idb_txn.commit()?;
+            idb_txn.commit().await?;
             if let Some(listener) = commit_listener {
                 listener(&self.reactivity_trackers);
             };
@@ -86,8 +86,8 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         self.reactivity_trackers.clone()
     }
 
-    pub fn abort(mut self) -> Result<(), RawDb::Error> {
-        self.inner.take().expect("").idb_txn.abort()?;
+    pub async fn abort(mut self) -> Result<(), RawDb::Error> {
+        self.inner.take().expect("").idb_txn.abort().await?;
         Ok(())
     }
 }
@@ -178,10 +178,10 @@ where
     Mode: TxnMode,
     TxnTableMarkers: Default,
 {
-    pub fn build(self) -> TxnWithOptimisticChanges<RawDb, TxnTableMarkers, Mode> {
+    pub async fn build(self) -> TxnWithOptimisticChanges<RawDb, TxnTableMarkers, Mode> {
         TxnWithOptimisticChanges {
             optimistic_updates: self.optimistic_updates.clone(),
-            inner: Some((self.inner.build(), self.commit_listener).into()),
+            inner: Some((self.inner.build().await, self.commit_listener).into()),
             reactivity_trackers: Default::default(),
         }
     }
