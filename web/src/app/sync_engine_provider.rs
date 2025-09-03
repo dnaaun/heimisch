@@ -1,16 +1,16 @@
 use leptos::prelude::*;
-use send_wrapper::SendWrapper;
 use shared::sync_engine::Transport;
 use shared::{backend_api_trait::BackendApi, github_api_trait::GithubApi};
+use utils::JustSend;
 
 use crate::typed_transport::BinaryTransport;
 pub type SyncEngine = shared::sync_engine::SyncEngine<
-    SendWrapper<idb::Database>,
+    JustSend<idb::Database>,
     BackendApi,
-    SendWrapper<Transport<BinaryTransport>>,
+    Transport<BinaryTransport>,
     GithubApi,
 >;
-pub type SyncEngineContext = SendWrapper<SyncEngine>;
+pub type SyncEngineContext = JustSend<SyncEngine>;
 
 pub fn sync_engine_provided<V>(
     children: impl Fn() -> V + Send + Clone + 'static,

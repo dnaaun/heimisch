@@ -1,7 +1,7 @@
 /// I'm not using https://docs.rs/serde-json-wasm/latest/serde_json_wasm/
 /// because that library didn't play nice with jiff.
 use super::*;
-use send_wrapper::SendWrapper;
+use utils::JustSend;
 use wasm_bindgen::JsValue;
 
 #[derive(Debug)]
@@ -46,12 +46,12 @@ where
     Ok(js_sys::JSON::parse(&s)?)
 }
 
-impl<R: Table> RawTableAccessTrait<R> for SendWrapper<idb::ObjectStore> {
-    type RawDb = SendWrapper<idb::Database>;
+impl<R: Table> RawTableAccessTrait<R> for JustSend<idb::ObjectStore> {
+    type RawDb = JustSend<idb::Database>;
 
     async fn get(&self, key: &R::Id) -> Result<Option<R>, Error> {
         let fut = idb::ObjectStore::get(self, idb::Query::Key(to_value(key)?))?.into_future();
-        let item = SendWrapper::new(fut)
+        let item = JustSend::new(fut)
             .await?
             .map(|i| from_value(i))
             .transpose()?;
@@ -60,7 +60,7 @@ impl<R: Table> RawTableAccessTrait<R> for SendWrapper<idb::ObjectStore> {
 
     async fn get_all(&self) -> Result<Vec<R>, Error> {
         let fut = idb::ObjectStore::get_all(self, None, None)?.into_future();
-        let items = SendWrapper::new(fut)
+        let items = JustSend::new(fut)
             .await?
             .into_iter()
             .map(|i| from_value(i))
@@ -70,25 +70,25 @@ impl<R: Table> RawTableAccessTrait<R> for SendWrapper<idb::ObjectStore> {
 
     async fn put(&self, item: &R) -> Result<(), Error> {
         let fut = idb::ObjectStore::put(self, &to_value(item)?, None)?.into_future();
-        SendWrapper::new(fut).await?;
+        JustSend::new(fut).await?;
         Ok(())
     }
 
     async fn delete(&self, key: &R::Id) -> Result<(), Error> {
         let fut = idb::ObjectStore::delete(self, idb::Query::Key(to_value(key)?))?.into_future();
-        SendWrapper::new(fut).await?;
+        JustSend::new(fut).await?;
         Ok(())
     }
 
-    fn index(&self, name: &str) -> SendWrapper<idb::Index> {
-        SendWrapper::new(
+    fn index(&self, name: &str) -> JustSend<idb::Index> {
+        JustSend::new(
             idb::ObjectStore::index(self, name).expect("This rarely (never) happens I hope."),
         )
     }
 }
 
-impl RawTxnTrait for SendWrapper<idb::Transaction> {
-    type RawDb = SendWrapper<idb::Database>;
+impl RawTxnTrait for JustSend<idb::Transaction> {
+    type RawDb = JustSend<idb::Database>;
 
     fn commit(self) -> Result<(), Error> {
         idb::Transaction::commit(self.take())?;
@@ -100,41 +100,41 @@ impl RawTxnTrait for SendWrapper<idb::Transaction> {
         Ok(())
     }
 
-    fn get_table<R: Table>(&self, store_name: &str) -> SendWrapper<idb::ObjectStore> {
-        SendWrapper::new(
+    fn get_table<R: Table>(&self, store_name: &str) -> JustSend<idb::ObjectStore> {
+        JustSend::new(
             idb::Transaction::object_store(self, store_name)
                 .expect("This rarely (never) happens I hope."),
         )
     }
 }
 
-impl RawDbBuilderTrait for SendWrapper<idb::builder::DatabaseBuilder> {
-    type RawDb = SendWrapper<idb::Database>;
+impl RawDbBuilderTrait for JustSend<idb::builder::DatabaseBuilder> {
+    type RawDb = JustSend<idb::Database>;
 
     async fn build(self) -> Result<Self::RawDb, Error> {
-        Ok(SendWrapper::new(
+        Ok(JustSend::new(
             idb::builder::DatabaseBuilder::build(self.take()).await?,
         ))
     }
 
-    fn add_table(self, table_builder: SendWrapper<idb::builder::ObjectStoreBuilder>) -> Self {
-        SendWrapper::new(idb::builder::DatabaseBuilder::add_object_store(
+    fn add_table(self, table_builder: JustSend<idb::builder::ObjectStoreBuilder>) -> Self {
+        JustSend::new(idb::builder::DatabaseBuilder::add_object_store(
             self.take(),
             table_builder.take(),
         ))
     }
 }
 
-impl RawDbTrait for SendWrapper<idb::Database> {
+impl RawDbTrait for JustSend<idb::Database> {
     type Error = Error;
-    type RawTxn = SendWrapper<idb::Transaction>;
-    type RawDbBuilder = SendWrapper<idb::builder::DatabaseBuilder>;
-    type RawTableBuilder = SendWrapper<idb::builder::ObjectStoreBuilder>;
-    type RawIndex = SendWrapper<idb::Index>;
-    type RawTableAccess<R: Table> = SendWrapper<idb::ObjectStore>;
+    type RawTxn = JustSend<idb::Transaction>;
+    type RawDbBuilder = JustSend<idb::builder::DatabaseBuilder>;
+    type RawTableBuilder = JustSend<idb::builder::ObjectStoreBuilder>;
+    type RawIndex = JustSend<idb::Index>;
+    type RawTableAccess<R: Table> = JustSend<idb::ObjectStore>;
 
     fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn {
-        SendWrapper::new(
+        JustSend::new(
             self.transaction(
                 store_names,
                 if read_write {
@@ -148,12 +148,12 @@ impl RawDbTrait for SendWrapper<idb::Database> {
     }
 
     fn builder(name: &str) -> Self::RawDbBuilder {
-        SendWrapper::new(idb::builder::DatabaseBuilder::new(name))
+        JustSend::new(idb::builder::DatabaseBuilder::new(name))
     }
 
     fn table_builder<R: Table>() -> Self::RawTableBuilder {
         let builder = idb::builder::ObjectStoreBuilder::new(R::NAME);
-        SendWrapper::new(R::index_names().iter().fold(builder, |builder, name| {
+        JustSend::new(R::index_names().iter().fold(builder, |builder, name| {
             builder.add_index(idb::builder::IndexBuilder::new(
                 name.to_string(),
                 idb::KeyPath::Single(name.to_string()),
@@ -162,8 +162,8 @@ impl RawDbTrait for SendWrapper<idb::Database> {
     }
 }
 
-impl RawIndexTrait for SendWrapper<idb::Index> {
-    type RawDb = SendWrapper<idb::Database>;
+impl RawIndexTrait for JustSend<idb::Index> {
+    type RawDb = JustSend<idb::Database>;
 
     async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Error> {
         Ok(idb::Index::get(self, idb::Query::Key(to_value(value)?))?

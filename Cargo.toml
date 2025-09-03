@@ -14,7 +14,8 @@ members = [
     "github_api",
     "reqwest_wiremock",
     "zwang_router",
-    "leptos_testing_utils", "typed_db",
+    "leptos_testing_utils",
+    "typed_db",
 ]
 
 [[workspace.metadata.leptos]]

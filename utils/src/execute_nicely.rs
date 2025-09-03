@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use send_wrapper::SendWrapper;
+use crate::just_send::JustSend;
 
 pub trait DisplayDebug: std::fmt::Display + std::fmt::Debug {}
 impl<T: std::fmt::Display + std::fmt::Debug> DisplayDebug for T {}
@@ -62,7 +62,7 @@ impl ExecuteNicely for reqwest::Client {
 
         let url = request.url().clone();
 
-        let request_fut = SendWrapper::new(self.execute(request));
+        let request_fut = JustSend::new(self.execute(request));
         async move {
             match request_fut.await {
                 Ok(resp) => Ok(resp),

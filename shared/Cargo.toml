@@ -18,7 +18,7 @@ typed_db = { path = "../typed_db", optional = false }
 utils = { path = "../utils" }
 idalloc = "0.1.1"
 parking_lot = "0.12.3"
-send_wrapper = "0.6.0"
+
 codee = { version = "0.2.0", features = ["json_serde"] }
 diesel-derive-newtype = { version = "2.1.2", optional = true }
 diesel = { version = "2.2.4", optional = true }
@@ -53,6 +53,7 @@ hydrate = [
 	"dep:gloo-timers",
 	"dep:web-sys",
 	"any_spawner/wasm-bindgen",
+	"utils/hydrate",
 ]
 ssr = [
 	"github_api/ssr",

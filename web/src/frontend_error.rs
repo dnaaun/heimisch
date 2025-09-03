@@ -1,11 +1,11 @@
 use std::{hash::Hash, sync::Arc};
 
-use send_wrapper::SendWrapper;
+use utils::JustSend;
 
 #[derive(Debug, derive_more::Display, Clone)]
 pub enum FrontendError {
     #[display("Indexeddb Error: {_0:?}")]
-    Idb(Arc<SendWrapper<typed_db::idb_impl::Error>>),
+    Idb(Arc<JustSend<typed_db::idb_impl::Error>>),
 }
 
 /// I only implement this so that I can hash and memoize Result<_, FrontendError>,
@@ -34,6 +34,6 @@ impl From<&FrontendError> for FrontendError {
 
 impl From<typed_db::idb_impl::Error> for FrontendError {
     fn from(value: typed_db::idb_impl::Error) -> Self {
-        FrontendError::Idb(Arc::new(SendWrapper::new(value)))
+        FrontendError::Idb(Arc::new(JustSend::new(value)))
     }
 }

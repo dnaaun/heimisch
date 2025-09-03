@@ -35,7 +35,7 @@ heck = "0.5.0"
 strum_macros = "0.26.4"
 derive_more = { version = "1.0.0", features = ["display", "from_str"] }
 strum = "0.26.3"
-send_wrapper = { version = "*", features = ["futures"] }
+utils = { path = "../utils", features = ["hydrate"] }
 itertools = "0.13.0"
 jiff = { version = "*", default-features = false, features = ["serde", "alloc", "std", "js"] }
 codee = "0.2.0"

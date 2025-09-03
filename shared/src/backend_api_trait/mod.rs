@@ -1,4 +1,4 @@
-use send_wrapper::SendWrapper;
+use utils::JustSend;
 use std::{future::Future, sync::Arc};
 use url::Url;
 
@@ -86,7 +86,7 @@ impl BackendApiTrait for BackendApi {
         &self,
         payload: AuthFinishPayload,
     ) -> Result<AuthFinishResponse, OwnApiError> {
-        SendWrapper::new(
+        JustSend::new(
             self.client
                 .make_post_request(AuthFinishEndpoint, payload, ()),
         )

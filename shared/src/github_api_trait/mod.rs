@@ -1,6 +1,6 @@
 use std::{future::Future, sync::Arc};
 
-use send_wrapper::SendWrapper;
+use utils::JustSend;
 
 use github_api::{
     apis::{
@@ -219,7 +219,7 @@ impl GithubApiTrait for GithubApi {
         >,
     > + Send
            + Sync {
-        SendWrapper::new(github_api::apis::users_api::users_slash_get_authenticated(
+        JustSend::new(github_api::apis::users_api::users_slash_get_authenticated(
             configuration,
         ))
     }
@@ -233,7 +233,7 @@ impl GithubApiTrait for GithubApi {
     ) -> impl std::future::Future<Output = Result<models::Issue, Error<IssuesSlashCreateError>>>
            + Send
            + Sync {
-        SendWrapper::new(github_api::apis::issues_api::issues_slash_create(
+        JustSend::new(github_api::apis::issues_api::issues_slash_create(
             configuration,
             owner,
             repo,
@@ -253,7 +253,7 @@ impl GithubApiTrait for GithubApi {
         >,
     > + Send
            + Sync {
-        SendWrapper::new(
+        JustSend::new(
             github_api::apis::apps_api::apps_slash_list_repos_accessible_to_installation(
                 configuration,
                 per_page,
@@ -276,7 +276,7 @@ impl GithubApiTrait for GithubApi {
         Output = Result<Vec<models::IssueComment>, Error<IssuesSlashListCommentsForRepoError>>,
     > + Send
            + Sync {
-        SendWrapper::new(
+        JustSend::new(
             github_api::apis::issues_api::issues_slash_list_comments_for_repo(
                 configuration,
                 owner,
@@ -297,7 +297,7 @@ impl GithubApiTrait for GithubApi {
     ) -> impl Future<Output = Result<models::Installation, Error<AppsSlashGetInstallationError>>>
            + Send
            + Sync {
-        SendWrapper::new(github_api::apis::apps_api::apps_slash_get_installation(
+        JustSend::new(github_api::apis::apps_api::apps_slash_get_installation(
             configuration,
             installation_id,
         ))
@@ -321,7 +321,7 @@ impl GithubApiTrait for GithubApi {
         page: Option<i32>,
     ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> + Send + Sync
     {
-        SendWrapper::new(github_api::apis::issues_api::issues_slash_list_for_repo(
+        JustSend::new(github_api::apis::issues_api::issues_slash_list_for_repo(
             configuration,
             owner,
             repo,

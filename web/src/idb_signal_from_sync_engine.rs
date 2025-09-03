@@ -1,7 +1,6 @@
 use leptos::prelude::*;
 use std::{future::Future, sync::Arc};
 
-use send_wrapper::SendWrapper;
 use shared::{
     backend_api_trait::BackendApiTrait,
     sync_engine::{
@@ -10,6 +9,7 @@ use shared::{
     },
 };
 use typed_db::{ReadOnly, TxnMode};
+use utils::JustSend;
 
 use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
@@ -27,26 +27,22 @@ where
         make_txn: impl for<'a> Fn(
                 TxnBuilderWithOptimisticChanges<
                     'a,
-                    SendWrapper<idb::Database>,
+                    JustSend<idb::Database>,
                     DbStoreMarkers,
                     (),
                     ReadOnly,
                 >,
-            ) -> TxnWithOptimisticChanges<
-                SendWrapper<idb::Database>,
-                TxnStoreMarkers,
-                Mode,
-            > + 'static,
-        compute_val: impl Fn(
-                Arc<TxnWithOptimisticChanges<SendWrapper<idb::Database>, TxnStoreMarkers, Mode>>,
-            ) -> Fut
+            )
+                -> TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>
+            + 'static,
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>>) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>;
 }
 
 impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
     IdbSignalFromSyncEngine<DbTableMarkers, TxnStoreMarkers, Mode, Fut, T>
-    for SyncEngine<SendWrapper<idb::Database>, BA, TT, GH>
+    for SyncEngine<JustSend<idb::Database>, BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
@@ -61,19 +57,15 @@ where
         make_txn: impl for<'a> Fn(
                 TxnBuilderWithOptimisticChanges<
                     'a,
-                    SendWrapper<idb::Database>,
+                    JustSend<idb::Database>,
                     DbTableMarkers,
                     (),
                     ReadOnly,
                 >,
-            ) -> TxnWithOptimisticChanges<
-                SendWrapper<idb::Database>,
-                TxnStoreMarkers,
-                Mode,
-            > + 'static,
-        compute_val: impl Fn(
-                Arc<TxnWithOptimisticChanges<SendWrapper<idb::Database>, TxnStoreMarkers, Mode>>,
-            ) -> Fut
+            )
+                -> TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>
+            + 'static,
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>>) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>> {
         let db = self.db.clone();

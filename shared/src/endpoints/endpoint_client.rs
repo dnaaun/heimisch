@@ -7,9 +7,9 @@ use std::{
 use super::endpoint::{GetEndpoint, PostEndpoint};
 use http::{HeaderName, StatusCode};
 use reqwest::{Client, ClientBuilder};
-use send_wrapper::SendWrapper;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use url::Url;
+use utils::JustSend;
 use utils::{ExecuteNicely, ReqwestSendError};
 
 thread_local! {
@@ -94,7 +94,7 @@ impl EndpointClient {
         query_params: <E as GetEndpoint>::QueryParams,
     ) -> impl Future<Output = Result<T, OwnApiError>> + Send + Sync + 'static
     where
-        T: DeserializeOwned + 'static,
+        T: DeserializeOwned + 'static + Send + Sync,
         E: GetEndpoint<JsonResponse = T>,
     {
         type ReturnType<T> = Pin<Box<dyn Future<Output = Result<T, OwnApiError>> + Send + Sync>>;
@@ -104,9 +104,8 @@ impl EndpointClient {
         url.set_query(Some(&match serde_urlencoded::to_string(query_params) {
             Ok(query_params) => query_params,
             Err(err) => {
-                return Box::pin(SendWrapper::new(ready(Err(OwnApiError::UrlParamsEncode(
-                    err,
-                ))))) as ReturnType<T>
+                return Box::pin(JustSend::new(ready(Err(OwnApiError::UrlParamsEncode(err)))))
+                    as ReturnType<T>
             }
         }));
 
@@ -119,7 +118,7 @@ impl EndpointClient {
 
         let execute_nicely_future = self.client.execute_nicely(request.build().unwrap());
         let redirect_handler = self.redirect_handler.clone();
-        Box::pin(SendWrapper::new(async move {
+        Box::pin(JustSend::new(async move {
             let response = execute_nicely_future.await?;
 
             if response.status() == CUSTOM_REDIRECT_STATUS_CODE.with(|i| *i) {
@@ -162,9 +161,8 @@ impl EndpointClient {
         url.set_query(Some(&match serde_urlencoded::to_string(query_params) {
             Ok(query_params) => query_params,
             Err(err) => {
-                return Box::pin(SendWrapper::new(ready(Err(OwnApiError::UrlParamsEncode(
-                    err,
-                ))))) as ReturnType<T>
+                return Box::pin(JustSend::new(ready(Err(OwnApiError::UrlParamsEncode(err)))))
+                    as ReturnType<T>
             }
         }));
         let mut request = self.client.post(url.clone());
@@ -176,7 +174,7 @@ impl EndpointClient {
 
         let execute_nicely_future = self.client.execute_nicely(request.build().unwrap());
         let redirect_handler = self.redirect_handler.clone();
-        Box::pin(SendWrapper::new(async move {
+        Box::pin(JustSend::new(async move {
             let response = execute_nicely_future.await?;
 
             if response.status() == CUSTOM_REDIRECT_STATUS_CODE.with(|i| *i) {
@@ -198,7 +196,7 @@ impl EndpointClient {
                 return Err(OwnApiError::PageRedirect);
             }
 
-            Ok(SendWrapper::new(response.json::<T>()).await?)
+            Ok(JustSend::new(response.json::<T>()).await?)
         })) as ReturnType<T>
     }
 }
