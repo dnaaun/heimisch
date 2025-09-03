@@ -7,6 +7,7 @@ use std::{
 
 use leptos::prelude::*;
 use parking_lot::Mutex;
+use send_wrapper::SendWrapper;
 use shared::sync_engine::{optimistic::db::TxnWithOptimisticChanges, DbSubscription};
 
 type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
@@ -85,8 +86,9 @@ where
 {
     #[track_caller]
     pub fn new<Markers, Mode, Fut, Deregister>(
-        make_txn: impl Fn() -> TxnWithOptimisticChanges<idb::Database, Markers, Mode> + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, Markers, Mode>>) -> Fut
+        make_txn: impl Fn() -> TxnWithOptimisticChanges<SendWrapper<idb::Database>, Markers, Mode>
+            + 'static,
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<SendWrapper<idb::Database>, Markers, Mode>>) -> Fut
             + 'static,
         register_notifier: impl Fn(DbSubscription) -> Deregister + 'static,
     ) -> Self

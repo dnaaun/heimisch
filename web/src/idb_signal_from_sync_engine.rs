@@ -25,7 +25,13 @@ where
     fn idb_signal(
         &self,
         make_txn: impl for<'a> Fn(
-                TxnBuilderWithOptimisticChanges<'a, idb::Database, DbStoreMarkers, (), ReadOnly>,
+                TxnBuilderWithOptimisticChanges<
+                    'a,
+                    SendWrapper<idb::Database>,
+                    DbStoreMarkers,
+                    (),
+                    ReadOnly,
+                >,
             ) -> TxnWithOptimisticChanges<
                 SendWrapper<idb::Database>,
                 TxnStoreMarkers,
@@ -40,7 +46,7 @@ where
 
 impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
     IdbSignalFromSyncEngine<DbTableMarkers, TxnStoreMarkers, Mode, Fut, T>
-    for SyncEngine<idb::Database, BA, TT, GH>
+    for SyncEngine<SendWrapper<idb::Database>, BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
@@ -53,16 +59,24 @@ where
     fn idb_signal(
         &self,
         make_txn: impl for<'a> Fn(
-                TxnBuilderWithOptimisticChanges<'a, idb::Database, DbTableMarkers, (), ReadOnly>,
+                TxnBuilderWithOptimisticChanges<
+                    'a,
+                    SendWrapper<idb::Database>,
+                    DbTableMarkers,
+                    (),
+                    ReadOnly,
+                >,
             ) -> TxnWithOptimisticChanges<
                 SendWrapper<idb::Database>,
                 TxnStoreMarkers,
                 Mode,
             > + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<idb::Database, TxnStoreMarkers, Mode>>) -> Fut
+        compute_val: impl Fn(
+                Arc<TxnWithOptimisticChanges<SendWrapper<idb::Database>, TxnStoreMarkers, Mode>>,
+            ) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>> {
-        let db = SendWrapper::new(self.db.clone());
+        let db = self.db.clone();
         let make_txn = move || make_txn(db.txn().with_no_commit_listener());
         let db_subscriptions = self.db_subscriptions.clone();
 

@@ -59,6 +59,7 @@ leptos_testing_utils = { path = "../leptos_testing_utils" }
 [features]
 default = []
 tracing = []
+hydrate = [] # VS Code's Rust Analyzer crashes otherwise if I have the feature on in rust-analyzer
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test_coverage)'] }

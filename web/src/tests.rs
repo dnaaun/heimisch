@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use leptos::{
     prelude::*,
@@ -21,14 +21,16 @@ wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 pub async fn idb_signal_basic_reactivity() {
     _ = Executor::init_wasm_bindgen();
 
-    let sync_engine = SyncEngine::new(
-        Rc::new(BACKEND_API.with(|e| e.clone())),
-        async |url| Transport::new(url).await,
-        shared::github_api_trait::GithubApi.into(),
-        "heimisch".into(),
-    )
-    .await
-    .unwrap();
+    let sync_engine = SyncEngine::builder()
+        .backend_api(Arc::new(BACKEND_API.with(|e| e.clone())))
+        .github_api(shared::github_api_trait::GithubApi.into())
+        .db_name("heimisch".into())
+        .make_transport(Arc::new(move |url| {
+            Box::pin(async move { Transport::new(url).await })
+        }))
+        .build()
+        .await
+        .unwrap();
 
     let num_times_updated = RwSignal::new(0);
 
