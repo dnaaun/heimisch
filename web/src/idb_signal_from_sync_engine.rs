@@ -8,12 +8,12 @@ use shared::{
         DbTableMarkers, SyncEngine, TransportTrait,
     },
 };
-use typed_db::{ReadOnly, TxnMode};
+use typed_db::ReadOnly;
 use utils::JustSend;
 
 use crate::{frontend_error::FrontendError, idb_signal::IdbSignal};
 
-pub trait IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Mode, Fut, T>
+pub trait IdbSignalFromSyncEngine<DbStoreMarkers, TxnStoreMarkers, Fut, T>
 where
     T: 'static + std::fmt::Debug,
 {
@@ -35,20 +35,21 @@ where
             ) -> TxnWithOptimisticChanges<
                 JustSend<idb::Database>,
                 TxnStoreMarkers,
-                Mode,
+                ReadOnly,
             > + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>>) -> Fut
+        compute_val: impl Fn(
+                Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, ReadOnly>>,
+            ) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>;
 }
 
-impl<BA, TT, GH, TxnStoreMarkers, Mode, Fut, T>
-    IdbSignalFromSyncEngine<DbTableMarkers, TxnStoreMarkers, Mode, Fut, T>
+impl<BA, TT, GH, TxnStoreMarkers, Fut, T>
+    IdbSignalFromSyncEngine<DbTableMarkers, TxnStoreMarkers, Fut, T>
     for SyncEngine<JustSend<idb::Database>, BA, TT, GH>
 where
     TxnStoreMarkers: 'static,
     Fut: Future<Output = Result<T, FrontendError>>,
-    Mode: TxnMode + 'static,
     T: 'static + std::fmt::Debug,
     TT: TransportTrait,
     BA: BackendApiTrait,
@@ -67,9 +68,11 @@ where
             ) -> TxnWithOptimisticChanges<
                 JustSend<idb::Database>,
                 TxnStoreMarkers,
-                Mode,
+                ReadOnly,
             > + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>>) -> Fut
+        compute_val: impl Fn(
+                Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, ReadOnly>>,
+            ) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>> {
         let db = self.db.clone();

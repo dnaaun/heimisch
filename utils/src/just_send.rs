@@ -27,6 +27,12 @@
 #[derive(Debug, Clone)]
 pub struct JustSend<T>(#[pin] T);
 
+impl<T> From<T> for JustSend<T> {
+    fn from(value: T) -> Self {
+        Self(value)
+    }
+}
+
 impl<T> JustSend<T> {
     pub fn new(data: T) -> Self {
         Self(data)

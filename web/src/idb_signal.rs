@@ -8,6 +8,7 @@ use std::{
 use leptos::prelude::*;
 use parking_lot::Mutex;
 use shared::sync_engine::{optimistic::db::TxnWithOptimisticChanges, DbSubscription};
+use typed_db::ReadOnly;
 use utils::JustSend;
 
 type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
@@ -85,17 +86,16 @@ where
     T: 'static,
 {
     #[track_caller]
-    pub fn new<Markers, Mode, Fut, Deregister>(
-        make_txn: impl AsyncFn() -> TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, Mode>
+    pub fn new<Markers, Fut, Deregister>(
+        make_txn: impl AsyncFn() -> TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, ReadOnly>
             + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, Mode>>) -> Fut
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, ReadOnly>>) -> Fut
             + 'static,
         register_notifier: impl Fn(DbSubscription) -> Deregister + 'static,
     ) -> Self
     where
         Fut: Future<Output = T>,
         Markers: 'static,
-        Mode: 'static,
         Deregister: Fn() + Send + Sync + 'static,
     {
         let register_notifier = Arc::new(register_notifier);

@@ -6,7 +6,14 @@ pub mod raw_traits;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_impl;
 
+use any_spawner::Executor;
 pub use derivative::Derivative;
+use futures::{
+    SinkExt, StreamExt, TryStreamExt,
+    channel::{mpsc, oneshot},
+    lock::Mutex,
+    stream,
+};
 pub use raw_traits::RawDbTrait;
 use raw_traits::*;
 
@@ -28,16 +35,7 @@ impl<Head, Tail, T> TableMarker<T> for (Head, Tail) where Head: TableMarker<T> {
 
 impl<T: Table> TableMarker<T> for T::Marker {}
 
-pub trait Table: DeserializeOwned + Serialize +
-// I need this in some places apparently.
-Clone +
-// Also looks like I need this.
-
-'static 
-
-+ Send + Sync
-
-{
+pub trait Table: DeserializeOwned + Serialize + Clone + 'static + Send + Sync + Sized {
     const NAME: &'static str;
 
     /// I _feel_ like I'm going to need this.
@@ -45,21 +43,142 @@ Clone +
 
     /// I need the `Serialize` here to make it easier to integrate with idb and for optimistic stuff.
     /// I need the `DeserializeOwned` here for optimistic stuff.
-    type Id: serde::Serialize + DeserializeOwned
+    type Id: serde::Serialize
+        + DeserializeOwned
         // There's somewhere where we clone the id and also 'static is required there.
         + Clone
         + 'static
-        + Send + Sync 
-        ;
+        + Send
+        + Sync;
 
     fn id(&self) -> &Self::Id;
 
     fn index_names() -> &'static [&'static str];
 }
 
-pub struct Db<RawDb, TableMarkers> {
+#[derive(Clone)]
+enum WriteData {
+    Put {
+        id: SerializedId,
+        row: SerializedObject,
+        table_name: &'static str,
+    },
+    Delete {
+        id: SerializedId,
+        table_name: &'static str,
+    },
+}
+
+impl WriteData {
+    pub fn table_name(&self) -> &'static str {
+        match self {
+            WriteData::Put { table_name, .. } => table_name,
+            WriteData::Delete { table_name, .. } => table_name,
+        }
+    }
+}
+
+enum ReadData {
+    Get {
+        id: SerializedId,
+        table_name: &'static str,
+    },
+    GetAll {
+        table_name: &'static str,
+    },
+    IndexGet {
+        value: SerializedValue,
+        index_name: &'static str,
+        table_name: &'static str,
+    },
+    IndexGetAll {
+        value: Option<SerializedValue>,
+        index_name: &'static str,
+        table_name: &'static str,
+    },
+}
+
+impl ReadData {
+    pub fn table_name(&self) -> &'static str {
+        match self {
+            ReadData::Get { table_name, .. } => table_name,
+            ReadData::GetAll { table_name, .. } => table_name,
+            ReadData::IndexGet { table_name, .. } => table_name,
+            ReadData::IndexGetAll { table_name, .. } => table_name,
+        }
+    }
+}
+
+enum TxnData<Error> {
+    Write {
+        data: Vec<WriteData>,
+        sender: oneshot::Sender<Result<(), Error>>,
+    },
+    Read {
+        data: ReadData,
+        sender: oneshot::Sender<Result<ReadResponse, Error>>,
+    },
+}
+
+#[derive(Debug)]
+enum ReadResponse {
+    Row(Option<SerializedObject>),
+    Rows(Vec<SerializedObject>),
+}
+
+impl ReadResponse {
+    pub fn unwrap_row(self) -> Option<SerializedObject> {
+        match self {
+            ReadResponse::Row(row) => row,
+            _ => panic!("Expected a row, got a rows"),
+        }
+    }
+
+    pub fn unwrap_rows(self) -> Vec<SerializedObject> {
+        match self {
+            ReadResponse::Rows(rows) => rows,
+            _ => panic!("Expected rows, got a row"),
+        }
+    }
+}
+
+pub struct Db<RawDb: RawDbTrait, TableMarkers> {
     markers: PhantomData<TableMarkers>,
-    pub(crate) raw: RawDb,
+    // So sqlite has a cocurrency limit of 1 for transactions. The first thing I tried
+    // was locking a mutex for the duration of transaction (ie, until the `Txn` is dropped).
+    // I opted to go for an async
+    // Mutex. And the issue I ran into there was imagine the following sequence of events:
+    //
+    //  ```rust
+    //  let txn1 = db.txn().await;
+    //  let txn2 = db.txn().await; // This will never resolve because the mutex is locked.
+    //  txn1.commit().await;
+    //  ```
+    // I think the same issue would happen with a sync Mutex as well.
+    //
+    // So I thought of two options:
+    // 1. Impose a programming constraint on myself of "avoid concurrent transactions":
+    //    But that's hard to get right and easy to get wrong (and perhaps impossible to
+    //    totally avoid, as I will have websocket updates requiring db updates randomly).
+    // 2. Implement a queue system with a worker task processing the queue.
+    event_queue_sender: mpsc::Sender<TxnData<RawDb::Error>>,
+    event_queue_kill_switch_sender: Option<oneshot::Sender<()>>,
+}
+
+impl<RawDb: RawDbTrait, TableMarkers> Drop for Db<RawDb, TableMarkers> {
+    fn drop(&mut self) {
+        match self
+            .event_queue_kill_switch_sender
+            .take()
+            .expect("Should be present")
+            .send(())
+        {
+            Ok(_) => (),
+            Err(_) => {
+                println!("Failed to send kill switch to event queue.");
+            }
+        }
+    }
 }
 
 pub struct DbBuilder<RawDb: RawDbTrait, TableMarkers> {
@@ -74,6 +193,103 @@ impl<RawDb: RawDbTrait, TableMarkers> Db<RawDb, TableMarkers> {
             name,
             markers: PhantomData,
             table_builders: Default::default(),
+        }
+    }
+}
+
+/// We drain the event queue when the kiill switch is invoked, but it's still possible
+/// that some things are not processed if things are added to the queue.
+fn handle_events<RawDb: RawDbTrait>(
+    mut event_queue_receiver: mpsc::Receiver<TxnData<RawDb::Error>>,
+    mut event_queue_kill_switch: oneshot::Receiver<()>,
+    raw_db: Arc<RawDb>,
+) -> impl Future<Output = ()> + Send + Sync {
+    async move {
+        let mut kill_switch_invoked = false;
+        while !kill_switch_invoked {
+            let requests = futures::select! {
+                request = event_queue_receiver.next() => vec![request],
+                _ = event_queue_kill_switch => {
+                    kill_switch_invoked = true;
+                    event_queue_receiver.close();
+                    std::iter::from_fn(|| event_queue_receiver.try_next().ok()).collect::<Vec<_>>()
+                }
+            };
+
+            for request in requests {
+                let request = match request {
+                    Some(request) => request,
+                    None => {
+                        println!(
+                            "Not sure why this would happen actually. I presume all clones of the Sender have been dropped?"
+                        );
+                        break;
+                    }
+                };
+
+                match request {
+                    TxnData::Write { data, sender: done } => {
+                        let table_names = data
+                            .iter()
+                            .map(|data| data.table_name())
+                            .collect::<Vec<_>>();
+                        let txn = raw_db.txn(&table_names, true).await;
+                        let results = stream::iter(data)
+                            .then(async |data| match data {
+                                WriteData::Put {
+                                    id,
+                                    row,
+                                    table_name,
+                                } => txn.get_table(table_name).put(&id, &row).await,
+                                WriteData::Delete { id, table_name } => {
+                                    txn.get_table(table_name).delete(&id).await
+                                }
+                            })
+                            .try_collect::<()>()
+                            .await;
+
+                        done.send(results).unwrap();
+                    }
+                    TxnData::Read {
+                        data,
+                        sender: result,
+                    } => {
+                        let txn = raw_db.txn(&[data.table_name()], false).await;
+                        let response = async || {
+                            Ok::<_, RawDb::Error>(match data {
+                                ReadData::Get { id, table_name } => {
+                                    ReadResponse::Row(txn.get_table(table_name).get(&id).await?)
+                                }
+                                ReadData::GetAll { table_name } => {
+                                    ReadResponse::Rows(txn.get_table(table_name).get_all().await?)
+                                }
+                                ReadData::IndexGet {
+                                    value,
+                                    table_name,
+                                    index_name,
+                                } => ReadResponse::Row(
+                                    txn.get_table(table_name)
+                                        .index(index_name)
+                                        .get(&value)
+                                        .await?,
+                                ),
+                                ReadData::IndexGetAll {
+                                    value,
+                                    table_name,
+                                    index_name,
+                                } => ReadResponse::Rows(
+                                    txn.get_table(table_name)
+                                        .index(index_name)
+                                        .get_all(value.as_ref())
+                                        .await?,
+                                ),
+                            })
+                        };
+
+                        result.send(response().await).unwrap();
+                    }
+                }
+            }
         }
     }
 }
@@ -95,11 +311,21 @@ impl<RawDb: RawDbTrait, TableMarkers> DbBuilder<RawDb, TableMarkers> {
             |db_builder, (_, table_builder)| db_builder.add_table(table_builder),
         );
 
-        let db = db_builder.build().await?;
+        let raw_db = Arc::new(db_builder.build().await?);
+
+        let (event_queue_sender, event_queue_receiver) = mpsc::channel(100);
+        let (event_queue_kill_switch_sender, event_queue_kill_switch_receiver) = oneshot::channel();
+
+        Executor::spawn(handle_events(
+            event_queue_receiver,
+            event_queue_kill_switch_receiver,
+            raw_db.clone(),
+        ));
 
         Ok(Db {
             markers: PhantomData,
-            raw: db,
+            event_queue_sender,
+            event_queue_kill_switch_sender: Some(event_queue_kill_switch_sender),
         })
     }
 }
@@ -107,6 +333,7 @@ impl<RawDb: RawDbTrait, TableMarkers> DbBuilder<RawDb, TableMarkers> {
 impl<RawDb: RawDbTrait, DbTableMarkers> Db<RawDb, DbTableMarkers> {
     pub fn txn(&self) -> TxnBuilder<'_, RawDb, DbTableMarkers, (), ReadOnly> {
         TxnBuilder {
+            event_queue_sender: self.event_queue_sender.clone(),
             store_names: Default::default(),
             txn_table_markers: Default::default(),
             db: self,
@@ -142,6 +369,7 @@ pub struct TxnBuilder<'db, RawDb: RawDbTrait, DbTableMarkers, TxnTableMarkers, M
     txn_table_markers: TxnTableMarkers,
     store_names: HashSet<&'static str>,
     mode: PhantomData<Mode>,
+    event_queue_sender: mpsc::Sender<TxnData<RawDb::Error>>,
 }
 
 impl<'db, Db: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
@@ -162,6 +390,7 @@ where
             store_names: new_table_names,
             db: self.db,
             mode: self.mode,
+            event_queue_sender: self.event_queue_sender,
         }
     }
 
@@ -171,6 +400,7 @@ where
             store_names: self.store_names,
             db: self.db,
             mode: PhantomData,
+            event_queue_sender: self.event_queue_sender,
         }
     }
 
@@ -180,29 +410,32 @@ where
             store_names: self.store_names,
             db: self.db,
             mode: PhantomData,
+            event_queue_sender: self.event_queue_sender,
         }
     }
-
+}
+impl<'db, Db: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
+    TxnBuilder<'db, Db, DbTableMarkers, TxnTableMarkers, Mode>
+where
+    TxnTableMarkers: Default,
+    Mode: TxnMode,
+{
     pub async fn build(self) -> Txn<Db, TxnTableMarkers, Mode> {
-        let raw_txn = self.db.raw.txn(
-            &self.store_names.into_iter().collect::<Vec<_>>(),
-            Mode::IS_READ_WRITE,
-        ).await;
-
-
         Txn {
             markers: self.txn_table_markers,
-            raw_txn: Some(raw_txn),
-            mode: PhantomData,
+            _mode: PhantomData,
+            write_data: Arc::new(Mutex::new(Vec::new())),
+            event_queue_sender: self.event_queue_sender,
         }
     }
 }
 
 pub struct Txn<Db: RawDbTrait, TableMarkers, Mode> {
     #[allow(unused)]
-    markers: TableMarkers,
-    raw_txn: Option<Db::RawTxn>,
-    mode: PhantomData<Mode>,
+    markers: (TableMarkers),
+    _mode: PhantomData<Mode>,
+    write_data: Arc<Mutex<Vec<WriteData>>>,
+    event_queue_sender: mpsc::Sender<TxnData<Db::Error>>,
 }
 
 impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
@@ -210,23 +443,29 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
     where
         TableMarkers: TableMarker<R>,
         R: Table,
+        Mode: TxnMode,
     {
-        let raw_table = self.raw_txn.as_ref().map(|t| t.get_table(&R::NAME)).expect(
-            "Should be None only if committed/aborted, which means &self shouldn't be obtainable",
-        );
         TableAccess {
-            raw_table: Arc::new(raw_table),
+            event_queue_sender: self.event_queue_sender.clone(),
             mode: PhantomData,
+            write_data: Some(self.write_data.clone()),
         }
     }
 
     pub async fn commit(mut self) -> Result<(), Db::Error> {
-        self.raw_txn.take().expect("Should be None only if committed/aborted, which means &self shouldn't be obtainable").commit().await?;
+        let write_data = self.write_data.lock().await;
+        self.event_queue_sender
+            .send(TxnData::Write {
+                data: write_data.clone(),
+                sender: oneshot::channel().0,
+            })
+            .await
+            .unwrap();
         Ok(())
     }
 
-    pub async fn abort(mut self) -> Result<(), Db::Error> {
-        self.raw_txn.take().expect("Should be None only if committed/aborted, which means &self shouldn't be obtainable").abort().await?;
+    pub async fn abort(self) -> Result<(), Db::Error> {
+        self.write_data.lock().await.clear();
         Ok(())
     }
 }
@@ -234,8 +473,11 @@ impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
 #[derive(Derivative)]
 #[derivative(Clone(bound = ""))]
 pub struct TableAccess<RawDb: RawDbTrait, R: Table, Mode> {
-    pub(crate) raw_table: Arc<RawDb::RawTableAccess<R>>,
+    pub(crate) event_queue_sender: mpsc::Sender<TxnData<RawDb::Error>>,
     pub(crate) mode: PhantomData<(R, Mode)>,
+
+    /// Will be non-None for read-write transactions.
+    write_data: Option<Arc<Mutex<Vec<WriteData>>>>,
 }
 
 impl<Db: RawDbTrait, R: Table, Mode> TableAccess<Db, R, Mode>
@@ -243,17 +485,53 @@ where
     Mode: TxnMode,
 {
     pub async fn get(&self, id: &R::Id) -> Result<Option<R>, Db::Error> {
-        self.raw_table.get(id).await
+        let id = SerializedId::new_from_id::<R>(id);
+        let (sender, receiver) = oneshot::channel();
+        let txn_data = TxnData::Read {
+            data: ReadData::Get {
+                id,
+                table_name: R::NAME,
+            },
+            sender,
+        };
+        self.event_queue_sender
+            .clone()
+            .send(txn_data)
+            .await
+            .unwrap();
+
+        Ok(receiver
+            .await
+            .unwrap()?
+            .unwrap_row()
+            .map(|row| serde_json::from_str(&row).unwrap()))
     }
 
     pub async fn get_all(&self) -> Result<Vec<R>, Db::Error> {
-        self.raw_table.get_all().await
+        let (sender, receiver) = oneshot::channel();
+        let txn_data = TxnData::Read {
+            data: ReadData::GetAll {
+                table_name: R::NAME,
+            },
+            sender,
+        };
+        self.event_queue_sender
+            .clone()
+            .send(txn_data)
+            .await
+            .unwrap();
+        Ok(receiver
+            .await
+            .unwrap()?
+            .unwrap_rows()
+            .into_iter()
+            .map(|row| serde_json::from_str(&row).unwrap())
+            .collect())
     }
 
     pub fn index<IS: IndexSpec<Table = R>>(&self) -> Index<Db, IS> {
-        let raw_index = self.raw_table.index(IS::NAME);
         Index {
-            raw_index,
+            event_queue_sender: self.event_queue_sender.clone(),
             _spec: PhantomData,
         }
     }
@@ -264,11 +542,30 @@ where
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     pub async fn put(&self, item: &R) -> Result<(), Db::Error> {
-        self.raw_table.put(item).await
+        self.write_data
+            .as_ref()
+            .expect("Should be Some for write transactions")
+            .lock()
+            .await
+            .push(WriteData::Put {
+                id: SerializedId::new_from_id::<R>(item.id()),
+                row: SerializedObject::from_row(item).unwrap(),
+                table_name: R::NAME,
+            });
+        Ok(())
     }
 
     pub async fn delete(&self, id: &R::Id) -> Result<(), Db::Error> {
-        self.raw_table.delete(id).await
+        self.write_data
+            .as_ref()
+            .expect("Should be Some for write transactions")
+            .lock()
+            .await
+            .push(WriteData::Delete {
+                id: SerializedId::new_from_id::<R>(id),
+                table_name: R::NAME,
+            });
+        Ok(())
     }
 }
 
@@ -285,7 +582,7 @@ pub trait IndexSpec {
 }
 
 pub struct Index<RawDb: RawDbTrait, IS: IndexSpec> {
-    pub(crate) raw_index: RawDb::RawIndex,
+    pub(crate) event_queue_sender: mpsc::Sender<TxnData<RawDb::Error>>,
     _spec: PhantomData<IS>,
 }
 
@@ -294,13 +591,51 @@ impl<RawDb: RawDbTrait, IS: IndexSpec> Index<RawDb, IS> {
         &self,
         value: &IS::Type,
     ) -> Result<Option<IS::Table>, <RawDb as RawDbTrait>::Error> {
-        Ok(self.raw_index.get::<IS>(value).await?)
+        let (sender, receiver) = oneshot::channel();
+        let txn_data = TxnData::Read {
+            data: ReadData::IndexGet {
+                value: SerializedValue::from_value(value).unwrap(),
+                index_name: IS::NAME,
+                table_name: IS::Table::NAME,
+            },
+            sender,
+        };
+        self.event_queue_sender
+            .clone()
+            .send(txn_data)
+            .await
+            .unwrap();
+        Ok(receiver
+            .await
+            .unwrap()?
+            .unwrap_row()
+            .map(|row| serde_json::from_str(&row).unwrap()))
     }
 
     pub async fn get_all(
         &self,
         value: Option<&IS::Type>,
     ) -> Result<Vec<IS::Table>, <RawDb as RawDbTrait>::Error> {
-        Ok(self.raw_index.get_all::<IS>(value).await?)
+        let (sender, receiver) = oneshot::channel();
+        let txn_data = TxnData::Read {
+            data: ReadData::IndexGetAll {
+                value: value.map(|v| SerializedValue::from_value(v).unwrap()),
+                index_name: IS::NAME,
+                table_name: IS::Table::NAME,
+            },
+            sender,
+        };
+        self.event_queue_sender
+            .clone()
+            .send(txn_data)
+            .await
+            .unwrap();
+        Ok(receiver
+            .await
+            .unwrap()?
+            .unwrap_rows()
+            .into_iter()
+            .map(|row| serde_json::from_str(&row).unwrap())
+            .collect())
     }
 }

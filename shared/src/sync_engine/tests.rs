@@ -14,7 +14,7 @@ use std::{
     time::Duration,
 };
 use tokio::sync::Mutex;
-use typed_db::{sqlite_impl::SqliteDatabase, Table};
+use typed_db::{raw_traits::SerializedId, sqlite_impl::SqliteDatabase, Table};
 use url::Url;
 
 use crate::{
@@ -33,8 +33,7 @@ use crate::{
 };
 
 use super::{
-    optimistic::db::{ReactivityTrackers, SerializedId},
-    websocket_updates::transport::tests::MockTransport,
+    optimistic::db::ReactivityTrackers, websocket_updates::transport::tests::MockTransport,
     DbSubscription, SyncEngine,
 };
 

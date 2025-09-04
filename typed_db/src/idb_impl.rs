@@ -6,9 +6,9 @@ use wasm_bindgen::JsValue;
 
 #[derive(Debug)]
 pub enum Error {
-    Js(JsValue),
+    Js(JustSend<JsValue>),
     Serde(serde_json::Error),
-    Id(idb::Error),
+    Id(JustSend<idb::Error>),
 }
 
 impl From<serde_json::Error> for Error {
@@ -19,13 +19,13 @@ impl From<serde_json::Error> for Error {
 
 impl From<idb::Error> for Error {
     fn from(value: idb::Error) -> Self {
-        Error::Id(value)
+        Error::Id(JustSend::new(value))
     }
 }
 
 impl From<JsValue> for Error {
     fn from(value: JsValue) -> Self {
-        Error::Js(value)
+        Error::Js(JustSend::new(value))
     }
 }
 
@@ -46,11 +46,12 @@ where
     Ok(js_sys::JSON::parse(&s)?)
 }
 
-impl<R: Table> RawTableAccessTrait<R> for JustSend<idb::ObjectStore> {
+impl RawTableAccessTrait for JustSend<idb::ObjectStore> {
     type RawDb = JustSend<idb::Database>;
 
-    async fn get(&self, key: &R::Id) -> Result<Option<R>, Error> {
-        let fut = idb::ObjectStore::get(self, idb::Query::Key(to_value(key)?))?.into_future();
+    async fn get(&self, key: &SerializedId) -> Result<Option<SerializedObject>, Error> {
+        let fut =
+            idb::ObjectStore::get(self, idb::Query::Key(js_sys::JSON::parse(&key)?))?.into_future();
         let item = JustSend::new(fut)
             .await?
             .map(|i| from_value(i))
@@ -58,7 +59,7 @@ impl<R: Table> RawTableAccessTrait<R> for JustSend<idb::ObjectStore> {
         Ok(item)
     }
 
-    async fn get_all(&self) -> Result<Vec<R>, Error> {
+    async fn get_all(&self) -> Result<Vec<SerializedObject>, Error> {
         let fut = idb::ObjectStore::get_all(self, None, None)?.into_future();
         let items = JustSend::new(fut)
             .await?
@@ -68,14 +69,15 @@ impl<R: Table> RawTableAccessTrait<R> for JustSend<idb::ObjectStore> {
         Ok(items)
     }
 
-    async fn put(&self, item: &R) -> Result<(), Error> {
-        let fut = idb::ObjectStore::put(self, &to_value(item)?, None)?.into_future();
+    async fn put(&self, _id: &SerializedId, item: &SerializedObject) -> Result<(), Error> {
+        let fut = idb::ObjectStore::put(self, &js_sys::JSON::parse(&item)?, None)?.into_future();
         JustSend::new(fut).await?;
         Ok(())
     }
 
-    async fn delete(&self, key: &R::Id) -> Result<(), Error> {
-        let fut = idb::ObjectStore::delete(self, idb::Query::Key(to_value(key)?))?.into_future();
+    async fn delete(&self, key: &SerializedId) -> Result<(), Error> {
+        let fut = idb::ObjectStore::delete(self, idb::Query::Key(js_sys::JSON::parse(&key)?))?
+            .into_future();
         JustSend::new(fut).await?;
         Ok(())
     }
@@ -100,7 +102,7 @@ impl RawTxnTrait for JustSend<idb::Transaction> {
         Ok(())
     }
 
-    fn get_table<R: Table>(&self, store_name: &str) -> JustSend<idb::ObjectStore> {
+    fn get_table(&self, store_name: &str) -> JustSend<idb::ObjectStore> {
         JustSend::new(
             idb::Transaction::object_store(self, store_name)
                 .expect("This rarely (never) happens I hope."),
@@ -131,7 +133,7 @@ impl RawDbTrait for JustSend<idb::Database> {
     type RawDbBuilder = JustSend<idb::builder::DatabaseBuilder>;
     type RawTableBuilder = JustSend<idb::builder::ObjectStoreBuilder>;
     type RawIndex = JustSend<idb::Index>;
-    type RawTableAccess<R: Table> = JustSend<idb::ObjectStore>;
+    type RawTableAccess = JustSend<idb::ObjectStore>;
 
     async fn txn(&self, store_names: &[&str], read_write: bool) -> Self::RawTxn {
         JustSend::new(
@@ -165,27 +167,32 @@ impl RawDbTrait for JustSend<idb::Database> {
 impl RawIndexTrait for JustSend<idb::Index> {
     type RawDb = JustSend<idb::Database>;
 
-    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Error> {
-        Ok(idb::Index::get(self, idb::Query::Key(to_value(value)?))?
+    async fn get(&self, value: &SerializedValue) -> Result<Option<SerializedObject>, Error> {
+        let fut = idb::Index::get(self, idb::Query::Key(to_value(value)?))?.into_future();
+        Ok(JustSend::new(fut)
             .await?
             .map(|i| from_value(i))
             .transpose()?)
     }
 
-    async fn get_all<IS: IndexSpec>(
+    async fn get_all(
         &self,
-        value: Option<&IS::Type>,
-    ) -> Result<Vec<IS::Table>, Error> {
-        Ok(idb::Index::get_all(
+        value: Option<&SerializedValue>,
+    ) -> Result<Vec<SerializedObject>, Error> {
+        let fut = idb::Index::get_all(
             self,
             value
-                .map(|v| to_value(v).map(idb::Query::Key))
+                .map(|v| {
+                    js_sys::JSON::parse(&serde_json::to_string(v).unwrap()).map(idb::Query::Key)
+                })
                 .transpose()?,
             None,
         )?
-        .await?
-        .into_iter()
-        .map(from_value)
-        .collect::<Result<Vec<_>, _>>()?)
+        .into_future();
+        Ok(JustSend::new(fut)
+            .await?
+            .into_iter()
+            .map(from_value)
+            .collect::<Result<Vec<_>, _>>()?)
     }
 }

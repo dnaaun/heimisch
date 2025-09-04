@@ -44,70 +44,61 @@ impl SqliteTableAccess {
     }
 }
 
-impl<R: Table> RawTableAccessTrait<R> for SqliteTableAccess {
+impl RawTableAccessTrait for SqliteTableAccess {
     type RawDb = SqliteDatabase;
 
-    async fn get(&self, id: &R::Id) -> Result<Option<R>, Error> {
+    async fn get(&self, id: &SerializedId) -> Result<Option<SerializedObject>, Error> {
         let conn = self.connection.lock().await;
-        let id_json = serde_json::to_string(id)?;
+        let id_str = id.0.clone();
 
         let mut stmt = conn.prepare(&format!(
             "SELECT data FROM {} WHERE id = ?",
             self.table_name
         ))?;
-        let mut rows = stmt.query_map([id_json], |row| {
+        let mut rows = stmt.query_map([id_str], |row| {
             let data: String = row.get(0)?;
             Ok(data)
         })?;
 
         if let Some(row) = rows.next() {
             let data = row?;
-            let item: R = serde_json::from_str(&data)?;
-            Ok(Some(item))
+            Ok(Some(SerializedObject(data)))
         } else {
             Ok(None)
         }
     }
 
-    async fn get_all(&self) -> Result<Vec<R>, Error> {
+    async fn get_all(&self) -> Result<Vec<SerializedObject>, Error> {
         let conn = self.connection.lock().await;
         let mut stmt = conn.prepare(&format!("SELECT data FROM {}", self.table_name))?;
         let rows = stmt.query_map([], |row| {
             let data: String = row.get(0)?;
-            Ok(data)
+            Ok(SerializedObject(data))
         })?;
 
-        let mut items = Vec::new();
-        for row in rows {
-            let data = row?;
-            let item: R = serde_json::from_str(&data)?;
-            items.push(item);
-        }
-        Ok(items)
+        let items: Result<Vec<_>, _> = rows.into_iter().collect();
+        Ok(items?)
     }
 
-    async fn put(&self, item: &R) -> Result<(), Error> {
+    async fn put(&self, id: &SerializedId, item: &SerializedObject) -> Result<(), Error> {
         let conn = self.connection.lock().await;
-        let id_json = serde_json::to_string(item.id())?;
-        let data_json = serde_json::to_string(item)?;
 
         conn.execute(
             &format!(
                 "INSERT OR REPLACE INTO {} (id, data) VALUES (?, ?)",
                 self.table_name
             ),
-            params![id_json, data_json],
+            params![id, item],
         )?;
         Ok(())
     }
 
-    async fn delete(&self, id: &R::Id) -> Result<(), Error> {
+    async fn delete(&self, id: &SerializedId) -> Result<(), Error> {
         let conn = self.connection.lock().await;
-        let id_json = serde_json::to_string(id)?;
 
         conn.execute(
             &format!("DELETE FROM {} WHERE id = ?", self.table_name),
-            params![id_json],
+            params![id],
         )?;
         Ok(())
     }
@@ -156,8 +147,8 @@ impl RawTxnTrait for SqliteTransaction {
         Ok(())
     }
 
-    fn get_table<R: Table>(&self, store_name: &str) -> SqliteTableAccess {
-        SqliteTableAccess::new(self.conn.clone(), store_name.to_string())
+    fn get_table(&self, table_name: &str) -> SqliteTableAccess {
+        SqliteTableAccess::new(self.conn.clone(), table_name.to_string())
     }
 }
 
@@ -222,7 +213,7 @@ impl RawDbTrait for SqliteDatabase {
     type RawDbBuilder = SqliteDatabaseBuilder;
     type RawIndex = SqliteIndex;
     type RawTableBuilder = SqliteTableBuilder;
-    type RawTableAccess<R: Table> = SqliteTableAccess;
+    type RawTableAccess = SqliteTableAccess;
 
     async fn txn(&self, _store_names: &[&str], _read_write: bool) -> Self::RawTxn {
         SqliteTransaction::new(self.connection.clone()).await
@@ -264,52 +255,52 @@ impl SqliteIndex {
 impl RawIndexTrait for SqliteIndex {
     type RawDb = SqliteDatabase;
 
-    async fn get<IS: IndexSpec>(&self, value: &IS::Type) -> Result<Option<IS::Table>, Error> {
+    async fn get(&self, value: &SerializedValue) -> Result<Option<SerializedObject>, Error> {
         let conn = self.connection.lock().await;
-        let value_json = serde_json::to_string(value)?;
+        let value_str = serde_json::to_string(value)?;
 
         let mut stmt = conn.prepare(&format!(
             "SELECT data FROM {} WHERE json_extract(data, '$.{}') = ?",
             self.table_name, self.index_name
         ))?;
 
-        let mut rows = stmt.query_map([value_json], |row| {
+        let mut rows = stmt.query_map([value_str], |row| {
             let data: String = row.get(0)?;
             Ok(data)
         })?;
 
         if let Some(row) = rows.next() {
             let data = row?;
-            let item: IS::Table = serde_json::from_str(&data)?;
+            let item = serde_json::from_str(&data)?;
             Ok(Some(item))
         } else {
             Ok(None)
         }
     }
 
-    async fn get_all<IS: IndexSpec>(
+    async fn get_all(
         &self,
-        value: Option<&IS::Type>,
-    ) -> Result<Vec<IS::Table>, Error> {
+        value: Option<&SerializedValue>,
+    ) -> Result<Vec<SerializedObject>, Error> {
         let conn = self.connection.lock().await;
 
         let mut items = Vec::new();
 
         if let Some(value) = value {
-            let value_json = serde_json::to_string(value)?;
+            let value_str = serde_json::to_string(value)?;
             let query = format!(
                 "SELECT data FROM {} WHERE json_extract(data, '$.{}') = ?",
                 self.table_name, self.index_name
             );
             let mut stmt = conn.prepare(&query)?;
-            let rows = stmt.query_map([value_json], |row| {
+            let rows = stmt.query_map([value_str], |row| {
                 let data: String = row.get(0)?;
                 Ok(data)
             })?;
 
             for row in rows {
                 let data = row?;
-                let item: IS::Table = serde_json::from_str(&data)?;
+                let item = serde_json::from_str(&data)?;
                 items.push(item);
             }
         } else {
@@ -322,7 +313,7 @@ impl RawIndexTrait for SqliteIndex {
 
             for row in rows {
                 let data = row?;
-                let item: IS::Table = serde_json::from_str(&data)?;
+                let item = serde_json::from_str(&data)?;
                 items.push(item);
             }
         }

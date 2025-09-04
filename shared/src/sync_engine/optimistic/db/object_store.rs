@@ -4,11 +4,12 @@ use derivative::Derivative;
 use maplit::{hashmap, hashset};
 
 use crate::sync_engine::optimistic::optimistic_changes::OptimisticChanges;
-use typed_db::{IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode};
+use typed_db::{
+    raw_traits::SerializedId, IndexSpec, Present, RawDbTrait, Table, TableAccess, TxnMode,
+};
 
 use super::{
     index::IndexWithOptimisticChanges, reactivity_trackers::ReactivityTrackers, CommitListener,
-    SerializedId,
 };
 
 #[derive(Derivative)]

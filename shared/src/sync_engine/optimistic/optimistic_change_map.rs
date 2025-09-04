@@ -8,9 +8,9 @@ use bimap::BiMap;
 use parking_lot::RwLock;
 pub use status::Status;
 
-use typed_db::Table;
+use typed_db::{raw_traits::SerializedId, Table};
 
-use super::{db::SerializedId, monotonic_time::MonotonicTime};
+use super::monotonic_time::MonotonicTime;
 
 mod status {
     /// The value inside is never `None`. But having an option is the only way I know of enabling

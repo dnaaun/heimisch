@@ -4,6 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
+any_spawner = { version = "0.3.0", features = ["futures-executor"] }
 async-trait = "0.1.83"
 backtrace = "0.3.74"
 futures = "*"

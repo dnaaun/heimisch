@@ -109,6 +109,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "any_spawner"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1384d3fe1eecb464229fcf6eebb72306591c56bf27b373561489458a7c73027d"
+dependencies = [
+ "futures",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2199,7 +2209,7 @@ version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26b8731cb00f3f0894058155410b95c8955b17273181d2bc72600ab84edd24f1"
 dependencies = [
- "any_spawner",
+ "any_spawner 0.2.0",
  "cfg-if",
  "either_of",
  "futures",
@@ -2329,7 +2339,7 @@ version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4168ead6a9715daba953aa842795cb2ad81b6e011a15745bd3d1baf86f76de95"
 dependencies = [
- "any_spawner",
+ "any_spawner 0.2.0",
  "either_of",
  "futures",
  "gloo-net 0.6.0",
@@ -2365,7 +2375,7 @@ version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66985242812ec95e224fb48effe651ba02728beca92c461a9464c811a71aab11"
 dependencies = [
- "any_spawner",
+ "any_spawner 0.2.0",
  "base64",
  "codee 0.3.0",
  "futures",
@@ -3279,7 +3289,7 @@ version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76a0ccddbc11a648bd09761801dac9e3f246ef7641130987d6120fced22515e6"
 dependencies = [
- "any_spawner",
+ "any_spawner 0.2.0",
  "async-lock",
  "futures",
  "guardian",
@@ -3954,7 +3964,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
- "any_spawner",
+ "any_spawner 0.2.0",
  "bimap",
  "bon",
  "codee 0.2.0",
@@ -4200,7 +4210,7 @@ version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d42b7c1545705f77d871228eb52cbb1376b35dc0a237be9fb11e2d9e4e20818"
 dependencies = [
- "any_spawner",
+ "any_spawner 0.2.0",
  "async-trait",
  "const_str_slice_concat",
  "drain_filter_polyfill",
@@ -4788,8 +4798,10 @@ dependencies = [
 name = "typed_db"
 version = "0.1.0"
 dependencies = [
+ "any_spawner 0.3.0",
  "backtrace",
  "derivative",
+ "derive_more",
  "futures",
  "idb",
  "js-sys",
@@ -4957,6 +4969,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 name = "utils"
 version = "0.0.0"
 dependencies = [
+ "any_spawner 0.3.0",
  "async-trait",
  "backtrace",
  "futures",

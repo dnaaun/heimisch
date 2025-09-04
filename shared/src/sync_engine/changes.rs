@@ -468,7 +468,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
     }
 }
 
-async fn persist_changes_to_issues<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
+async fn persist_changes_to_issues<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode: TxnMode>(
     txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
     issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
 ) -> SyncResult<(), W, RawDb>

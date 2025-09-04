@@ -5,9 +5,9 @@ use std::{any::Any, future::Future, sync::Arc};
 
 use any_spawner::Executor;
 
-use typed_db::Table;
+use typed_db::{raw_traits::SerializedId, Table};
 
-use super::{db::SerializedId, optimistic_change_map::OptimisticChangeMap};
+use super::optimistic_change_map::OptimisticChangeMap;
 
 #[derive(Default, Clone)]
 pub struct OptimisticChanges {

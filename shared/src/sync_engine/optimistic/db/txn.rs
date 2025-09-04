@@ -49,6 +49,7 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
     where
         S: Table,
         Markers: TableMarker<S>,
+        Mode: TxnMode,
     {
         let inner = self.inner.as_ref().expect("");
         TableWithOptimisticChanges::new(
