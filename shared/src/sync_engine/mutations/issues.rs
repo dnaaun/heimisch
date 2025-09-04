@@ -25,7 +25,7 @@ impl<
     /// Returns the optimistic id of the issue.
     ///
     /// Invariant upheld: The issue number and id will be a negative number for the optimistic issue.
-    pub fn create_issue(
+    pub async fn create_issue(
         &self,
         installation_id: &InstallationId,
         owner: &User,
@@ -60,6 +60,7 @@ impl<
 
         self.db
             .table_rw::<Issue>()
+            .await
             .create_optimistically(optimistic_issue, async move {
                 let conf = this.get_api_conf(&installation_id).await.map_err(|_| ())?;
                 let id = this

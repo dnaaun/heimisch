@@ -177,8 +177,9 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
         title: title.clone(),
         ..Default::default()
     };
-    let optimistic_issue_id =
-        se.create_issue(&installation_id, &user, &repository, issue_create_request)?;
+    let optimistic_issue_id = se
+        .create_issue(&installation_id, &user, &repository, issue_create_request)
+        .await?;
 
     assert!(bulk_subscriber_hit.expect_and_reset(1));
 

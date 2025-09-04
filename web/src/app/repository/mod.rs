@@ -97,11 +97,12 @@ pub fn RepositoryPage(
 
     let repository_page_context =
         sync_engine.idb_signal(
-            |builder| {
+            async |builder| {
                 builder
                     .with_table::<User>()
                     .with_table::<Repository>()
                     .build()
+                    .await
             },
             move |txn| async move {
                 let user = txn

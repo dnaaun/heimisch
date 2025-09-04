@@ -35,7 +35,11 @@ pub async fn idb_signal_basic_reactivity() {
     let num_times_updated = RwSignal::new(0);
 
     let signal = sync_engine.idb_signal(
-        move |b| b.with_table::<IssueCommentsInitialSyncStatus>().build(),
+        async move |b| {
+            b.with_table::<IssueCommentsInitialSyncStatus>()
+                .build()
+                .await
+        },
         move |txn| async move {
             txn.table::<IssueCommentsInitialSyncStatus>()
                 .get_all_optimistically()
@@ -58,13 +62,14 @@ pub async fn idb_signal_basic_reactivity() {
         .txn()
         .with_table::<IssueCommentsInitialSyncStatus>()
         .read_write()
-        .build();
+        .build()
+        .await;
 
     txn.table::<IssueCommentsInitialSyncStatus>()
         .put(&Default::default())
         .await
         .unwrap();
-    txn.commit().unwrap();
+    txn.commit().await.unwrap();
 
     tick().await;
 

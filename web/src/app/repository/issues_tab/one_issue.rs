@@ -52,7 +52,7 @@ pub fn OneIssue(
         };
         let sync_engine2 = sync_engine.clone();
         let issue_and_user = sync_engine.idb_signal(
-            move |txn| txn.with_table::<User>().with_table::<Issue>().build(),
+            async move |txn| txn.with_table::<User>().with_table::<Issue>().build().await,
             move |txn| {
                 let sync_engine2 = sync_engine2.clone();
                 async move {
@@ -124,10 +124,11 @@ pub fn OneIssue(
                 };
 
                 let issue_id = issue.get_value().id;
-                let issue_comment_and_users = sync_engine.idb_signal(|builder| {
+                let issue_comment_and_users = sync_engine.idb_signal(async |builder| {
                     builder.with_table::<IssueComment>()
                         .with_table::<User>()
                         .build()
+                        .await
                 }, move |txn| async move {
                     let mut issue_comments = txn.table::<IssueComment>().index::<IssueIdIndex>().get_all_optimistically(Some(&Some(issue_id))).await?;
                     issue_comments.sort_by_key(|c| c.created_at.clone());

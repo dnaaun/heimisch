@@ -48,7 +48,7 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
         T: Table,
         DbTableMarkers: TableMarker<T>,
     {
-        self.table::<T>().get(id).await
+        self.table::<T>().await.get(id).await
     }
 
     // Shortcut
@@ -57,7 +57,7 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
         DbTableMarkers: TableMarker<T>,
         T: Table,
     {
-        self.table::<T>().get_all_optimistically().await
+        self.table::<T>().await.get_all_optimistically().await
     }
 
     // Shortcut
@@ -69,7 +69,7 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
         T: Table,
         DbTableMarkers: TableMarker<T>,
     {
-        self.table::<T>().get_optimistically(id).await
+        self.table::<T>().await.get_optimistically(id).await
     }
 
     // Shortcut
@@ -77,7 +77,7 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
     where
         DbTableMarkers: TableMarker<T>,
     {
-        self.table_rw::<T>().put(item).await
+        self.table_rw::<T>().await.put(item).await
     }
 
     // Shortcut
@@ -85,21 +85,23 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
     where
         DbTableMarkers: TableMarker<T>,
     {
-        self.table_rw::<T>().delete(id).await
+        self.table_rw::<T>().await.delete(id).await
     }
 
     /// Shortcut
     #[track_caller]
-    pub fn table<S: Table + 'static>(&self) -> super::TableWithOptimisticChanges<RawDb, S, ReadOnly>
+    pub async fn table<S: Table + 'static>(
+        &self,
+    ) -> super::TableWithOptimisticChanges<RawDb, S, ReadOnly>
     where
         DbTableMarkers: TableMarker<S>,
     {
-        self.txn().with_table::<S>().build().table::<S>()
+        self.txn().with_table::<S>().build().await.table::<S>()
     }
 
     /// Shortcut
     #[track_caller]
-    pub fn table_rw<S: Table + 'static>(
+    pub async fn table_rw<S: Table + 'static>(
         &self,
     ) -> super::TableWithOptimisticChanges<RawDb, S, ReadWrite>
     where
@@ -109,6 +111,7 @@ impl<RawDb: RawDbTrait, DbTableMarkers> DbWithOptimisticChanges<RawDb, DbTableMa
             .with_table::<S>()
             .read_write()
             .build()
+            .await
             .table::<S>()
     }
 

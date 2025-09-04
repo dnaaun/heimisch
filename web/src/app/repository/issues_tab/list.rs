@@ -34,7 +34,7 @@ pub fn IssuesList(
     let sync_engine = use_sync_engine();
 
     let issues = sync_engine.idb_signal(
-        |builder| builder.with_table::<Issue>().build(),
+        async |builder| builder.with_table::<Issue>().build().await,
         move |txn| async move {
             let issues = txn
                 .table::<Issue>()
@@ -119,7 +119,7 @@ fn IssueRow(
     let sync_engine = use_sync_engine();
     let user_id = issue.user_id.clone();
     let user = sync_engine.idb_signal(
-        |builder| builder.with_table::<User>().build(),
+        async |builder| builder.with_table::<User>().build().await,
         move |txn| {
             let user_id = user_id.clone();
             async move {
@@ -133,7 +133,7 @@ fn IssueRow(
     );
     let id = issue.id;
     let comments_count = sync_engine.idb_signal(
-        |builder| builder.with_table::<IssueComment>().build(),
+        async |builder| builder.with_table::<IssueComment>().build().await,
         move |txn| async move {
             Ok(txn
                 .table::<IssueComment>()

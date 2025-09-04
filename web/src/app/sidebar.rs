@@ -24,11 +24,12 @@ pub fn Sidebar(outlet: Outlet<(), impl IntoView>) -> impl IntoView {
     let show_forks = RwSignal::new(true);
 
     let repositorys_and_owners = sync_engine.idb_signal(
-        |txn_builder| {
+        async |txn_builder| {
             txn_builder
                 .with_table::<Repository>()
                 .with_table::<User>()
                 .build()
+                .await
         },
         |txn| async move {
             let repositorys = txn.table::<Repository>().get_all_optimistically().await?;

@@ -41,7 +41,8 @@ pub trait RawTxnTrait: Send + Sync {
 pub trait RawDbBuilderTrait {
     type RawDb: RawDbTrait;
 
-    async fn build(self) -> Result<Self::RawDb, <Self::RawDb as RawDbTrait>::Error>;
+    fn build(self)
+    -> impl Future<Output = Result<Self::RawDb, <Self::RawDb as RawDbTrait>::Error>>;
 
     fn add_table(self, table_builder: <Self::RawDb as RawDbTrait>::RawTableBuilder) -> Self;
 }

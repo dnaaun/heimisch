@@ -24,7 +24,7 @@ where
     /// of signals from leptos/solid/whatever).
     fn idb_signal(
         &self,
-        make_txn: impl for<'a> Fn(
+        make_txn: impl for<'a> AsyncFn(
                 TxnBuilderWithOptimisticChanges<
                     'a,
                     JustSend<idb::Database>,
@@ -32,9 +32,11 @@ where
                     (),
                     ReadOnly,
                 >,
-            )
-                -> TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>
-            + 'static,
+            ) -> TxnWithOptimisticChanges<
+                JustSend<idb::Database>,
+                TxnStoreMarkers,
+                Mode,
+            > + 'static,
         compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>>) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>>;
@@ -54,7 +56,7 @@ where
     #[track_caller]
     fn idb_signal(
         &self,
-        make_txn: impl for<'a> Fn(
+        make_txn: impl for<'a> AsyncFn(
                 TxnBuilderWithOptimisticChanges<
                     'a,
                     JustSend<idb::Database>,
@@ -62,14 +64,16 @@ where
                     (),
                     ReadOnly,
                 >,
-            )
-                -> TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>
-            + 'static,
+            ) -> TxnWithOptimisticChanges<
+                JustSend<idb::Database>,
+                TxnStoreMarkers,
+                Mode,
+            > + 'static,
         compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, TxnStoreMarkers, Mode>>) -> Fut
             + 'static,
     ) -> IdbSignal<Result<T, FrontendError>> {
         let db = self.db.clone();
-        let make_txn = move || make_txn(db.txn().with_no_commit_listener());
+        let make_txn = async move || make_txn(db.txn().with_no_commit_listener()).await;
         let db_subscriptions = self.db_subscriptions.clone();
 
         IdbSignal::new(make_txn, compute_val, move |db_subscription| {

@@ -7,8 +7,8 @@ use std::{
 
 use leptos::prelude::*;
 use parking_lot::Mutex;
-use utils::JustSend;
 use shared::sync_engine::{optimistic::db::TxnWithOptimisticChanges, DbSubscription};
+use utils::JustSend;
 
 type DontKNowWhatToNameYou<S> = AsyncDerived<S, LocalStorage>;
 
@@ -86,7 +86,7 @@ where
 {
     #[track_caller]
     pub fn new<Markers, Mode, Fut, Deregister>(
-        make_txn: impl Fn() -> TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, Mode>
+        make_txn: impl AsyncFn() -> TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, Mode>
             + 'static,
         compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, Mode>>) -> Fut
             + 'static,
@@ -102,7 +102,7 @@ where
 
         let compute_val = Arc::new(compute_val);
 
-        let make_txn = Arc::new(move || Arc::new(make_txn()));
+        let make_txn = Arc::new(async move || Arc::new(make_txn().await));
 
         let deregister_notifier: DeregisterNotifierFunc = Arc::new(Mutex::new(None));
         let deregister_notifier_copy = deregister_notifier.clone();
@@ -119,7 +119,7 @@ where
             async move {
                 // tracing::trace!("In async block in async derived.");
                 trigger.track();
-                let txn = make_txn();
+                let txn = make_txn().await;
                 let val = compute_val(txn.clone()).await;
 
                 let db_subscription = DbSubscription {

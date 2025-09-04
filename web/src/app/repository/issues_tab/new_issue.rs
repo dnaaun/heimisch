@@ -46,12 +46,14 @@ pub fn NewIssue(
                         &repository,
                         issues_create_request,
                     )
+                    .await
                     .log_err();
 
                 if let Ok(optimistic_issue_id) = optimistic_issue_id {
-                    let txn = sync_engine.db.txn().with_table::<Issue>().build();
-                    let issue_number = txn
+                    let issue_number = sync_engine
+                        .db
                         .table::<Issue>()
+                        .await
                         .get_optimistically(&optimistic_issue_id)
                         .await
                         .unwrap()
