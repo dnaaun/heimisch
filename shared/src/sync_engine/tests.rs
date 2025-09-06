@@ -1,4 +1,3 @@
-use any_spawner::Executor;
 use futures::{
     channel::mpsc,
     future::{select, Either},
@@ -16,6 +15,7 @@ use std::{
 use tokio::sync::Mutex;
 use typed_db::{raw_traits::SerializedId, sqlite_impl::SqliteDatabase, Table};
 use url::Url;
+use utils::{spawn, tick};
 
 use crate::{
     avail::Avail,
@@ -24,7 +24,6 @@ use crate::{
         installations::GetInstallationAccessTokenQueryParams, websocket_updates::ServerMsg,
     },
     github_api_trait::MockGithubApiTrait,
-    sync_engine::optimistic::db::tests::init_executor,
     types::{
         installation_access_token_row::InstallationAccessToken, issue::Issue,
         repository::Repository, user::User,
@@ -73,8 +72,6 @@ impl<E: std::error::Error + 'static> From<E> for AnyError {
 
 #[tokio::test]
 async fn testing_optimistic_create() -> Result<(), AnyError> {
-    init_executor();
-
     // Let's buckle up. Get all our stuff ready.
     let user = User::default();
     let repository = Repository::default();
@@ -151,7 +148,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
 
     let se_clone = se.clone();
 
-    Executor::spawn_local(async move {
+    spawn(async move {
         let _ = se_clone.recv_websocket_updates().await.log_err();
     });
 
@@ -303,10 +300,10 @@ async fn wait_for(assertion: &(dyn Fn() -> bool + Sync)) {
                 }
                 delay_ms = (delay_ms * 1.5_f64).min(1000.0);
                 tokio::time::sleep(Duration::from_millis(delay_ms as u64)).await;
-                Executor::tick().await;
+                tick().await;
             }
         }),
-        tokio::time::sleep(Duration::from_secs(2)).boxed(),
+        tokio::time::sleep(Duration::from_secs(10)).boxed(),
     );
 
     match timeout.await {

@@ -4,7 +4,6 @@ pub mod raw_traits;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_impl;
 
-use any_spawner::Executor;
 pub use derivative::Derivative;
 use futures::{
     SinkExt, StreamExt, TryStreamExt,
@@ -298,7 +297,7 @@ impl<RawDb: RawDbTrait> DbBuilder<RawDb> {
         let (event_queue_sender, event_queue_receiver) = mpsc::channel(100);
         let (event_queue_kill_switch_sender, event_queue_kill_switch_receiver) = oneshot::channel();
 
-        Executor::spawn(handle_events(
+        tokio::task::spawn(handle_events(
             event_queue_receiver,
             event_queue_kill_switch_receiver,
             raw_db.clone(),

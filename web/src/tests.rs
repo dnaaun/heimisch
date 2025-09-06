@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use leptos::{
-    prelude::*,
-    task::{tick, Executor},
-};
+use leptos::{prelude::*, task::tick};
 use macros::leptos_test_setup;
 use shared::{
     sync_engine::Transport,
@@ -19,8 +16,6 @@ wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 #[leptos_test_setup]
 pub async fn idb_signal_basic_reactivity() {
-    _ = Executor::init_wasm_bindgen();
-
     let sync_engine = SyncEngine::builder()
         .backend_api(Arc::new(BACKEND_API.with(|e| e.clone())))
         .github_api(shared::github_api_trait::GithubApi.into())

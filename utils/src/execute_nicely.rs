@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::just_send::JustSend;
+use crate::async_runtime::JustSend;
 
 pub trait DisplayDebug: std::fmt::Display + std::fmt::Debug {}
 impl<T: std::fmt::Display + std::fmt::Debug> DisplayDebug for T {}

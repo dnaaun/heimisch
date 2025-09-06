@@ -1,3 +1,7 @@
+use std::future::Future;
+
+use futures::channel::oneshot;
+
 /// This project shares a lot of code between stuff that's supposed to run
 /// in the browser, in a CLI/daemon, and in a server.
 /// Nothing needs to be Send/Sync in the browser because barring web workers
@@ -86,4 +90,27 @@ impl<S: futures::Stream> futures::Stream for JustSend<S> {
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.0.size_hint()
     }
+}
+
+pub fn spawn<F>(fut: F)
+where
+    <F as Future>::Output: Send,
+    F: Future + Send + 'static,
+{
+    #[cfg(feature = "ssr")]
+    tokio::task::spawn(fut);
+    #[cfg(not(feature = "ssr"))]
+    #[cfg(feature = "hydrate")]
+    wasm_bindgen_futures::spawn_local(async move {
+        fut.await;
+    });
+}
+
+/// Basically copied over from leptos.
+pub async fn tick() {
+    let (sender, receiver) = oneshot::channel::<()>();
+    spawn(async {
+        let _ = sender.send(());
+    });
+    let _ = receiver.await;
 }

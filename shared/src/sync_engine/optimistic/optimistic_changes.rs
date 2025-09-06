@@ -3,9 +3,8 @@
 
 use std::{any::Any, future::Future, sync::Arc};
 
-use any_spawner::Executor;
-
 use typed_db::{raw_traits::SerializedId, Table};
+use utils::spawn;
 
 use super::optimistic_change_map::OptimisticChangeMap;
 
@@ -20,13 +19,13 @@ impl OptimisticChanges {
     pub fn update<S: Table + 'static>(
         &self,
         row: S,
-        update_fut: impl Future<Output = Result<(), ()>> + 'static,
+        update_fut: impl Future<Output = Result<(), ()>> + Send + 'static,
     ) {
         let updates = self.updates.clone();
         let id = row.id().clone();
         let now = updates.insert::<S>(&id, Arc::new(row));
 
-        Executor::spawn_local(async move {
+        spawn(async move {
             match update_fut.await {
                 Ok(_) => {
                     updates.mark_realistic::<S>(&id, &now, ());
@@ -48,7 +47,7 @@ impl OptimisticChanges {
         let creations = self.creations.clone();
         let time = creations.insert::<S>(&id, Arc::new(row));
 
-        Executor::spawn(async move {
+        spawn(async move {
             match create_fut.await {
                 Ok(actual_id) => {
                     creations.mark_realistic::<S>(
@@ -67,13 +66,13 @@ impl OptimisticChanges {
     pub fn delete<S: Table>(
         &self,
         id: &S::Id,
-        delete_fut: impl Future<Output = Result<(), ()>> + 'static,
+        delete_fut: impl Future<Output = Result<(), ()>> + Send + 'static,
     ) {
         let deletes = self.deletes.clone();
         let time = deletes.insert::<S>(id, ());
         let id = id.clone();
 
-        Executor::spawn_local(async move {
+        spawn(async move {
             match delete_fut.await {
                 Ok(_) => {
                     deletes.mark_realistic::<S>(&id, &time, ());

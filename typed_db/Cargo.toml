@@ -17,7 +17,8 @@ parking_lot = "0.12.4"
 futures = "0.3.31"
 any_spawner = "0.3.0"
 derive_more = { version = "1.0.0", features = ["display", "deref"] }
+tokio = { version = "1.40.0", default-fetures = false, optional = true }
 
 [features]
 idb = ["dep:idb", "dep:wasm-bindgen", "dep:js-sys", "utils/hydrate"]
-sqlite = ["rusqlite"]
+sqlite = ["rusqlite", "dep:tokio"]

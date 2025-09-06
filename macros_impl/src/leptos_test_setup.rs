@@ -17,7 +17,6 @@ pub fn leptos_test_setup(item: TokenStream) -> TokenStream {
         #[::wasm_bindgen_test::wasm_bindgen_test]
         #fn_vis #asyncness fn #fn_name(#input_args) #output {
             {
-                _ = ::leptos::task::Executor::init_wasm_bindgen();
                 let buffer = ::std::sync::Arc::new(::std::sync::Mutex::new(Vec::new()));
                 let writer_factory = ::leptos_testing_utils::leptos_test_setup::MemoryWriterFactory {
                     buffer: ::std::sync::Arc::clone(&buffer),

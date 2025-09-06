@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use any_spawner::Executor;
 use bon::builder;
 use parking_lot::Mutex;
 use typed_db::{sqlite_impl::SqliteDatabase, RawDbTrait, ReadOnly, ReadWrite};
@@ -189,14 +188,6 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .await;
 }
 
-pub fn init_executor() {
-    #[cfg(feature = "ssr")]
-    let _ = Executor::init_futures_executor(); // ignore AlreadySet error
-
-    #[cfg(feature = "hydrate")]
-    let _ = Executor::init_wasm_bindgen(); // ignore AlreadySet error
-}
-
 #[tokio::test]
 pub async fn get_all_no_optimisim_put_overlapping() {
     num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
@@ -254,7 +245,6 @@ pub async fn get_all_no_optimisim_create_overlapping() {
 
 #[tokio::test]
 pub async fn get_all_no_optimisim_create_non_overlapping() {
-    init_executor();
     num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Repository>().build().await)

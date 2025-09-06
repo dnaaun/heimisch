@@ -26,7 +26,6 @@ http = "1.1.0"
 ewebsock = "0.8.0"
 pin-project = "1.1.7"
 serde_urlencoded = "0.7.1"
-any_spawner = { version = "0.2.0", default-features = false }
 tracing-subscriber = "0.3.19"
 bon = "3.3.2"
 mockall = "0.13.1"
@@ -52,7 +51,6 @@ hydrate = [
 	"dep:leptos_testing_utils",
 	"dep:gloo-timers",
 	"dep:web-sys",
-	"any_spawner/wasm-bindgen",
 	"utils/hydrate",
 ]
 ssr = [
@@ -61,7 +59,6 @@ ssr = [
 	"dep:diesel-derive-newtype",
 	"dep:diesel",
 	"dep:tokio",
-	"any_spawner/futures-executor",
 ]
 
 # Otherwise (nightly) rust complains about `[wasm_bindgen_test]`

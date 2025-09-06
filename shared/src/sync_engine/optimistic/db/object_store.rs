@@ -191,7 +191,7 @@ where
     pub fn update_optimistically(
         &self,
         row: S,
-        update_fut: impl Future<Output = Result<(), ()>> + 'static,
+        update_fut: impl Future<Output = Result<(), ()>> + Send + 'static,
     ) {
         let reactivity_trackers = ReactivityTrackers::builder()
             .stores_modified(hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]])
