@@ -47,7 +47,9 @@ impl OptimisticChanges {
         let creations = self.creations.clone();
         let time = creations.insert::<S>(&id, Arc::new(row));
 
+        println!("In OptimisticChanges::create");
         spawn(async move {
+            println!("In OptimisticChanges::create spawn");
             match create_fut.await {
                 Ok(actual_id) => {
                     creations.mark_realistic::<S>(

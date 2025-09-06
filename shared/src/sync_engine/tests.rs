@@ -70,7 +70,7 @@ impl<E: std::error::Error + 'static> From<E> for AnyError {
     }
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn testing_optimistic_create() -> Result<(), AnyError> {
     // Let's buckle up. Get all our stuff ready.
     let user = User::default();
@@ -92,7 +92,6 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     let title = IssuesCreateRequestTitle::String("fancy title".to_string());
 
     let create_issues_hit = Arc::new(NumTimesHit::default());
-    let create_issues_hit_clone = create_issues_hit.clone();
     let (mut create_issues_resp_sender, create_issues_resp_receiver) =
         mpsc::channel::<github_api::models::Issue>(10);
 
@@ -100,6 +99,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
     let create_issues_resp_receiver = Arc::new(Mutex::new(create_issues_resp_receiver));
 
     let title_clone = title.clone();
+    let create_issues_hit2 = create_issues_hit.clone();
     mock_github_api
         .expect_issues_slash_create()
         .times(..=1)
@@ -107,12 +107,12 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
             issue_create_request_in_mock.title == title_clone
         })
         .returning_st(move |_, _, _, _| {
-            let create_issues_hit_clone = create_issues_hit_clone.clone();
+            let create_issues_hit2 = create_issues_hit2.clone();
             let create_issues_resp_receiver = create_issues_resp_receiver.clone();
             Box::pin(async move {
                 let mut receiver = create_issues_resp_receiver.lock().await;
                 let ret = receiver.next().await.unwrap();
-                create_issues_hit_clone.increment();
+                create_issues_hit2.increment();
                 Ok(ret)
             })
         });
@@ -199,7 +199,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
 
     // Now let's send the reply to the create_issues_resp_receiver.
     create_issues_resp_sender.send(github_issue).await?;
-    wait_for(&move || create_issues_hit.expect_and_reset(1)).await;
+    wait_for(&mut || create_issues_hit.expect_and_reset(1)).await;
 
     let single_subscriber_hit = Arc::new(NumTimesHit::default());
     let single_subscriber_hit_clone = single_subscriber_hit.clone();
@@ -242,8 +242,8 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
         })
         .await?;
 
-    wait_for(&move || bulk_subscriber_hit.expect_and_reset(1)).await;
-    wait_for(&move || single_subscriber_hit.expect_and_reset(1)).await;
+    wait_for(&mut || bulk_subscriber_hit.expect_and_reset(1)).await;
+    wait_for(&mut || single_subscriber_hit.expect_and_reset(1)).await;
 
     let txn = se.db.txn().with_table::<Issue>().build().await;
 
@@ -287,11 +287,11 @@ async fn wait_for(assertion: &dyn Fn() -> bool) {
 
 #[cfg(feature = "ssr")]
 #[track_caller]
-async fn wait_for(assertion: &(dyn Fn() -> bool + Sync)) {
+async fn wait_for(assertion: &mut (dyn FnMut() -> bool + Sync)) {
     use futures::future::FutureExt;
 
     let timeout = select(
-        Box::pin(async {
+        Box::pin(async move {
             let mut delay_ms = 20.0;
 
             loop {
@@ -303,7 +303,7 @@ async fn wait_for(assertion: &(dyn Fn() -> bool + Sync)) {
                 tick().await;
             }
         }),
-        tokio::time::sleep(Duration::from_secs(10)).boxed(),
+        tokio::time::sleep(Duration::from_secs(2)).boxed(),
     );
 
     match timeout.await {

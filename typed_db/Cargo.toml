@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 derivative = "2.2.0"
 idb = { version = "0.6.4", optional = true }
-rusqlite = { version = "0.37.0", features = ["bundled"], optional = true }
+rusqlite = { version = "0.37.0", features = ["bundled", "serde_json"], optional = true }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0" }
 wasm-bindgen = { version = "*", optional = true }
@@ -17,7 +17,10 @@ parking_lot = "0.12.4"
 futures = "0.3.31"
 any_spawner = "0.3.0"
 derive_more = { version = "1.0.0", features = ["display", "deref"] }
-tokio = { version = "1.40.0", default-fetures = false, optional = true }
+tokio = { version = "1.40.0", default-features = false, optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
 
 [features]
 idb = ["dep:idb", "dep:wasm-bindgen", "dep:js-sys", "utils/hydrate"]

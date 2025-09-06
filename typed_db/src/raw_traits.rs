@@ -60,6 +60,14 @@ impl SerializedValue {
     pub fn from_value<T: Serialize>(value: &T) -> Result<Self, serde_json::Error> {
         Ok(Self(serde_json::to_string(value)?))
     }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    pub fn as_raw_value(&self) -> Result<serde_json::Value, serde_json::Error> {
+        serde_json::from_str(&self.0)
+    }
 }
 
 pub trait RawTableAccessTrait: Send + Sync {

@@ -1,3 +1,4 @@
+/// Mostly LLM generated.
 use futures::lock::Mutex;
 use rusqlite::{Connection, params};
 use std::sync::Arc;
@@ -257,22 +258,50 @@ impl RawIndexTrait for SqliteIndex {
 
     async fn get(&self, value: &SerializedValue) -> Result<Option<SerializedObject>, Error> {
         let conn = self.connection.lock().await;
-        let value_str = serde_json::to_string(value)?;
+        let raw_value = value.as_raw_value()?;
 
-        let mut stmt = conn.prepare(&format!(
+        let query = format!(
             "SELECT data FROM {} WHERE json_extract(data, '$.{}') = ?",
             self.table_name, self.index_name
-        ))?;
+        );
 
-        let mut rows = stmt.query_map([value_str], |row| {
-            let data: String = row.get(0)?;
-            Ok(data)
-        })?;
+        let data_results: Vec<String> = match &raw_value {
+            serde_json::Value::String(s) => {
+                let mut stmt = conn.prepare(&query)?;
+                stmt.query_map([s], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?
+            }
+            serde_json::Value::Number(n) if n.is_i64() => {
+                let mut stmt = conn.prepare(&query)?;
+                stmt.query_map([n.as_i64().unwrap()], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?
+            }
+            serde_json::Value::Number(n) if n.is_f64() => {
+                let mut stmt = conn.prepare(&query)?;
+                stmt.query_map([n.as_f64().unwrap()], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?
+            }
+            serde_json::Value::Bool(b) => {
+                let mut stmt = conn.prepare(&query)?;
+                stmt.query_map([*b], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?
+            }
+            serde_json::Value::Null => {
+                let mut stmt = conn.prepare(&query)?;
+                stmt.query_map([Option::<String>::None], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?
+            }
+            _ => {
+                return Err(Error::Sqlite(rusqlite::Error::InvalidColumnType(
+                    0,
+                    "unsupported_json_type".to_string(),
+                    rusqlite::types::Type::Null,
+                )));
+            }
+        };
 
-        if let Some(row) = rows.next() {
-            let data = row?;
-            let item = serde_json::from_str(&data)?;
-            Ok(Some(item))
+        if let Some(data) = data_results.into_iter().next() {
+            Ok(Some(SerializedObject(data)))
         } else {
             Ok(None)
         }
@@ -287,21 +316,36 @@ impl RawIndexTrait for SqliteIndex {
         let mut items = Vec::new();
 
         if let Some(value) = value {
-            let value_str = serde_json::to_string(value)?;
+            let raw_value = value.as_raw_value()?;
             let query = format!(
                 "SELECT data FROM {} WHERE json_extract(data, '$.{}') = ?",
                 self.table_name, self.index_name
             );
-            let mut stmt = conn.prepare(&query)?;
-            let rows = stmt.query_map([value_str], |row| {
-                let data: String = row.get(0)?;
-                Ok(data)
-            })?;
 
-            for row in rows {
-                let data = row?;
-                let item = serde_json::from_str(&data)?;
-                items.push(item);
+            let mut stmt = conn.prepare(&query)?;
+            let data_results: Vec<String> = match &raw_value {
+                serde_json::Value::String(s) => stmt
+                    .query_map([s], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?,
+                serde_json::Value::Number(n) if n.is_i64() => stmt
+                    .query_map([n.as_i64().unwrap()], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?,
+                serde_json::Value::Number(n) if n.is_f64() => stmt
+                    .query_map([n.as_f64().unwrap()], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?,
+                serde_json::Value::Bool(b) => stmt
+                    .query_map([*b], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?,
+                serde_json::Value::Null => stmt
+                    .query_map([Option::<String>::None], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?,
+                value => stmt
+                    .query_map([value], |row| Ok(row.get::<_, String>(0)?))?
+                    .collect::<Result<Vec<_>, _>>()?,
+            };
+
+            for data in data_results {
+                items.push(SerializedObject(data));
             }
         } else {
             let query = format!("SELECT data FROM {}", self.table_name);
@@ -313,10 +357,12 @@ impl RawIndexTrait for SqliteIndex {
 
             for row in rows {
                 let data = row?;
-                let item = serde_json::from_str(&data)?;
-                items.push(item);
+                items.push(SerializedObject(data));
             }
         }
         Ok(items)
     }
 }
+
+#[cfg(test)]
+mod tests;

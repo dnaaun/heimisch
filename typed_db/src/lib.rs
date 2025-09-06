@@ -187,6 +187,7 @@ fn handle_events<RawDb: RawDbTrait>(
     raw_db: Arc<RawDb>,
 ) -> impl Future<Output = ()> + Send + Sync {
     async move {
+        println!("In handle_events");
         let mut kill_switch_invoked = false;
         while !kill_switch_invoked {
             let requests = futures::select! {
@@ -230,7 +231,11 @@ fn handle_events<RawDb: RawDbTrait>(
                             .try_collect::<()>()
                             .await;
 
-                        done.send(results).unwrap();
+                        if let Err(e) = txn.commit().await {
+                            done.send(Err(e)).unwrap();
+                        } else {
+                            done.send(results).unwrap();
+                        }
                     }
                     TxnData::Read {
                         data,
@@ -238,7 +243,7 @@ fn handle_events<RawDb: RawDbTrait>(
                     } => {
                         let txn = raw_db.txn(&[data.table_name()], false).await;
                         let response = async || {
-                            Ok::<_, RawDb::Error>(match data {
+                            let result = match data {
                                 ReadData::Get { id, table_name } => {
                                     ReadResponse::Row(txn.get_table(table_name).get(&id).await?)
                                 }
@@ -265,7 +270,9 @@ fn handle_events<RawDb: RawDbTrait>(
                                         .get_all(value.as_ref())
                                         .await?,
                                 ),
-                            })
+                            };
+                            txn.commit().await?;
+                            Ok::<_, RawDb::Error>(result)
                         };
 
                         result.send(response().await).unwrap();

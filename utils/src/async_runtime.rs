@@ -97,8 +97,13 @@ where
     <F as Future>::Output: Send,
     F: Future + Send + 'static,
 {
-    #[cfg(feature = "ssr")]
-    tokio::task::spawn(fut);
+    // #[cfg(feature = "ssr")]
+    println!("In spawn");
+    // #[cfg(feature = "ssr")]
+    tokio::task::spawn(async move {
+        println!("INSIDE SPAWNED FUTURE");
+        fut.await
+    });
     #[cfg(not(feature = "ssr"))]
     #[cfg(feature = "hydrate")]
     wasm_bindgen_futures::spawn_local(async move {
