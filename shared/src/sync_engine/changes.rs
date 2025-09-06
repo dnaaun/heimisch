@@ -1,6 +1,6 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use typed_db::{Present, RawDbTrait, ReadOnly, Table, TableMarker, TxnMode};
+use typed_db::{Present, RawDbTrait, ReadOnly, Table, TxnMode};
 
 use crate::avail::{MergeError, MergeStructWithAvails};
 use crate::backend_api_trait::BackendApiTrait;
@@ -110,32 +110,6 @@ where
     }
 }
 
-pub trait TableMarkersForChanges:
-    TableMarker<Milestone>
-    + TableMarker<Label>
-    + TableMarker<License>
-    + TableMarker<Repository>
-    + TableMarker<User>
-    + TableMarker<Issue>
-    + TableMarker<IssueComment>
-    + TableMarker<GithubApp>
-    + Default
-{
-}
-
-impl<T> TableMarkersForChanges for T where
-    T: TableMarker<Milestone>
-        + TableMarker<License>
-        + TableMarker<Label>
-        + TableMarker<Repository>
-        + TableMarker<User>
-        + TableMarker<Issue>
-        + TableMarker<IssueComment>
-        + TableMarker<GithubApp>
-        + Default
-{
-}
-
 impl Changes {
     pub fn with_added(mut self, changes: Changes) -> Result<Self, MergeError> {
         self.add(changes)?;
@@ -143,18 +117,9 @@ impl Changes {
     }
 
     /// A transaction builder that contains all the stores that `Changes` might interact with.
-    pub fn txn<RawDb: RawDbTrait, TableMarkers>(
-        db: &DbWithOptimisticChanges<RawDb, TableMarkers>,
-    ) -> TxnBuilderWithOptimisticChanges<
-        '_,
-        RawDb,
-        TableMarkers,
-        impl TableMarkersForChanges,
-        ReadOnly,
-    >
-    where
-        TableMarkers: TableMarkersForChanges,
-    {
+    pub fn txn<RawDb: RawDbTrait>(
+        db: &DbWithOptimisticChanges<RawDb>,
+    ) -> TxnBuilderWithOptimisticChanges<'_, RawDb, ReadOnly> {
         db.txn()
             .with_table::<GithubApp>()
             .with_table::<Issue>()
@@ -436,12 +401,9 @@ where
 impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
     SyncEngine<RawDb, BackendApi, Transport, GithubApi>
 {
-    pub async fn persist_changes<
-        Marker: TableMarkersForChanges,
-        Mode: TxnMode<SupportsReadWrite = Present>,
-    >(
+    pub async fn persist_changes<Mode: TxnMode<SupportsReadWrite = Present>>(
         &self,
-        txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+        txn: &TxnWithOptimisticChanges<RawDb, Mode>,
         changes: impl IntoChanges,
     ) -> SyncResult<(), Transport, RawDb> {
         let Changes {
@@ -454,26 +416,24 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             labels,
             milestones,
         } = changes.into_changes()?;
-        persist_changes_to_issues::<Transport, RawDb, Marker, Mode>(txn, issues).await?;
-        persist_changes_to_issue_comments::<Transport, RawDb, Marker, Mode>(txn, issue_comments)
-            .await?;
-        persist_changes_to_github_apps::<Transport, RawDb, Marker, Mode>(txn, github_apps).await?;
-        persist_changes_to_users::<Transport, RawDb, Marker, Mode>(txn, users).await?;
-        persist_changes_to_repositorys::<Transport, RawDb, Marker, Mode>(txn, repositorys).await?;
-        persist_changes_to_milestones::<Transport, RawDb, Marker, Mode>(txn, milestones).await?;
-        persist_changes_to_licenses::<Transport, RawDb, Marker, Mode>(txn, licenses).await?;
-        upsert_labels::<Transport, RawDb, Marker, Mode>(txn, labels).await?;
+        persist_changes_to_issues::<Transport, RawDb, Mode>(txn, issues).await?;
+        persist_changes_to_issue_comments::<Transport, RawDb, Mode>(txn, issue_comments).await?;
+        persist_changes_to_github_apps::<Transport, RawDb, Mode>(txn, github_apps).await?;
+        persist_changes_to_users::<Transport, RawDb, Mode>(txn, users).await?;
+        persist_changes_to_repositorys::<Transport, RawDb, Mode>(txn, repositorys).await?;
+        persist_changes_to_milestones::<Transport, RawDb, Mode>(txn, milestones).await?;
+        persist_changes_to_licenses::<Transport, RawDb, Mode>(txn, licenses).await?;
+        upsert_labels::<Transport, RawDb, Mode>(txn, labels).await?;
 
         Ok(())
     }
 }
 
-async fn persist_changes_to_issues<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode: TxnMode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_issues<W: TransportTrait, RawDb: RawDbTrait, Mode: TxnMode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     issues: HashMap<IssueId, ExistingOrDeleted<Issue>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<Issue>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let issue_store = txn.table::<Issue>();
@@ -496,12 +456,11 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_issue_comments<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_issue_comments<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     issue_comments: HashMap<IssueCommentId, ExistingOrDeleted<IssueComment>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<IssueComment>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let issue_comment_store = txn.table::<IssueComment>();
@@ -523,12 +482,11 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_github_apps<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_github_apps<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     github_apps: HashMap<GithubAppId, ExistingOrDeleted<GithubApp>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<GithubApp>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let github_app_store = txn.table::<GithubApp>();
@@ -550,12 +508,11 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_users<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_users<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     users: HashMap<UserId, ExistingOrDeleted<User>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<User>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let user_store = txn.table::<User>();
@@ -578,12 +535,11 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_licenses<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_licenses<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     licenses: HashMap<LicenseId, ExistingOrDeleted<License>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<License>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let license_store = txn.table::<License>();
@@ -606,12 +562,11 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_milestones<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_milestones<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     milestones: HashMap<MilestoneId, ExistingOrDeleted<Milestone>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<Milestone>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let milestone_store = txn.table::<Milestone>();
@@ -634,12 +589,11 @@ where
     Ok(())
 }
 
-async fn persist_changes_to_repositorys<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn persist_changes_to_repositorys<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     repositorys: HashMap<RepositoryId, ExistingOrDeleted<Repository>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<Repository>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let repository_store = txn.table::<Repository>();
@@ -662,12 +616,11 @@ where
     Ok(())
 }
 
-async fn upsert_labels<W: TransportTrait, RawDb: RawDbTrait, Marker, Mode>(
-    txn: &TxnWithOptimisticChanges<RawDb, Marker, Mode>,
+async fn upsert_labels<W: TransportTrait, RawDb: RawDbTrait, Mode>(
+    txn: &TxnWithOptimisticChanges<RawDb, Mode>,
     labels: HashMap<LabelId, ExistingOrDeleted<Label>>,
 ) -> SyncResult<(), W, RawDb>
 where
-    Marker: TableMarker<Label>,
     Mode: TxnMode<SupportsReadWrite = Present>,
 {
     let label_store = txn.table::<Label>();

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, TableMarker, Txn, TxnBuilder, TxnMode};
+use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, Txn, TxnBuilder, TxnMode};
 
 use crate::sync_engine::optimistic::{db::MaybeOptimistic, optimistic_changes::OptimisticChanges};
 
@@ -10,25 +10,24 @@ use super::{
 };
 
 #[derive(derive_more::From)]
-struct TxnWithOptimisticChangesInner<RawDb: RawDbTrait, C, Mode> {
-    idb_txn: Txn<RawDb, C, Mode>,
+struct TxnWithOptimisticChangesInner<RawDb: RawDbTrait, Mode> {
+    idb_txn: Txn<RawDb, Mode>,
     commit_listener: Option<CommitListener>,
 }
 
-pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, C, Mode> {
+pub struct TxnWithOptimisticChanges<RawDb: RawDbTrait, Mode> {
     optimistic_updates: Arc<OptimisticChanges>,
     /// RTI: Will be None if and only if the transaction is committed or aborted.
     /// RTI upkeep: `.commit()` and `.abort()` take a `self`.
-    inner: Option<TxnWithOptimisticChangesInner<RawDb, C, Mode>>,
+    inner: Option<TxnWithOptimisticChangesInner<RawDb, Mode>>,
 
     /// Could probably pass out &mut references istead of RefCell, but let's go for easy mode Rust.
     pub reactivity_trackers: ReactivityTrackers,
 }
 
-impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, Mode> {
+impl<RawDb: RawDbTrait, Mode> TxnWithOptimisticChanges<RawDb, Mode> {
     pub async fn get<S: Table>(&self, id: &S::Id) -> Result<Option<S>, RawDb::Error>
     where
-        Markers: TableMarker<S>,
         Mode: TxnMode,
     {
         self.table::<S>().get(id).await
@@ -39,7 +38,6 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
         id: &S::Id,
     ) -> Result<Option<MaybeOptimistic<S>>, RawDb::Error>
     where
-        Markers: TableMarker<S>,
         Mode: TxnMode,
     {
         self.table::<S>().get_optimistically(id).await
@@ -48,7 +46,6 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
     pub fn table<S>(&self) -> TableWithOptimisticChanges<RawDb, S, Mode>
     where
         S: Table,
-        Markers: TableMarker<S>,
         Mode: TxnMode,
     {
         let inner = self.inner.as_ref().expect("");
@@ -93,44 +90,27 @@ impl<RawDb: RawDbTrait, Markers, Mode> TxnWithOptimisticChanges<RawDb, Markers, 
     }
 }
 
-impl<RawDb: RawDbTrait, Markers, Mode> Drop for TxnWithOptimisticChanges<RawDb, Markers, Mode> {
+impl<RawDb: RawDbTrait, Mode> Drop for TxnWithOptimisticChanges<RawDb, Mode> {
     fn drop(&mut self) {
         let _ = self.commit_impl();
     }
 }
 
 #[derive(derive_more::Constructor)]
-pub struct TxnBuilderWithOptimisticChanges<
-    'db,
-    RawDb: RawDbTrait,
-    DbTableMarkers,
-    TxnTableMarkers,
-    Mode,
-> {
-    inner: TxnBuilder<'db, RawDb, DbTableMarkers, TxnTableMarkers, Mode>,
+pub struct TxnBuilderWithOptimisticChanges<'db, RawDb: RawDbTrait, Mode> {
+    inner: TxnBuilder<'db, RawDb, Mode>,
     optimistic_updates: Arc<OptimisticChanges>,
     commit_listener: Option<CommitListener>,
 }
 
-impl<'db, RawDb: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
-    TxnBuilderWithOptimisticChanges<'db, RawDb, DbTableMarkers, TxnTableMarkers, Mode>
+impl<'db, RawDb: RawDbTrait, Mode> TxnBuilderWithOptimisticChanges<'db, RawDb, Mode>
 where
-    TxnTableMarkers: Default,
     Mode: TxnMode,
 {
     #[track_caller]
-    pub fn with_table<H2>(
-        self,
-    ) -> TxnBuilderWithOptimisticChanges<
-        'db,
-        RawDb,
-        DbTableMarkers,
-        (H2::Marker, TxnTableMarkers),
-        Mode,
-    >
+    pub fn with_table<H2>(self) -> TxnBuilderWithOptimisticChanges<'db, RawDb, Mode>
     where
         H2: Table + 'static,
-        DbTableMarkers: TableMarker<H2>,
     {
         TxnBuilderWithOptimisticChanges {
             inner: self.inner.with_table::<H2>(),
@@ -140,10 +120,7 @@ where
     }
 
     #[track_caller]
-    pub fn read_write(
-        self,
-    ) -> TxnBuilderWithOptimisticChanges<'db, RawDb, DbTableMarkers, TxnTableMarkers, ReadWrite>
-    {
+    pub fn read_write(self) -> TxnBuilderWithOptimisticChanges<'db, RawDb, ReadWrite> {
         TxnBuilderWithOptimisticChanges {
             inner: self.inner.read_write(),
             optimistic_updates: self.optimistic_updates,
@@ -152,10 +129,7 @@ where
     }
 
     #[track_caller]
-    pub fn read_only(
-        self,
-    ) -> TxnBuilderWithOptimisticChanges<'db, RawDb, DbTableMarkers, TxnTableMarkers, ReadOnly>
-    {
+    pub fn read_only(self) -> TxnBuilderWithOptimisticChanges<'db, RawDb, ReadOnly> {
         TxnBuilderWithOptimisticChanges {
             inner: self.inner.read_only(),
             optimistic_updates: self.optimistic_updates,
@@ -173,13 +147,11 @@ where
     }
 }
 
-impl<RawDb: RawDbTrait, TxnTableMarkers, DbTableMarkers, Mode>
-    TxnBuilderWithOptimisticChanges<'_, RawDb, DbTableMarkers, TxnTableMarkers, Mode>
+impl<RawDb: RawDbTrait, Mode> TxnBuilderWithOptimisticChanges<'_, RawDb, Mode>
 where
     Mode: TxnMode,
-    TxnTableMarkers: Default,
 {
-    pub async fn build(self) -> TxnWithOptimisticChanges<RawDb, TxnTableMarkers, Mode> {
+    pub async fn build(self) -> TxnWithOptimisticChanges<RawDb, Mode> {
         TxnWithOptimisticChanges {
             optimistic_updates: self.optimistic_updates.clone(),
             inner: Some((self.inner.build().await, self.commit_listener).into()),

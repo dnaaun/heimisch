@@ -9,10 +9,7 @@ use url::Url;
 use crate::{
     backend_api_trait::BackendApi,
     endpoints::endpoint_client::EndpointClient,
-    sync_engine::{
-        websocket_updates::transport::tests::MockTransport, DbSubscription, DbTableMarkers,
-        SyncEngine,
-    },
+    sync_engine::{websocket_updates::transport::tests::MockTransport, DbSubscription, SyncEngine},
     types::{
         issue::{Issue, RepositoryIdIndex},
         repository::Repository,
@@ -38,21 +35,15 @@ async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, M
 }
 
 #[builder]
-async fn num_times_subscriber_called<
-    RawDb: RawDbTrait,
-    Txn1Markers,
-    Txn1Mode,
-    Txn2Markers,
-    Txn2Mode,
->(
+async fn num_times_subscriber_called<RawDb: RawDbTrait, Txn1Mode, Txn2Mode>(
     make_txn_1: impl for<'a> AsyncFn(
-        TxnBuilderWithOptimisticChanges<'a, RawDb, DbTableMarkers, (), ReadOnly>,
-    ) -> TxnWithOptimisticChanges<RawDb, Txn1Markers, Txn1Mode>,
+        TxnBuilderWithOptimisticChanges<'a, RawDb, ReadOnly>,
+    ) -> TxnWithOptimisticChanges<RawDb, Txn1Mode>,
     make_txn_2: impl for<'a> AsyncFn(
-        TxnBuilderWithOptimisticChanges<'a, RawDb, DbTableMarkers, (), ReadWrite>,
-    ) -> TxnWithOptimisticChanges<RawDb, Txn2Markers, Txn2Mode>,
-    with_txn_1: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn1Markers, Txn1Mode>),
-    with_txn_2: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn2Markers, Txn2Mode>),
+        TxnBuilderWithOptimisticChanges<'a, RawDb, ReadWrite>,
+    ) -> TxnWithOptimisticChanges<RawDb, Txn2Mode>,
+    with_txn_1: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn1Mode>),
+    with_txn_2: impl AsyncFn(&TxnWithOptimisticChanges<RawDb, Txn2Mode>),
     should_overlap: bool,
 ) {
     let subscriber_hit_times = Arc::new(Mutex::new(0));
@@ -86,7 +77,7 @@ async fn num_times_subscriber_called<
 }
 
 pub async fn index_get_no_optimisim_put_overlapping() {
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Issue>().build().await)
         .with_txn_1(async |txn| {
@@ -106,7 +97,7 @@ pub async fn index_get_no_optimisim_put_overlapping() {
 
 #[tokio::test]
 pub async fn index_get_no_optimisim_put_non_overlapping() {
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Repository>().build().await)
         .with_txn_1(async |txn| {
@@ -130,7 +121,7 @@ pub async fn index_get_no_optimisim_put_non_overlapping() {
 #[tokio::test]
 pub async fn get_no_optimisim_put_overlapping() {
     let some_issue_id = 4.into();
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Issue>().build().await)
         .with_txn_1(async |txn| {
@@ -156,7 +147,7 @@ pub async fn get_no_optimisim_put_overlapping() {
 #[tokio::test]
 pub async fn get_no_optimisim_put_non_overlapping() {
     let some_issue_id = 4.into();
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Issue>().build().await)
         .with_txn_1(async |txn| {
@@ -178,7 +169,7 @@ pub async fn get_no_optimisim_put_non_overlapping() {
         .call()
         .await;
 
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Repository>().build().await)
         .with_txn_1(async |txn| {
@@ -208,7 +199,7 @@ pub fn init_executor() {
 
 #[tokio::test]
 pub async fn get_all_no_optimisim_put_overlapping() {
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Issue>().build().await)
         .with_txn_1(async |txn| {
@@ -224,7 +215,7 @@ pub async fn get_all_no_optimisim_put_overlapping() {
 
 #[tokio::test]
 pub async fn get_all_no_optimisim_put_non_overlapping() {
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Repository>().build().await)
         .with_txn_1(async |txn| {
@@ -246,7 +237,7 @@ pub async fn get_all_no_optimisim_put_non_overlapping() {
 
 #[tokio::test]
 pub async fn get_all_no_optimisim_create_overlapping() {
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Issue>().build().await)
         .with_txn_1(async |txn| {
@@ -264,7 +255,7 @@ pub async fn get_all_no_optimisim_create_overlapping() {
 #[tokio::test]
 pub async fn get_all_no_optimisim_create_non_overlapping() {
     init_executor();
-    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _, _, _>()
+    num_times_subscriber_called::<SqliteDatabase, _, _, _, _, _, _>()
         .make_txn_1(async |txn| txn.with_table::<Issue>().build().await)
         .make_txn_2(async |txn| txn.with_table::<Repository>().build().await)
         .with_txn_1(async |txn| {

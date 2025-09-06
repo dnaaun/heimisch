@@ -2,20 +2,8 @@ use std::sync::Arc;
 
 use crate::backend_api_trait::BackendApiTrait;
 use crate::sync_engine::error::RawDbErrorToSyncError;
-use crate::types::github_app::GithubAppTableMarker;
-use crate::types::installation_access_token_row::InstallationAccessTokenRowTableMarker;
-use crate::types::installation_initial_sync_status::InstallationInitialSyncStatusTableMarker;
-use crate::types::issue::IssueTableMarker;
-use crate::types::issue_comment::IssueCommentTableMarker;
-use crate::types::issue_comment_initial_sync_status::IssueCommentsInitialSyncStatusTableMarker;
-use crate::types::issues_initial_sync_status::IssuesInitialSyncStatusTableMarker;
-use crate::types::label::{Label, LabelTableMarker};
-use crate::types::last_webhook_update_at::{LastWebhookUpdateAt, LastWebhookUpdateAtTableMarker};
-use crate::types::license::LicenseTableMarker;
-use crate::types::milestone::MilestoneTableMarker;
-use crate::types::repository::RepositoryTableMarker;
-use crate::types::repository_initial_sync_status::RepositoryInitialSyncStatusTableMarker;
-use crate::types::user::UserTableMarker;
+use crate::types::label::Label;
+use crate::types::last_webhook_update_at::LastWebhookUpdateAt;
 use crate::types::{
     github_app::GithubApp, installation_access_token_row::InstallationAccessTokenRow,
     installation_initial_sync_status::InstallationInitialSyncStatus, issue::Issue,
@@ -35,43 +23,6 @@ use super::websocket_updates::transport::TransportTrait;
 use super::DbSubscription;
 use super::{error::SyncResult, SyncEngine};
 
-pub type DbTableMarkers = (
-    InstallationInitialSyncStatusTableMarker,
-    (
-        RepositoryInitialSyncStatusTableMarker,
-        (
-            IssueCommentsInitialSyncStatusTableMarker,
-            (
-                LastWebhookUpdateAtTableMarker,
-                (
-                    IssueCommentTableMarker,
-                    (
-                        InstallationAccessTokenRowTableMarker,
-                        (
-                            IssuesInitialSyncStatusTableMarker,
-                            (
-                                LabelTableMarker,
-                                (
-                                    LicenseTableMarker,
-                                    (
-                                        MilestoneTableMarker,
-                                        (
-                                            RepositoryTableMarker,
-                                            (
-                                                GithubAppTableMarker,
-                                                (UserTableMarker, (IssueTableMarker, ())),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        ),
-    ),
-);
 
 #[bon]
 impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
@@ -88,7 +39,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
                 + Sync,
         >,
     ) -> SyncResult<Self, Transport, RawDb> {
-        let db = Db::<RawDb, ()>::builder(db_name)
+        let db = Db::<RawDb>::builder(db_name)
             .with_table::<Issue>()
             .with_table::<User>()
             .with_table::<GithubApp>()

@@ -1,5 +1,3 @@
-#![feature(marker_trait_attr)]
-
 #[cfg(feature = "idb")]
 pub mod idb_impl;
 pub mod raw_traits;
@@ -26,20 +24,8 @@ use std::{
 
 use serde::{Serialize, de::DeserializeOwned};
 
-#[marker]
-pub trait TableMarker<T> {}
-
-impl<Head, Tail, T> TableMarker<T> for (Head, Tail) where Tail: TableMarker<T> {}
-
-impl<Head, Tail, T> TableMarker<T> for (Head, Tail) where Head: TableMarker<T> {}
-
-impl<T: Table> TableMarker<T> for T::Marker {}
-
 pub trait Table: DeserializeOwned + Serialize + Clone + 'static + Send + Sync + Sized {
     const NAME: &'static str;
-
-    /// I _feel_ like I'm going to need this.
-    type Marker: Default;
 
     /// I need the `Serialize` here to make it easier to integrate with idb and for optimistic stuff.
     /// I need the `DeserializeOwned` here for optimistic stuff.
@@ -142,8 +128,7 @@ impl ReadResponse {
     }
 }
 
-pub struct Db<RawDb: RawDbTrait, TableMarkers> {
-    markers: PhantomData<TableMarkers>,
+pub struct Db<RawDb: RawDbTrait> {
     // So sqlite has a cocurrency limit of 1 for transactions. The first thing I tried
     // was locking a mutex for the duration of transaction (ie, until the `Txn` is dropped).
     // I opted to go for an async
@@ -165,7 +150,7 @@ pub struct Db<RawDb: RawDbTrait, TableMarkers> {
     event_queue_kill_switch_sender: Option<oneshot::Sender<()>>,
 }
 
-impl<RawDb: RawDbTrait, TableMarkers> Drop for Db<RawDb, TableMarkers> {
+impl<RawDb: RawDbTrait> Drop for Db<RawDb> {
     fn drop(&mut self) {
         match self
             .event_queue_kill_switch_sender
@@ -181,17 +166,15 @@ impl<RawDb: RawDbTrait, TableMarkers> Drop for Db<RawDb, TableMarkers> {
     }
 }
 
-pub struct DbBuilder<RawDb: RawDbTrait, TableMarkers> {
+pub struct DbBuilder<RawDb: RawDbTrait> {
     name: String,
-    markers: PhantomData<TableMarkers>,
     table_builders: HashMap<TypeId, RawDb::RawTableBuilder>,
 }
 
-impl<RawDb: RawDbTrait, TableMarkers> Db<RawDb, TableMarkers> {
-    pub fn builder(name: String) -> DbBuilder<RawDb, ()> {
+impl<RawDb: RawDbTrait> Db<RawDb> {
+    pub fn builder(name: String) -> DbBuilder<RawDb> {
         DbBuilder {
             name,
-            markers: PhantomData,
             table_builders: Default::default(),
         }
     }
@@ -294,18 +277,17 @@ fn handle_events<RawDb: RawDbTrait>(
     }
 }
 
-impl<RawDb: RawDbTrait, TableMarkers> DbBuilder<RawDb, TableMarkers> {
-    pub fn with_table<R: Table + 'static>(mut self) -> DbBuilder<RawDb, (R::Marker, TableMarkers)> {
+impl<RawDb: RawDbTrait> DbBuilder<RawDb> {
+    pub fn with_table<R: Table + 'static>(mut self) -> DbBuilder<RawDb> {
         self.table_builders
             .insert(TypeId::of::<R>(), RawDb::table_builder::<R>());
         DbBuilder {
             name: self.name,
-            markers: PhantomData,
             table_builders: self.table_builders,
         }
     }
 
-    pub async fn build(self) -> Result<Db<RawDb, TableMarkers>, RawDb::Error> {
+    pub async fn build(self) -> Result<Db<RawDb>, RawDb::Error> {
         let db_builder = self.table_builders.into_iter().fold(
             RawDb::builder(&self.name),
             |db_builder, (_, table_builder)| db_builder.add_table(table_builder),
@@ -323,19 +305,17 @@ impl<RawDb: RawDbTrait, TableMarkers> DbBuilder<RawDb, TableMarkers> {
         ));
 
         Ok(Db {
-            markers: PhantomData,
             event_queue_sender,
             event_queue_kill_switch_sender: Some(event_queue_kill_switch_sender),
         })
     }
 }
 
-impl<RawDb: RawDbTrait, DbTableMarkers> Db<RawDb, DbTableMarkers> {
-    pub fn txn(&self) -> TxnBuilder<'_, RawDb, DbTableMarkers, (), ReadOnly> {
+impl<RawDb: RawDbTrait> Db<RawDb> {
+    pub fn txn(&self) -> TxnBuilder<'_, RawDb, ReadOnly> {
         TxnBuilder {
             event_queue_sender: self.event_queue_sender.clone(),
             store_names: Default::default(),
-            txn_table_markers: Default::default(),
             db: self,
             mode: PhantomData,
         }
@@ -364,39 +344,29 @@ impl TxnMode for ReadWrite {
     const IS_READ_WRITE: bool = true;
     type SupportsReadWrite = Present;
 }
-pub struct TxnBuilder<'db, RawDb: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode> {
-    db: &'db Db<RawDb, DbTableMarkers>,
-    txn_table_markers: TxnTableMarkers,
+pub struct TxnBuilder<'db, RawDb: RawDbTrait, Mode> {
+    db: &'db Db<RawDb>,
     store_names: HashSet<&'static str>,
     mode: PhantomData<Mode>,
     event_queue_sender: mpsc::Sender<TxnData<RawDb::Error>>,
 }
 
-impl<'db, Db: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
-    TxnBuilder<'db, Db, DbTableMarkers, TxnTableMarkers, Mode>
+impl<'db, Db: RawDbTrait, Mode> TxnBuilder<'db, Db, Mode>
 where
-    TxnTableMarkers: Default,
     Mode: TxnMode,
 {
-    pub fn with_table<R: Table + 'static>(
-        self,
-    ) -> TxnBuilder<'db, Db, DbTableMarkers, (R::Marker, TxnTableMarkers), Mode> {
-        let new_markers = (R::Marker::default(), TxnTableMarkers::default());
+    pub fn with_table<R: Table + 'static>(self) -> TxnBuilder<'db, Db, Mode> {
         let mut new_table_names = self.store_names;
         new_table_names.insert(&R::NAME);
 
         TxnBuilder {
-            txn_table_markers: new_markers,
             store_names: new_table_names,
-            db: self.db,
-            mode: self.mode,
-            event_queue_sender: self.event_queue_sender,
+            ..self
         }
     }
 
-    pub fn read_write(self) -> TxnBuilder<'db, Db, DbTableMarkers, TxnTableMarkers, ReadWrite> {
+    pub fn read_write(self) -> TxnBuilder<'db, Db, ReadWrite> {
         TxnBuilder {
-            txn_table_markers: self.txn_table_markers,
             store_names: self.store_names,
             db: self.db,
             mode: PhantomData,
@@ -404,9 +374,8 @@ where
         }
     }
 
-    pub fn read_only(self) -> TxnBuilder<'db, Db, DbTableMarkers, TxnTableMarkers, ReadOnly> {
+    pub fn read_only(self) -> TxnBuilder<'db, Db, ReadOnly> {
         TxnBuilder {
-            txn_table_markers: self.txn_table_markers,
             store_names: self.store_names,
             db: self.db,
             mode: PhantomData,
@@ -414,15 +383,12 @@ where
         }
     }
 }
-impl<'db, Db: RawDbTrait, DbTableMarkers, TxnTableMarkers, Mode>
-    TxnBuilder<'db, Db, DbTableMarkers, TxnTableMarkers, Mode>
+impl<'db, Db: RawDbTrait, Mode> TxnBuilder<'db, Db, Mode>
 where
-    TxnTableMarkers: Default,
     Mode: TxnMode,
 {
-    pub async fn build(self) -> Txn<Db, TxnTableMarkers, Mode> {
+    pub async fn build(self) -> Txn<Db, Mode> {
         Txn {
-            markers: self.txn_table_markers,
             _mode: PhantomData,
             write_data: Arc::new(Mutex::new(Vec::new())),
             event_queue_sender: self.event_queue_sender,
@@ -430,18 +396,15 @@ where
     }
 }
 
-pub struct Txn<Db: RawDbTrait, TableMarkers, Mode> {
-    #[allow(unused)]
-    markers: (TableMarkers),
+pub struct Txn<Db: RawDbTrait, Mode> {
     _mode: PhantomData<Mode>,
     write_data: Arc<Mutex<Vec<WriteData>>>,
     event_queue_sender: mpsc::Sender<TxnData<Db::Error>>,
 }
 
-impl<Db: RawDbTrait, TableMarkers, Mode> Txn<Db, TableMarkers, Mode> {
+impl<Db: RawDbTrait, Mode> Txn<Db, Mode> {
     pub fn table<R>(&self) -> TableAccess<Db, R, Mode>
     where
-        TableMarkers: TableMarker<R>,
         R: Table,
         Mode: TxnMode,
     {

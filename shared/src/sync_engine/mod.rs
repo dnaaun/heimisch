@@ -51,7 +51,6 @@ impl std::fmt::Debug for DbSubscription {
     }
 }
 
-pub use new_defn::DbTableMarkers;
 
 /// TODO: Use the "inner pattern" here.
 pub struct SyncEngine<
@@ -60,7 +59,7 @@ pub struct SyncEngine<
     Transport: TransportTrait,
     GithubApi,
 > {
-    pub db: Arc<DbWithOptimisticChanges<RawDb, DbTableMarkers>>,
+    pub db: Arc<DbWithOptimisticChanges<RawDb>>,
     pub db_subscriptions: Registry<DbSubscription>,
     backend_api: Arc<BackendApi>,
     github_api: Arc<GithubApi>,

@@ -86,16 +86,15 @@ where
     T: 'static,
 {
     #[track_caller]
-    pub fn new<Markers, Fut, Deregister>(
-        make_txn: impl AsyncFn() -> TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, ReadOnly>
+    pub fn new<Fut, Deregister>(
+        make_txn: impl AsyncFn() -> TxnWithOptimisticChanges<JustSend<idb::Database>, ReadOnly>
             + 'static,
-        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, Markers, ReadOnly>>) -> Fut
+        compute_val: impl Fn(Arc<TxnWithOptimisticChanges<JustSend<idb::Database>, ReadOnly>>) -> Fut
             + 'static,
         register_notifier: impl Fn(DbSubscription) -> Deregister + 'static,
     ) -> Self
     where
         Fut: Future<Output = T>,
-        Markers: 'static,
         Deregister: Fn() + Send + Sync + 'static,
     {
         let register_notifier = Arc::new(register_notifier);

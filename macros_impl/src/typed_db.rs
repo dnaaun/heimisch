@@ -28,7 +28,6 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         &(struct_name.to_string().to_lowercase() + "s"),
         struct_name.span(),
     );
-    let table_marker_name = quote::format_ident!("{}TableMarker", struct_name);
 
     let fields: Vec<_> = match opts.data {
         darling::ast::Data::Struct(ref fields) => fields.fields.iter().collect(),
@@ -81,13 +80,8 @@ pub fn derive_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         .collect();
 
     let output = quote! {
-        #[derive(Default)]
-        pub struct #table_marker_name {}
-
-        impl typed_db::TableMarker<#struct_name> for #table_marker_name {}
         impl typed_db::Table for #struct_name {
             const NAME: &'static str = stringify!(#struct_name_lowercase_pluralized);
-            type Marker = #table_marker_name;
             type Id = #id_field_type;
 
             fn id(&self) -> &Self::Id {
