@@ -71,6 +71,7 @@ impl<E: std::error::Error + 'static> From<E> for AnyError {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+#[test_log::test]
 async fn testing_optimistic_create() -> Result<(), AnyError> {
     // Let's buckle up. Get all our stuff ready.
     let user = User::default();
@@ -106,7 +107,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
         .withf(move |_, _, _, issue_create_request_in_mock| {
             issue_create_request_in_mock.title == title_clone
         })
-        .returning_st(move |_, _, _, _| {
+        .returning(move |_, _, _, _| {
             let create_issues_hit2 = create_issues_hit2.clone();
             let create_issues_resp_receiver = create_issues_resp_receiver.clone();
             Box::pin(async move {
@@ -179,9 +180,7 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
 
     assert!(bulk_subscriber_hit.expect_and_reset(1));
 
-    println!("ABOUT TO GET THE THING!!!");
     let issues = se.db.get_all_optimistically::<Issue>().await?;
-    println!("JUST GOT THE ISSUES");
     assert_eq!(issues.len(), 1);
     assert_eq!(issues[0].id, optimistic_issue_id);
     assert_eq!(issues[0].title, Avail::Yes("fancy title".into()));
@@ -199,7 +198,11 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
 
     // Now let's send the reply to the create_issues_resp_receiver.
     create_issues_resp_sender.send(github_issue).await?;
-    wait_for(&mut || create_issues_hit.expect_and_reset(1)).await;
+    wait_for(
+        &mut || create_issues_hit.expect_and_reset(1),
+        "create_issues_hit",
+    )
+    .await;
 
     let single_subscriber_hit = Arc::new(NumTimesHit::default());
     let single_subscriber_hit_clone = single_subscriber_hit.clone();
@@ -242,8 +245,16 @@ async fn testing_optimistic_create() -> Result<(), AnyError> {
         })
         .await?;
 
-    wait_for(&mut || bulk_subscriber_hit.expect_and_reset(1)).await;
-    wait_for(&mut || single_subscriber_hit.expect_and_reset(1)).await;
+    wait_for(
+        &mut || bulk_subscriber_hit.expect_and_reset(1),
+        "bulk_subscriber_hit",
+    )
+    .await;
+    wait_for(
+        &mut || single_subscriber_hit.expect_and_reset(1),
+        "single_subscriber_hit",
+    )
+    .await;
 
     let txn = se.db.txn().with_table::<Issue>().build().await;
 
@@ -287,10 +298,11 @@ async fn wait_for(assertion: &dyn Fn() -> bool) {
 
 #[cfg(feature = "ssr")]
 #[track_caller]
-async fn wait_for(assertion: &mut (dyn FnMut() -> bool + Sync)) {
+async fn wait_for(assertion: &mut (dyn FnMut() -> bool + Sync), message: &str) {
     use futures::future::FutureExt;
+    use utils::filtered_backtrace;
 
-    let timeout = select(
+    let fut = select(
         Box::pin(async move {
             let mut delay_ms = 20.0;
 
@@ -306,8 +318,8 @@ async fn wait_for(assertion: &mut (dyn FnMut() -> bool + Sync)) {
         tokio::time::sleep(Duration::from_secs(2)).boxed(),
     );
 
-    match timeout.await {
+    match fut.await {
         Either::Left(_) => {}
-        Either::Right(_) => panic!("wait_for failed"),
+        Either::Right(_) => panic!("{} at {:?}", message, filtered_backtrace(true)),
     }
 }

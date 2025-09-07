@@ -41,6 +41,7 @@ leptos_testing_utils = { path = "../leptos_testing_utils", optional = true }
 tokio = { version = "1.47.1", default-features = false, features = ["rt-multi-thread", "rt"], optional = true }
 gloo-timers = { version = "*", optional = true }
 web-sys = { version = "*", optional = true, features = ["Performance"] }
+test-log = { version = "0.2.18", features = ["trace"] }
 
 [features]
 default = ["ssr"]

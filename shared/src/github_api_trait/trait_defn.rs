@@ -1,5 +1,6 @@
-use std::future::Future;
-use std::sync::Arc;
+extern crate alloc;
+
+use std::{future::Future, ops::Deref};
 
 use github_api::{
     apis::{
@@ -93,7 +94,7 @@ pub trait GithubApiTrait: Send + Sync + 'static {
     ) -> impl Future<Output = Result<Vec<models::Issue>, Error<IssuesSlashListForRepoError>>> + Send + Sync;
 }
 
-impl<T: 'static> GithubApiTrait for Arc<T>
+impl<P: Deref<Target = T> + Send + Sync + 'static, T: 'static> GithubApiTrait for P
 where
     T: GithubApiTrait,
 {

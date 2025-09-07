@@ -11,7 +11,7 @@ use super::{
 
 #[derive(derive_more::From)]
 struct TxnWithOptimisticChangesInner<RawDb: RawDbTrait, Mode> {
-    idb_txn: Txn<RawDb, Mode>,
+    inner_txn: Txn<RawDb, Mode>,
     commit_listener: Option<CommitListener>,
 }
 
@@ -51,7 +51,7 @@ impl<RawDb: RawDbTrait, Mode> TxnWithOptimisticChanges<RawDb, Mode> {
         let inner = self.inner.as_ref().expect("");
         TableWithOptimisticChanges::new(
             self.optimistic_updates.clone(),
-            Arc::new(inner.idb_txn.table::<S>()),
+            Arc::new(inner.inner_txn.table::<S>()),
             self.reactivity_trackers.clone(),
             inner.commit_listener.clone(),
         )
@@ -67,11 +67,11 @@ impl<RawDb: RawDbTrait, Mode> TxnWithOptimisticChanges<RawDb, Mode> {
         //   (1) commit the inner transaction, and
         //   (2) invoke the commit listener twice.
         if let Some(TxnWithOptimisticChangesInner {
-            idb_txn,
+            inner_txn,
             commit_listener,
         }) = self.inner.take()
         {
-            idb_txn.commit().await?;
+            inner_txn.commit().await?;
             if let Some(listener) = commit_listener {
                 listener(&self.reactivity_trackers);
             };
@@ -85,7 +85,7 @@ impl<RawDb: RawDbTrait, Mode> TxnWithOptimisticChanges<RawDb, Mode> {
     }
 
     pub async fn abort(mut self) -> Result<(), RawDb::Error> {
-        self.inner.take().expect("").idb_txn.abort().await?;
+        self.inner.take().expect("").inner_txn.abort().await?;
         Ok(())
     }
 }

@@ -23,7 +23,7 @@ async fn get_sync_engine<RawDb: RawDbTrait>() -> SyncEngine<RawDb, BackendApi, M
             |_| (),
             Url::parse("https://www.example.com/").unwrap(),
         ))))
-        .github_api(Arc::new(()))
+        .github_api(())
         .db_name(":memory:".into())
         .make_transport(Arc::new(move |_| {
             Box::pin(async move { Ok(MockTransport::new().0) })

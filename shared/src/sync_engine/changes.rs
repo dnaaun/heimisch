@@ -445,6 +445,7 @@ where
                     Some(existing) => existing.with_merged(issue)?,
                     None => issue,
                 };
+
                 issue_store.put(&merged).await.tse()?;
             }
             ExistingOrDeleted::Deleted(id) => {

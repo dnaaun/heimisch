@@ -13,6 +13,7 @@ use futures::{
 };
 pub use raw_traits::RawDbTrait;
 use raw_traits::*;
+use utils::spawn;
 
 use std::{
     any::TypeId,
@@ -41,7 +42,7 @@ pub trait Table: DeserializeOwned + Serialize + Clone + 'static + Send + Sync + 
     fn index_names() -> &'static [&'static str];
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum WriteData {
     Put {
         id: SerializedId,
@@ -187,7 +188,6 @@ fn handle_events<RawDb: RawDbTrait>(
     raw_db: Arc<RawDb>,
 ) -> impl Future<Output = ()> + Send + Sync {
     async move {
-        println!("In handle_events");
         let mut kill_switch_invoked = false;
         while !kill_switch_invoked {
             let requests = futures::select! {
@@ -203,7 +203,7 @@ fn handle_events<RawDb: RawDbTrait>(
                 let request = match request {
                     Some(request) => request,
                     None => {
-                        println!(
+                        tracing::error!(
                             "Not sure why this would happen actually. I presume all clones of the Sender have been dropped?"
                         );
                         break;
@@ -357,11 +357,11 @@ pub struct TxnBuilder<'db, RawDb: RawDbTrait, Mode> {
     event_queue_sender: mpsc::Sender<TxnData<RawDb::Error>>,
 }
 
-impl<'db, Db: RawDbTrait, Mode> TxnBuilder<'db, Db, Mode>
+impl<'db, RawDb: RawDbTrait, Mode> TxnBuilder<'db, RawDb, Mode>
 where
     Mode: TxnMode,
 {
-    pub fn with_table<R: Table + 'static>(self) -> TxnBuilder<'db, Db, Mode> {
+    pub fn with_table<R: Table + 'static>(self) -> TxnBuilder<'db, RawDb, Mode> {
         let mut new_table_names = self.store_names;
         new_table_names.insert(&R::NAME);
 
@@ -371,7 +371,7 @@ where
         }
     }
 
-    pub fn read_write(self) -> TxnBuilder<'db, Db, ReadWrite> {
+    pub fn read_write(self) -> TxnBuilder<'db, RawDb, ReadWrite> {
         TxnBuilder {
             store_names: self.store_names,
             db: self.db,
@@ -380,7 +380,7 @@ where
         }
     }
 
-    pub fn read_only(self) -> TxnBuilder<'db, Db, ReadOnly> {
+    pub fn read_only(self) -> TxnBuilder<'db, RawDb, ReadOnly> {
         TxnBuilder {
             store_names: self.store_names,
             db: self.db,
@@ -421,21 +421,42 @@ impl<Db: RawDbTrait, Mode> Txn<Db, Mode> {
         }
     }
 
-    pub async fn commit(mut self) -> Result<(), Db::Error> {
-        let write_data = self.write_data.lock().await;
-        self.event_queue_sender
+    pub async fn commit(self) -> Result<(), Db::Error> {
+        Self::commit_impl(self.write_data.clone(), self.event_queue_sender).await
+    }
+
+    async fn commit_impl(
+        write_data: Arc<Mutex<Vec<WriteData>>>,
+        mut event_queue_sender: mpsc::Sender<TxnData<Db::Error>>,
+    ) -> Result<(), Db::Error> {
+        let write_data = write_data.lock().await;
+        let (sender, receiver) = oneshot::channel();
+        event_queue_sender
             .send(TxnData::Write {
                 data: write_data.clone(),
-                sender: oneshot::channel().0,
+                sender,
             })
             .await
             .unwrap();
+        receiver.await.unwrap()?;
         Ok(())
     }
 
     pub async fn abort(self) -> Result<(), Db::Error> {
         self.write_data.lock().await.clear();
         Ok(())
+    }
+}
+
+impl<Db: RawDbTrait, Mode> Txn<Db, Mode>
+where
+    Mode: 'static,
+{
+    pub fn drop(self) {
+        spawn(Self::commit_impl(
+            self.write_data.clone(),
+            self.event_queue_sender,
+        ));
     }
 }
 

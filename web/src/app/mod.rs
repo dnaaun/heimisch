@@ -24,7 +24,7 @@ pub fn App() -> impl IntoView {
     let sync_engine = LocalResource::new(move || async move {
         SyncEngine::builder()
             .backend_api(Arc::new(BACKEND_API.with(|e| e.clone())))
-            .github_api(Arc::new(shared::github_api_trait::GithubApi))
+            .github_api(shared::github_api_trait::GithubApi)
             .db_name("heimisch".into())
             .make_transport(Arc::new(move |url| {
                 Box::pin(async move { Transport::new(url).await })

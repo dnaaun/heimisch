@@ -23,15 +23,17 @@ use super::websocket_updates::transport::TransportTrait;
 use super::DbSubscription;
 use super::{error::SyncResult, SyncEngine};
 
-
 #[bon]
-impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, GithubApi>
-    SyncEngine<RawDb, BackendApi, Transport, GithubApi>
+impl<RawDb, BackendApi, Transport, GithubApi> SyncEngine<RawDb, BackendApi, Transport, GithubApi>
+where
+    RawDb: RawDbTrait,
+    BackendApi: BackendApiTrait,
+    Transport: TransportTrait,
 {
     #[builder]
     pub async fn new(
         backend_api: Arc<BackendApi>,
-        github_api: Arc<GithubApi>,
+        github_api: GithubApi,
         db_name: String,
         make_transport: Arc<
             dyn Fn(Url) -> BoxFuture<'static, Result<Transport, Transport::TransportError>>
@@ -79,7 +81,7 @@ impl<RawDb: RawDbTrait, BackendApi: BackendApiTrait, Transport: TransportTrait, 
             db: Arc::new(db),
             db_subscriptions,
             backend_api,
-            github_api,
+            github_api: Arc::new(github_api),
             make_transport,
         })
     }

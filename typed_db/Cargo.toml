@@ -18,6 +18,7 @@ futures = "0.3.31"
 any_spawner = "0.3.0"
 derive_more = { version = "1.0.0", features = ["display", "deref"] }
 tokio = { version = "1.40.0", default-features = false, optional = true }
+tracing = { version = "0.1.41", default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }

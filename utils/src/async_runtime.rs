@@ -97,11 +97,9 @@ where
     <F as Future>::Output: Send,
     F: Future + Send + 'static,
 {
-    // #[cfg(feature = "ssr")]
-    println!("In spawn");
-    // #[cfg(feature = "ssr")]
+    // #[cfg(feature = "ssr")] // Apparently running "cargo test -F ssr" doesn't actually activate
+    // the cargo features? I dunno.
     tokio::task::spawn(async move {
-        println!("INSIDE SPAWNED FUTURE");
         fut.await
     });
     #[cfg(not(feature = "ssr"))]

@@ -136,7 +136,7 @@ where
             })
             .await
             .tse()?;
-        drop(txn);
+        txn.commit().await.map_err(SyncErrorSrc::Db)?;
         Ok(())
     }
 }

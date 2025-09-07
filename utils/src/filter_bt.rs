@@ -4,7 +4,7 @@ thread_local! {
     static ABSOLUTE_CUR_DIR: PathBuf = std::fs::canonicalize(std::env::current_dir().expect("")).expect("");
 }
 
-pub fn filtered_backtrace() -> backtrace::Backtrace {
+pub fn filtered_backtrace(skip_last_frame: bool) -> backtrace::Backtrace {
     let backtrace = backtrace::Backtrace::new();
     let frames = backtrace
         .frames()
@@ -25,6 +25,7 @@ pub fn filtered_backtrace() -> backtrace::Backtrace {
                     .unwrap_or(false)
             })
         })
+        .skip(if skip_last_frame { 1 } else { 0 })
         .cloned()
         .collect::<Vec<_>>();
 

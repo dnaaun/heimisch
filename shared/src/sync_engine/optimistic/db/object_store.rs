@@ -116,7 +116,6 @@ where
             })
             .collect::<Vec<_>>();
 
-        println!("len(from_db_filtered)={}", from_db_filtered.len());
         let mut all = from_db_filtered;
         all.extend(
             self.optimistic_changes
@@ -212,7 +211,6 @@ where
         row: S,
         create_fut: impl Future<Output = Result<S::Id, ()>> + Send + Sync + 'static,
     ) {
-        println!("In ObjectStoreWithOptimisticChanges::create");
         let reactivity_trackers = ReactivityTrackers::builder()
             .stores_modified(hashmap![S::NAME => hashset![SerializedId::new_from_row(&row)]])
             .build();

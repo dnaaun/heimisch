@@ -3,6 +3,7 @@
 #![feature(marker_trait_attr)]
 #![feature(async_fn_track_caller)]
 #![feature(trait_alias)]
+#![feature(hint_must_use)] // Only for mock impl
 
 pub mod avail;
 pub mod consts;
