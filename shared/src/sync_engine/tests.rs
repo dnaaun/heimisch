@@ -70,7 +70,7 @@ impl<E: std::error::Error + 'static> From<E> for AnyError {
     }
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 #[test_log::test]
 async fn testing_optimistic_create() -> Result<(), AnyError> {
     // Let's buckle up. Get all our stuff ready.

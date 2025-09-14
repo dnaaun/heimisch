@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, ItemFn};
 
-/// NOTE: Should probably name this "leptos test setup"
+/// Will capture and output tracing logs to the console.
 pub fn leptos_test_setup(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 

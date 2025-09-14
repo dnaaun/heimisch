@@ -5,8 +5,8 @@ use typed_db::{RawDbTrait, ReadOnly, ReadWrite, Table, Txn, TxnBuilder, TxnMode}
 use crate::sync_engine::optimistic::{db::MaybeOptimistic, optimistic_changes::OptimisticChanges};
 
 use super::{
-    object_store::TableWithOptimisticChanges,
     reactivity_trackers::{CommitListener, ReactivityTrackers},
+    table::TableWithOptimisticChanges,
 };
 
 #[derive(derive_more::From)]
